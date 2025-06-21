@@ -86,7 +86,8 @@ export function display_game_stats(stats) {
 export function clear_all_canvas() {
     game_scene.clear();
     score_scene.clear();
-    display_game_message("Please Join or Create a game or Tournament");
+    let msg =  i18next.t('canvasJoin');
+    display_game_message(msg);
 }
 export function display_game_score(data) {
     cancel_timeout();

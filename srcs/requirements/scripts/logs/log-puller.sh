@@ -12,6 +12,7 @@ SERVICES=(
   kibana
   django
   nginx
+  modsecurity
   gunicorn
   daphne
   postgres
@@ -20,7 +21,8 @@ SERVICES=(
 
 for service in "${SERVICES[@]}"; do
   echo "⏳ Starting follower logs for : $service"
-  docker logs --follow "$service" > "$LOG_DIR/$service.log" 2>&1 &
+  # docker logs --follow "$service" > "$LOG_DIR/$service.log" 2>&1 &
+    docker logs --follow "$service" > "$LOG_DIR/$service.log" &
   echo $! >> "$PID_FILE"
 done
 

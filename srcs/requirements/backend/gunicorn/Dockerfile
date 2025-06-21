@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y \
     npm \
     && ln -s /usr/bin/python3 /usr/bin/python
 
+RUN  apt update && apt install -y gettext
+
 WORKDIR /app/data/
 
 COPY requirements/backend/gunicorn/tools/entrypoint.sh /entrypoint.sh

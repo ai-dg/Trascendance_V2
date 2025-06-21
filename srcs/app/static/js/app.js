@@ -14,16 +14,17 @@ import { formatDate } from "./srcs/Date.js";
 import { cancel_countdown } from "./srcs/JoinCreateGame.js";
 import { game_alert } from "./srcs/GameAlert.js";
 import { update_game_alert } from "./srcs/Chat.js";
+import { getUrl } from "./srcs/Urls.js";
+import { set_language, translate } from "./srcs/translate.js"
 registerElements();
-let status = false; // not used yet...
-let data_game = null;
+
 window.gameInstance = null;
-let lastUpdate = Date.now();
+
 export let isSocketReady = false;
 const join_tournament_list = document.getElementById("tournament_list");
 const join_game_list = document.getElementById("joingame_list");
-/// a chaque chargement de page
-/// a chaque remove
+
+
 export function updatePills() {
     let avail_tournaments = count_child_nodes(join_tournament_list);
     let avail_games = count_child_nodes(join_game_list);
@@ -45,9 +46,7 @@ socket_game.onopen = () => {
     console.log("✅ [app.ts] WebSocket (Game) connected!");
     isSocketReady = true;
 };
-let GAMES = [];
-let TOURNAMENTS = [];
-let MY_GAMES = [];
+
 let player_statistics = {
     total_games_played: 0,
     total_games_wons: 0,
@@ -70,7 +69,8 @@ socket_game.onmessage = (event) => {
         /*
         if (game_socket_outside)
           game_socket_outside.close(1000)*/
-        display_game_message(`Your opponent leaved the game ! Please wait !`);
+        let msg = i18next.t("opponentLeaved")
+        display_game_message(msg);
     }
     if (response.status === "game_paused")
         update_game_alert("A neu game is ready ! Please join the arena");
@@ -80,13 +80,14 @@ socket_game.onmessage = (event) => {
     }
     if (response.status === "game_created") {
         if (!game_socket_outside)
-            display_game_message("A new game is available");
+
+            display_game_message(i18next.t("newGameAvailable"));
         update_game_lobby([response], true);
         updatePills();
     }
     if (response.status === "tournament_created") {
         if (!game_socket_outside)
-            display_game_message("A new tournament is available");
+            display_game_message(i18next.t("newTournament"));
         update_tournament_lobby([response], true);
         updatePills();
     }
@@ -125,7 +126,28 @@ document.addEventListener("DOMContentLoaded", () => {
     const chatButton = document.getElementById("chat");
     const accountButton = document.getElementById("account");
     const submitUserInfosButton = document.getElementById("submit-user-infos");
+    const languageButtons = document.querySelectorAll('.dropdown-item');
     color_canvas();
+    const languageForm = document.getElementById("language-form")
+    console.log(set_language());
+
+    i18next.init({
+        lng: localStorage.getItem('lang'),
+        resources: translate,
+    });
+
+    
+    languageButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            document.getElementById('language-input').value = this.value;
+            let val = document.getElementById('language-input').value 
+            
+            languageForm.submit();
+        });
+    });
+
     if (newGameButton) {
         newGameButton.addEventListener("click", () => {
             let target = document.getElementById("NewGameWrapper");
@@ -470,7 +492,7 @@ document.addEventListener("DOMContentLoaded", () => {
 //     }
 // }
 function getKeyMaps() {
-    fetch("/accounts/keymap/?user=" + User.get())
+    fetch(getUrl("/accounts/keymap/?user=" + User.get()))
         .then(response => response.json())
         .then(data => {
         if (data.default_map) {
@@ -496,7 +518,7 @@ function saveKeyMaps() {
         invited_map: invited_map,
         invited_inverted_map: invited_inverted_map,
     };
-    fetch("/accounts/keymap/", {
+    fetch(getUrl("/accounts/keymap/"), {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -526,7 +548,7 @@ export function loadPlayerHistory(user) {
         return;
     }
     history_container.innerHTML = "";
-    fetch("/getusersessions/?user=" + user)
+    fetch(getUrl("/getusersessions/?user=" + user))
         .then(response => response.json())
         .then(data => {
         // console.log("Player history data received:", data);
@@ -584,7 +606,7 @@ export function loadPlayerHistory(user) {
 }
 // load player statistics
 export function loadPlayerStatistics(user) {
-    fetch("/getuserstats/?user=" + user)
+    fetch(getUrl("/getuserstats/?user=" + user))
         .then(response => response.json())
         .then(data => {
         player_statistics.total_games_played = data.total_games_played || 0;
@@ -607,8 +629,38 @@ export function loadPlayerStatistics(user) {
         total_tournaments_won.innerHTML = player_statistics.total_tournaments_won.toString();
     });
 }
+
+
+// function ping()
+// {
+//      fetch(getUrl("/openping"), {
+//         method: "GET",
+//         headers: {
+//             "X-CSRFToken": getCSRFToken()
+//         },
+//         credentials: "include"
+//     }).then(response => {
+//         if (!response.ok) {
+//             console.warn("Ping failed: ", response.status);
+//         }
+//     })
+//     .catch(err => {
+//         console.error("Ping error: ", err);
+//     });
+// }
+
+
+// function keep_alive()
+// {
+//     setInterval(ping, 20000)
+// }
+
+
 (async () => {
     await User.setUser();
+    console.log("%cBienvenu sur Transcendance !", "font-size:80px; color: #FFFFFF; background-color:#242424")
+    // keep_alive()
+
     initUserInfo();
     initChatRoom();
     getKeyMaps();
@@ -720,4 +772,9 @@ document.addEventListener("keydown", (event) => {
         toucheActive = null;
         saveKeyMaps();
     }
+});
+
+window.addEventListener("beforeunload", () => {
+    const data = new FormData();
+    navigator.sendBeacon(getUrl("pong/close"), data);
 });

@@ -8,7 +8,7 @@ from server.asyncredis import redis
 from .tools import all_players_connected, get_game_status, update_game_params, get_running_games, does_game_exist, clean_pending_games, move_game_to, register_tournament, is_running_tournament, is_running, get_game_param, unlock_for_creation, is_allowed_for_creation, lock_for_creation, create_new_game, create_new_single_game, create_new_tournament, get_all_games, lock_game, PENDING_TOURNAMENTS, get_running_tournaments, RUNNING_TOURNAMENTS, PENDING_GAMES, RUNNING_GAMES, PENDING, RUNNING
 from .Tournament import Tournament, get_next_game, all_games_played, get_tournament_stats, debug_tree
 from channels.generic.websocket import AsyncWebsocketConsumer
-
+from django.utils.translation import gettext as _
 from django.contrib.auth import get_user_model
 from .data import setup_game_data, setup_tournament_data
 from datetime import datetime, timezone
@@ -30,12 +30,12 @@ class PongGeneralConsumer(AsyncWebsocketConsumer):
         self.channel_layer = get_channel_layer()
         await self.channel_layer.group_add(f"user_{self.user}", self.channel_name)
         await self.channel_layer.group_add(self.room_name, self.channel_name)
-        await self.send(text_data=json.dumps({"message": "connected to Pong Lobby, sending games...!"}))
+        await self.send(text_data=json.dumps({"message": _("connected to Pong Lobby, sending games...!")}))
         data = await get_all_games(self.user)
         if data :
             await self.send(text_data=json.dumps(data))
         else :
-            await self.send(text_data=json.dumps({"message": "no available games"}))
+            await self.send(text_data=json.dumps({"message": _("no available games")}))
         reco = await get_running_games(self.user)
         if reco:
             if reco["game_param"]["opponent"] == "remote":
@@ -83,25 +83,25 @@ class PongGeneralConsumer(AsyncWebsocketConsumer):
         tournament_uid = data.get("tournament_uid")
         if not tournament_uid:
             logger.error(f"❌ [PongGeneralConsumer] Invalid tournament id - the tournament is over or timed out")        
-            await self.notify("access_refused", "Invalid tournament id - the tournament is over or timed out", f"user_{self.user}", data)
+            await self.notify("access_refused", _("Invalid tournament id - the tournament is over or timed out"), f"user_{self.user}", data)
             await self.close(1008)
             return
         status = await get_game_status(tournament_uid)
         logger.info(f"status is : {status}")
         data["type"] = "notify_user"
         if status == RUNNING:
-            await self.notify("tournament_ready", "you will be redirected to the tournament", f"user_{self.user}", data)
+            await self.notify("tournament_ready", _("you will be redirected to the tournament"), f"user_{self.user}", data)
 
 
     async def join_tournament(self, data):
         user = self.scope["user"].username
         tournament_uid = data.get("tournament_uid")
         if not tournament_uid:
-            await self.notify("failed", "no id tournament_id found",f"user_{user}")
+            await self.notify("failed", _("no id tournament_id found"),f"user_{user}")
             return
         tournament = await get_game_param(tournament_uid)
         if user in tournament["players"]:
-            await self.notify("already registered", "you are already resgistered",f"user_{user}")
+            await self.notify("already registered", _("you are already resgistered"),f"user_{user}")
             return
            
         notification = await register_tournament(user, tournament_uid)
@@ -117,14 +117,14 @@ class PongGeneralConsumer(AsyncWebsocketConsumer):
                             {"type": "send_game_announcement",
                             "status": "remove_tournament",                    
                             "game_uid": tournament_uid,
-                            "message": "A Tournament has been locked"
+                            "message": _("A Tournament has been locked")
                             }
                 )
             else:
                 notification["status"] = "join_tournament"
                 await self.notify("join_tournament", f"{user} join the tournament", self.room_name, {**notification})
         else:
-            await self.notify("register failed", "tournament is unavailable : locked or finished",f"user_{user}")
+            await self.notify("register failed", _("tournament is unavailable : locked or finished") ,f"user_{user}")
 
 
     async def join_game(self, data):
@@ -486,18 +486,18 @@ class PongConsumer(AsyncWebsocketConsumer):
 
 
         if await redis.get(f"{self.game_uid}_paused"):
-            await self.notify("game_paused", "Game was paused due to disconnection. Waiting for all players to reconnect.", f"user_{self.user}")
+            await self.notify("game_paused", _("Game was paused due to disconnection. Waiting for all players to reconnect."), f"user_{self.user}")
             logger.info(f"⏸️ [PongConsumer] User {self.user} reconnected to paused game")
         if await redis.scard(self.CONNECTED) == 2:
             if await redis.get(f"{self.game_uid}_paused"):
                 # await redis.delete(f"{self.game_uid}_paused")
-                await self.notify("resume", "All players reconnected. You can resume the game.", self.game_uid)
+                await self.notify("resume", _("All players reconnected. You can resume the game."), self.game_uid)
                 logger.info("✅ [PongConsumer] Game can be resumed - all players back")
             else:
                 await self.notify("waiting", "waiting players ready notification", self.game_uid)
                 if self.opponent != 'ia' and self.opponent != 'invited':
                     date = datetime.now(timezone.utc).isoformat()
-                    await self.notify("game_info", "A new game is ready ! Please join the arena", f"room_{self.user}", {"date" : date})
+                    await self.notify("game_info", _("A new game is ready ! Please join the arena"), f"room_{self.user}", {"date" : date})
 
 
     async def disconnect(self, close_code):
@@ -516,8 +516,8 @@ class PongConsumer(AsyncWebsocketConsumer):
             await self.cleanup()
         if self.opponent_name:
             if await redis.sismember(f"{self.game_uid}_ready", self.opponent_name):
-                await self.notify(status, "your opponent left the game", f"user_{self.opponent_name}", data={"user":self.opponent_name})
-        await self.notify(status, "you left the game", f"user_{self.user}", data={"user":self.user})
+                await self.notify(status, _("your opponent left the game"), f"user_{self.opponent_name}", data={"user":self.opponent_name})
+        await self.notify(status, _("you left the game"), f"user_{self.user}", data={"user":self.user})
         await redis.delete(f"{self.game_uid}_ready")
 
 
@@ -570,11 +570,11 @@ class PongConsumer(AsyncWebsocketConsumer):
             if res == 0:
                 logger.info(f"player already send ready status")
             if await redis.scard(f"{self.game_uid}_ready") == 2:
-                await self.notify("start_game", "ready to play", self.game_uid)
+                await self.notify("start_game", _("ready to play"), self.game_uid)
                 return True
             else:
-                await self.notify("waiting", "waiting for your opponent", f"user_{user}")
-                await self.notify("waiting", "your opponent is ready", f"user_{self.opponent_name}")           
+                await self.notify("waiting", _("waiting for your opponent"), f"user_{user}")
+                await self.notify("waiting", _("your opponent is ready"), f"user_{self.opponent_name}")           
             return False
 
     async def receive(self, text_data):
@@ -611,17 +611,17 @@ class PongConsumer(AsyncWebsocketConsumer):
 
             elif command == "stop":
                 logger.info("🛑 [PongConsumer] Stopping the game")
-                await self.notify("stopped", "You have forfeited the match", self.game_uid, {"action":"forfeited"})
+                await self.notify("stopped", _("You have forfeited the match"), self.game_uid, {"action":"forfeited"})
                 self.game.running = False
 
             elif command == "paused":
                 logger.info("🛑 [PongConsumer] Pausing the game")
-                await self.notify("stopped", "your opponent paused the game", self.game_uid, {"action":"paused"})
+                await self.notify("stopped", _("your opponent paused the game"), self.game_uid, {"action":"paused"})
                 self.game.running = False
 
             elif command == "resume":
                 logger.info("🛑 [PongConsumer] Resume the game")
-                await self.notify("stopped", "your opponent resumed the game", self.game_uid, {"action":"resumed"})
+                await self.notify("stopped", _("your opponent resumed the game"), self.game_uid, {"action":"resumed"})
                 self.game.running = False
 
         if "action" in data:
@@ -679,8 +679,8 @@ class PongConsumer(AsyncWebsocketConsumer):
             locked = await redis.set(f"lnotification_lock_{self.game_uid}", 1, ex=60, nx=True)
             if locked:
                 if tournament_uid:
-                    await self.notify("end_game", "the game is over", self.game_uid, data={"tournament_uid" : tournament_uid, "action" : "none", **stats})
-                    await self.notify("end_game", "the game is over", tournament_uid, data={"tournament_uid" : tournament_uid, "action" : "tournament", **stats})
+                    await self.notify("end_game", _("the game is over"), self.game_uid, data={"tournament_uid" : tournament_uid, "action" : "none", **stats})
+                    await self.notify("end_game", _("the game is over"), tournament_uid, data={"tournament_uid" : tournament_uid, "action" : "tournament", **stats})
                     try :
                         await self.channel_layer.group_send(
                             tournament_uid, 
@@ -880,7 +880,7 @@ class PongTournamentConsumer(AsyncWebsocketConsumer):
                     # envoyer ici les notifications dans le chat....
                     for user in self.allowed_users:
                         date = datetime.now(timezone.utc).isoformat()
-                        await self.notify("game_info", "The tournament is ready ! Please join the arena", f"room_{user}", {"date" : date})
+                        await self.notify("game_info", _("The tournament is ready ! Please join the arena"), f"room_{user}", {"date" : date})
                     was_set = await redis.set(f"init_lock_{self.tournament_uid}", value=1, nx=True, ex=60)
                     if was_set:
                         await self.tournament.init_tournament()
@@ -945,7 +945,7 @@ class PongTournamentConsumer(AsyncWebsocketConsumer):
             locked = await redis.set(f"lock_{self.tournament_uid}", 1, ex=60, nx=True)   
             if locked:
                 for user in self.allowed_users:
-                    await self.notify("tournament_over", "the tournament is over",  f"tournament_{user}", data={
+                    await self.notify("tournament_over", _("the tournament is over"),  f"tournament_{user}", data={
                 "action":"display", "stats":stats, "tournament_uid": self.tournament_uid, "winner": stats["winner"]})
                 await self.save_tournament_winner_in_db(stats["winner"])
                 await redis.srem(RUNNING_TOURNAMENTS, self.tournament_uid)
@@ -958,7 +958,7 @@ class PongTournamentConsumer(AsyncWebsocketConsumer):
             if locked:
                 users = current_game.data["allowed_users"]
                 for user in users:
-                    await self.notify("game_ready", "your game is ready", f"user_{user}", data={**current_game.data, "status": "game_ready"})
+                    await self.notify("game_ready", _("your game is ready"), f"user_{user}", data={**current_game.data, "status": "game_ready"})
                 active_games[current_game.game_uid] = current_game
                 await asyncio.sleep(0.05)
             current_game = await get_next_game(self.tournament.tree)

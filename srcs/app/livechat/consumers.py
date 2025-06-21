@@ -11,7 +11,7 @@ from .tools import get_banned, is_reciprocal, ban, unban, remove_friend, add_fri
 from server.asyncredis import redis
 import logging
 from django.apps import apps
-
+from django.utils.translation import gettext as _
 
 Room = apps.get_model('livechat', 'Room')
 
@@ -217,8 +217,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             user = data.get("user")
             friend = data.get("friend")
             now = datetime.now(timezone.utc).isoformat()
-            await self.notify(f"room_{user}", {"status" : "game_info", "message" : "Your game is ready ! Please join the arena", "date" : now})
-            await self.notify(f"room_{friend}", {"status" : "game_info", "message" : "Your game is ready ! Please join the arena", "date": now})
+            await self.notify(f"room_{user}", {"status" : "game_info", "message" : _("Your game is ready ! Please join the arena"), "date" : now})
+            await self.notify(f"room_{friend}", {"status" : "game_info", "message" : _("Your game is ready ! Please join the arena"), "date": now})
 
             
         elif action == "decline":
@@ -226,10 +226,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
             friend = data["friend"]
             await unlock_for_creation(recipient)
             await clean_pending_games()
+            trad = _("can't play right now")
             game = {}
             game ["status"] = "decline"
             game ["fiend"] = friend
-            game ["message"] = f"{friend} can't play right now !"
+            game ["message"] = f"{friend} {trad} !"
             await self.notify(f"room_{recipient}", game)
 
 

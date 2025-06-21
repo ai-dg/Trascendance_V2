@@ -15,7 +15,7 @@ RESET = "\033[0m"
 
 up: build
 	docker compose -f $(COMPOSE) create
-	docker compose -f $(COMPOSE) up -d --remove-orphans
+	docker compose -f $(COMPOSE) up --remove-orphans
 	@$(MAKE) start-logs
 	@$(MAKE) wait-kibana
 	@$(MAKE) import-kibana

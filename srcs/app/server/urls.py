@@ -17,6 +17,7 @@ Including another URLconf
 
 from django.conf.urls.static import static
 from django.urls import include, path
+from django.conf.urls.i18n import set_language
 from django.contrib import admin
 from django.conf import settings
 from pong import views
@@ -26,6 +27,7 @@ urlpatterns = [
     path("", include(("pong.urls", "pong"), namespace="pong")),
     path("chat/", include(("livechat.urls", "livechat"), namespace="livechat")),
     path("accounts/", include(("accounts.urls", "accounts"),namespace="accounts")),
+    path('i18n/setlang/', set_language, name='set_language'),
 ]
 
 

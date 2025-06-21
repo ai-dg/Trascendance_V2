@@ -2,6 +2,9 @@
 
 echo -e "\033[35mDjango est en mode : $DJANGO_ENV\033[0m"
 
+export PYTHONPATH=/app/data
+export DJANGO_SETTINGS_MODULE=server.settings
+
 source /app/data/venv/bin/activate
 
 #if [ -d "/app/data/static/ts" ]; then
@@ -14,12 +17,17 @@ source /app/data/venv/bin/activate
 
 sleep 10
 
+
 echo -e "\033[33mApplication des migrations...\033[0m"
 python manage.py makemigrations pong
 python manage.py makemigrations accounts
 python manage.py makemigrations livechat
 python manage.py makemigrations
 python manage.py migrate
+
+django-admin makemessages -l en
+django-admin makemessages -l fr
+django-admin makemessages -l es
 
 if [ "$DJANGO_ENV" == "DEV" ]; then
     # echo -e "\033[32mCollecte des fichiers statiques...\033[0m"

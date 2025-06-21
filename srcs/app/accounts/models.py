@@ -70,6 +70,7 @@ class TranscendanceUser(AbstractBaseUser, PermissionsMixin):
     oauth = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
     tournament_pseudo = models.CharField(max_length=40, blank=True)
+    language = models.CharField(max_length=10, default="en")
     keys_map = models.JSONField(default=default_keys_map)
     
     friends = models.ManyToManyField('self', symmetrical=False, related_name="friend_of", blank=True)

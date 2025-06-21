@@ -1,0 +1,14 @@
+.env
+secrets.txt
+node_modules/
+venv/
+migrations/
+__pycache__/
+chris_*
+save_*
+static/js/
+/srcs/logs/*
+media/
+staticfiles/
+.vscode
+kibana_json

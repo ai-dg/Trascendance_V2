@@ -31,6 +31,20 @@ REDIS_HOST = 'redis'
 REDIS_PORT = 6379
 REDIS_DB = 0
 
+#multilanguage support
+USE_I18N = True
+USE_L10N = True
+
+LANGUAGE_CODE = 'en' 
+
+LANGUAGES = [
+    ('en', 'English'),
+    ('fr', 'Français'),
+    ('es', 'Español'),]
+
+LOCALE_PATHS = [os.path.join(BASE_DIR, 'locale')]
+
+
 # SECURITY WARNING: don't run with debug turned on in production!
 
 DJANGO_ENV = env("DJANGO_ENV", default="DEV")
@@ -116,6 +130,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -133,6 +148,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                'django.template.context_processors.i18n',
             ],
         },
     },

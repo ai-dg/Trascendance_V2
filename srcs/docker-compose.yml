@@ -1,17 +1,53 @@
 
 services:
 
+
+######################################################################
+#************************** 📦 Security ******************************
+######################################################################
+
+
+  modsecurity:
+    container_name: modsecurity 
+    build:
+      context: .
+      dockerfile: ./requirements/security/modsecurity/Dockerfile
+    ports:
+      - 443:443
+    networks:
+      - transcendance
+    env_file:
+      - .env
+    depends_on:
+      - nginx
+
+
+  vault:
+    container_name: vault
+    image: hashicorp/vault:latest
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: "root"  # pour démarrage en mode dev (pas sécurisé)
+      VAULT_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+    cap_add:
+      - IPC_LOCK  # recommandé pour Vault
+    networks:
+      - transcendance
+    volumes:
+      - secrets:/vault/file
+
+
 ######################################################################
 #************************** 📦 BACKEND *******************************
 ######################################################################
+
 
   daphne:
     container_name: daphne
     build: 
       context: .
       dockerfile: ./requirements/backend/daphne/Dockerfile
-    ports:
-      - "${PORT_DAPHNE}:8001"
     volumes:
       - app:/app/data
       - venvdata:/app/data/venv
@@ -33,7 +69,8 @@ services:
       - dependencies
     env_file:
       - .env
-    
+
+
   django:
     container_name: django
     build:
@@ -70,8 +107,6 @@ services:
     build: 
       context: .
       dockerfile: ./requirements/backend/gunicorn/Dockerfile
-    # ports:
-    #   - "${PORT_GUNICORN}:8000"
     volumes:
       - app:/app/data
       - venvdata:/app/data/venv
@@ -117,8 +152,6 @@ services:
     build:
       context: .
       dockerfile: ./requirements/core/postgres/Dockerfile
-    ports: 
-      - "${PORT_POSTGRES}:5432"
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -214,9 +247,9 @@ services:
     env_file:
       - .env
     
-######################################################################
+#####################################################################
 #************************** 🎂​ FRONTEND ******************************
-######################################################################
+#####################################################################
 
   # nodejs:
   #   container_name: nodejs
@@ -224,7 +257,7 @@ services:
   #     context: .
   #     dockerfile: ./requirements/nodejs/Dockerfile
   #   ports: 
-  #     - 8080:8080
+  #     - 9090:9090
   #   volumes:
   #     - nodejs:/app/nodejs
   #   networks:
@@ -241,9 +274,6 @@ services:
       args:
         DJANGO_ENV: ${DJANGO_ENV}
       dockerfile: ./requirements/proxy/nginx/Dockerfile
-    ports:
-      - "${PORT_NGINX_HTTP}:80"
-      - "${PORT_NGINX_HTTPS}:443"
     networks:
       - transcendance
     volumes:
@@ -298,6 +328,13 @@ volumes:
       type: none
       o: bind
       device: ${HOME}/data/logsdata
+
+  secrets:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${HOME}/data/secrets
 
   # nodejs:
   #   driver: local

@@ -1,4 +1,5 @@
 {% csrf_token %}
+{% load i18n %}
 
 
 <div class="game-alert d-none closer"></div>
@@ -7,15 +8,15 @@
     <div class="chatwrapper">
         <div class="users_window">
             <div class="friends_users_wrapper">
-                <div class="legend">Friends <fold-element target="friends_users" type="unfold"></fold-element></div>
+                <div class="legend">{% trans "Friends" %} <fold-element target="friends_users" type="unfold"></fold-element></div>
                 <div class="friends_users"></div>
             </div>
             <div class="connected_users_wrapper">
-                <div class="legend">Connected <fold-element target="connected_users" type="unfold"></fold-element></div>
+                <div class="legend">{% trans "Connected" %} <fold-element target="connected_users" type="unfold"></fold-element></div>
                 <div class="connected_users"></div>
             </div>
             <div class="banned_users_wrapper">
-                <div class="legend">Banned <fold-element target="banned_users" type="unfold"></fold-element></div>
+                <div class="legend">{% trans "Banned" %}<fold-element target="banned_users" type="unfold"></fold-element></div>
                 <div class="banned_users"></div>
             </div>
         </div>

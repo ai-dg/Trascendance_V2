@@ -7,15 +7,22 @@ from .models import *
 from django.http import JsonResponse
 import redis, logging
 from django.contrib.auth.decorators import login_required
+from accounts.views import logout_user
 from django.db.models import Q
+from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.translation import gettext as _
 
 # Create your views here.
 r = redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
 logger = logging.getLogger(__name__)
 
+
 def get_user(request):
     user_id = request.user.id
     username = request.user.username
+    if not request.user.is_authenticated:
+            return JsonResponse({'error': 'User not authenticated'}, status=401)
     
     if user_id and username:
         return JsonResponse({'username': username})
@@ -108,16 +115,70 @@ def get_user_stats(request):
             'total_tournaments_won': total_tournaments_won
         })
 
-    
+
 
 def pong(request):
     if not request.user.is_authenticated:
         return render(request, 'accounts/login.html')
-    context = { 'room_name' : 'General Chat', 'username': request.user.username, 'tournament_pseudo': request.user.tournament_pseudo}
+    
+    username = request.user.username
+    
+    # Vérifier les verrous Redis
+    pong_lock = r.get(f"user:{username}:pong_lock")
+    reco_lock = r.get(f"user:{username}:reco_lock")
+    
+    # Si déjà connecté ET pas de token de reconnexion → BLOQUER
+    if pong_lock and not reco_lock:
+        messages.info(request, "User already authenticated ! Please close previous connection")
+        return render(request, "accounts/login.html")
+    
+    # Si token de reconnexion présent → le consommer
+    if reco_lock:
+        r.delete(f"user:{username}:reco_lock")
+    
+    # Créer/renouveler le verrou de session avec timeout de sécurité (1 heure)
+    r.setex(f"user:{username}:pong_lock", 3600, "1")
+    
+    context = {
+        'room_name': 'General Chat',
+        'username': username,
+        'tournament_pseudo': request.user.tournament_pseudo
+    }
     return render(request, "pong/index.html", context)
 
+
+# def open_ping(request):
+#     if not request.user.is_authenticated:
+#         return JsonResponse({"status":"user diconnected"}, status=401)
+#     r.expire(f"user:{request.user.username}:pong_lock", 60)
+#     logger.info("USERPING")
+#     return JsonResponse({"status":"connected"}, status=200)
+
+@csrf_exempt
+def close(request):
+    if request.method == "POST" and request.user.is_authenticated:
+        username = request.user.username
+        
+        # Créer un token de reconnexion avec timeout (5 minutes)
+        r.setex(f"user:{username}:reco_lock", 300, "1")
+        
+        # Libérer la session pong mais garder l'utilisateur "en ligne"
+        r.delete(f"user:{username}:pong_lock")
+        
+        # Note: on ne supprime PAS de 'online_users' car l'user peut revenir
+        
+        logger.info(f"User {username} - Session closed with reconnection token")
+        return JsonResponse({"status": "disconnection ok", "success": True}, status=200)
+    
+    if request.method == "GET" and request.user.is_authenticated:
+        logger.info("GET request - no action taken")
+        return JsonResponse({"status": "user connected (no action taken)", "success": False}, status=200)
+    
+    logger.info("User not authenticated")
+    return JsonResponse({'error': 'User not authenticated', "success": False}, status=403)
+
+
+
 def logout_view(request):
-    r.srem('online_users', request.session["username"] )
-    logout(request)
-    request.session.flush() 
-    return redirect("pong")
+    # Alias pour logout_user pour compatibilité
+    return logout_user(request)

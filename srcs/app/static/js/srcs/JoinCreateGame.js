@@ -9,6 +9,9 @@ import { display_game_count, display_game_message, display_game_score, clear_all
 import { game_scene } from "./Scene.js";
 import { update_game_alert } from "./Chat.js";
 import { updatePills } from "../app.js";
+import { CONFETTI_CONF } from "./JoinCreateTournament.js";
+
+
 const NEWGAME = "new_game";
 const NEWAIGAME = "new_ai_game";
 const NEWINVITEDGAME = "new_invited_game";
@@ -70,9 +73,9 @@ export function update_lobbies(data) {
     update_game_lobby(data.games);
     update_tournament_lobby(data.tournaments);
     if (data.games.length + data.games.tournaments > 0)
-        display_game_message("Game or Tournaments are available ! Want to Play ?");
+        display_game_message(i18next.t("canvasPlay"));
     else
-        display_game_message("Please Join or Create a game or Tournament");
+        display_game_message(i18next.t("canvasJoin"));
 }
 export function register_tournament(tournament) {
     let tournament_uid = tournament.tournament_uid;
@@ -92,7 +95,7 @@ function getGameElement(game) {
         gameinfo_box_2.classList.add("container", "text-light", "mt-4", "p-3", "border");
         el.appendChild(gameinfo_box_2);
         let slots = document.createElement('h6');
-        slots.innerHTML = "Players: 1 / 2 - " + game.created_by;
+        slots.innerHTML = i18next.t("players") + ": 1 / 2 - " + game.created_by;
         gameinfo_box_2.appendChild(slots);
         let winCondition = document.createElement('h6');
         winCondition.innerHTML = "Win condition: " + game.game_param.win_condition + " / " + game.game_param.max_pts + " pts";
@@ -103,7 +106,7 @@ function getGameElement(game) {
         let join_btn = document.createElement('button');
         join_btn.classList.add("btn", "btn-success", "mt-4");
         join_btn.type = "button";
-        join_btn.innerHTML = "Join game";
+        join_btn.innerHTML = i18next.t("join");
         if (game.created_by != User.get())
             gameinfo_box_2.appendChild(join_btn);
         join_btn.addEventListener("click", () => {
@@ -114,7 +117,7 @@ function getGameElement(game) {
             let delete_btn = document.createElement('button');
             delete_btn.classList.add("btn", "btn-danger", "mt-4");
             delete_btn.type = "button";
-            delete_btn.innerHTML = "Delete";
+            delete_btn.innerHTML = i18next.t("Cancel");
             gameinfo_box_2.appendChild(delete_btn);
             delete_btn.addEventListener("click", () => {
                 close_windows();
@@ -162,7 +165,7 @@ export function launch(params, game_socket_id) {
         if (params.status === "game_ready") {
             display_action_button(game_socket_id, ready_btn);
             clear_all_canvas();
-            display_game_message(`All players connected ! Press Ready to start !`);
+            display_game_message(i18next.t("ready"));
         }
         else {
             if (!ready_btn.classList.contains("d-none"))
@@ -255,7 +258,7 @@ export async function run(event, game_socket_id) {
         if (window.gameInstance)
             window.gameInstance.stop();
         cancel_countdown();
-        display_game_message(`All players reconnected ! Press Resume to resume the game !`);
+        display_game_message(i18next.t("resume"));
     }
     else if (data_game.status == "start_count") {
         timer = 5;
@@ -275,7 +278,6 @@ export async function run(event, game_socket_id) {
         }
     }
     else if (data_game.status == "end_game" || data_game.type == "end_game") {
-        console.log("IN GAMESOCKET FUCKING CONDITIONNNNNN !!!!!");
         game_socket_id.close(1000);
         if (window.gameInstance) {
             window.gameInstance.stop();
@@ -285,11 +287,12 @@ export async function run(event, game_socket_id) {
         if (data_game.action != "none") {
             if (data_game.winner === User.get()) {
                 if (!data_game.tournament_uid)
-                    display_game_message("You win the game ! Please wait for your opponent");
-                display_game_message("You win the game !");
+                    display_game_message(i18nxt.t("winTounamentGame"));
+                display_game_message(i18next.t("winGame"));
+                confetti(CONFETTI_CONF);
             }
             else {
-                display_game_message(`Game Over, ${data_game.winner} win the game !`);
+                display_game_message(i18next.t("gameOver") + `, ${data_game.winner} ` + i18next.t("gameWinnerIs"));
             }
         }
     }
