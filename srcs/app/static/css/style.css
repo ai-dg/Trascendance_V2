@@ -139,7 +139,22 @@ input[class="inputfield"]{
   }
   
   
-  
+.perspective
+{
+    perspective: 800px;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+
+}  
+
+.up{
+    z-index: 2;
+}
+
 #gameCanvas
 {   
     /*color:#494066;*/
@@ -147,7 +162,8 @@ input[class="inputfield"]{
     position: absolute;
     top:60%;
     left: 50%;
-    transform: translate(-50%,-50%);
+    transform: translate(-50%, -50%);
+    transform-origin: center;
     background-color: rgba(0, 0, 0, 0.8);
     height: var(--scene_height);
     width: var(--scene_width);

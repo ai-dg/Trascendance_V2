@@ -36,6 +36,16 @@ services:
       - transcendance
     volumes:
       - secrets:/vault/file
+      
+  mailpit:
+    image: axllent/mailpit
+    container_name: gt_mailpit
+    ports:
+      - "8025:8025"    # Interface web
+      - "1025:1025"    # SMTP
+    restart: unless-stopped
+    networks:
+      - transcendance
 
 
 ######################################################################
