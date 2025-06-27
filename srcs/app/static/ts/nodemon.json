@@ -1,7 +1,0 @@
-{
-    "watch": ["app/**/*.ts"], 
-    "exec": "tsc && ./resolve-imports.sh ../js/",
-    "ext": "ts",
-    "delay": "2000"
-  }
-  
