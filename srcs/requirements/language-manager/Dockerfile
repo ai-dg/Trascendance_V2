@@ -8,6 +8,8 @@ RUN rm /etc/nginx/sites-enabled/default
 
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
 
+RUN chmod 644 /etc/nginx/nginx.conf
+
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]

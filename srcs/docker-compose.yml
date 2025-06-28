@@ -18,6 +18,7 @@ services:
       - "8080:80"
     volumes:
       - ./requirements/gateway/nginx/nginx.conf:/etc/nginx/nginx.conf
+    user: "0:0"
     restart: unless-stopped
     environment: {}
     depends_on:
