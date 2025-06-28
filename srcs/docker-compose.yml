@@ -1,5 +1,10 @@
 services:
 
+
+######################################################################
+#************************** 🧬 PROXY / NGINX *************************
+######################################################################
+
   gateway:
     container_name: gateway
     build:
@@ -9,11 +14,20 @@ services:
     networks:
     - transcendence
     - internal
+    ports:
+      - "8080:80"
     volumes:
       - ./requirements/gateway/nginx/nginx.conf:/etc/nginx/nginx.conf
     restart: unless-stopped
     environment: {}
-    depends_on: {}
+    depends_on:
+      - auth_app
+      - live-chat_app
+
+
+######################################################################
+#************************** 📦 BACKEND *******************************
+######################################################################
 
   auth_app:
     container_name: auth_app
@@ -21,6 +35,8 @@ services:
       context: ./requirements/auth/app
     expose:
       - 3000
+    volumes:
+      - ./volumes/auth:/data
     networks:
       - internal
 
@@ -30,15 +46,83 @@ services:
       context: ./requirements/auth
     depends_on:
       - auth_app
-    ports:
-      - "8080:80"
     networks:
       - internal
       - transcendence
+
+  language-manager_app:
+    container_name: language-manager_app
+    build:
+      context: ./requirements/language-manager/app
+    expose:
+      - 3000
+    # volumes:
+    #   - sqlite_data:/data
+    networks:
+      - internal
+
+  language-manager_nginx:
+    container_name: language-manager_nginx
+    build:
+      context: ./requirements/language-manager
+    depends_on:
+      - language-manager_app
+    networks:
+      - internal
+      - transcendence
+
+  live-chat_app:
+    container_name: live-chat_app
+    build:
+      context: ./requirements/live-chat/app
+    expose:
+      - 3000
+    volumes:
+      - ./volumes/live-chat:/data
+    networks:
+      - internal
+
+  live-chat_nginx:
+    container_name: live-chat_nginx
+    build:
+      context: ./requirements/live-chat
+    depends_on:
+      - live-chat_app
+    networks:
+      - internal
+      - transcendence
+
+  remote-players_app:
+    container_name: remote-players_app
+    build:
+      context: ./requirements/remote-players/app
+    expose:
+      - 3000
+    networks:
+      - internal
+
+  remote-players_nginx:
+    container_name: remote-players_nginx
+    build:
+      context: ./requirements/remote-players
+    depends_on:
+      - remote-players_app
+    networks:
+      - internal
+      - transcendence
+
+######################################################################
+#*************************🚀 CORE SERVICES ***************************
+######################################################################
+
+
+
+######################################################################
+######################### 🌐​ NETWORKS & VOLUMES ######################
+######################################################################
 
 networks:
   internal:
     driver: bridge
   transcendence:
     driver: bridge
-
