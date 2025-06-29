@@ -15,6 +15,6 @@ COPY server.js .
 RUN npm init -y \
 	&& npm install fastify
 
-EXPOSE 3000
+EXPOSE 3001
 
 CMD ["node", "server.js"]

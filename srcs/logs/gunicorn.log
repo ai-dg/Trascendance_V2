@@ -1,0 +1,25 @@
+[35mDjango est en mode : DEV[0m
+[33mApplication des migrations...[0m
+ALLOWED_IP: 10.0.2.15
+No changes detected in app 'pong'
+ALLOWED_IP: 10.0.2.15
+No changes detected in app 'accounts'
+ALLOWED_IP: 10.0.2.15
+No changes detected in app 'livechat'
+ALLOWED_IP: 10.0.2.15
+No changes detected
+ALLOWED_IP: 10.0.2.15
+Operations to perform:
+  Apply all migrations: accounts, admin, auth, contenttypes, livechat, pong, sessions
+Running migrations:
+  No migrations to apply.
+ALLOWED_IP: 10.0.2.15
+processing locale en
+ALLOWED_IP: 10.0.2.15
+processing locale fr
+ALLOWED_IP: 10.0.2.15
+processing locale es
+[32mDémarrage en mode DEV avec Gunicorn...[0m
+ALLOWED_IP: 10.0.2.15
+ALLOWED_IP: 10.0.2.15
+ALLOWED_IP: 10.0.2.15

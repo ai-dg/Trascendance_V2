@@ -6,4 +6,17 @@ app.get('/', async () => {
 	return { status: 'ok', service: 'remote-players' };
 });
 
-app.listen({ port: 3000, host: '0.0.0.0' });
+const start = async () => {
+	try {
+		app.listen({ port: 3003, host: '0.0.0.0' });
+		console.log('Remote-player service running');
+	} catch (err) {
+		console.error(err);
+		process.exit(1);
+	}
+};
+
+start();
+
+
+

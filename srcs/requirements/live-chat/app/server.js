@@ -40,7 +40,7 @@ app.post('/live-chat', async (request, reply) => {
 const start = async () => {
 	try {
 		app.db = await setupDatabase();
-		await app.listen({ port: 3000, host: '0.0.0.0' });
+		await app.listen({ port: 3002, host: '0.0.0.0' });
 		console.log('live-chat service running');
 	} catch (err) {
 		console.error(err);

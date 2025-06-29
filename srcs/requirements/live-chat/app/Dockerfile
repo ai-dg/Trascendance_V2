@@ -16,6 +16,6 @@ RUN npm install --package-lock
 
 VOLUME ["/data"]
 
-EXPOSE 3000
+EXPOSE 3002
 
 CMD ["node", "server.js"]

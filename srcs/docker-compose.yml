@@ -30,6 +30,12 @@ services:
 #************************** 📦 BACKEND *******************************
 ######################################################################
 
+# AUTH_SERVICE : 3000
+# LANGUAGE_MANAGER_SERVICE : 3001
+# LIVE_CHAT_SERVICE : 3002
+# REMOTE_PLAYER_SERVICE : 3003
+
+
   auth_app:
     container_name: auth_app
     build:
@@ -41,76 +47,48 @@ services:
     networks:
       - internal
 
-  auth_nginx:
-    container_name: auth_nginx
-    build:
-      context: ./requirements/auth
-    depends_on:
-      - auth_app
-    networks:
-      - internal
-      - transcendence
-
   language-manager_app:
     container_name: language-manager_app
     build:
       context: ./requirements/language-manager/app
     expose:
-      - 3000
+      - 3001
     # volumes:
     #   - sqlite_data:/data
     networks:
       - internal
-
-  language-manager_nginx:
-    container_name: language-manager_nginx
-    build:
-      context: ./requirements/language-manager
-    depends_on:
-      - language-manager_app
-    networks:
-      - internal
-      - transcendence
 
   live-chat_app:
     container_name: live-chat_app
     build:
       context: ./requirements/live-chat/app
     expose:
-      - 3000
+      - 3002
     volumes:
       - ./volumes/live-chat:/data
     networks:
       - internal
-
-  live-chat_nginx:
-    container_name: live-chat_nginx
-    build:
-      context: ./requirements/live-chat
-    depends_on:
-      - live-chat_app
-    networks:
-      - internal
-      - transcendence
 
   remote-players_app:
     container_name: remote-players_app
     build:
       context: ./requirements/remote-players/app
     expose:
-      - 3000
+      - 3003
     networks:
       - internal
 
-  remote-players_nginx:
-    container_name: remote-players_nginx
+  match-maker_app:
+    container_name: match-maker_app
     build:
-      context: ./requirements/remote-players
-    depends_on:
-      - remote-players_app
+      context: ./requirements/match-maker/app
+    expose:
+      - 3004
+    # volumes:
+    #   - sqlite_data:/data
     networks:
       - internal
-      - transcendence
+
 
 ######################################################################
 #*************************🚀 CORE SERVICES ***************************
