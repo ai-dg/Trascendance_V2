@@ -34,7 +34,19 @@ services:
 # LANGUAGE_MANAGER_SERVICE : 3001
 # LIVE_CHAT_SERVICE : 3002
 # REMOTE_PLAYER_SERVICE : 3003
+# MATCH_MAKING : 3004
+# SERVER-RENDERING : 3003
 
+  server-rendering_app:
+    container_name: server-rendering_app
+    build:
+      context: ./requirements/server-rendering/app
+    expose:
+      - 3005
+    # volumes:
+    #   - sqlite_data:/data
+    networks:
+      - internal
 
   auth_app:
     container_name: auth_app
