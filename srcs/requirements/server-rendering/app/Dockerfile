@@ -13,7 +13,7 @@ COPY . .
 
 
 RUN npm init -y \
-	&& npm install fastify @fastify/view ejs
+	&& npm install fastify @fastify/view ejs @fastify/csrf-protection @fastify/env @fastify/jwt	@fastify/oauth2 @fastify/websocket
 EXPOSE 3005
 
 CMD ["node", "server.js"]
