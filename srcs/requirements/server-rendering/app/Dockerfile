@@ -9,6 +9,7 @@ RUN apt update && apt upgrade -y \
 
 WORKDIR /app
 
+COPY package*.json ./
 COPY . .
 
 

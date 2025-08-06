@@ -1,14 +1,23 @@
-import Fastify from 'fastify';
-import pointOfView from '@fastify/view'
-import ejs from 'ejs'
-import { join, resolve } from 'path';
+import fastify from 'fastify';
+import view from '@fastify/view';
+import ejs from 'ejs';
+import fastifyStatic from '@fastify/static';
+import { join, dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-const app = Fastify();
+const app = fastify();
 
-app.register(pointOfView, {
+app.register(fastifyStatic, {
+  root: join(__dirname, 'srcs/public'),
+  prefix: '/public/',
+});
+
+app.register(view, {
     engine: { ejs },
-    root: resolve( 'srcs', 'ejs-templates')
+    root: join(__dirname, 'srcs/views')
 
 })
 
