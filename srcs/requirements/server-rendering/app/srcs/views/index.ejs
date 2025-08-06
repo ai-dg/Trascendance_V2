@@ -7,8 +7,21 @@
         <!-- link to Tailwind CSS -->
          <link href="/public/css/tailwind.css" rel="stylesheet" />
     </head>
-    <body>
-        <h1 class="text-4xl font-bold text-blue-600 mt-8 mb-4">OIIIIIIIII</h1>
+    <body class="flex items-center justify-center min-h-screen bg-gray-100">
+        <div id="content" class="bg-gray-800 p-8 rounded-lg shadow-lg w-96 text-center">
+            <h1 id="title" class="text-2xl font-bold text-white mb-6">TRANSCENDENCE</h1>
+            <div class="flex flex-col space-y-4">
+                <button id="signinBtn" class="bg-transparent text-white border-none hover:underline"><%= text.singin %></button>
+                <button id="playAsGuestBtn" class="bg-transparent text-white border-none hover:underline"><%= text.playAsGuest %></button>
+                <button id="optionsBtn" class="bg-transparent text-white border-none hover:underline"><%= text.options %></button>
+                <button id="aboutBtn" class="bg-transparent text-white border-none hover:underline"><%= text.about %></button>
+            </div>
+
+        </div>
+        <main>
+
+        </main>
+        <script src="../public/scripts/script.js"></script>
     </body>
     <footer>
         
