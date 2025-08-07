@@ -17,6 +17,16 @@ up: build
 	docker compose -f $(COMPOSE) create
 	docker compose -f $(COMPOSE) up --remove-orphans
 
+watch:
+	( \
+		cd srcs/requirements/server-rendering/app && \
+		npm run watch:ts & \
+		npm run watch:css & \
+		wait \
+	)
+
+
+
 build:
 	docker compose -f $(COMPOSE) build
 

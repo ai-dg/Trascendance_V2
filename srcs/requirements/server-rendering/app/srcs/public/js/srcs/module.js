@@ -7,3 +7,6 @@
 export function sayHello(name) {
     return `hello ${name}`;
 }
+export function helloWorld() {
+    console.log("hello World !!!!");
+}

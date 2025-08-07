@@ -9,3 +9,7 @@
 export function sayHello(name:string):string{
 	return `hello ${name}`
 }
+
+export function helloWorld(){
+	console.log("hello World !!!!");
+}

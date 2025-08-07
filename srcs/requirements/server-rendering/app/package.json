@@ -10,8 +10,7 @@
     "watch:css": "postcss srcs/styles/tailwind.css -o srcs/public/css/tailwind.css --watch",
 	"watch:ts": "tsc --watch",
 	"nodemon": "nodemon --config nodemon.json",
-	"dev": "concurrently \"npm run watch:css\" \"npm run watch:ts\" \"npm run nodemon\""
-
+	"dev": "concurrently --raw --kill-others-on-fail -n css,ts,nodemon \"npm run watch:css\" \"npm run watch:ts\" \"npm run nodemon\""
   },
   "keywords": [],
   "author": "",
