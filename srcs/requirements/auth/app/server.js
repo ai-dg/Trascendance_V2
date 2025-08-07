@@ -1,8 +1,47 @@
+
+
 import Fastify from 'fastify';
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
+import 'dotenv/config';
+import cors from '@fastify/cors';
+import cookie from '@fastify/cookie';
+import { createClient } from 'redis';
+import { setupMessageQueues } from './srcs/services/message-broker.js';
+import { routes } from './srcs/routes/routes.js';
 
-const app = Fastify();
+
+/************************************************************************************************* */
+//										     AUTH SERVER                                           //
+/************************************************************************************************* */
+
+
+export const server = Fastify({trustProxy: true});
+const is_prod = process.env.NODE_ENV === "PROD"
+export const base_url = is_prod ? "www.transcendance.com" : "localhost"
+
+export const redis = createClient({
+	socket: {
+	host: process.env.REDIS_HOST,
+	port: process.env.REDIS_PORT
+	},
+	password: process.env.REDIS_PASSWORD
+});
+
+await redis.connect();
+
+
+await server.register(cors, {
+	origin: `https://${base_url}`,
+	credentials: true
+});
+
+
+await server.register(cookie, {
+	secret: process.env.COOKIE_SECRET,
+	parseOptions: {}
+});
+
 
 async function setupDatabase() {
 	const db = await open({
@@ -11,42 +50,50 @@ async function setupDatabase() {
 	})
 
 	await db.exec(`
-		CREATE TABLE IF NOT EXISTS auth (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		context TEXT NOT NULL,
+		CREATE TABLE IF NOT EXISTS users (
+		user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_mail TEXT NOT NULL UNIQUE,
+		pseudo TEXT NOT NULL UNIQUE,
+		user_password TEXT NOT NULL,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)
-	`);
-
+		);`);
+		// CREATE TABLE IF NOT EXISTS auth (
+		// id INTEGER PRIMARY KEY AUTOINCREMENT,
+		// context TEXT NOT NULL,
+		// created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		// )
 	return db;
 }
 
-app.get('/', async () => {
+
+server.addHook('onRequest', async (request, reply) => {
+	console.log(`[${new Date().toISOString()}] ${request.method} ${request.url}`);
+	// console.log('Origine :', request.headers.origin);
+});
+
+
+
+server.register(routes,{});
+
+
+server.get('/test-route', async () => {
 	return { status: 'ok', service: 'auth' };
 });
 
-app.get('/auth', async (request, reply) => {
-	const rows = await app.db.all('SELECT * FROM auth ORDER BY created_at DESC');
-	return rows;
-})
 
-app.post('/auth', async (request, reply) => {
-	console.log('Body: ', request.body);
-	const { context } = request.body;
-	await app.db.run('INSERT INTO auth (context) VALUES (?)', [context]);
-	return { ok: true };
-});
 
 const start = async () => {
 	try {
-		app.db = await setupDatabase();
-		await app.listen({ port: 3000, host: '0.0.0.0' });
-		console.log('Auth service running');
+		const port = 3000;
+		server.db = await setupDatabase();
+		await server.listen({ port: port, host: '0.0.0.0'});
+		await setupMessageQueues();
+		console.log(`Auth service running on port ${port}`);
 	} catch (err) {
 		console.error(err);
 		process.exit(1);
 	}
 };
 
-start();
+start()
 

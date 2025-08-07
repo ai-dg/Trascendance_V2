@@ -7,7 +7,11 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
     "build:css": "npx postcss srcs/styles/tailwind.css -o srcs/public/css/tailwind.css",
-    "watch:css": "postcss srcs/styles/tailwind.css -o srcs/public/css/tailwind.css --watch"
+    "watch:css": "postcss srcs/styles/tailwind.css -o srcs/public/css/tailwind.css --watch",
+	"watch:ts": "tsc --watch",
+	"nodemon": "nodemon --config nodemon.json",
+	"dev": "concurrently \"npm run watch:css\" \"npm run watch:ts\" \"npm run nodemon\""
+
   },
   "keywords": [],
   "author": "",

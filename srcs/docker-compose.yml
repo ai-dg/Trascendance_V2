@@ -52,12 +52,31 @@ services:
     container_name: auth_app
     build:
       context: ./requirements/auth/app
-    expose:
-      - 3000
+    ports:
+      - 3000:3000
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
+      - CSRF_SECRET=${CSRF_SECRET}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
     volumes:
-      - ./volumes/auth:/data
+      - /data/node_modules
+      # - sqlite_data:/data
+      # - ./volume/redis_data:/data
+      - ./requirements/auth/app:/data
     networks:
       - internal
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: on-failure
 
   language-manager_app:
     container_name: language-manager_app
@@ -105,6 +124,71 @@ services:
 ######################################################################
 #*************************🚀 CORE SERVICES ***************************
 ######################################################################
+
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: gt_mailpit
+    ports:
+      - "8025:8025"    # Interface web
+      - "1025:1025"    # SMTP
+    restart: unless-stopped
+    networks:
+      - internal
+
+  mail:
+    container_name: mail
+    build:
+      context: ./requirements/mail/app/
+    ports:
+      - 3300:3300
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - ./requirements/mail/app:/data
+      - /data/node_modules
+    networks:
+      - internal
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: on-failure
+
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbit
+    ports:
+      - "5672:5672"    # port principal AMQP (clients)
+      - "15672:15672"  # interface web management
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s 
+    networks:
+      - internal
+    restart: unless-stopped
+
+  redis:
+    container_name: redis
+    image: redis:7
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    ports:
+      - "6379:6379"    
+    networks:
+      - internal
+    volumes:
+      - ./volume/redis_data:/data
 
 
 

@@ -7,12 +7,13 @@ RUN apt update && apt upgrade -y \
 	&& apt clean \
 	&& rm -rf /var/lib/apt/lists/*
 
+
 VOLUME ["/data"]
 
 WORKDIR /data
 
 COPY package.json ./
-COPY package-lock.json ./
+COPY package-lock.json .
 
 RUN npm install -g nodemon
 
@@ -26,22 +27,17 @@ RUN npm install --package-lock \
 	bcryptjs \
 	jsonwebtoken \
 	@fastify/cookie \
-	@fastify/csrf-protection \
 	redis \
 	xss \
 	validator \
 	nodemailer \
 	@grpc/grpc-js \
 	@grpc/proto-loader \
-	amqplib \
-	sqlite3 \
-	sqlite
+	amqplib \ 
+	nodemon
 
 COPY . .
 
-EXPOSE 3000
+EXPOSE 3300
 
 CMD ["nodemon", "--config", "nodemon.json"]
-
-
-

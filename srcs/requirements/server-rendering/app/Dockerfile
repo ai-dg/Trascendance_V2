@@ -14,7 +14,9 @@ COPY . .
 
 
 RUN npm init -y \
-	&& npm install fastify @fastify/view ejs @fastify/csrf-protection @fastify/env @fastify/jwt	@fastify/oauth2 @fastify/websocket
+	&& npm install fastify @fastify/view ejs @fastify/csrf-protection @fastify/env @fastify/jwt	@fastify/oauth2 @fastify/websocket concurrently nodemon
 EXPOSE 3005
 
-CMD ["node", "server.js"]
+# CMD ["node", "server.js"]
+
+CMD [ "npm", "run", "dev" ]
