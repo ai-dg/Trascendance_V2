@@ -6,6 +6,13 @@
   "about": "INFOS??",
 
   "optionsMessage": "PARAMETRES ICI???",
+  "lang": "LANGUE: ",
   "language": "FRANCAIS",
-  "back": "RETURN"
+  "back": "RETURN",
+
+  "signinTitle": "POUR SE CONNECTER:",
+  "signIn": "CONNECT TOI ICI",
+  "login": "USERNAME", 
+  "passwd": "MOT DE PASSE",
+  "other": "OU CONNECT TOI AVEC:"
 }

@@ -1,8 +1,23 @@
 console.log("Script working properly");
 
 document.addEventListener("DOMContentLoaded", () => {
-  showHome();
+  loadLanguage(languages[currentLangIndex].code, 'home');
 });
+
+function showSignIN(text) {
+  const contentDiv = document.getElementById('content');
+  contentDiv.innerHTML = `
+    <h2 class="text-xl font-bold mb-6 text-white">${text.signinTitle}</h2>
+    <form class="flex flex-col space-y-4">
+      <input type="text" placeholder="${text.login}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
+      <input type="password" placeholder="${text.passwd}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
+      <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">${text.signin}</button>
+    </form>
+    <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
+  `;
+
+  document.getElementById("backBtn").addEventListener("click", () => showHome(text));
+}
 
 function showOptions(text) {
   const contentDiv = document.getElementById('content');
@@ -10,9 +25,10 @@ function showOptions(text) {
     <h2 class="text-xl font-bold mb-4 text-white">${text.options}</h2>
     <p class="text-white">${text.optionsMessage}</p>
     <div class="mt-6">
+      <p class="text-white">${text.lang}
       <button id="langToggleBtn" class="bg-transparent text-white border border-white px-4 py-2 rounded">
        ${text.language}
-      </button>
+      </button></p>
     </div>
     <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
   `;
@@ -34,7 +50,9 @@ function showHome(text) {
     </div>
   `;
 
+  document.getElementById("signinBtn").addEventListener("click", () => showSignIN(text));
   document.getElementById("optionsBtn").addEventListener("click", () => showOptions(text));
+  
 }
 
 const languages = [
@@ -46,7 +64,7 @@ const languages = [
 let currentLangIndex = 0;
 let currentTexts = null;
 
-async function loadLanguage(langCode) {
+async function loadLanguage(langCode, view = 'home') {
   try {
     const res = await fetch(`/api/translations?lang=${langCode}`);
     if (!res.ok) throw new Error('Failed to load translations');
@@ -55,8 +73,10 @@ async function loadLanguage(langCode) {
     currentTexts = data.text;
     currentLangIndex = languages.findIndex(l => l.code === langCode);
     if (currentLangIndex === -1) currentLangIndex = 0;
-
-    showHome(currentTexts);
+    if (view === 'options')
+      showOptions(currentTexts);
+    else
+      showHome(currentTexts);
   } catch (err) {
     console.error(err);
   }
@@ -65,7 +85,7 @@ async function loadLanguage(langCode) {
 function toggleLanguage() {
   currentLangIndex = (currentLangIndex + 1) % languages.length;
   const nextLang = languages[currentLangIndex].code;
-  loadLanguage(nextLang);
+  loadLanguage(nextLang, 'options');
 }
 
 loadLanguage(languages[currentLangIndex].code);

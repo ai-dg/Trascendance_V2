@@ -6,6 +6,13 @@
   "about": "SOBRE",
 
   "optionsMessage": "CONFIGS AQUI??",
+  "lang": "IDIOMA: ",
   "language": "PORTUGUES",
-  "back": "VOLTAR"
+  "back": "VOLTAR",
+
+  "signinTitle": "PARA SE CONECTAR",
+  "signIn": "CONECTE-SE AQUI",
+  "login": "NOME DE USUARIO", 
+  "passwd": "SENHA",
+  "other": "OU CONECTE-SE COM:"
 }
