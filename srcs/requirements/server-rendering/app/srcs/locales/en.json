@@ -14,5 +14,10 @@
   "signIn": "CONNECT HERE",
   "login": "USERNAME", 
   "passwd": "PASSWORD",
-  "other": "OR CONNECT WITH"
+  "other": "OR CONNECT WITH",
+
+  "guestTitle": "PLAY AS GUEST",
+  "nickname": "NICKNAME",
+  "chooseAvatar": "CHOOSE YOUR AVATAR",
+  "play": "PLAY"
 }

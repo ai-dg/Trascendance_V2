@@ -13,8 +13,54 @@ function showSignIN(text) {
       <input type="password" placeholder="${text.passwd}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
       <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">${text.signin}</button>
     </form>
+    <br>
+    <h3 class="text-xl font-bold mb-6 text-white">${text.other}</h3>
+    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">GOOGLE SIGN IN</button>
+    <br><br>
+    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">42AUTH</button>
+    <br>
     <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
   `;
+
+  document.getElementById("backBtn").addEventListener("click", () => showHome(text));
+}
+
+function showGuestPlay(text) {
+  const contentDiv = document.getElementById('content');
+  contentDiv.innerHTML = `
+    <h2 class="text-xl font-bold mb-6 text-white">${text.guestTitle}</h2>
+    <form class="flex flex-col space-y-4">
+      <input type="text" placeholder="${text.nickname}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none" required>
+
+      <label class="text-white text-left">${text.chooseAvatar}</label>
+      <div class="flex justify-center space-x-4 pt-2">
+        <img src="/public/avatars/avatar1.png" alt="Avatar 1"
+         class="w-20 h-20 rounded-full object-cover cursor-pointer border-2 border-transparent hover:border-blue-400 avatar-option">
+        <img src="/public/avatars/avatar2.png" alt="Avatar 2"
+         class="w-20 h-20 rounded-full object-cover cursor-pointer border-2 border-transparent hover:border-blue-400 avatar-option">
+        <img src="/public/avatars/avatar3.png" alt="Avatar 3"
+          class="w-20 h-20 rounded-full object-cover cursor-pointer border-2 border-transparent hover:border-blue-400 avatar-option">
+      </div>
+
+      <button type="submit" class="bg-green-500 hover:bg-green-600 text-white py-2 rounded">${text.play}</button>
+    </form>
+    <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
+  `;
+
+  let selectedAvatar = null;
+
+  document.querySelectorAll('.avatar-option').forEach(img => {
+    img.addEventListener('click', () => {
+      document.querySelectorAll('.avatar-option').forEach(i => i.classList.remove('border-blue-500'));
+      img.classList.add('border-blue-400');
+      selectedAvatar = img.getAttribute('src');
+    });
+  });
+
+  document.querySelector("form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const nickname = e.target.querySelector('input[type="text"]').value;
+  });
 
   document.getElementById("backBtn").addEventListener("click", () => showHome(text));
 }
@@ -51,6 +97,7 @@ function showHome(text) {
   `;
 
   document.getElementById("signinBtn").addEventListener("click", () => showSignIN(text));
+  document.getElementById("playAsGuestBtn").addEventListener("click", () => showGuestPlay(text));
   document.getElementById("optionsBtn").addEventListener("click", () => showOptions(text));
   
 }

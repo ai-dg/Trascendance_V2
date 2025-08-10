@@ -14,5 +14,10 @@
   "signIn": "CONNECT TOI ICI",
   "login": "USERNAME", 
   "passwd": "MOT DE PASSE",
-  "other": "OU CONNECT TOI AVEC:"
+  "other": "OU CONNECT TOI AVEC:",
+
+  "guestTitle": "JOUE COMME INVITE",
+  "nickname": "SURNOM",
+  "chooseAvatar": "CHOISIS UN AVATAR",
+  "play": "JOUER"
 }

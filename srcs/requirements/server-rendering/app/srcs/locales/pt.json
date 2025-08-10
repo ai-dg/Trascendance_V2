@@ -14,5 +14,10 @@
   "signIn": "CONECTE-SE AQUI",
   "login": "NOME DE USUARIO", 
   "passwd": "SENHA",
-  "other": "OU CONECTE-SE COM:"
+  "other": "OU CONECTE-SE COM:",
+
+  "guestTitle": "JOGAR COMO CONVIDADO",
+  "nickname": "APELIDO",
+  "chooseAvatar": "ESCOLHA UM AVATAR",
+  "play": "JOGAR"
 }
