@@ -109,6 +109,8 @@ function showSignUp(text) {
             return;
         }
         errorDiv.innerHTML = '';
+        // To remove after auth working
+        showVerificationCode(text);
     });
     // back button
     const backBtn = document.getElementById("backBtn");

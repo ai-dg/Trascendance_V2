@@ -130,6 +130,9 @@ function showSignUp(text: Translations) {
 
     errorDiv.innerHTML = '';
 
+    // To remove after auth working
+    showVerificationCode(text);
+
   });
 
   // back button
