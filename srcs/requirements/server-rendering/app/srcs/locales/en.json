@@ -35,5 +35,10 @@
   "errLower": "Password must contain at least one lowercase letter.",
   "errNbr": "Password must contain at least one number.",
   "errMatch": "Passwords do not match.",
-  "errEmail": "Please enter a valid email address."
+  "errEmail": "Please enter a valid email address.",
+
+  "verifyTitle": "Email verification",
+  "verifyInstruction": "Enter the 6-digit code sent to your email.",
+  "verify": "Verify"
+
 }

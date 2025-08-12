@@ -35,5 +35,9 @@
   "errLower": "A senha deve conter pelo menos uma letra minúscula.",
   "errNbr": "A senha deve conter pelo menos um número.",
   "errMatch": "As senhas não coincidem.",
-  "errEmail": "Por favor, insira um endereço de e-mail válido."
+  "errEmail": "Por favor, insira um endereço de e-mail válido.",
+
+  "verifyTitle": "Verificação de e-mail",
+  "verifyInstruction": "Digite o código de 6 dígitos enviado para o seu e-mail.",
+  "verify": "Verificar"
 }

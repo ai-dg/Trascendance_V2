@@ -32,7 +32,7 @@ function showSignUp(text: Translations) {
       <div id="formErrors" class="text-red-500 text-sm italic mt-2"></div>
       </form>
     <br>
-    <h3 class="text-xl font-bold mb-6 text-white">${text.other}</h3>
+    <h3 class="text-xl font-bold mb-6 text-white">${text.otherUp}</h3>
     <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">GOOGLE SIGN IN</button>
     <br><br>
     <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">42AUTH</button>
@@ -139,6 +139,54 @@ function showSignUp(text: Translations) {
   backBtn.addEventListener("click", () => showHome(text));
 }
 
+// show verification code for 2FA
+function showVerificationCode(text: Translations) {
+  const contentDiv = document.getElementById('content') as HTMLDivElement;
+  if (!contentDiv) {
+    console.error("Failed to find content element");
+    return;
+  }
+
+  contentDiv.innerHTML = `
+    <h2 class="text-xl font-bold mb-4 text-white">${text.verifyTitle}</h2>
+    <p class="text-white mb-4">${text.verifyInstruction}</p>
+    <div id="codeContainer" class="flex justify-center space-x-2">
+      ${Array.from({ length: 6 })
+        .map((_, i) => `<input id="code-${i}" type="text" maxlength="1" class="w-10 h-10 text-center rounded bg-gray-700 text-white focus:outline-none" />`)
+        .join('')}
+    </div>
+    <button id="verifyBtn" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">${text.verify}</button>
+    <br>
+    <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
+  `;
+
+  const inputs = document.querySelectorAll<HTMLInputElement>('#codeContainer input');
+  if (!inputs)
+    console.error("Failed to find inputs element");
+  inputs.forEach((input, idx) => {
+    input.addEventListener('input', () => {
+      input.value = input.value.replace(/\D/g, '');
+      if (input.value.length === 1 && idx < inputs.length - 1) {
+        inputs[idx + 1].focus();
+      }
+    });
+  });
+
+  // verify button
+  const verifyBtn = document.getElementById('verifyBtn') as HTMLButtonElement;
+  if (!verifyBtn)
+    console.error("Failed to find verifyBtn element");
+  verifyBtn.addEventListener('click', () => {
+    const code = Array.from(inputs).map(i => i.value).join('');
+  });
+
+  // back button
+  const backBtn = document.getElementById("backBtn") as HTMLButtonElement;
+  if (!backBtn)
+    console.error("Failed to find backBtn element");
+  backBtn.addEventListener("click", () => showSignIn(text));
+}
+
 function showSignIn(text: Translations) {
   console.log(">> showSignIn() called");  // to remove
   const contentDiv = document.getElementById('content') as HTMLDivElement;
@@ -196,6 +244,9 @@ function showSignIn(text: Translations) {
     if (!passwdInput)
       console.error("Failed to find input element");
     const passwd = passwdInput.value;
+
+    // To remove after auth working
+    showVerificationCode(text);
   });
 
   // forgot password button
@@ -229,7 +280,7 @@ function showForgotPasswd(text: Translations) {
   const backBtn = document.getElementById("backBtn") as HTMLButtonElement;
   if (!backBtn)
     console.error("Failed to find backBtn element");
-  backBtn.addEventListener("click", () => showHome(text));
+  backBtn.addEventListener("click", () => showSignIn(text));
 }
 
 function showGuestPlay(text: Translations) {

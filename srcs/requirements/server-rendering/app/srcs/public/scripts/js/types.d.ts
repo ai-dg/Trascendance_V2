@@ -30,5 +30,8 @@ export interface Translations {
     errNbr: string;
     errMatch: string;
     errEmail: string;
+    verifyTitle: string;
+    verifyInstruction: string;
+    verify: string;
 }
 //# sourceMappingURL=types.d.ts.map
