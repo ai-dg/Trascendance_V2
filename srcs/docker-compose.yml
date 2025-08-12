@@ -47,6 +47,12 @@ services:
     #   - sqlite_data:/data
     networks:
       - internal
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: on-failure
 
   auth_app:
     container_name: auth_app
