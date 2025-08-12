@@ -1,6 +1,7 @@
 {
   "title": "TRANSCENDENCE",
   "signin": "SIGN IN",
+  "signup": "SIGN UP",
   "playAsGuest": "PLAY AS GUEST",
   "options": "OPTIONS",
   "about": "ABOUT",
@@ -15,9 +16,24 @@
   "login": "USERNAME", 
   "passwd": "PASSWORD",
   "other": "OR CONNECT WITH",
+  "forgotPasswd": "FORGOT YOUR PASSWORD?",
+  "resetPasswd": "RESET PASSWORD",
+
+  "signupTitle": "TO SIGN UP",
+  "signupBtn": "SIGN UP",
+  "email": "EMAIL",
+  "passwdConfirm": "CONFIRM YOUR PASSWORD",
+  "otherUp": "OR SIGN UP WITH:",
 
   "guestTitle": "PLAY AS GUEST",
   "nickname": "NICKNAME",
   "chooseAvatar": "CHOOSE YOUR AVATAR",
-  "play": "PLAY"
+  "play": "PLAY",
+
+  "errLength": "Password must be at least 8 characters long.",
+  "errUpper": "Password must contain at least one uppercase letter.",
+  "errLower": "Password must contain at least one lowercase letter.",
+  "errNbr": "Password must contain at least one number.",
+  "errMatch": "Passwords do not match.",
+  "errEmail": "Please enter a valid email address."
 }

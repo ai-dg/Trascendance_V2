@@ -3,12 +3,21 @@ export interface Translations {
   login: string;
   passwd: string;
   signin: string;
+  forgotPasswd: string;
 
   guestTitle: string;
   nickname: string;
   chooseAvatar: string;
   play: string;
   back: string;
+
+  signupTitle: string;
+  signup: string;
+  signupBtn: string;
+  email: string;
+  otherUp: string;
+  passwdConfirm: string;
+  resetPasswd: string;
 
   options: string;
   optionsMessage: string;
@@ -19,4 +28,11 @@ export interface Translations {
   about: string;
   title: string;
   other: string;
+
+  errLength: string;
+  errUpper: string;
+  errLower: string;
+  errNbr: string;
+  errMatch: string;
+  errEmail: string;
 }

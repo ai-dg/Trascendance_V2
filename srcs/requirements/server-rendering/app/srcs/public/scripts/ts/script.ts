@@ -1,21 +1,160 @@
 import type { Translations } from './types'
 
-console.log("Script working properly");
+console.log("Script working properly");  // to remove
 
 document.addEventListener("DOMContentLoaded", () => {
   loadLanguage(languages[currentLangIndex].code, 'home');
 });
 
+function showSignUp(text: Translations) {
+  console.log(">> showSignUp() called"); // to remove
+  const contentDiv = document.getElementById('content') as HTMLDivElement;
+  if (!contentDiv)
+    console.error("Failed to find content element");
+  contentDiv.innerHTML = `
+    <h2 class="text-xl font-bold mb-6 text-white">${text.signupTitle}</h2>
+    <form class="flex flex-col space-y-4">
+      <input id="login" type="text" required placeholder="${text.login}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
+      <input id="email" type="text" required placeholder="${text.email}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
+      <div class="relative">
+        <input id="passwd" type="password" required placeholder="${text.passwd}" class="px-4 py-2 pr-10 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none w-full">
+        <button type="button" id="togglePasswd" required class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-300 hover:text-white">
+          👁️
+        </button>
+      </div>
+      <div class="relative">
+        <input id="passwdConfirm" type="password" placeholder="${text.passwdConfirm}" class="px-4 py-2 pr-10 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none w-full">
+        <button type="button" id="togglePasswdConfirm" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-300 hover:text-white">
+          👁️
+        </button>
+      </div>
+      <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">${text.signupBtn}</button>
+      <div id="formErrors" class="text-red-500 text-sm italic mt-2"></div>
+      </form>
+    <br>
+    <h3 class="text-xl font-bold mb-6 text-white">${text.other}</h3>
+    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">GOOGLE SIGN IN</button>
+    <br><br>
+    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">42AUTH</button>
+    <br>
+    <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
+  `;
+
+  // show password button
+  const togglePasswdBtn = document.getElementById('togglePasswd') as HTMLButtonElement;
+  if (!togglePasswdBtn)
+    console.error("Failed to find togglePasswdBtn element");
+
+  const passwdInput = document.getElementById('passwd') as HTMLInputElement;
+  if (!passwdInput)
+    console.error("Failed to find passwdInput element");
+
+  if (togglePasswdBtn && passwdInput) {
+    togglePasswdBtn.addEventListener("click", () => {
+      const isPassword = passwdInput.type === "password";
+      passwdInput.type = isPassword ? "text" : "password";
+    });
+  }
+
+  const togglePasswdConfirmBtn = document.getElementById('togglePasswdConfirm') as HTMLButtonElement;
+  if (!togglePasswdConfirmBtn)
+    console.error("Failed to find togglePasswdConfirmBtn element");
+
+  const passwdConfirmInput = document.getElementById('passwdConfirm') as HTMLInputElement;
+  if (!passwdConfirmInput)
+    console.error("Failed to find passwdConfirmInput element");
+
+  if (togglePasswdConfirmBtn && passwdConfirmInput) {
+    togglePasswdConfirmBtn.addEventListener("click", () => {
+      const isPassword = passwdConfirmInput.type === "password";
+      passwdConfirmInput.type = isPassword ? "text" : "password";
+    });
+  }
+
+  // sign up form
+  const form = document.querySelector("form") as HTMLFormElement;
+  if (!form)
+    console.error("Failed to find form element");
+  form.addEventListener("submit", (e: Event) => {
+    e.preventDefault();
+
+    const errorDiv = document.getElementById('formErrors') as HTMLDivElement;
+    if (!errorDiv)
+      console.error("Failed to find errorDiv element");
+
+    const loginInput = form.querySelector('input[id="login"]') as HTMLInputElement;
+    if (!loginInput)
+      console.error("Failed to find input element");
+    const login = loginInput.value.trim();
+
+    const emailInput = form.querySelector('input[id="email"]') as HTMLInputElement;
+    if (!emailInput)
+      console.error("Failed to find input element");
+    const email = emailInput.value.trim();
+
+    const passwdInput = form.querySelector('input[id="passwd"]') as HTMLInputElement;
+    if (!passwdInput)
+      console.error("Failed to find input element");
+    const passwd = passwdInput.value.trim();
+
+    const passwdConfirmInput = form.querySelector('input[id="passwdConfirm"]') as HTMLInputElement;
+    if (!passwdConfirmInput)
+      console.error("Failed to find input element");
+    const passwdConfirm = passwdConfirmInput.value.trim();
+    
+    const errors: string[] = [];
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.push(text.errEmail);
+    }
+
+    if (passwd.length < 8) {
+      errors.push(text.errLength);
+    }
+    if (!/[A-Z]/.test(passwd)) {
+      errors.push(text.errUpper);
+    }
+    if (!/[a-z]/.test(passwd)) {
+      errors.push(text.errLower);
+    }
+    if (!/[0-9]/.test(passwd)) {
+      errors.push(text.errNbr);
+    }
+    if (passwdConfirm !== undefined && passwd !== passwdConfirm) {
+      errors.push(text.errMatch);
+    }
+    if (errors.length > 0) {
+      errorDiv.innerHTML = errors.map(err => `<p>- ${err}</p>`).join('');
+      return;
+    }
+
+    errorDiv.innerHTML = '';
+
+  });
+
+  // back button
+  const backBtn = document.getElementById("backBtn") as HTMLButtonElement;
+  if (!backBtn)
+    console.error("Failed to find backBtn element");
+  backBtn.addEventListener("click", () => showHome(text));
+}
+
 function showSignIn(text: Translations) {
-  console.log(">> showSignIn() called");
+  console.log(">> showSignIn() called");  // to remove
   const contentDiv = document.getElementById('content') as HTMLDivElement;
   if (!contentDiv)
     console.error("Failed to find content element");
   contentDiv.innerHTML = `
     <h2 class="text-xl font-bold mb-6 text-white">${text.signinTitle}</h2>
     <form class="flex flex-col space-y-4">
-      <input type="text" placeholder="${text.login}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
-      <input type="password" placeholder="${text.passwd}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
+      <input type="text" required placeholder="${text.login}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
+      <div class="relative">
+        <input type="password" required placeholder="${text.passwd}" class="px-4 py-2 pr-10 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none w-full">
+        <button type="button" id="togglePasswd" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-300 hover:text-white">
+          👁️
+        </button>
+      </div>
+      <button id="forgotPasswd" type="submit" class="text-sm italic bg-transparent text-red-600 border-none hover:underline">${text.forgotPasswd}</button>
       <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">${text.signin}</button>
     </form>
     <br>
@@ -27,6 +166,65 @@ function showSignIn(text: Translations) {
     <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
   `;
 
+  // show password button
+  const togglePasswdBtn = document.getElementById('togglePasswd') as HTMLButtonElement;
+  if (!togglePasswdBtn)
+    console.error("Failed to find togglePasswdBtn element");
+
+  const passwdInput = document.querySelector('input[type="password"]') as HTMLInputElement;
+  if (!passwdInput)
+    console.error("Failed to find passwdInput element");
+
+  if (togglePasswdBtn && passwdInput) {
+    togglePasswdBtn.addEventListener("click", () => {
+      const isPassword = passwdInput.type === "password";
+      passwdInput.type = isPassword ? "text" : "password";
+    });
+  }
+
+  // login form
+  const form = document.querySelector("form") as HTMLFormElement;
+  if (!form)
+    console.error("Failed to find form element");
+  form.addEventListener("submit", (e: Event) => {
+    e.preventDefault();
+    const loginInput = form.querySelector('input[type="text"]') as HTMLInputElement;
+    if (!loginInput)
+      console.error("Failed to find input element");
+    const login = loginInput.value;
+    const passwdInput = form.querySelector('input[type="password"]') as HTMLInputElement;
+    if (!passwdInput)
+      console.error("Failed to find input element");
+    const passwd = passwdInput.value;
+  });
+
+  // forgot password button
+  const forgotPasswd = document.getElementById("forgotPasswd") as HTMLButtonElement;
+  if (!forgotPasswd)
+    console.error("Failed to find forgotPasswd element");
+  forgotPasswd.addEventListener("click", () => showForgotPasswd(text));
+
+  // back button
+  const backBtn = document.getElementById("backBtn") as HTMLButtonElement;
+  if (!backBtn)
+    console.error("Failed to find backBtn element");
+  backBtn.addEventListener("click", () => showHome(text));
+}
+
+function showForgotPasswd(text: Translations) {
+  console.log(">> showForgotPasswd() called");  // to remove
+  const contentDiv = document.getElementById('content') as HTMLDivElement;
+  if (!contentDiv)
+    console.error("Failed to find content element");
+  contentDiv.innerHTML = `
+    <h2 class="text-xl font-bold mb-6 text-white">${text.forgotPasswd}</h2>
+    <form class="flex flex-col space-y-4">
+      <input type="text" placeholder="${text.email}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
+      <button type="forgotPasswd" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">${text.resetPasswd}</button>
+      <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
+      </form>
+  `;
+
   // back button
   const backBtn = document.getElementById("backBtn") as HTMLButtonElement;
   if (!backBtn)
@@ -35,7 +233,7 @@ function showSignIn(text: Translations) {
 }
 
 function showGuestPlay(text: Translations) {
-  console.log(">> showGuestPlay() called");
+  console.log(">> showGuestPlay() called");  // to remove
   const contentDiv = document.getElementById('content') as HTMLDivElement;
   if (!contentDiv)
     console.error("Failed to find content element");
@@ -90,7 +288,7 @@ function showGuestPlay(text: Translations) {
 }
 
 function showOptions(text: Translations) {
-  console.log(">> showOptions() called");
+  console.log(">> showOptions() called");  // to remove
   const contentDiv = document.getElementById('content') as HTMLDivElement;
   if (!contentDiv)
     console.error("Failed to find content element");
@@ -126,12 +324,19 @@ function showHome(text: Translations) {
   contentDiv.innerHTML = `
     <h1 id="title" class="text-2xl font-bold text-white mb-6">${text.title}</h1>
     <div class="flex flex-col space-y-4" id="buttonsContainer">
+      <button id="signupBtn" class="bg-transparent text-red-600 border-none hover:underline">${text.signup}</button>
       <button id="signinBtn" class="bg-transparent text-white border-none hover:underline">${text.signin}</button>
       <button id="playAsGuestBtn" class="bg-transparent text-white border-none hover:underline">${text.playAsGuest}</button>
       <button id="optionsBtn" class="bg-transparent text-white border-none hover:underline">${text.options}</button>
       <button id="aboutBtn" class="bg-transparent text-white border-none hover:underline">${text.about}</button>
     </div>
   `;
+
+  // sign up button
+  const signupBtn = document.getElementById("signupBtn") as HTMLButtonElement;
+  if (!signupBtn)
+    console.error("Failed to find signupBtn element");
+  signupBtn.addEventListener("click", () => showSignUp(text));
 
   // sign in button
   const signinBtn = document.getElementById("signinBtn") as HTMLButtonElement;
