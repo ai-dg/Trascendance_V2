@@ -1,0 +1,23 @@
+{
+  "title": "TRANSCENDENCE",
+  "signin": "CONECTAR",
+  "playAsGuest": "JOGAR COMO CONVIDADO",
+  "options": "CONFIGURACOES",
+  "about": "SOBRE",
+
+  "optionsMessage": "CONFIGS AQUI??",
+  "lang": "IDIOMA: ",
+  "language": "PORTUGUES",
+  "back": "VOLTAR",
+
+  "signinTitle": "PARA SE CONECTAR",
+  "signIn": "CONECTE-SE AQUI",
+  "login": "NOME DE USUARIO", 
+  "passwd": "SENHA",
+  "other": "OU CONECTE-SE COM:",
+
+  "guestTitle": "JOGAR COMO CONVIDADO",
+  "nickname": "APELIDO",
+  "chooseAvatar": "ESCOLHA UM AVATAR",
+  "play": "JOGAR"
+}

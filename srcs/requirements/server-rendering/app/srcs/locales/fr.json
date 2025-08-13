@@ -1,0 +1,23 @@
+{
+  "title": "TRANSCENDENCE",
+  "signin": "CONNECT TOI",
+  "playAsGuest": "JOUER COMME INVITE",
+  "options": "PARAMETRES",
+  "about": "INFOS??",
+
+  "optionsMessage": "PARAMETRES ICI???",
+  "lang": "LANGUE: ",
+  "language": "FRANCAIS",
+  "back": "RETURN",
+
+  "signinTitle": "POUR SE CONNECTER:",
+  "signIn": "CONNECT TOI ICI",
+  "login": "USERNAME", 
+  "passwd": "MOT DE PASSE",
+  "other": "OU CONNECT TOI AVEC:",
+
+  "guestTitle": "JOUE COMME INVITE",
+  "nickname": "SURNOM",
+  "chooseAvatar": "CHOISIS UN AVATAR",
+  "play": "JOUER"
+}

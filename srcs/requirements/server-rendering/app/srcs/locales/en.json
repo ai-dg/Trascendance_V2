@@ -1,0 +1,23 @@
+{
+  "title": "TRANSCENDENCE",
+  "signin": "SIGN IN",
+  "playAsGuest": "PLAY AS GUEST",
+  "options": "OPTIONS",
+  "about": "ABOUT",
+
+  "optionsMessage": "OPTIONS HERE??",
+  "lang": "LANGUAGE: ",
+  "language": "ENGLISH",
+  "back": "RETURN",
+
+  "signinTitle": "TO SIGN IN:",
+  "signIn": "CONNECT HERE",
+  "login": "USERNAME", 
+  "passwd": "PASSWORD",
+  "other": "OR CONNECT WITH",
+
+  "guestTitle": "PLAY AS GUEST",
+  "nickname": "NICKNAME",
+  "chooseAvatar": "CHOOSE YOUR AVATAR",
+  "play": "PLAY"
+}
