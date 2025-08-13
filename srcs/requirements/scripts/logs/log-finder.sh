@@ -4,6 +4,7 @@ LOG_DIR=./srcs/logs
 PID_FILE="$LOG_DIR/pids.txt"
 
 rm -f "$PID_FILE"
+rm -rf ./srcs/logs/*
 
 SERVICES=(
   gateway
@@ -22,7 +23,7 @@ SERVICES=(
 
 for service in "${SERVICES[@]}"; do
   echo "⏳ Starting follower logs for : $service"
-  docker logs --follow "$service" > "$LOG_DIR/$service.log" 2>&1 &
+  docker logs --follow "$service" > "$LOG_DIR/$service.ansi" 2>&1 &
   echo $! >> "$PID_FILE"
 done
 
