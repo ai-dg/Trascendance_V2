@@ -1,0 +1,5 @@
+172.18.0.1 - - [13/Aug/2025:08:12:55 +0000] "GET / HTTP/1.1" 200 1400 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+172.18.0.1 - - [13/Aug/2025:08:12:55 +0000] "GET /public/css/tailwind.css HTTP/1.1" 200 13930 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+172.18.0.1 - - [13/Aug/2025:08:12:55 +0000] "GET /public/js/script.js HTTP/1.1" 200 18596 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+172.18.0.1 - - [13/Aug/2025:08:12:55 +0000] "GET /api/translations?lang=en HTTP/1.1" 200 440 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+172.18.0.1 - - [13/Aug/2025:08:12:55 +0000] "GET /favicon.ico HTTP/1.1" 404 83 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
