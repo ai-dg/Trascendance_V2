@@ -131,7 +131,8 @@ function showSignUp(text: Translations) {
     errorDiv.innerHTML = '';
 
     // To remove after auth working
-    showVerificationCode(text);
+    const view = 'signup';
+    showVerificationCode(text, view);
 
   });
 
@@ -143,7 +144,7 @@ function showSignUp(text: Translations) {
 }
 
 // show verification code for 2FA
-function showVerificationCode(text: Translations) {
+function showVerificationCode(text: Translations, view: string) {
   const contentDiv = document.getElementById('content') as HTMLDivElement;
   if (!contentDiv) {
     console.error("Failed to find content element");
@@ -187,7 +188,10 @@ function showVerificationCode(text: Translations) {
   const backBtn = document.getElementById("backBtn") as HTMLButtonElement;
   if (!backBtn)
     console.error("Failed to find backBtn element");
-  backBtn.addEventListener("click", () => showSignIn(text));
+  if (view === 'signin')
+    backBtn.addEventListener("click", () => showSignIn(text));
+  else if (view === 'signup')
+    backBtn.addEventListener("click", () => showSignUp(text));
 }
 
 function showSignIn(text: Translations) {
@@ -249,7 +253,8 @@ function showSignIn(text: Translations) {
     const passwd = passwdInput.value;
 
     // To remove after auth working
-    showVerificationCode(text);
+    const view = 'signin';
+    showVerificationCode(text, view);
   });
 
   // forgot password button

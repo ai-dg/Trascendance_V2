@@ -1,5 +1,6 @@
 {
   "title": "TRANSCENDENCE",
+  "signup": "CREE TON COMPTE",
   "signin": "CONNECT TOI",
   "playAsGuest": "JOUER COMME INVITE",
   "options": "PARAMETRES",
@@ -14,10 +15,29 @@
   "signIn": "CONNECT TOI ICI",
   "login": "USERNAME", 
   "passwd": "MOT DE PASSE",
-  "other": "OU CONNECT TOI AVEC:",
+  "other": "OU CONNECT TOI AVEC :",
+  "forgotPasswd": "MOT DE PASSE OUBLIE ?",
+  "resetPasswd": "RESET MOT DE PASSE",
+
+  "signupTitle": "CREER UN COMPTE",
+  "signupBtn": "CREER",
+  "email": "EMAIL",
+  "passwdConfirm": "VERIFIE TON MOT DE PASSE",
+  "otherUp": "OU CREE TON COMPTE AVEC",
 
   "guestTitle": "JOUE COMME INVITE",
   "nickname": "SURNOM",
   "chooseAvatar": "CHOISIS UN AVATAR",
-  "play": "JOUER"
+  "play": "JOUER",
+
+  "errLength": "Le mot de passe doit contenir au moins 8 caractères.",
+  "errUpper": "Le mot de passe doit contenir au moins une lettre majuscule.",
+  "errLower": "Le mot de passe doit contenir au moins une lettre minuscule.",
+  "errNbr": "Le mot de passe doit contenir au moins un chiffre.",
+  "errMatch": "Les mots de passe ne correspondent pas.",
+  "errEmail": "Veuillez saisir une adresse e-mail valide.",
+
+  "verifyTitle": "Vérification de l'e-mail",
+  "verifyInstruction": "Entrez le code à 6 chiffres envoyé à votre adresse e-mail.",
+  "verify": "Vérifier"
 }

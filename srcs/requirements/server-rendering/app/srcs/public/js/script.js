@@ -110,7 +110,8 @@ function showSignUp(text) {
         }
         errorDiv.innerHTML = '';
         // To remove after auth working
-        showVerificationCode(text);
+        const view = 'signup';
+        showVerificationCode(text, view);
     });
     // back button
     const backBtn = document.getElementById("backBtn");
@@ -119,7 +120,7 @@ function showSignUp(text) {
     backBtn.addEventListener("click", () => showHome(text));
 }
 // show verification code for 2FA
-function showVerificationCode(text) {
+function showVerificationCode(text, view) {
     const contentDiv = document.getElementById('content');
     if (!contentDiv) {
         console.error("Failed to find content element");
@@ -159,7 +160,10 @@ function showVerificationCode(text) {
     const backBtn = document.getElementById("backBtn");
     if (!backBtn)
         console.error("Failed to find backBtn element");
-    backBtn.addEventListener("click", () => showSignIn(text));
+    if (view === 'signin')
+        backBtn.addEventListener("click", () => showSignIn(text));
+    else if (view === 'signup')
+        backBtn.addEventListener("click", () => showSignUp(text));
 }
 function showSignIn(text) {
     console.log(">> showSignIn() called"); // to remove
@@ -215,7 +219,8 @@ function showSignIn(text) {
             console.error("Failed to find input element");
         const passwd = passwdInput.value;
         // To remove after auth working
-        showVerificationCode(text);
+        const view = 'signin';
+        showVerificationCode(text, view);
     });
     // forgot password button
     const forgotPasswd = document.getElementById("forgotPasswd");
