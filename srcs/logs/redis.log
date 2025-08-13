@@ -1,12 +1,12 @@
-1:C 22 Jun 2025 05:36:35.203 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
-1:C 22 Jun 2025 05:36:35.204 # Redis version=6.0.16, bits=64, commit=00000000, modified=0, pid=1, just started
-1:C 22 Jun 2025 05:36:35.204 # Configuration loaded
-1:M 22 Jun 2025 05:36:35.233 * Running mode=standalone, port=6379.
-1:M 22 Jun 2025 05:36:35.233 # Server initialized
-1:M 22 Jun 2025 05:36:35.233 # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
-1:M 22 Jun 2025 05:36:35.233 # WARNING you have Transparent Huge Pages (THP) support enabled in your kernel. This will create latency and memory usage issues with Redis. To fix this issue run the command 'echo madvise > /sys/kernel/mm/transparent_hugepage/enabled' as root, and add it to your /etc/rc.local in order to retain the setting after a reboot. Redis must be restarted after THP is disabled (set to 'madvise' or 'never').
-1:M 22 Jun 2025 05:36:35.244 * Ready to accept connections
-1:signal-handler (1750572174) Received SIGTERM scheduling shutdown...
-1:M 22 Jun 2025 06:02:54.373 # User requested shutdown...
-1:M 22 Jun 2025 06:02:54.373 * Calling fsync() on the AOF file.
-1:M 22 Jun 2025 06:02:54.374 # Redis is now ready to exit, bye bye...
+1:C 13 Aug 2025 08:12:27.645 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+1:C 13 Aug 2025 08:12:27.645 * Redis version=7.4.5, bits=64, commit=00000000, modified=0, pid=1, just started
+1:C 13 Aug 2025 08:12:27.645 * Configuration loaded
+1:M 13 Aug 2025 08:12:27.645 * monotonic clock: POSIX clock_gettime
+1:M 13 Aug 2025 08:12:27.645 * Running mode=standalone, port=6379.
+1:M 13 Aug 2025 08:12:27.646 * Server initialized
+1:M 13 Aug 2025 08:12:27.646 * Loading RDB produced by version 7.4.5
+1:M 13 Aug 2025 08:12:27.646 * RDB age 60 seconds
+1:M 13 Aug 2025 08:12:27.646 * RDB memory usage when created 0.95 Mb
+1:M 13 Aug 2025 08:12:27.646 * Done loading RDB, keys loaded: 0, keys expired: 0.
+1:M 13 Aug 2025 08:12:27.646 * DB loaded from disk: 0.000 seconds
+1:M 13 Aug 2025 08:12:27.646 * Ready to accept connections tcp
