@@ -44,25 +44,31 @@ await server.register(cookie, {
 
 
 async function setupDatabase() {
-	const db = await open({
-		filename: '/data/auth.sqlite',
-		driver: sqlite3.Database
-	})
-
-	await db.exec(`
-		CREATE TABLE IF NOT EXISTS users (
-		user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_mail TEXT NOT NULL UNIQUE,
-		pseudo TEXT NOT NULL UNIQUE,
-		user_password TEXT NOT NULL,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		);`);
-		// CREATE TABLE IF NOT EXISTS auth (
-		// id INTEGER PRIMARY KEY AUTOINCREMENT,
-		// context TEXT NOT NULL,
-		// created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		// )
-	return db;
+	try{
+		const db = await open({
+			filename: '/data/auth.sqlite',
+			driver: sqlite3.Database
+		})
+	
+		await db.exec(`
+			CREATE TABLE IF NOT EXISTS users (
+			user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_mail TEXT NOT NULL UNIQUE,
+			pseudo TEXT NOT NULL UNIQUE,
+			user_password TEXT NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+			);`);
+			// CREATE TABLE IF NOT EXISTS auth (
+			// id INTEGER PRIMARY KEY AUTOINCREMENT,
+			// context TEXT NOT NULL,
+			// created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+			// )
+		return db;
+	}
+	catch(err){
+		console.log("fail opening db");
+		return null;
+	}
 }
 
 

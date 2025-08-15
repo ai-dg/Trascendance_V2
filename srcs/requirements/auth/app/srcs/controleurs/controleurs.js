@@ -23,9 +23,9 @@ import { mail_queue } from '../services/message-broker.js';
 
 export async function login_route(request, reply){
 	
-		const [rows] = await server.db.query(`SELECT * FROM users WHERE user_mail= ?`, [request.body.email])
+		const rows = await server.db.get(`SELECT * FROM users WHERE user_mail= ?`, [request.body.email])
 		 
-		if (rows.length === 0)
+		if (!rows)
 			return reply.send(get_error_message(e.AUTH_INVALID_CREDENTIALS, 401));
 		const user = rows[0];
 	
@@ -50,7 +50,7 @@ export async function login_route(request, reply){
 			}
 			await redis.set(id, JSON.stringify(validate), { EX: 300 });
 			const mailOptions = {
-			from: '"GT Trainer" <no-reply@gt-trainer.com>',
+			from: '"Transcendance 42" <no-reply@transcendance.42.com>',
 			to: `${email}`,
 			subject: "Tentative de connexion",  
 			text: `Votre code de connexion est : ${otp}`,
@@ -236,13 +236,12 @@ export async function signup_route(request, reply)
 		pseudo = xss(pseudo);
 		if (!email.match(is_mail))
 			return reply.send({success: false, message:"Oops ! Seems your email is not valid" }, 400)	
-		const [m] = await server.db.query(`SELECT * FROM users WHERE user_mail= ?` , [email])
-		console.log(m)
-		if (m.length > 0)
+		const m = await server.db.get(`SELECT * FROM users WHERE user_mail= ?` , [email])
+		if (m)
 			return reply.send({success: false, message:"Oops! Your mail seems to be already used. Please try to reset your password"}, 400);
-		const [u] = await server.db.query(`SELECT * FROM users WHERE pseudo= ? `, [pseudo])
+		const u = await server.db.get(`SELECT * FROM users WHERE pseudo= ? `, [pseudo])
 		console.log(u)
-		if (u.length > 0)
+		if (u)
 			return reply.send({success: false, message:"Oops! pseudo already used... "}, 400);
 		
 		const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{12,64}$/
@@ -258,15 +257,15 @@ export async function signup_route(request, reply)
 		await redis.set(token, JSON.stringify({email, pseudo, passwordHash}, {EX: 120}));
 		// get_mail_options
 		const mailOptions = {
-				from: '"GT Trainer" <no-reply@gt-trainer.com>',
+				from: '"Transcendance 42" <no-reply@transcendance.42.com>',
 				to: `${email}`,
 				subject: "Bienvenue ! Confirme ton adresse email ✨",  
-				text: `Bienvenue sur GT Trainer ! Pour activer ton compte, clique sur le lien suivant dans les 24h : https://${base_url}/confirm-email/${token}`,
-				html: `	<p>Bienvenue sur <strong>GT Trainer</strong> !</p>
+				text: `Bienvenue sur Transcendance 42 ! Pour activer ton compte, clique sur le lien suivant dans les 24h : https://${base_url}/confirm-email/${token}`,
+				html: `	<p>Bienvenue sur <strong>Transcendance 42</strong> !</p>
 				<p>Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en cliquant sur le lien ci-dessous :</p>
 				<p><a href='https://${base_url}/confirm-email/${token}'>Confirmer mon adresse</a></p>
 				<p>Ce lien est valable pendant 24 heures.</p>
-				<p>À très vite sur GT Trainer ! 👋</p>`
+				<p>À très vite sur Transcendance 42 ! 👋</p>`
 			};
 			if (!server.mailChannel)
 				return reply.send({success: false, message:"Unknown server error, please try again later"}, 500);
@@ -285,14 +284,14 @@ export async function reset_forgotten_password_route(request, reply)
 		const is_valid = await is_valid_path(email, uuid);
 		if (!is_valid)
 			return reply.send({success: false, message: "The reset link has expired or is corrupted and is no longer valid."}, 401)
-			const [row] = await server.db.query("SELECT * FROM users WHERE user_mail= ?", [email]);
-		if (row.length === 0)
+			const row = await server.db.get("SELECT * FROM users WHERE user_mail= ?", [email]);
+		if (!row)
 			return reply.send({success: false, message: "invalid mail"}, 401)
 		const { success, response } = is_valid_password(password)
 		if (!success)
 			return reply.send(response, 401);
 		const passwordHash = await hash(password, 10);
-		await server.db.query("UPDATE users SET user_password= ? WHERE user_mail= ?", [passwordHash, email])
+		await server.db.get("UPDATE users SET user_password= ? WHERE user_mail= ?", [passwordHash, email])
 		await redis.del(`${email}:reset-password`)
 		return reply.send({success: true, message: "password changed"}, 401)
 	}
@@ -306,8 +305,8 @@ export async function reset_forgotten_password_request_route(request, reply)
 		const is_valid = await is_valid_path(email, uuid);
 		if (!is_valid)
 			return reply.send({success: false, message: "The reset link has expired or is corrupted and is no longer valid."}, 401)
-		const [row] = await server.db.query("SELECT * FROM users WHERE user_mail= ?", [email]);
-		if (row.length === 0)
+		const row = await server.db.get("SELECT * FROM users WHERE user_mail= ?", [email]);
+		if (!row)
 			return reply.send({success: false, message: "invalid mail"}, 401)
 		return reply.send({success:true, message: "user is registered"})
 	}
@@ -346,13 +345,13 @@ export async function update_password_route(request, reply)
 
 export async function reset_password_route(request, reply)  {
 		const email = request.body.email;
-		const [row] = await server.db.query("SELECT * FROM users WHERE user_mail= ?", [email]);
-		if (row.length > 0)
+		const row = await server.db.get("SELECT * FROM users WHERE user_mail= ?", [email]);
+		if (row)
 		{
 			const UUID = crypto.randomUUID();
 			await redis.set(`${email}:reset-password`, UUID, {EX:600})
 			const mailOptions = {
-			from: '"GT Trainer" <no-reply@gt-trainer.com>',
+			from: '"Transcendance 42" <no-reply@transcendance.42.com>',
 			to: `${email}`,
 			subject: "Réinitialisation de votre mot de passe",  
 			text: `Voici le lien pour réinitialiser votre mot de passe : https://${base_url}/reset-password/${email}/${UUID}`,

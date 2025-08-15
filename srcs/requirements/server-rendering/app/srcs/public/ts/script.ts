@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadLanguage(languages[currentLangIndex].code, 'home');
 });
 
+
 function showSignUp(text: Translations) {
   console.log(">> showSignUp() called"); // to remove
   const contentDiv = document.getElementById('content') as HTMLDivElement;
@@ -121,7 +122,7 @@ function showSignUp(text: Translations) {
 }
 
 // show verification code for 2FA
-function showVerificationCode(text: Translations, view: string) {
+export function showVerificationCode(text: Translations, view: string) {
   const contentDiv = document.getElementById('content') as HTMLDivElement;
   if (!contentDiv) {
     console.error("Failed to find content element");

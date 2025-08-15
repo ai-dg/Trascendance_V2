@@ -9,6 +9,12 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+let base_url = "localhost:8080";
+const is_prod = process.env.NODE_ENV === "PROD"
+
+
+
+
 const app = fastify();
 
 app.register(fastifyStatic, {
@@ -34,7 +40,7 @@ function loadTranslations(lang = 'en') {
 app.get('/', (req, reply) => {
   const lang = req.query.lang || 'en';
   const text = loadTranslations(lang);
-  reply.view('index.ejs', { text, lang });
+  reply.view('index.ejs', { text, lang, base_url });
 });
 
 app.get('/api/translations', (req, reply) => {

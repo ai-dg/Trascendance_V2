@@ -1,3 +1,5 @@
+import { getErrorMessage } from "./error.js";
+import { getUrl } from "./urls.js";
 export function getSignupForm(text) {
     return `
     <h2 class="text-xl font-bold mb-6 text-white">${text.signupTitle}</h2>
@@ -28,7 +30,38 @@ export function getSignupForm(text) {
     <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
   `;
 }
-export async function registerUser(login, passwd, email) {
-    console.log("login event ready", login, passwd, email);
-    console.log("test restart nodemon");
+export async function registerUser(pseudo, password, email) {
+    const errorDiv = document.getElementById('formErrors');
+    const form = {
+        email,
+        pseudo,
+        password
+    };
+    try {
+        const res = await fetch(getUrl('auth/signup'), {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify(form)
+        });
+        const result = await res.json();
+        if (!result) {
+            errorDiv.textContent = "Server error";
+            return;
+        }
+        if (!result.success) {
+            errorDiv.textContent = result.message;
+            return;
+        }
+        else {
+            //window.location.href ="/";
+            // showVerificationCode(text, view);
+            console.log("a confirmation mail has been sended");
+        }
+        // http://auth/signup
+    }
+    catch (err) {
+        errorDiv.textContent = getErrorMessage(err);
+    }
 }

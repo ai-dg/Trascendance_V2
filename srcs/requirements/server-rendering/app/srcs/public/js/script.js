@@ -95,7 +95,7 @@ function showSignUp(text) {
     backBtn.addEventListener("click", () => showHome(text));
 }
 // show verification code for 2FA
-function showVerificationCode(text, view) {
+export function showVerificationCode(text, view) {
     const contentDiv = document.getElementById('content');
     if (!contentDiv) {
         console.error("Failed to find content element");
