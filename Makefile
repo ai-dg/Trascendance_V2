@@ -30,6 +30,9 @@ watch:
 		wait \
 	)
 
+dev:
+	docker compose -f $(COMPOSE) up --force-recreate --build
+
 build:
 	docker compose -f $(COMPOSE) build
 

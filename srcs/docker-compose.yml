@@ -43,8 +43,11 @@ services:
       context: ./requirements/server-rendering/app
     expose:
       - 3005
-    # volumes:
-    #   - sqlite_data:/data
+    volumes:
+      - /data/node_modules
+      - ./requirements/server-rendering/app:/data
+      # - sqlite_data:/data
+      # - ./volume/redis_data:/data
     networks:
       - internal
     depends_on:

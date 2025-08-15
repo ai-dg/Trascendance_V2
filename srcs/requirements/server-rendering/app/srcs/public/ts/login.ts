@@ -35,36 +35,9 @@ export function getSignupForm(text: Translations)
 }
 
 
-export function initLoginButton(){
-	const initBtn = document.getElementById("submit-login")
-	if (!initBtn)
-	{
-		throw new Error("can't find submit-login button");
-	}
-	initBtn.addEventListener('click', (e)=>login)
-}
+export async function registerUser(login: string, passwd: string, email: string){
+	console.log("login event ready", login, passwd, email)
+	console.log("test restart nodemon");
 
-export function removeListener(event: string, element: HTMLElement, handler:(e: Event) => void){
-
-	if (!handler || !event)
-	{
-		throw new Error("handler is undefined")
-	}
-	if (element)
-	  element.removeEventListener(event, handler);
-	else
-		throw new Error("can't find element...")
-
-}
-
-
-export function cleanListeners(){
-	const initBtn = document.getElementById("submit-login") as HTMLElement;
-	if (initBtn)
-		removeListener('click', initBtn, login);
-}
-
-function login(e:Event){
-	console.log("login event ready")
 
 }

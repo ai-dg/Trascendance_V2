@@ -1,4 +1,4 @@
-import { cleanListeners, getSignupForm, initLoginButton } from './login.js';
+import { getSignupForm, registerUser } from './login.js';
 import type { Translations } from './types.js'
 
 console.log("Script working properly");  // to remove
@@ -106,7 +106,9 @@ function showSignUp(text: Translations) {
 
     // To remove after auth working
     const view = 'signup';
-    showVerificationCode(text, view);
+	
+	registerUser(login, passwd, email);
+    //showVerificationCode(text, view);
 
   });
 
@@ -115,7 +117,7 @@ function showSignUp(text: Translations) {
   if (!backBtn)
     console.error("Failed to find backBtn element");
   backBtn.addEventListener("click", () => showHome(text));
-	initLoginButton()
+
 }
 
 // show verification code for 2FA
@@ -351,7 +353,7 @@ function showOptions(text: Translations) {
   backBtn.addEventListener("click", () => showHome(text));}
 
 function showHome(text: Translations) {
-	cleanListeners()
+	
   if (!text) return;
   const contentDiv = document.getElementById('content') as HTMLDivElement;
   if (!contentDiv)

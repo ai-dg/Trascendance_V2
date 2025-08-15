@@ -21,6 +21,7 @@ app.register(view, {
   root: join(__dirname, 'srcs/views')
 });
 
+
 function loadTranslations(lang = 'en') {
   const filePath = join(__dirname, `srcs/locales/${lang}.json`);
   if (fs.existsSync(filePath)) {

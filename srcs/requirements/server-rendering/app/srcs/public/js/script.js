@@ -1,4 +1,4 @@
-import { cleanListeners, getSignupForm, initLoginButton } from './login.js';
+import { getSignupForm, registerUser } from './login.js';
 console.log("Script working properly"); // to remove
 document.addEventListener("DOMContentLoaded", () => {
     loadLanguage(languages[currentLangIndex].code, 'home');
@@ -85,14 +85,14 @@ function showSignUp(text) {
         errorDiv.innerHTML = '';
         // To remove after auth working
         const view = 'signup';
-        showVerificationCode(text, view);
+        registerUser(login, passwd, email);
+        //showVerificationCode(text, view);
     });
     // back button
     const backBtn = document.getElementById("backBtn");
     if (!backBtn)
         console.error("Failed to find backBtn element");
     backBtn.addEventListener("click", () => showHome(text));
-    initLoginButton();
 }
 // show verification code for 2FA
 function showVerificationCode(text, view) {
@@ -305,7 +305,6 @@ function showOptions(text) {
     backBtn.addEventListener("click", () => showHome(text));
 }
 function showHome(text) {
-    cleanListeners();
     if (!text)
         return;
     const contentDiv = document.getElementById('content');

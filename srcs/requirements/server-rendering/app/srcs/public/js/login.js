@@ -28,27 +28,7 @@ export function getSignupForm(text) {
     <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
   `;
 }
-export function initLoginButton() {
-    const initBtn = document.getElementById("submit-login");
-    if (!initBtn) {
-        throw new Error("can't find submit-login button");
-    }
-    initBtn.addEventListener('click', (e) => login);
-}
-export function removeListener(event, element, handler) {
-    if (!handler || !event) {
-        throw new Error("handler is undefined");
-    }
-    if (element)
-        element.removeEventListener(event, handler);
-    else
-        throw new Error("can't find element...");
-}
-export function cleanListeners() {
-    const initBtn = document.getElementById("submit-login");
-    if (initBtn)
-        removeListener('click', initBtn, login);
-}
-function login(e) {
-    console.log("login event ready");
+export async function registerUser(login, passwd, email) {
+    console.log("login event ready", login, passwd, email);
+    console.log("test restart nodemon");
 }
