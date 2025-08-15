@@ -42,6 +42,8 @@ app.get('/api/translations', (req, reply) => {
   reply.send({ text, lang });
 });
 
+
+
 const start = async () => {
   try {
     await app.listen({ port: 3005, host: '0.0.0.0' });

@@ -1,4 +1,5 @@
-import type { Translations } from './types'
+import { cleanListeners, getSignupForm, initLoginButton } from './login.js';
+import type { Translations } from './types.js'
 
 console.log("Script working properly");  // to remove
 
@@ -11,34 +12,7 @@ function showSignUp(text: Translations) {
   const contentDiv = document.getElementById('content') as HTMLDivElement;
   if (!contentDiv)
     console.error("Failed to find content element");
-  contentDiv.innerHTML = `
-    <h2 class="text-xl font-bold mb-6 text-white">${text.signupTitle}</h2>
-    <form class="flex flex-col space-y-4">
-      <input id="login" type="text" required placeholder="${text.login}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
-      <input id="email" type="text" required placeholder="${text.email}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
-      <div class="relative">
-        <input id="passwd" type="password" required placeholder="${text.passwd}" class="px-4 py-2 pr-10 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none w-full">
-        <button type="button" id="togglePasswd" required class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-300 hover:text-white">
-          👁️
-        </button>
-      </div>
-      <div class="relative">
-        <input id="passwdConfirm" type="password" placeholder="${text.passwdConfirm}" class="px-4 py-2 pr-10 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none w-full">
-        <button type="button" id="togglePasswdConfirm" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-300 hover:text-white">
-          👁️
-        </button>
-      </div>
-      <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">${text.signupBtn}</button>
-      <div id="formErrors" class="text-red-500 text-sm italic mt-2"></div>
-      </form>
-    <br>
-    <h3 class="text-xl font-bold mb-6 text-white">${text.otherUp}</h3>
-    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">GOOGLE SIGN IN</button>
-    <br><br>
-    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">42AUTH</button>
-    <br>
-    <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
-  `;
+  contentDiv.innerHTML = getSignupForm(text);
 
   // show password button
   const togglePasswdBtn = document.getElementById('togglePasswd') as HTMLButtonElement;
@@ -141,6 +115,7 @@ function showSignUp(text: Translations) {
   if (!backBtn)
     console.error("Failed to find backBtn element");
   backBtn.addEventListener("click", () => showHome(text));
+	initLoginButton()
 }
 
 // show verification code for 2FA
@@ -376,6 +351,7 @@ function showOptions(text: Translations) {
   backBtn.addEventListener("click", () => showHome(text));}
 
 function showHome(text: Translations) {
+	cleanListeners()
   if (!text) return;
   const contentDiv = document.getElementById('content') as HTMLDivElement;
   if (!contentDiv)
