@@ -1,4 +1,4 @@
-import { server, redis, base_url} from '../../server.js';
+import { app, redis, base_url} from '../../server.js';
 import pkg from 'jsonwebtoken';
 const { sign, verify } = pkg;
 import { compare, hash } from 'bcryptjs';
@@ -23,7 +23,7 @@ import { mail_queue } from '../services/message-broker.js';
 
 export async function login_route(request, reply){
 	
-		const rows = await server.db.get(`SELECT * FROM users WHERE user_mail= ?`, [request.body.email])
+		const rows = await app.db.get(`SELECT * FROM users WHERE user_mail= ?`, [request.body.email])
 		 
 		if (!rows)
 			return reply.send(get_error_message(e.AUTH_INVALID_CREDENTIALS, 401));
@@ -56,9 +56,9 @@ export async function login_route(request, reply){
 			text: `Votre code de connexion est : ${otp}`,
 			html: `<p>Votre code de connexion est : ${otp}</p>`
 			};
-			if (! server.mailChannel)
+			if (! app.mailChannel)
 				console.log("fastify CHANNEL UNDEFINED")
-			server.mailChannel.sendToQueue(mail_queue, Buffer.from(JSON.stringify(mailOptions)), {
+			app.mailChannel.sendToQueue(mail_queue, Buffer.from(JSON.stringify(mailOptions)), {
 					persistent: true,
 				});
 			return reply.send({success:true, status:"otp-validation", otp_id: id, expire_at})		
@@ -108,7 +108,7 @@ export async function get_csrf_route(request, reply){
 			signed_token = signCSRFToken(csrf_token)
 		}
 		catch(err){
-			return reply.send({success:false, message: "server can't serve csrf token, try again later"}, 500)
+			return reply.send({success:false, message: "app can't serve csrf token, try again later"}, 500)
 		}
 		reply.setCookie('csrf', signed_token, {
 			httpOnly: true,
@@ -121,13 +121,11 @@ export async function get_csrf_route(request, reply){
 }
 
 
-export async function otp_validation_route(request, reply)
+export async function login_otp_validation_route(request, reply)
 {
 	const user_agent =  request.headers["user-agent"];
-	console.log("user agent", user_agent);
-	console.log("ip : ", request.ip);
 
-	const { otp, otp_id } = JSON.parse(request.body);
+	const { otp, otp_id } = request.body;
 	const row = await redis.get(otp_id);
 	const data = JSON.parse(row)
 	if (!data)
@@ -136,40 +134,32 @@ export async function otp_validation_route(request, reply)
 		return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
 	const is_valid = await compare(otp, data.otp_hashed);
 	try {
-
 		if (!is_valid)
 			return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
-
 		const jti = crypto.randomUUID();
-		console.log('DATA :  ',data);
 		const payload = {
 			user_id: data.user_id,
 			email: data.email,
 			pseudo: data.pseudo,
 			jti
-		};		
+		};
 		const secretKey = process.env.JWT_SECRET;	
 		const token = sign(payload, secretKey, { expiresIn: '1h' });
-
 		await redis.set(`jwt:${jti}`, 'valid', { EX: 3600 });
-		
-	
-		reply.setCookie('token', token, {
+		return reply.setCookie('token', token, {
 			httpOnly: true,
 			sameSite: 'none',
 			secure: true,
 			path: '/',
 			maxAge: 3600
-		}).send(get_success_message(data.email, data.pseudo), 200)
+		}).send({...get_success_message(data.email, data.pseudo)}, 200)
 		}
 	catch(err)
 		{
-			return reply.send(get_error_message(e.SERVER_ERROR, 500))
-		}
-		return reply.send(get_error_message(e.SERVER_ERROR, 500))
-
-	
+			return reply.send(get_error_message(e.app_ERROR, 500))
+		}	
 }
+
 
 
 /**********************************************************************************************************************************************************/
@@ -191,7 +181,7 @@ export async function logout_route(request, reply){
 			}		
 		}
 		catch (err){
-			return reply.send ({success:false, message: "Internal server error"}, 500)
+			return reply.send ({success:false, message: "Internal app error"}, 500)
 	}
 }
 
@@ -236,10 +226,10 @@ export async function signup_route(request, reply)
 		pseudo = xss(pseudo);
 		if (!email.match(is_mail))
 			return reply.send({success: false, message:"Oops ! Seems your email is not valid" }, 400)	
-		const m = await server.db.get(`SELECT * FROM users WHERE user_mail= ?` , [email])
+		const m = await app.db.get(`SELECT * FROM users WHERE user_mail= ?` , [email])
 		if (m)
 			return reply.send({success: false, message:"Oops! Your mail seems to be already used. Please try to reset your password"}, 400);
-		const u = await server.db.get(`SELECT * FROM users WHERE pseudo= ? `, [pseudo])
+		const u = await app.db.get(`SELECT * FROM users WHERE pseudo= ? `, [pseudo])
 		console.log(u)
 		if (u)
 			return reply.send({success: false, message:"Oops! pseudo already used... "}, 400);
@@ -252,30 +242,74 @@ export async function signup_route(request, reply)
 			return reply.send({success: false, message:"Oops! Your password needs to be at least 12 characters long."}, 400);
 		
 		let passwordHash = await hash(password, 10);
-	
-		const token = crypto.randomUUID();
-		await redis.set(token, JSON.stringify({email, pseudo, passwordHash}, {EX: 120}));
+		const otp = generateOTP();
+		const otp_id = crypto.randomUUID();
+		const otp_hashed = await hash(otp, 10);
+		const user_agent = request.headers["user-agent"];
+		const expire_at = Date.now() + 5 * 60 * 1000;
+		const validate = {
+			otp_hashed : otp_hashed,
+			user_agent,
+			email: email,
+			pseudo: pseudo,
+			expire_at : expire_at,
+			ip: request.ip,
+			passwordHash
+		}
+		await redis.set(otp_id, JSON.stringify(validate, {EX: 120}));
 		// get_mail_options
 		const mailOptions = {
 				from: '"Transcendance 42" <no-reply@transcendance.42.com>',
 				to: `${email}`,
-				subject: "Bienvenue ! Confirme ton adresse email ✨",  
-				text: `Bienvenue sur Transcendance 42 ! Pour activer ton compte, clique sur le lien suivant dans les 24h : https://${base_url}/confirm-email/${token}`,
+				subject: "Bienvenue ! Confirme ton adresse email ✨", 
+				text: `Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  ${otp} .`,
 				html: `	<p>Bienvenue sur <strong>Transcendance 42</strong> !</p>
-				<p>Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en cliquant sur le lien ci-dessous :</p>
-				<p><a href='https://${base_url}/confirm-email/${token}'>Confirmer mon adresse</a></p>
-				<p>Ce lien est valable pendant 24 heures.</p>
+				<p>Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  ${otp} .</p>
+				<p>Ce lien est valable 2mn
 				<p>À très vite sur Transcendance 42 ! 👋</p>`
 			};
-			if (!server.mailChannel)
-				return reply.send({success: false, message:"Unknown server error, please try again later"}, 500);
-			server.mailChannel.sendToQueue(mail_queue, Buffer.from(JSON.stringify(mailOptions)), {
+			// html: `<p>Votre code de connexion est : ${otp}</p>`
+			if (!app.mailChannel)
+				return reply.send({success: false, message:"Unknown app error, please try again later"}, 500);
+			app.mailChannel.sendToQueue(mail_queue, Buffer.from(JSON.stringify(mailOptions)), {
 					persistent: true,
 			});
-	
-		return reply.send(get_message(true, e.MAIL_SENDED), 200)
+		return reply.send({success:true, status:"otp-validation", otp_id, expire_at})
 }
-	
+
+
+
+
+export async function signup_otp_validation_route(request, reply)
+{
+	const user_agent =  request.headers["user-agent"];
+
+	const { otp, otp_id } = request.body;
+	const row = await redis.get(otp_id);
+	const data = JSON.parse(row)
+	if (!data)
+		return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
+	if (typeof(otp) !== "string" && otp.length != 6)
+		return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
+	const is_valid = await compare(otp, data.otp_hashed);
+	try {
+		if (!is_valid)
+			return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
+		await app.db.run('INSERT INTO "users" ("user_mail", "pseudo", "user_password") VALUES (?, ?, ?)', [data.email, data.pseudo, data.passwordHash])
+		return reply.send({...get_success_message(data.email, data.pseudo), message: 'user created'}, 200)
+	}
+	catch(err)
+	{
+		console.error(err.message)
+		return reply.send(get_error_message(e.SERVER_ERROR, 500))
+	}
+}
+
+/**********************************************************************************************************************************************************/
+/*** 																	reset passwords 		  											  			***/
+/**********************************************************************************************************************************************************/
+
+
 
 export async function reset_forgotten_password_route(request, reply)
 {
@@ -284,14 +318,14 @@ export async function reset_forgotten_password_route(request, reply)
 		const is_valid = await is_valid_path(email, uuid);
 		if (!is_valid)
 			return reply.send({success: false, message: "The reset link has expired or is corrupted and is no longer valid."}, 401)
-			const row = await server.db.get("SELECT * FROM users WHERE user_mail= ?", [email]);
+			const row = await app.db.get("SELECT * FROM users WHERE user_mail= ?", [email]);
 		if (!row)
 			return reply.send({success: false, message: "invalid mail"}, 401)
 		const { success, response } = is_valid_password(password)
 		if (!success)
 			return reply.send(response, 401);
 		const passwordHash = await hash(password, 10);
-		await server.db.get("UPDATE users SET user_password= ? WHERE user_mail= ?", [passwordHash, email])
+		await app.db.get("UPDATE users SET user_password= ? WHERE user_mail= ?", [passwordHash, email])
 		await redis.del(`${email}:reset-password`)
 		return reply.send({success: true, message: "password changed"}, 401)
 	}
@@ -305,7 +339,7 @@ export async function reset_forgotten_password_request_route(request, reply)
 		const is_valid = await is_valid_path(email, uuid);
 		if (!is_valid)
 			return reply.send({success: false, message: "The reset link has expired or is corrupted and is no longer valid."}, 401)
-		const row = await server.db.get("SELECT * FROM users WHERE user_mail= ?", [email]);
+		const row = await app.db.get("SELECT * FROM users WHERE user_mail= ?", [email]);
 		if (!row)
 			return reply.send({success: false, message: "invalid mail"}, 401)
 		return reply.send({success:true, message: "user is registered"})
@@ -332,9 +366,6 @@ export async function update_password_route(request, reply)
 }
 
 
-
-
-
 /**
  * 
  * @param {import('fastify').FastifyRequest<{ Body: { email: string } }>} request
@@ -345,7 +376,7 @@ export async function update_password_route(request, reply)
 
 export async function reset_password_route(request, reply)  {
 		const email = request.body.email;
-		const row = await server.db.get("SELECT * FROM users WHERE user_mail= ?", [email]);
+		const row = await app.db.get("SELECT * FROM users WHERE user_mail= ?", [email]);
 		if (row)
 		{
 			const UUID = crypto.randomUUID();
@@ -357,9 +388,9 @@ export async function reset_password_route(request, reply)  {
 			text: `Voici le lien pour réinitialiser votre mot de passe : https://${base_url}/reset-password/${email}/${UUID}`,
 			html: `<p>Voici le lien pour réinitialiser votre mot de passe : <a href='https://${base_url}/reset-password/${email}/${UUID}'>Cliquez ici</a></p>`
 			};
-			if (! server.mailChannel)
+			if (! app.mailChannel)
 				console.log("FASTIFY CHANNEL UNDEFINED")
-			server.mailChannel.sendToQueue(mail_queue, Buffer.from(JSON.stringify(mailOptions)), {
+			app.mailChannel.sendToQueue(mail_queue, Buffer.from(JSON.stringify(mailOptions)), {
 					persistent: true,
 				});
 		}	

@@ -50,6 +50,16 @@ services:
       # - ./volume/redis_data:/data
     networks:
       - internal
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
+      - NODE_ENV=${NODE_ENV}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
+      - CSRF_SECRET=${CSRF_SECRET}
     depends_on:
       rabbitmq:
         condition: service_healthy

@@ -39,7 +39,7 @@ export function getSignupForm(text: Translations)
 }
 
 
-export async function registerUser(pseudo: string, password: string, email: string){
+export async function registerUser(pseudo: string, password: string, email: string, text:Translations, view:string){
 	const errorDiv = document.getElementById('formErrors') as HTMLElement;
 	const form =
 	{
@@ -72,7 +72,8 @@ export async function registerUser(pseudo: string, password: string, email: stri
 		else
 		{
 			//window.location.href ="/";
-			// showVerificationCode(text, view);
+			showVerificationCode(text, view, result.otp_id);
+			errorDiv.textContent =  result.message
 			console.log("a confirmation mail has been sended")
 		}
 

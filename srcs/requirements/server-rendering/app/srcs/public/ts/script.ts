@@ -1,5 +1,6 @@
 import { getSignupForm, registerUser } from './login.js';
 import type { Translations } from './types.js'
+import { getUrl } from './urls.js';
 
 console.log("Script working properly");  // to remove
 
@@ -108,7 +109,7 @@ function showSignUp(text: Translations) {
     // To remove after auth working
     const view = 'signup';
 	
-	registerUser(login, passwd, email);
+	registerUser(login, passwd, email, text, view);
     //showVerificationCode(text, view);
 
   });
@@ -122,7 +123,7 @@ function showSignUp(text: Translations) {
 }
 
 // show verification code for 2FA
-export function showVerificationCode(text: Translations, view: string) {
+export function showVerificationCode(text: Translations, view: string, otp_id:string) {
   const contentDiv = document.getElementById('content') as HTMLDivElement;
   if (!contentDiv) {
     console.error("Failed to find content element");
@@ -158,8 +159,39 @@ export function showVerificationCode(text: Translations, view: string) {
   const verifyBtn = document.getElementById('verifyBtn') as HTMLButtonElement;
   if (!verifyBtn)
     console.error("Failed to find verifyBtn element");
-  verifyBtn.addEventListener('click', () => {
-    const code = Array.from(inputs).map(i => i.value).join('');
+  verifyBtn.addEventListener('click', async () => {
+	  const code = Array.from(inputs).map(i => i.value).join('');
+	  console.log("verifyBtn called : code ", code)
+	try{
+		const res = await fetch(getUrl('auth/signup/otp-validation'),{
+			method:"POST",
+			headers: {
+				'content-type': 'application/json',
+			},
+			body: JSON.stringify({otp: code, otp_id})
+		});
+
+		if (!res)
+		throw new Error("Can't reach the server");
+		const result = await res.json();
+		if (result.success)
+		{
+			console.log('success : ', result.message)
+		}
+		else{
+			console.log('failure : ', result.message)
+		}
+	}
+	catch (err)
+	{
+		console.log(err);
+		
+	}
+	
+
+	
+	
+
   });
 
   // back button
@@ -232,7 +264,7 @@ function showSignIn(text: Translations) {
 
     // To remove after auth working
     const view = 'signin';
-    showVerificationCode(text, view);
+    // showVerificationCode(text, view);
   });
 
   // forgot password button

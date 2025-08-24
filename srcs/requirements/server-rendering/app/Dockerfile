@@ -15,7 +15,7 @@ RUN npm install -g nodemon typescript tailwindcss ts-node concurrently
 
 
 RUN npm init -y \
-&& npm install fastify @fastify/view ejs @fastify/csrf-protection @fastify/env @fastify/jwt	@fastify/oauth2 @fastify/websocket && npm install typescript @types/ejs @types/node autoprefixer postcss postcss-cli 
+&& npm install fastify @fastify/view ejs @fastify/csrf-protection jsonwebtoken @fastify/env @fastify/jwt	@fastify/oauth2 @fastify/websocket && npm install typescript @types/ejs @types/node autoprefixer postcss postcss-cli amqplib
 COPY . .
 
 EXPOSE 3005

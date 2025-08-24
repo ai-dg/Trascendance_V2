@@ -1,4 +1,4 @@
-import { redis, app } from '../server.js'
+import { redis, app } from './server.js'
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { e } from './messages.js';
@@ -194,15 +194,4 @@ export async function confirm_email_token(token)
 	const insert = query_result[0];
 	if (insert && insert.affectedRows > 0)
 	return { success: true, message: "Account created !" };
-}
-export async function signup_otp_validation(token)
-{
-	const { otp, otp_id } = JSON.parse(request.body);
-	const row = await redis.get(otp_id);
-	const data = JSON.parse(row)
-	if (!data)
-		return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
-	if (typeof(otp) !== "string" && otp.length != 6)
-		return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
-	const is_valid = await compare(otp, data.otp_hashed);
 }

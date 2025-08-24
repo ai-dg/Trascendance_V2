@@ -40,3 +40,8 @@ export interface Translations {
   verifyInstruction: string;
   verify: string;
 }
+
+
+export interface params{
+	otp_id: string;
+}

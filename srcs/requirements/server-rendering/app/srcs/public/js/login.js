@@ -1,5 +1,6 @@
 import { getErrorMessage } from "./error.js";
 import { getUrl } from "./urls.js";
+import { showVerificationCode } from "./script.js";
 export function getSignupForm(text) {
     return `
     <h2 class="text-xl font-bold mb-6 text-white">${text.signupTitle}</h2>
@@ -30,7 +31,7 @@ export function getSignupForm(text) {
     <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
   `;
 }
-export async function registerUser(pseudo, password, email) {
+export async function registerUser(pseudo, password, email, text, view) {
     const errorDiv = document.getElementById('formErrors');
     const form = {
         email,
@@ -56,7 +57,8 @@ export async function registerUser(pseudo, password, email) {
         }
         else {
             //window.location.href ="/";
-            // showVerificationCode(text, view);
+            showVerificationCode(text, view, result.otp_id);
+            errorDiv.textContent = result.message;
             console.log("a confirmation mail has been sended");
         }
         // http://auth/signup

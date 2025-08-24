@@ -1,4 +1,5 @@
 import { getSignupForm, registerUser } from './login.js';
+import { getUrl } from './urls.js';
 console.log("Script working properly"); // to remove
 document.addEventListener("DOMContentLoaded", () => {
     loadLanguage(languages[currentLangIndex].code, 'home');
@@ -85,7 +86,7 @@ function showSignUp(text) {
         errorDiv.innerHTML = '';
         // To remove after auth working
         const view = 'signup';
-        registerUser(login, passwd, email);
+        registerUser(login, passwd, email, text, view);
         //showVerificationCode(text, view);
     });
     // back button
@@ -95,7 +96,7 @@ function showSignUp(text) {
     backBtn.addEventListener("click", () => showHome(text));
 }
 // show verification code for 2FA
-export function showVerificationCode(text, view) {
+export function showVerificationCode(text, view, otp_id) {
     const contentDiv = document.getElementById('content');
     if (!contentDiv) {
         console.error("Failed to find content element");
@@ -128,8 +129,30 @@ export function showVerificationCode(text, view) {
     const verifyBtn = document.getElementById('verifyBtn');
     if (!verifyBtn)
         console.error("Failed to find verifyBtn element");
-    verifyBtn.addEventListener('click', () => {
+    verifyBtn.addEventListener('click', async () => {
         const code = Array.from(inputs).map(i => i.value).join('');
+        console.log("verifyBtn called : code ", code);
+        try {
+            const res = await fetch(getUrl('auth/signup/otp-validation'), {
+                method: "POST",
+                headers: {
+                    'content-type': 'application/json',
+                },
+                body: JSON.stringify({ otp: code, otp_id })
+            });
+            if (!res)
+                throw new Error("Can't reach the server");
+            const result = await res.json();
+            if (result.success) {
+                console.log('success : ', result.message);
+            }
+            else {
+                console.log('failure : ', result.message);
+            }
+        }
+        catch (err) {
+            console.log(err);
+        }
     });
     // back button
     const backBtn = document.getElementById("backBtn");
@@ -195,7 +218,7 @@ function showSignIn(text) {
         const passwd = passwdInput.value;
         // To remove after auth working
         const view = 'signin';
-        showVerificationCode(text, view);
+        // showVerificationCode(text, view);
     });
     // forgot password button
     const forgotPasswd = document.getElementById("forgotPasswd");
