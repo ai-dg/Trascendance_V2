@@ -2,7 +2,7 @@ import { getErrorMessage } from "./error.js";
 import { Translations } from "./types.js";
 import { getUrl } from "./urls.js";
 import { showVerificationCode } from "./script.js";
-
+import { getConnectedHome } from "./interface.js";
 
 
 
@@ -72,7 +72,7 @@ export async function registerUser(pseudo: string, password: string, email: stri
 		else
 		{
 			//window.location.href ="/";
-			showVerificationCode(text, view, result.otp_id);
+			showVerificationCode(text, view, {otp_id: result.otp_id, context:"signup", handler: ()=>{console.log("signup success")}});
 			errorDiv.textContent =  result.message
 			console.log("a confirmation mail has been sended")
 		}
@@ -85,6 +85,109 @@ export async function registerUser(pseudo: string, password: string, email: stri
 
 	}
 
+}
 
 
+async function initCSRFToken(){
+
+	try{
+		const res = await fetch(getUrl('auth/csrf-token'),
+		{
+			method:"GET",
+			credentials:'include'
+		})
+		if(!res)
+			console.error("can't connect to server, please try again later")
+		const result = await res.json();
+		if (result.success)
+		{
+			const token = result.data.csrfToken
+			const el = document.createElement("meta")
+			el.setAttribute('name', 'csrf-token')
+			el.setAttribute('content', token)
+			document.head.appendChild(el);
+		}
+		else
+		{
+			console.error("Not authenticated...")
+		}
+	}
+	catch(err)
+	{
+		console.error(getErrorMessage(err));
+	}
+};
+
+
+export async function log_handler(){
+	const menu = document.querySelector('.menu') as HTMLDivElement;
+	const otpCheck = document.querySelector(".otp-check") as HTMLDivElement;
+	const signupBtn = document.getElementById('signupBtn') as HTMLDivElement;
+	const signinBtn = document.getElementById('signinBtn') as HTMLDivElement;
+	if (menu)
+	{
+		menu.removeChild(signupBtn);
+		menu.removeChild(signinBtn);
+		if (otpCheck)
+			otpCheck.style.display = "none"
+		let logoutBtn = document.createElement('button');
+		logoutBtn.id = "lougoutBn";
+		logoutBtn.classList.add("bg-transparent",  "text-red-600", "border-none",  "hover:underline")
+		menu.appendChild(logoutBtn);
+	}else
+	{
+		const content = document.getElementById("content") as HTMLElement;
+		content.innerHTML = await getConnectedHome();
+		console.error("can't find menu")
+	}
+
+	await initCSRFToken();
+	
+
+}
+
+export async function logUser(pseudo: string, password: string, text:Translations, view:string){
+	const errorDiv = document.getElementById('formErrors') as HTMLElement;
+	const form =
+	{
+		pseudo,
+		password
+	}
+
+	try{
+		const res = await fetch(getUrl('auth/login'),{
+			method:'POST',
+			headers : {
+				'content-type' : 'application/json'
+			},
+			body: JSON.stringify(form)
+
+		})
+
+		const result = await res.json();
+		if (! result)
+		{
+			errorDiv.textContent = "Server error";
+			return
+		}
+		if (!result.success)
+		{
+			errorDiv.textContent =  result.message
+			return
+		}
+		else
+		{
+			//window.location.href ="/";
+			showVerificationCode(text, view, {otp_id: result.otp_id, context:"login", handler: log_handler});
+			errorDiv.textContent =  result.message
+			console.log("a confirmation mail has been sended")
+		}
+
+		// http://auth/signup
+
+
+	}catch(err){
+		errorDiv.textContent = getErrorMessage(err);
+
+	}
 }

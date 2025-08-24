@@ -1,8 +1,9 @@
-import { getSignupForm, registerUser } from './login.js';
-import type { Translations } from './types.js'
+import { getSignupForm, logUser, registerUser } from './login.js';
+import type { params, Translations } from './types.js'
 import { getUrl } from './urls.js';
 
 console.log("Script working properly");  // to remove
+
 
 document.addEventListener("DOMContentLoaded", () => {
   loadLanguage(languages[currentLangIndex].code, 'home');
@@ -123,7 +124,7 @@ function showSignUp(text: Translations) {
 }
 
 // show verification code for 2FA
-export function showVerificationCode(text: Translations, view: string, otp_id:string) {
+export function showVerificationCode(text: Translations, view: string, params: params) {
   const contentDiv = document.getElementById('content') as HTMLDivElement;
   if (!contentDiv) {
     console.error("Failed to find content element");
@@ -131,7 +132,7 @@ export function showVerificationCode(text: Translations, view: string, otp_id:st
   }
 
   contentDiv.innerHTML = `
-    <h2 class="text-xl font-bold mb-4 text-white">${text.verifyTitle}</h2>
+    <h2 class="otp-check text-xl font-bold mb-4 text-white">${text.verifyTitle}</h2>
     <p class="text-white mb-4">${text.verifyInstruction}</p>
     <div id="codeContainer" class="flex justify-center space-x-2">
       ${Array.from({ length: 6 })
@@ -160,15 +161,16 @@ export function showVerificationCode(text: Translations, view: string, otp_id:st
   if (!verifyBtn)
     console.error("Failed to find verifyBtn element");
   verifyBtn.addEventListener('click', async () => {
+	  const  context = params.context;
 	  const code = Array.from(inputs).map(i => i.value).join('');
 	  console.log("verifyBtn called : code ", code)
 	try{
-		const res = await fetch(getUrl('auth/signup/otp-validation'),{
+		const res = await fetch(getUrl(`auth/${context}/otp-validation`),{
 			method:"POST",
 			headers: {
 				'content-type': 'application/json',
 			},
-			body: JSON.stringify({otp: code, otp_id})
+			body: JSON.stringify({otp: code, otp_id: params.otp_id})
 		});
 
 		if (!res)
@@ -176,7 +178,7 @@ export function showVerificationCode(text: Translations, view: string, otp_id:st
 		const result = await res.json();
 		if (result.success)
 		{
-			console.log('success : ', result.message)
+			params.handler();
 		}
 		else{
 			console.log('failure : ', result.message)
@@ -212,15 +214,16 @@ function showSignIn(text: Translations) {
   contentDiv.innerHTML = `
     <h2 class="text-xl font-bold mb-6 text-white">${text.signinTitle}</h2>
     <form class="flex flex-col space-y-4">
-      <input type="text" required placeholder="${text.login}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
+      <input type="text" name="pseudo" required placeholder="${text.login}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
       <div class="relative">
-        <input type="password" required placeholder="${text.passwd}" class="px-4 py-2 pr-10 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none w-full">
+        <input type="password" name"password" required placeholder="${text.passwd}" class="px-4 py-2 pr-10 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none w-full">
         <button type="button" id="togglePasswd" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-300 hover:text-white">
           👁️
         </button>
       </div>
       <button id="forgotPasswd" type="submit" class="text-sm italic bg-transparent text-red-600 border-none hover:underline">${text.forgotPasswd}</button>
       <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">${text.signin}</button>
+	  <div id="formErrors" class="text-red-500 text-sm italic mt-2"></div>
     </form>
     <br>
     <h3 class="text-xl font-bold mb-6 text-white">${text.other}</h3>
@@ -247,6 +250,12 @@ function showSignIn(text: Translations) {
     });
   }
 
+
+   const errorDiv = document.getElementById('formErrors') as HTMLDivElement;
+    if (!errorDiv)
+      console.error("Failed to find errorDiv element");
+
+
   // login form
   const form = document.querySelector("form") as HTMLFormElement;
   if (!form)
@@ -261,9 +270,9 @@ function showSignIn(text: Translations) {
     if (!passwdInput)
       console.error("Failed to find input element");
     const passwd = passwdInput.value;
-
     // To remove after auth working
     const view = 'signin';
+	logUser(login, passwd, text, view);
     // showVerificationCode(text, view);
   });
 
@@ -455,9 +464,33 @@ async function loadLanguage(langCode: string, view = 'home') {
   }
 }
 
+export async function getTraductions(){
+	const html = document.querySelector("html")
+  	const langCode =html?.getAttribute("lang")
+	  try {
+    const res = await fetch(`/api/translations?lang=${langCode}`);
+    if (!res.ok) throw new Error('Failed to load translations');
+
+    const data = await res.json();
+    currentTexts = data.text;
+    currentLangIndex = languages.findIndex(l => l.code === langCode);
+    if (currentLangIndex === -1) currentLangIndex = 0;
+	return currentTexts;
+
+  } catch (err) {
+    console.error(err);
+  }
+
+}
+
+
+
+
 function toggleLanguage() {
   currentLangIndex = (currentLangIndex + 1) % languages.length;
   const nextLang = languages[currentLangIndex].code;
+  const html = document.querySelector("html")
+  html?.setAttribute("lang", nextLang)
   loadLanguage(nextLang, 'options');
 }
 

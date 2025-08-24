@@ -4,7 +4,8 @@ const ERRORS_MESSAGES = {
 	AUTH_INVALID_CREDENTIALS : "Adresse e-mail ou mot de passe incorrect",
 	USER_NOT_AUTHENTICATED : "Accès non autorisé",
 	AUTH_INVALID_TOKEN : "invalid token",
-	SERVER_ERROR : "unkown server error"
+	SERVER_ERROR : "unknown server error",
+	SQL_ERROR : "database error"
 }
 
 const SUCCESS_MESSAGES = {
@@ -14,6 +15,7 @@ const SUCCESS_MESSAGES = {
 
 
 export const e = Object.freeze({
+	SQL_ERROR : "SQL_ERROR",
 	AUTH_INVALID_CREDENTIALS : "AUTH_INVALID_CREDENTIALS",
 	USER_NOT_AUTHENTICATED: "USER_NOT_AUTHENTICATED",
 	MAIL_SENDED: "MAIL_SENDED",

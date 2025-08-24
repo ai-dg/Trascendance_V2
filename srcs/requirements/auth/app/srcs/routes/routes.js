@@ -8,7 +8,8 @@ import {
 		reset_forgotten_password_request_route,
 		signup_route,
 		login_otp_validation_route,
-		signup_otp_validation_route
+		signup_otp_validation_route,
+		is_connected
 
 } from "../controlers/controlers.js";
 
@@ -19,6 +20,9 @@ export function routes(app, options)
 	app.post('/login', async (request, reply) => login_route(request, reply))
 	app.post('/login/otp-validation', async (request, reply) => login_otp_validation_route(request,reply));	
 	app.get('/csrf-token', async (request, reply) => get_csrf_route(request, reply));
+
+	app.post('/is-connected', async (request, reply) => is_connected(request,reply));	
+
 	
 	// signup process
 	app.post('/signup', async (request, reply) => signup_route(request, reply));

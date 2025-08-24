@@ -83,16 +83,16 @@ export async function is_auth(request){
 	let exists = null;
 
 	if (!token)
-		return {success:false, jti:{}}
+		return {success:false, jwt:{}}
 	try{
 		is_valid = verify(token, process.env.JWT_SECRET)
 		if (!is_valid)
-			return {success:false, jti:{}, message: e.AUTH_INVALID_TOKEN}
+			return {success:false, jwt:{}, message: e.AUTH_INVALID_TOKEN}
 	}
 	catch(err)
 	{
 		console.error(err.message);
-		return {success:false, jti:{}, message: e.SERVER_ERROR}
+		return {success:false, jwt:{}, message: e.SERVER_ERROR}
 	}
 
 	try
@@ -103,11 +103,11 @@ export async function is_auth(request){
 	catch(err)
 	{
 		console.error(err.message);
-		return {success:false, jti:{}}
+		return {success:false, jwt:{}}
 	}
 	if (!exists || exists != "valid")
-		return {success:false, jti:{}}
-	return {success:true, jti:val}
+		return {success:false, jwt:{}}
+	return {success:true, jwt:val}
 }
 
 

@@ -1,6 +1,7 @@
 export interface Translations {
   signinTitle: string;
   login: string;
+  logout: string;
   passwd: string;
   signin: string;
   forgotPasswd: string;
@@ -43,5 +44,7 @@ export interface Translations {
 
 
 export interface params{
-	otp_id: string;
+	otp_id: string,
+	context: string,
+	handler: ()=>void;
 }

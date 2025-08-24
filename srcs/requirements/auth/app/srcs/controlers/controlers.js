@@ -23,16 +23,25 @@ import { mail_queue } from '../services/message-broker.js';
 
 export async function login_route(request, reply){
 	
-		const rows = await app.db.get(`SELECT * FROM users WHERE user_mail= ?`, [request.body.email])
-		 
-		if (!rows)
+		let user = null;	
+		const {pseudo, password} = request.body;
+		console.log(pseudo, password)
+		if (!pseudo || ! password)
 			return reply.send(get_error_message(e.AUTH_INVALID_CREDENTIALS, 401));
-		const user = rows[0];
+		try{
+			user = await app.db.get(`SELECT * FROM users WHERE pseudo= ?`, [pseudo])
+		}
+		catch(err)
+		{
+			return reply.send(get_error_message(e.SQL_ERROR, 500));
+		}
+		 
+		if (!user)
+			return reply.send(get_error_message(e.AUTH_INVALID_CREDENTIALS, 401));
 	
 		let isValidPassword = await compare(request.body.password, user.user_password);	
 		if (isValidPassword)
 		{
-			const email = request.body.email;
 			const otp = generateOTP();
 			const otp_hashed = await hash(otp, 10);
 			const user_agent = request.headers["user-agent"];
@@ -40,9 +49,9 @@ export async function login_route(request, reply){
 			const expire_at = Date.now() + 5 * 60 * 1000;
 	
 			const validate = {
+				email: user.user_mail,
 				otp_hashed : otp_hashed,
 				user_agent,
-				email: email,
 				user_id: user.user_id,
 				pseudo: user.pseudo,
 				expire_at : expire_at,
@@ -51,7 +60,7 @@ export async function login_route(request, reply){
 			await redis.set(id, JSON.stringify(validate), { EX: 300 });
 			const mailOptions = {
 			from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-			to: `${email}`,
+			to: `${user.user_mail}`,
 			subject: "Tentative de connexion",  
 			text: `Votre code de connexion est : ${otp}`,
 			html: `<p>Votre code de connexion est : ${otp}</p>`
@@ -99,7 +108,8 @@ export async function login_route(request, reply){
 
 export async function get_csrf_route(request, reply){
 		
-		const { success, jti } = await is_auth(request);
+		const { success, jwt } = await is_auth(request);
+
 		let signed_token = null;
 		if (!success)
 			return reply.send({success:false, message: "User is not authenticated"}, 401)
@@ -119,6 +129,17 @@ export async function get_csrf_route(request, reply){
 		})
 		.send({success:true, data:{csrfToken : csrf_token}}, 200)
 }
+
+
+
+export async function is_connected(request, reply) {
+	const {success, jwt} = await is_auth(request);
+	if (! success)
+		return reply.send({success:false, message : "User is not authenticated"}, 401);
+	return reply.send({success:true, message: "user is connected", pseudo:jwt.pseudo});
+	
+}
+
 
 
 export async function login_otp_validation_route(request, reply)
@@ -230,7 +251,7 @@ export async function signup_route(request, reply)
 		if (m)
 			return reply.send({success: false, message:"Oops! Your mail seems to be already used. Please try to reset your password"}, 400);
 		const u = await app.db.get(`SELECT * FROM users WHERE pseudo= ? `, [pseudo])
-		console.log(u)
+		console.log("check pseudo : ",u)
 		if (u)
 			return reply.send({success: false, message:"Oops! pseudo already used... "}, 400);
 		
