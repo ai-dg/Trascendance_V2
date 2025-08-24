@@ -1,4 +1,6 @@
 import { getTraductions } from "./script.js";
+import { showSignUp, showGuestPlay, showOptions, showSignIn } from "./script.js";
+import { logoutHandler } from "./login.js";
 export async function getDisconnectedHome() {
     const text = await getTraductions();
     return `<h1 id="title" class="text-2xl font-bold text-white mb-6">TRANSCENDENCE</h1>
@@ -19,4 +21,40 @@ export async function getConnectedHome() {
                 <button id="aboutBtn" class="bg-transparent text-white border-none hover:underline">${text.about}</button>
 				<button id="logoutBtn" class="bg-transparent text-white border-none hover:underline">${text.logout}</button>
             </div>`;
+}
+export async function initDisconnectedHome(text) {
+    // sign up button
+    const signupBtn = document.getElementById("signupBtn");
+    if (!signupBtn)
+        console.error("Failed to find signupBtn element");
+    signupBtn.addEventListener("click", () => showSignUp(text));
+    // sign in button
+    const signinBtn = document.getElementById("signinBtn");
+    if (!signinBtn)
+        console.error("Failed to find signinBtn element");
+    signinBtn.addEventListener("click", () => showSignIn(text));
+    // play as guest button
+    const playAsGuestBtn = document.getElementById("playAsGuestBtn");
+    if (!playAsGuestBtn)
+        console.error("Failed to find playAsGuestBtn element");
+    playAsGuestBtn.addEventListener("click", () => showGuestPlay(text));
+    // options button
+    const optionsBtn = document.getElementById("optionsBtn");
+    if (!optionsBtn)
+        console.error("Failed to find optionsBtn element");
+    optionsBtn.addEventListener("click", () => showOptions(text));
+}
+export async function initConnectedHome(text) {
+    // options button
+    const optionsBtn = document.getElementById("optionsBtn");
+    if (!optionsBtn)
+        console.error("Failed to find optionsBtn element");
+    else
+        optionsBtn.addEventListener("click", () => showOptions(text));
+    // logout button
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (!logoutBtn)
+        console.error("Failed to find logoutBtn element");
+    else
+        logoutBtn.addEventListener("click", logoutHandler);
 }

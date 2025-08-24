@@ -119,6 +119,41 @@ async function initCSRFToken(){
 };
 
 
+
+export async function logoutHandler(e:Event) {
+	const url = getUrl("auth/logout");
+	try{
+		const res = await fetch(url, {
+			method: "POST",
+			headers:{
+				"x-csrf-token": getCSRFToken()
+			},
+			credentials: 'include'
+		});
+		if (!res.ok)
+			console.log("Somethig went wrong here");
+		const result = await res.json()
+		window.location.href = '/';
+	}
+	catch(err)
+	{
+		console.log(err)
+		window.location.href = '/';
+	}
+}
+
+
+
+
+export function getCSRFToken() : string {
+
+    let csrf_token : string | null = document.querySelector("meta[name='csrf-token']")!.getAttribute('content');
+	if (!csrf_token)
+		return ""
+    return csrf_token
+}
+
+
 export async function log_handler(){
 	const menu = document.querySelector('.menu') as HTMLDivElement;
 	const otpCheck = document.querySelector(".otp-check") as HTMLDivElement;
@@ -138,12 +173,44 @@ export async function log_handler(){
 	{
 		const content = document.getElementById("content") as HTMLElement;
 		content.innerHTML = await getConnectedHome();
-		console.error("can't find menu")
+		const logoutBtn = document.getElementById("logoutBtn") as HTMLElement;
+		logoutBtn.addEventListener("click", logoutHandler);
 	}
 
 	await initCSRFToken();
-	
+}
 
+
+export async function isConnectedUser() {
+	const url = getUrl('auth/is-connected')
+	try {
+		const res = await fetch(url,
+			{
+				method:"POST",
+				headers:  {
+					"content-type": "application/json"		
+				},
+				credentials: "include",
+				body: JSON.stringify({})
+		})
+		if (!res.ok)
+		{
+			console.log("failed")
+			return false;
+		}
+		const result =  await res.json()
+		if (result.success)
+			return true;
+		else
+			return false;
+
+	}
+	catch(err)
+	{
+		console.log(err);
+		return false;
+	}
+	
 }
 
 export async function logUser(pseudo: string, password: string, text:Translations, view:string){

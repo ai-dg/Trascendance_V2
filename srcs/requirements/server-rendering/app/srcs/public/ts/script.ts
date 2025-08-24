@@ -1,4 +1,6 @@
-import { getSignupForm, logUser, registerUser } from './login.js';
+import test from 'node:test';
+import { getDisconnectedHome, getConnectedHome, initConnectedHome, initDisconnectedHome} from './interface.js';
+import { getSignupForm, isConnectedUser, logUser, registerUser } from './login.js';
 import type { params, Translations } from './types.js'
 import { getUrl } from './urls.js';
 
@@ -10,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-function showSignUp(text: Translations) {
+export function showSignUp(text: Translations) {
   console.log(">> showSignUp() called"); // to remove
   const contentDiv = document.getElementById('content') as HTMLDivElement;
   if (!contentDiv)
@@ -206,7 +208,7 @@ export function showVerificationCode(text: Translations, view: string, params: p
     backBtn.addEventListener("click", () => showSignUp(text));
 }
 
-function showSignIn(text: Translations) {
+export function showSignIn(text: Translations) {
   console.log(">> showSignIn() called");  // to remove
   const contentDiv = document.getElementById('content') as HTMLDivElement;
   if (!contentDiv)
@@ -289,7 +291,7 @@ function showSignIn(text: Translations) {
   backBtn.addEventListener("click", () => showHome(text));
 }
 
-function showForgotPasswd(text: Translations) {
+export function showForgotPasswd(text: Translations) {
   console.log(">> showForgotPasswd() called");  // to remove
   const contentDiv = document.getElementById('content') as HTMLDivElement;
   if (!contentDiv)
@@ -310,7 +312,7 @@ function showForgotPasswd(text: Translations) {
   backBtn.addEventListener("click", () => showSignIn(text));
 }
 
-function showGuestPlay(text: Translations) {
+export function showGuestPlay(text: Translations) {
   console.log(">> showGuestPlay() called");  // to remove
   const contentDiv = document.getElementById('content') as HTMLDivElement;
   if (!contentDiv)
@@ -365,7 +367,7 @@ function showGuestPlay(text: Translations) {
   backBtn.addEventListener("click", () => showHome(text));
 }
 
-function showOptions(text: Translations) {
+export function showOptions(text: Translations) {
   console.log(">> showOptions() called");  // to remove
   const contentDiv = document.getElementById('content') as HTMLDivElement;
   if (!contentDiv)
@@ -392,49 +394,29 @@ function showOptions(text: Translations) {
   const backBtn = document.getElementById("backBtn") as HTMLButtonElement;
   if (!backBtn)
     console.error("Failed to find backBtn element");
-  backBtn.addEventListener("click", () => showHome(text));}
+  backBtn.addEventListener("click", async () => showHome(text));
 
-function showHome(text: Translations) {
+}
+
+export async function showHome(text: Translations) {
 	
   if (!text) return;
   const contentDiv = document.getElementById('content') as HTMLDivElement;
   if (!contentDiv)
     console.error("Failed to find content element");
-  contentDiv.innerHTML = `
-    <h1 id="title" class="text-2xl font-bold text-white mb-6">${text.title}</h1>
-    <div class="flex flex-col space-y-4" id="buttonsContainer">
-      <button id="signupBtn" class="bg-transparent text-red-600 border-none hover:underline">${text.signup}</button>
-      <button id="signinBtn" class="bg-transparent text-white border-none hover:underline">${text.signin}</button>
-      <button id="playAsGuestBtn" class="bg-transparent text-white border-none hover:underline">${text.playAsGuest}</button>
-      <button id="optionsBtn" class="bg-transparent text-white border-none hover:underline">${text.options}</button>
-      <button id="aboutBtn" class="bg-transparent text-white border-none hover:underline">${text.about}</button>
-    </div>
-  `;
 
-  // sign up button
-  const signupBtn = document.getElementById("signupBtn") as HTMLButtonElement;
-  if (!signupBtn)
-    console.error("Failed to find signupBtn element");
-  signupBtn.addEventListener("click", () => showSignUp(text));
-
-  // sign in button
-  const signinBtn = document.getElementById("signinBtn") as HTMLButtonElement;
-  if (!signinBtn)
-    console.error("Failed to find signinBtn element");
-  signinBtn.addEventListener("click", () => showSignIn(text));
-
-  // play as guest button
-  const playAsGuestBtn = document.getElementById("playAsGuestBtn") as HTMLButtonElement;
-  if (!playAsGuestBtn)
-    console.error("Failed to find playAsGuestBtn element");
-  playAsGuestBtn.addEventListener("click", () => showGuestPlay(text));
-
-  // options button
-  const optionsBtn = document.getElementById("optionsBtn") as HTMLButtonElement;
-  if (!optionsBtn)
-    console.error("Failed to find optionsBtn element");
-  optionsBtn.addEventListener("click", () => showOptions(text));
-
+	const isConnected = await isConnectedUser();
+console.log("user is connected : ", isConnected);
+	if (isConnected)
+	{
+		await getConnectedHome()
+		initConnectedHome(text);
+	}
+	else
+	{
+		await getDisconnectedHome();
+		initDisconnectedHome(text);
+	}
 }
 
 const languages = [

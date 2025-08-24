@@ -187,22 +187,34 @@ export async function login_otp_validation_route(request, reply)
 /*** 																	Logout controlers		  											  			***/
 /**********************************************************************************************************************************************************/
 
+function getCookieParams(maxAge){
+	return {
+		httpOnly: true,
+		sameSite: 'none',
+		secure: true,
+		path: '/',
+		maxAge: maxAge
+	}
+}
+
 
 
 export async function logout_route(request, reply){
 		const token = request.cookies.token;
 		try{
 			const payload = verify(token, process.env.JWT_SECRET);
+			console.log(payload);
 			if (!payload)
-				return reply.send({success: true, message:"user not authenticated"}, 401)
+				return reply.send({success: true, message:"user already disconnected"}, 401)
 			else
 			{
 				await redis.set(`jwt:${payload.jti}`, "not valid", { EX: 1});
-				return reply.send({success: true, message:"user logged out"})
+				return reply.setCookie('token', token, getCookieParams(0))
+							.send({success: true, message:"user logged out"})
 			}		
 		}
 		catch (err){
-			return reply.send ({success:false, message: "Internal app error"}, 500)
+			return reply.send({success:false, message: "Internal app error"}, 500)
 	}
 }
 
@@ -297,8 +309,6 @@ export async function signup_route(request, reply)
 			});
 		return reply.send({success:true, status:"otp-validation", otp_id, expire_at})
 }
-
-
 
 
 export async function signup_otp_validation_route(request, reply)
