@@ -1,6 +1,6 @@
 import test from 'node:test';
 import { getDisconnectedHome, getConnectedHome, initConnectedHome, initDisconnectedHome} from './interface.js';
-import { getSignupForm, isConnectedUser, logUser, registerUser } from './login.js';
+import { getSignupForm, initCSRFToken, isConnectedUser, logUser, registerUser } from './login.js';
 import type { params, Translations } from './types.js'
 import { getUrl } from './urls.js';
 
@@ -409,13 +409,14 @@ export async function showHome(text: Translations) {
 console.log("user is connected : ", isConnected);
 	if (isConnected)
 	{
-		await getConnectedHome()
-		initConnectedHome(text);
+		await initCSRFToken()
+		contentDiv.innerHTML = await getConnectedHome()
+		await initConnectedHome(text);
 	}
 	else
 	{
-		await getDisconnectedHome();
-		initDisconnectedHome(text);
+		contentDiv.innerHTML = await getDisconnectedHome();
+		await initDisconnectedHome(text);
 	}
 }
 

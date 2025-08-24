@@ -88,7 +88,7 @@ export async function registerUser(pseudo: string, password: string, email: stri
 }
 
 
-async function initCSRFToken(){
+export async function initCSRFToken(){
 
 	try{
 		const res = await fetch(getUrl('auth/csrf-token'),
@@ -155,29 +155,7 @@ export function getCSRFToken() : string {
 
 
 export async function log_handler(){
-	const menu = document.querySelector('.menu') as HTMLDivElement;
-	const otpCheck = document.querySelector(".otp-check") as HTMLDivElement;
-	const signupBtn = document.getElementById('signupBtn') as HTMLDivElement;
-	const signinBtn = document.getElementById('signinBtn') as HTMLDivElement;
-	if (menu)
-	{
-		menu.removeChild(signupBtn);
-		menu.removeChild(signinBtn);
-		if (otpCheck)
-			otpCheck.style.display = "none"
-		let logoutBtn = document.createElement('button');
-		logoutBtn.id = "lougoutBn";
-		logoutBtn.classList.add("bg-transparent",  "text-red-600", "border-none",  "hover:underline")
-		menu.appendChild(logoutBtn);
-	}else
-	{
-		const content = document.getElementById("content") as HTMLElement;
-		content.innerHTML = await getConnectedHome();
-		const logoutBtn = document.getElementById("logoutBtn") as HTMLElement;
-		logoutBtn.addEventListener("click", logoutHandler);
-	}
-
-	await initCSRFToken();
+	window.location.href ="/";
 }
 
 

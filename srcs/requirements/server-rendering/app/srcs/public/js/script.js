@@ -1,5 +1,5 @@
 import { getDisconnectedHome, getConnectedHome, initConnectedHome, initDisconnectedHome } from './interface.js';
-import { getSignupForm, isConnectedUser, logUser, registerUser } from './login.js';
+import { getSignupForm, initCSRFToken, isConnectedUser, logUser, registerUser } from './login.js';
 import { getUrl } from './urls.js';
 console.log("Script working properly"); // to remove
 document.addEventListener("DOMContentLoaded", () => {
@@ -343,12 +343,13 @@ export async function showHome(text) {
     const isConnected = await isConnectedUser();
     console.log("user is connected : ", isConnected);
     if (isConnected) {
-        await getConnectedHome();
-        initConnectedHome(text);
+        await initCSRFToken();
+        contentDiv.innerHTML = await getConnectedHome();
+        await initConnectedHome(text);
     }
     else {
-        await getDisconnectedHome();
-        initDisconnectedHome(text);
+        contentDiv.innerHTML = await getDisconnectedHome();
+        await initDisconnectedHome(text);
     }
 }
 const languages = [

@@ -1,7 +1,6 @@
 import { getErrorMessage } from "./error.js";
 import { getUrl } from "./urls.js";
 import { showVerificationCode } from "./script.js";
-import { getConnectedHome } from "./interface.js";
 export function getSignupForm(text) {
     return `
     <h2 class="text-xl font-bold mb-6 text-white">${text.signupTitle}</h2>
@@ -68,7 +67,7 @@ export async function registerUser(pseudo, password, email, text, view) {
         errorDiv.textContent = getErrorMessage(err);
     }
 }
-async function initCSRFToken() {
+export async function initCSRFToken() {
     try {
         const res = await fetch(getUrl('auth/csrf-token'), {
             method: "GET",
@@ -120,27 +119,7 @@ export function getCSRFToken() {
     return csrf_token;
 }
 export async function log_handler() {
-    const menu = document.querySelector('.menu');
-    const otpCheck = document.querySelector(".otp-check");
-    const signupBtn = document.getElementById('signupBtn');
-    const signinBtn = document.getElementById('signinBtn');
-    if (menu) {
-        menu.removeChild(signupBtn);
-        menu.removeChild(signinBtn);
-        if (otpCheck)
-            otpCheck.style.display = "none";
-        let logoutBtn = document.createElement('button');
-        logoutBtn.id = "lougoutBn";
-        logoutBtn.classList.add("bg-transparent", "text-red-600", "border-none", "hover:underline");
-        menu.appendChild(logoutBtn);
-    }
-    else {
-        const content = document.getElementById("content");
-        content.innerHTML = await getConnectedHome();
-        const logoutBtn = document.getElementById("logoutBtn");
-        logoutBtn.addEventListener("click", logoutHandler);
-    }
-    await initCSRFToken();
+    window.location.href = "/";
 }
 export async function isConnectedUser() {
     const url = getUrl('auth/is-connected');

@@ -19,6 +19,7 @@ RUN npm install -g nodemon
 RUN npm install --package-lock \
 	dotenv \
 	mysql2 \
+	fastify@latest \
 	@fastify/formbody \
 	@fastify/helmet \
 	@fastify/rate-limit \
