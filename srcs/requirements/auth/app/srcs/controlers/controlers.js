@@ -66,7 +66,7 @@ export async function login_route(request, reply){
 			html: `<p>Votre code de connexion est : ${otp}</p>`
 			};
 			if (! app.mailChannel)
-				console.log("fastify CHANNEL UNDEFINED")
+				return reply.send(get_error_message(e.SQL_ERROR, 500))
 			app.mailChannel.sendToQueue(mail_queue, Buffer.from(JSON.stringify(mailOptions)), {
 					persistent: true,
 				});
@@ -344,57 +344,33 @@ export async function signup_otp_validation_route(request, reply)
 
 export async function reset_forgotten_password_route(request, reply)
 {
-		const { email, uuid } = request.params;
-		const { password } = request.body;
-		const is_valid = await is_valid_path(email, uuid);
+
+	const { otp, otp_id } = request.body;
+	const row = await redis.get(otp_id);
+	const data = JSON.parse(row)
+	if (!data)
+		return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
+	if (typeof(otp) !== "string" && otp.length != 6)
+		return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
+	const is_valid = await compare(otp, data.otp_hashed);
+	try {
 		if (!is_valid)
-			return reply.send({success: false, message: "The reset link has expired or is corrupted and is no longer valid."}, 401)
-			const row = await app.db.get("SELECT * FROM users WHERE user_mail= ?", [email]);
-		if (!row)
-			return reply.send({success: false, message: "invalid mail"}, 401)
-		const { success, response } = is_valid_password(password)
-		if (!success)
-			return reply.send(response, 401);
+			return reply.send({success: false, message: "the code is no longer valid, please try again"}, 403)
 		const passwordHash = await hash(password, 10);
 		await app.db.get("UPDATE users SET user_password= ? WHERE user_mail= ?", [passwordHash, email])
 		await redis.del(`${email}:reset-password`)
-		return reply.send({success: true, message: "password changed"}, 401)
+		return reply.send({success: true, message: "password changed"}, 201)
+
+	}
+	catch(err)
+	{
+		console.log(err)
+		return reply.send(get_error_message(e.SERVER_ERROR, 500));
 	}
 
 
-export async function reset_forgotten_password_request_route(request, reply)
-{
-
-		console.log("in auth/reset-password/ : " , request.url)
-		const { email, uuid } = request.params;	
-		const is_valid = await is_valid_path(email, uuid);
-		if (!is_valid)
-			return reply.send({success: false, message: "The reset link has expired or is corrupted and is no longer valid."}, 401)
-		const row = await app.db.get("SELECT * FROM users WHERE user_mail= ?", [email]);
-		if (!row)
-			return reply.send({success: false, message: "invalid mail"}, 401)
-		return reply.send({success:true, message: "user is registered"})
-	}
-
-
-export async function update_password_route(request, reply)
-{
-	
-		let csrf = await redis.get(`${user.user_mail}-csrf`)
-		const {oldPassword, newPassword} = request.body;
-		csrfTokenReceived = request.headers["gt-csrfToken"]
-		const token = request.cookies.token;
-		if (!token || !csrf || csrf != csrfTokenReceived) {
-			console.log("no token found")
-			return reply.send(get_error_message(e.USER_NOT_AUTHENTICATED, 403));
-		}
-		try {
-			const payload = verify(token, process.env.JWT_SECRET);
-			console.log(payload)
-		} catch (err) {
-			console.log("here....", err.message)	
-		}
 }
+
 
 
 /**
@@ -405,25 +381,50 @@ export async function update_password_route(request, reply)
  */
 
 
-export async function reset_password_route(request, reply)  {
+export async function reset_password_request_route(request, reply)  {
 		const email = request.body.email;
-		const row = await app.db.get("SELECT * FROM users WHERE user_mail= ?", [email]);
-		if (row)
+		console.log("email: ", email);
+		let user = null;
+		try{
+			user = await app.db.get("SELECT * FROM users WHERE user_mail= ?", [email]);
+		}
+		catch(err)
 		{
-			const UUID = crypto.randomUUID();
-			await redis.set(`${email}:reset-password`, UUID, {EX:600})
+			console.error(err)
+			return reply.send(get_error_message(e.SQL_ERROR, 500))
+		}
+		if (user)
+		{
+			const otp = generateOTP();
+			const otp_hashed = await hash(otp, 10);
+
+			const id = crypto.randomUUID();
+			const expire_at = Date.now() + 5 * 60 * 1000;
+			const validate = {
+				email: user.user_mail,
+				otp_hashed : otp_hashed,
+				user_id: user.user_id,
+				pseudo: user.pseudo,
+				expire_at : expire_at,
+			}
+			await redis.set(id, JSON.stringify(validate), { EX: 300 });
 			const mailOptions = {
 			from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-			to: `${email}`,
-			subject: "Réinitialisation de votre mot de passe",  
-			text: `Voici le lien pour réinitialiser votre mot de passe : https://${base_url}/reset-password/${email}/${UUID}`,
-			html: `<p>Voici le lien pour réinitialiser votre mot de passe : <a href='https://${base_url}/reset-password/${email}/${UUID}'>Cliquez ici</a></p>`
+			to: `${user.user_mail}`,
+			subject: "Mise a jour du mot de passe",  
+			text: `Votre code est : ${otp}`,
+			html: `<p>Votre code est : ${otp}</p>`
 			};
 			if (! app.mailChannel)
-				console.log("FASTIFY CHANNEL UNDEFINED")
+				return reply.send(get_error_message(e.SQL_ERROR, 500))
 			app.mailChannel.sendToQueue(mail_queue, Buffer.from(JSON.stringify(mailOptions)), {
 					persistent: true,
 				});
-		}	
-		return reply.send(get_message(true, e.MAIL_SENDED));
+			return reply.send({success:true, status:"otp-validation", otp_id: id, expire_at})		
+		}
+		else 
+			return reply.send(get_error_message(e.AUTH_INVALID_CREDENTIALS, 401));
 	}
+
+
+

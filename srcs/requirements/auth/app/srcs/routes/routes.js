@@ -1,11 +1,9 @@
 import { 
-		reset_password_route, 
 		get_csrf_route,
 		login_route,
 		logout_route, 
-		update_password_route,
 		reset_forgotten_password_route,
-		reset_forgotten_password_request_route,
+		reset_password_request_route,
 		signup_route,
 		login_otp_validation_route,
 		signup_otp_validation_route,
@@ -32,27 +30,11 @@ export function routes(app, options)
 
 	app.post('/logout', async (request, reply) => logout_route(request, reply))
 	
-	/// debuggin process ----
-	/**
-	 * flow : signup request... validation  link sended...
-	 * route requested : 
-	 * /auth/signup -> a mail is sended via rabbitmq...
-	 * 
-	 * 
-	 */
-
-	////
-
-
-
-	app.post('/password', async (request, reply) => reset_password_route(request, reply));
-	app.patch('/password', async (request, reply) => update_password_route(request, reply));
-
 
 	// reset-password (forget password process)
 
-	app.get('/reset-password/:email/:uuid', async (request, reply) => reset_forgotten_password_request_route(request, reply));
-	app.patch('/reset-password/:email/:uuid', async (request, reply) =>reset_forgotten_password_route(request, reply));
+	app.post('/reset-password', async (request, reply) => reset_password_request_route(request, reply));
+	app.post('/reset-password/otp-validation', async (request, reply) => reset_forgotten_password_route(request, reply));
 	
 
 

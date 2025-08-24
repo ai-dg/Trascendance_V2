@@ -1,6 +1,7 @@
 import { getDisconnectedHome, getConnectedHome, initConnectedHome, initDisconnectedHome, getSignupForm } from './interface.js';
 import { initCSRFToken, isConnectedUser, logUser, registerUser } from './login.js';
 import { OTPValidationHandler } from './handlers.js';
+import { getUrl } from './urls.js';
 console.log("Script working properly"); // to remove
 document.addEventListener("DOMContentLoaded", () => {
     loadLanguage(languages[currentLangIndex].code, 'home');
@@ -222,11 +223,48 @@ export function showForgotPasswd(text) {
     contentDiv.innerHTML = `
     <h2 class="text-xl font-bold mb-6 text-white">${text.forgotPasswd}</h2>
     <form class="flex flex-col space-y-4">
-      <input type="text" placeholder="${text.email}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
+      <input type="text" name="email" placeholder="${text.email}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
       <button type="forgotPasswd" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">${text.resetPasswd}</button>
       <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
       </form>
   `;
+    const form = document.querySelector("form");
+    if (!form)
+        console.error("Failed to find form element");
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = form.email.value;
+        console.log(email);
+        const url = getUrl('auth/reset-password');
+        try {
+            const res = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "content-type": "application/json"
+                },
+                body: JSON.stringify({ email })
+            });
+            if (!res.ok)
+                // TODO: handle this message
+                console.log("KO");
+            else {
+                const result = await res.json();
+                console.log(result.message);
+                if (result.success) {
+                    showVerificationCode(text, "", { otp_id: result.otp_id, context: "reset-password", handler: () => { console.log("Success ! go back to login page !"); }, });
+                }
+                else {
+                    // TODO: handle this message
+                    console.log("fail");
+                }
+            }
+        }
+        catch (err) {
+            // TODO: handle this message
+            console.log(err);
+        }
+        alert("MAIL SENDED");
+    });
     // back button
     const backBtn = document.getElementById("backBtn");
     if (!backBtn)

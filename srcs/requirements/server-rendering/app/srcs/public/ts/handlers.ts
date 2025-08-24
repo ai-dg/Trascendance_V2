@@ -25,8 +25,9 @@ export async function OTPValidationHandler(params:params, inputs: NodeListOf<HTM
 		});
 
 		if (!res)
-		throw new Error("Can't reach the server");
+			throw new Error("Can't reach the server");
 		const result = await res.json();
+		console.log(result);
 		if (result.success)
 		{
 			params.handler();
