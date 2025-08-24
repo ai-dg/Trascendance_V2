@@ -1,8 +1,8 @@
 import test from 'node:test';
-import { getDisconnectedHome, getConnectedHome, initConnectedHome, initDisconnectedHome} from './interface.js';
-import { getSignupForm, initCSRFToken, isConnectedUser, logUser, registerUser } from './login.js';
+import { getDisconnectedHome, getConnectedHome, initConnectedHome, initDisconnectedHome, getSignupForm} from './interface.js';
+import { initCSRFToken, isConnectedUser, logUser, registerUser } from './login.js';
 import type { params, Translations } from './types.js'
-import { getUrl } from './urls.js';
+import { OTPValidationHandler } from './handlers.js';
 
 console.log("Script working properly");  // to remove
 
@@ -17,6 +17,8 @@ export function showSignUp(text: Translations) {
   const contentDiv = document.getElementById('content') as HTMLDivElement;
   if (!contentDiv)
     console.error("Failed to find content element");
+
+  // update DOM
   contentDiv.innerHTML = getSignupForm(text);
 
   // show password button
@@ -162,41 +164,7 @@ export function showVerificationCode(text: Translations, view: string, params: p
   const verifyBtn = document.getElementById('verifyBtn') as HTMLButtonElement;
   if (!verifyBtn)
     console.error("Failed to find verifyBtn element");
-  verifyBtn.addEventListener('click', async () => {
-	  const  context = params.context;
-	  const code = Array.from(inputs).map(i => i.value).join('');
-	  console.log("verifyBtn called : code ", code)
-	try{
-		const res = await fetch(getUrl(`auth/${context}/otp-validation`),{
-			method:"POST",
-			headers: {
-				'content-type': 'application/json',
-			},
-			body: JSON.stringify({otp: code, otp_id: params.otp_id})
-		});
-
-		if (!res)
-		throw new Error("Can't reach the server");
-		const result = await res.json();
-		if (result.success)
-		{
-			params.handler();
-		}
-		else{
-			console.log('failure : ', result.message)
-		}
-	}
-	catch (err)
-	{
-		console.log(err);
-		
-	}
-	
-
-	
-	
-
-  });
+  verifyBtn.addEventListener('click', async () => OTPValidationHandler(params, inputs));
 
   // back button
   const backBtn = document.getElementById("backBtn") as HTMLButtonElement;
