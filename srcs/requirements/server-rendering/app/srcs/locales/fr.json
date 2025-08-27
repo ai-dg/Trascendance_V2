@@ -13,7 +13,8 @@
 
   "signinTitle": "POUR SE CONNECTER:",
   "signIn": "CONNECT TOI ICI",
-  "login": "USERNAME", 
+  "login": "USERNAME",
+  "logout": "DECONNECTER", 
   "passwd": "MOT DE PASSE",
   "other": "OU CONNECT TOI AVEC :",
   "forgotPasswd": "MOT DE PASSE OUBLIE ?",

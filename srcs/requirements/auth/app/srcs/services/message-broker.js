@@ -1,5 +1,5 @@
 import amqp from 'amqplib';
-import { server } from '../../server.js';
+import { app } from '../../server.js';
 import { confirm_email_token } from '../auth.js';
 
 
@@ -34,9 +34,9 @@ export async function setupMessageQueues() {
   const { connection, mailChannel, validationChannel } = await connect_message_queue();
   
   // Attacher les canaux a fastify
-  server.mailChannel = mailChannel;
-  server.validationChannel = validationChannel;
-  server.rabbitConnection = connection;
+  app.mailChannel = mailChannel;
+  app.validationChannel = validationChannel;
+  app.rabbitConnection = connection;
   
 
   validationChannel.consume(validation_queue, async (msg) => {

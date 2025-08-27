@@ -16,7 +16,7 @@ import { routes } from './srcs/routes/routes.js';
 /************************************************************************************************* */
 
 
-export const server = Fastify({trustProxy: true});
+export const app = Fastify({trustProxy: true});
 const is_prod = process.env.NODE_ENV === "PROD"
 export const base_url = is_prod ? "www.transcendance.com" : "localhost"
 
@@ -31,52 +31,58 @@ export const redis = createClient({
 await redis.connect();
 
 
-await server.register(cors, {
+await app.register(cors, {
 	origin: `https://${base_url}`,
 	credentials: true
 });
 
 
-await server.register(cookie, {
+await app.register(cookie, {
 	secret: process.env.COOKIE_SECRET,
 	parseOptions: {}
 });
 
 
 async function setupDatabase() {
-	const db = await open({
-		filename: '/data/auth.sqlite',
-		driver: sqlite3.Database
-	})
-
-	await db.exec(`
-		CREATE TABLE IF NOT EXISTS users (
-		user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_mail TEXT NOT NULL UNIQUE,
-		pseudo TEXT NOT NULL UNIQUE,
-		user_password TEXT NOT NULL,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		);`);
-		// CREATE TABLE IF NOT EXISTS auth (
-		// id INTEGER PRIMARY KEY AUTOINCREMENT,
-		// context TEXT NOT NULL,
-		// created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		// )
-	return db;
+	try{
+		const db = await open({
+			filename: '/data/auth.sqlite',
+			driver: sqlite3.Database
+		})
+	
+		await db.exec(`
+			CREATE TABLE IF NOT EXISTS users (
+			user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_mail TEXT NOT NULL UNIQUE,
+			pseudo TEXT NOT NULL UNIQUE,
+			user_password TEXT NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+			);`);
+			// CREATE TABLE IF NOT EXISTS auth (
+			// id INTEGER PRIMARY KEY AUTOINCREMENT,
+			// context TEXT NOT NULL,
+			// created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+			// )
+		return db;
+	}
+	catch(err){
+		console.log("fail opening db");
+		return null;
+	}
 }
 
 
-server.addHook('onRequest', async (request, reply) => {
+app.addHook('onRequest', async (request, reply) => {
 	console.log(`[${new Date().toISOString()}] ${request.method} ${request.url}`);
 	// console.log('Origine :', request.headers.origin);
 });
 
 
 
-server.register(routes,{});
+app.register(routes,{});
 
 
-server.get('/test-route', async () => {
+app.get('/test-route', async () => {
 	return { status: 'ok', service: 'auth' };
 });
 
@@ -85,8 +91,8 @@ server.get('/test-route', async () => {
 const start = async () => {
 	try {
 		const port = 3000;
-		server.db = await setupDatabase();
-		await server.listen({ port: port, host: '0.0.0.0'});
+		app.db = await setupDatabase();
+		await app.listen({ port: port, host: '0.0.0.0'});
 		await setupMessageQueues();
 		console.log(`Auth service running on port ${port}`);
 	} catch (err) {

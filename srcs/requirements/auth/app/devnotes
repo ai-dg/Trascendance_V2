@@ -7,3 +7,7 @@ protocole de sécurité :
 renvoyer un mail en cas d'ip insolite + protocole de récupération
 
 
+.tables          -- liste les tables
+.schema users    -- structure de la table 'users'
+SELECT * FROM users;  -- voir le contenu de la table
+.exit             -- sortir

@@ -1,4 +1,4 @@
-import { redis, app } from '../server.js'
+import { redis, app } from './server.js'
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { e } from './messages.js';
@@ -83,16 +83,16 @@ export async function is_auth(request){
 	let exists = null;
 
 	if (!token)
-		return {success:false, jwt:{}}
+		return {success:false, jti:{}}
 	try{
 		is_valid = verify(token, process.env.JWT_SECRET)
 		if (!is_valid)
-			return {success:false, jwt:{}, message: e.AUTH_INVALID_TOKEN}
+			return {success:false, jti:{}, message: e.AUTH_INVALID_TOKEN}
 	}
 	catch(err)
 	{
 		console.error(err.message);
-		return {success:false, jwt:{}, message: e.SERVER_ERROR}
+		return {success:false, jti:{}, message: e.SERVER_ERROR}
 	}
 
 	try
@@ -103,11 +103,11 @@ export async function is_auth(request){
 	catch(err)
 	{
 		console.error(err.message);
-		return {success:false, jwt:{}}
+		return {success:false, jti:{}}
 	}
 	if (!exists || exists != "valid")
-		return {success:false, jwt:{}}
-	return {success:true, jwt:val}
+		return {success:false, jti:{}}
+	return {success:true, jti:val}
 }
 
 
@@ -194,15 +194,4 @@ export async function confirm_email_token(token)
 	const insert = query_result[0];
 	if (insert && insert.affectedRows > 0)
 	return { success: true, message: "Account created !" };
-}
-export async function signup_otp_validation(token)
-{
-	const { otp, otp_id } = JSON.parse(request.body);
-	const row = await redis.get(otp_id);
-	const data = JSON.parse(row)
-	if (!data)
-		return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
-	if (typeof(otp) !== "string" && otp.length != 6)
-		return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
-	const is_valid = await compare(otp, data.otp_hashed);
 }
