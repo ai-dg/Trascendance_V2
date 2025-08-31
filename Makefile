@@ -17,6 +17,22 @@ up: build
 	docker compose -f $(COMPOSE) create
 	docker compose -f $(COMPOSE) up --remove-orphans
 
+d: build
+	docker compose -f $(COMPOSE) create
+	docker compose -f $(COMPOSE) up --remove-orphans -d
+	@$(MAKE) find-logs
+
+watch:
+	( \
+		cd srcs/services/server-rendering/app && \
+		npm run watch:ts & \
+		npm run watch:css & \
+		wait \
+	)
+
+dev:
+	docker compose -f $(COMPOSE) up --force-recreate --build
+
 build:
 	docker compose -f $(COMPOSE) build
 
@@ -35,9 +51,11 @@ re:
 ######################################################################
 
 down:
+	@$(MAKE) kill-logs
 	docker compose -f $(COMPOSE) down
 
 downv:
+	@$(MAKE) kill-logs
 	docker compose -f $(COMPOSE) down -v
 	@echo $(GREEN)Removing database volume folder...$(RESET)
 	@sudo rm -rf ${DATABASE_DIRECTORIES}
@@ -58,6 +76,16 @@ clean:
 	@echo ${GREEN}Cache cleaned${RESET}
 	@docker system df
 
+######################################################################
+#************************ ▌ STOP & CLEAN ▌***************************#
+######################################################################
+
+find-logs:
+	@echo $(GREEN)Generating logs...$(RESET)
+	@srcs/scripts/logs/log-finder.sh
+
+kill-logs:
+	@srcs/scripts/logs/kill-finder.sh
 
 ######################################################################
 #*********************** ▌ MONITORING ▌ *****************************#

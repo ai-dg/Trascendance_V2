@@ -1,0 +1,44 @@
+{
+  "title": "TRANSCENDENCE",
+  "signin": "CONECTAR",
+  "signup": "CRIAR UMA CONTA",
+  "playAsGuest": "JOGAR COMO CONVIDADO",
+  "options": "CONFIGURACOES",
+  "about": "SOBRE",
+
+  "optionsMessage": "CONFIGS AQUI??",
+  "lang": "IDIOMA: ",
+  "language": "PORTUGUES",
+  "back": "VOLTAR",
+
+  "signinTitle": "PARA SE CONECTAR",
+  "signIn": "CONECTE-SE AQUI",
+  "login": "NOME DE USUARIO", 
+  "logout": "SAIR",
+  "passwd": "SENHA",
+  "other": "OU CONECTE-SE COM :",
+  "forgotPasswd": "ESQUECEU A SENHA?",
+  "resetPasswd": "RESETAR SENHA",
+
+  "signupTitle": "PARA CRIAR UMA CONTA",
+  "signupBtn": "CRIAR",
+  "email": "EMAIL",
+  "passwdConfirm": "VERIFIQUE SUA SENHA",
+  "otherUp": "OU INSCREVA-SE COM:",
+
+  "guestTitle": "JOGAR COMO CONVIDADO",
+  "nickname": "APELIDO",
+  "chooseAvatar": "ESCOLHA UM AVATAR",
+  "play": "JOGAR",
+
+  "errLength": "A senha deve conter pelo menos 8 caracteres.",
+  "errUpper": "A senha deve conter pelo menos uma letra maiúscula.",
+  "errLower": "A senha deve conter pelo menos uma letra minúscula.",
+  "errNbr": "A senha deve conter pelo menos um número.",
+  "errMatch": "As senhas não coincidem.",
+  "errEmail": "Por favor, insira um endereço de e-mail válido.",
+
+  "verifyTitle": "Verificação de e-mail",
+  "verifyInstruction": "Digite o código de 6 dígitos enviado para o seu e-mail.",
+  "verify": "Verificar"
+}

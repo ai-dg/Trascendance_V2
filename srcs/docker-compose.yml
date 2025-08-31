@@ -10,14 +10,15 @@ services:
     build:
       context: .
       args: {}
-      dockerfile: ./requirements/gateway/Dockerfile
+      dockerfile: ./services/gateway/Dockerfile
     networks:
     - transcendence
     - internal
     ports:
       - "8080:80"
     volumes:
-      - ./requirements/gateway/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./services/gateway/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./frontend:/usr/share/nginx/html
     user: "0:0"
     restart: unless-stopped
     environment: {}
@@ -40,29 +41,68 @@ services:
   server-rendering_app:
     container_name: server-rendering_app
     build:
-      context: ./requirements/server-rendering/app
+      context: ./services
+      dockerfile: server-rendering/app/Dockerfile
     expose:
       - 3005
-    # volumes:
-    #   - sqlite_data:/data
+    volumes:
+      - /data/node_modules
+      # - ./services/server-rendering/app:/data
+      # - sqlite_data:/data
+      # - ./volume/redis_data:/data
     networks:
       - internal
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
+      - NODE_ENV=${NODE_ENV}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
+      - CSRF_SECRET=${CSRF_SECRET}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: on-failure
 
   auth_app:
     container_name: auth_app
     build:
-      context: ./requirements/auth/app
-    expose:
-      - 3000
+      context: ./services/auth/app
+    ports:
+      - 3000:3000
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
+      - CSRF_SECRET=${CSRF_SECRET}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
     volumes:
-      - ./volumes/auth:/data
+      - /data/node_modules
+      # - sqlite_data:/data
+      # - ./volume/redis_data:/data
+      - ./services/auth/app:/data
     networks:
       - internal
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: on-failure
 
   language-manager_app:
     container_name: language-manager_app
     build:
-      context: ./requirements/language-manager/app
+      context: ./services/language-manager/app
     expose:
       - 3001
     # volumes:
@@ -73,7 +113,7 @@ services:
   live-chat_app:
     container_name: live-chat_app
     build:
-      context: ./requirements/live-chat/app
+      context: ./services/live-chat/app
     expose:
       - 3002
     volumes:
@@ -84,7 +124,7 @@ services:
   remote-players_app:
     container_name: remote-players_app
     build:
-      context: ./requirements/remote-players/app
+      context: ./services/remote-players/app
     expose:
       - 3003
     networks:
@@ -93,7 +133,7 @@ services:
   match-maker_app:
     container_name: match-maker_app
     build:
-      context: ./requirements/match-maker/app
+      context: ./services/match-maker/app
     expose:
       - 3004
     # volumes:
@@ -106,6 +146,87 @@ services:
 #*************************🚀 CORE SERVICES ***************************
 ######################################################################
 
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: gt_mailpit
+    ports:
+      - "8025:8025"    # Interface web
+      - "1025:1025"    # SMTP
+    restart: unless-stopped
+    networks:
+      - internal
+
+  mail:
+    container_name: mail
+    build:
+      context: ./services/mail/app/
+    ports:
+      - 3300:3300
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - ./services/mail/app:/data
+      - /data/node_modules
+    networks:
+      - internal
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: on-failure
+
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbit
+    ports:
+      - "5672:5672"    # port principal AMQP (clients)
+      - "15672:15672"  # interface web management
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s 
+    networks:
+      - internal
+    restart: unless-stopped
+
+  redis:
+    container_name: redis
+    image: redis:7
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    ports:
+      - "6379:6379"    
+    networks:
+      - internal
+    volumes:
+      - ./volumes/redis_data:/data
+
+######################################################################
+#************************** 📦 FRONTEND *******************************
+######################################################################
+
+  frontend_app:
+    container_name: frontend_app
+    build:
+      context: ./services/frontend
+    expose:
+      - 3006
+    volumes:
+      - ./services/frontend/srcs:/app/srcs
+      - ./services/frontend/locales:/app/locales
+    networks:
+      - internal
+      - transcendence
 
 
 ######################################################################
