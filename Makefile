@@ -24,7 +24,7 @@ d: build
 
 watch:
 	( \
-		cd srcs/requirements/server-rendering/app && \
+		cd srcs/services/server-rendering/app && \
 		npm run watch:ts & \
 		npm run watch:css & \
 		wait \
@@ -82,10 +82,10 @@ clean:
 
 find-logs:
 	@echo $(GREEN)Generating logs...$(RESET)
-	@srcs/requirements/scripts/logs/log-finder.sh
+	@srcs/scripts/logs/log-finder.sh
 
 kill-logs:
-	@srcs/requirements/scripts/logs/kill-finder.sh
+	@srcs/scripts/logs/kill-finder.sh
 
 ######################################################################
 #*********************** ▌ MONITORING ▌ *****************************#

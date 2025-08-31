@@ -10,14 +10,15 @@ services:
     build:
       context: .
       args: {}
-      dockerfile: ./requirements/gateway/Dockerfile
+      dockerfile: ./services/gateway/Dockerfile
     networks:
     - transcendence
     - internal
     ports:
       - "8080:80"
     volumes:
-      - ./requirements/gateway/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./services/gateway/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./frontend:/usr/share/nginx/html
     user: "0:0"
     restart: unless-stopped
     environment: {}
@@ -40,12 +41,13 @@ services:
   server-rendering_app:
     container_name: server-rendering_app
     build:
-      context: ./requirements/server-rendering/app
+      context: ./services
+      dockerfile: server-rendering/app/Dockerfile
     expose:
       - 3005
     volumes:
       - /data/node_modules
-      - ./requirements/server-rendering/app:/data
+      # - ./services/server-rendering/app:/data
       # - sqlite_data:/data
       # - ./volume/redis_data:/data
     networks:
@@ -70,7 +72,7 @@ services:
   auth_app:
     container_name: auth_app
     build:
-      context: ./requirements/auth/app
+      context: ./services/auth/app
     ports:
       - 3000:3000
     environment:
@@ -87,7 +89,7 @@ services:
       - /data/node_modules
       # - sqlite_data:/data
       # - ./volume/redis_data:/data
-      - ./requirements/auth/app:/data
+      - ./services/auth/app:/data
     networks:
       - internal
     depends_on:
@@ -100,7 +102,7 @@ services:
   language-manager_app:
     container_name: language-manager_app
     build:
-      context: ./requirements/language-manager/app
+      context: ./services/language-manager/app
     expose:
       - 3001
     # volumes:
@@ -111,7 +113,7 @@ services:
   live-chat_app:
     container_name: live-chat_app
     build:
-      context: ./requirements/live-chat/app
+      context: ./services/live-chat/app
     expose:
       - 3002
     volumes:
@@ -122,7 +124,7 @@ services:
   remote-players_app:
     container_name: remote-players_app
     build:
-      context: ./requirements/remote-players/app
+      context: ./services/remote-players/app
     expose:
       - 3003
     networks:
@@ -131,7 +133,7 @@ services:
   match-maker_app:
     container_name: match-maker_app
     build:
-      context: ./requirements/match-maker/app
+      context: ./services/match-maker/app
     expose:
       - 3004
     # volumes:
@@ -158,7 +160,7 @@ services:
   mail:
     container_name: mail
     build:
-      context: ./requirements/mail/app/
+      context: ./services/mail/app/
     ports:
       - 3300:3300
     environment:
@@ -166,7 +168,7 @@ services:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
       - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
     volumes:
-      - ./requirements/mail/app:/data
+      - ./services/mail/app:/data
       - /data/node_modules
     networks:
       - internal
@@ -207,8 +209,24 @@ services:
     networks:
       - internal
     volumes:
-      - ./volume/redis_data:/data
+      - ./volumes/redis_data:/data
 
+######################################################################
+#************************** 📦 FRONTEND *******************************
+######################################################################
+
+  frontend_app:
+    container_name: frontend_app
+    build:
+      context: ./services/frontend
+    expose:
+      - 3006
+    volumes:
+      - ./services/frontend/srcs:/app/srcs
+      - ./services/frontend/locales:/app/locales
+    networks:
+      - internal
+      - transcendence
 
 
 ######################################################################
