@@ -1,6 +1,6 @@
 import { getErrorMessage } from "./error.js";
 import { getUrl } from "./urls.js";
-import { showVerificationCode } from "./script.js";
+import { showVerificationCode } from "./validator.js";
 import { log_handler, signupSuccessHandler } from "./handlers.js";
 export async function registerUser(pseudo, password, email, text, view) {
     const errorDiv = document.getElementById('formErrors');
@@ -129,6 +129,8 @@ export async function logUser(pseudo, password, text, view) {
             },
             body: JSON.stringify(form)
         });
+        const texttext = await res.text();
+        console.log("DEBUG RESPONSE:", texttext);
         const result = await res.json();
         if (!result) {
             errorDiv.textContent = "Server error";

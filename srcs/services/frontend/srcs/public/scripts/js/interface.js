@@ -1,6 +1,7 @@
-import { getTraductions } from "./script.js";
-import { showSignUp, showGuestPlay, showOptions, showSignIn } from "./script.js";
+import { getTraductions } from "./languageManager.js";
+import { getElement } from "./script.js";
 import { logoutHandler } from "./login.js";
+import { navigateTo } from "./navigation.js";
 export async function getDisconnectedHome() {
     const text = await getTraductions();
     return `<h1 id="title" class="text-2xl font-bold text-white mb-6">TRANSCENDENCE</h1>
@@ -15,7 +16,7 @@ export async function getDisconnectedHome() {
 export function getSignupForm(text) {
     return `
 	<h2 class="text-xl font-bold mb-6 text-white">${text.signupTitle}</h2>
-	<form class="flex flex-col space-y-4">
+	<form id="signupForm" class="flex flex-col space-y-4">
 	  <input id="login" type="text" required placeholder="${text.login}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
 	  <input id="email" type="text" required placeholder="${text.email}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
 	  <div class="relative">
@@ -42,6 +43,62 @@ export function getSignupForm(text) {
 	<button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
   `;
 }
+export function getSigninForm(text) {
+    return `
+		<h2 class="text-xl font-bold mb-6 text-white">${text.signinTitle}</h2>
+		<form class="flex flex-col space-y-4">
+		  <input type="text" name="pseudo" required placeholder="${text.login}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
+		  <div class="relative">
+			<input id="passwd" type="password" name="password" required placeholder="${text.passwd}" class="px-4 py-2 pr-10 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none w-full">
+			<button type="button" id="togglePasswd" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-300 hover:text-white">
+			  👁️
+			</button>
+		  </div>
+		  <button id="forgotPasswd" type="submit" class="text-sm italic bg-transparent text-red-600 border-none hover:underline">${text.forgotPasswd}</button>
+		  <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">${text.signin}</button>
+		  <div id="formErrors" class="text-red-500 text-sm italic mt-2"></div>
+		</form>
+		<br>
+		<h3 class="text-xl font-bold mb-6 text-white">${text.other}</h3>
+		<button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">GOOGLE SIGN IN</button>
+		<br><br>
+		<button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">42AUTH</button>
+		<br>
+		<button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
+	  `;
+}
+export function getGuestPlay(text) {
+    return `
+	    <h2 class="text-xl font-bold mb-6 text-white">${text.guestTitle}</h2>
+	    <form class="flex flex-col space-y-4">
+	      <input type="text" placeholder="${text.nickname}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none" required>
+	      <label class="text-white text-left">${text.chooseAvatar}</label>
+	      <div class="flex justify-center space-x-4 pt-2">
+	        <img src="/public/avatars/avatar1.png" alt="Avatar 1"
+	         class="w-20 h-20 rounded-full object-cover cursor-pointer border-2 border-transparent hover:border-blue-400 avatar-option">
+	        <img src="/public/avatars/avatar2.png" alt="Avatar 2"
+	         class="w-20 h-20 rounded-full object-cover cursor-pointer border-2 border-transparent hover:border-blue-400 avatar-option">
+	        <img src="/public/avatars/avatar3.png" alt="Avatar 3"
+	          class="w-20 h-20 rounded-full object-cover cursor-pointer border-2 border-transparent hover:border-blue-400 avatar-option">
+	      </div>
+	      <button type="submit" class="bg-green-500 hover:bg-green-600 text-white py-2 rounded">${text.play}</button>
+	    </form>
+	    <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
+	  `;
+}
+export function getOptions(text) {
+    return `
+		<h2 class="text-xl font-bold mb-4 text-white">${text.options}</h2>
+		<p class="text-white">${text.optionsMessage}</p>
+		<div class="mt-6">
+		  <p class="text-white">${text.lang}
+		  <button id="langToggleBtn" class="bg-transparent text-white border border-white px-4 py-2 rounded">
+		   ${text.language}
+		  </button></p>
+		</div>
+		<button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
+	  `;
+}
 export async function getConnectedHome() {
     const text = await getTraductions();
     return `<h1 id="title" class="text-2xl font-bold text-white mb-6">TRANSCENDENCE</h1>
@@ -54,37 +111,23 @@ export async function getConnectedHome() {
 }
 export async function initDisconnectedHome(text) {
     // sign up button
-    const signupBtn = document.getElementById("signupBtn");
-    if (!signupBtn)
-        console.error("Failed to find signupBtn element");
-    signupBtn.addEventListener("click", () => showSignUp(text));
+    const signupBtn = getElement("signupBtn");
+    signupBtn.addEventListener("click", () => navigateTo(text, "signup"));
     // sign in button
-    const signinBtn = document.getElementById("signinBtn");
-    if (!signinBtn)
-        console.error("Failed to find signinBtn element");
-    signinBtn.addEventListener("click", () => showSignIn(text));
+    const signinBtn = getElement("signinBtn");
+    signinBtn.addEventListener("click", () => navigateTo(text, "signin"));
     // play as guest button
-    const playAsGuestBtn = document.getElementById("playAsGuestBtn");
-    if (!playAsGuestBtn)
-        console.error("Failed to find playAsGuestBtn element");
-    playAsGuestBtn.addEventListener("click", () => showGuestPlay(text));
+    const playAsGuestBtn = getElement("playAsGuestBtn");
+    playAsGuestBtn.addEventListener("click", () => navigateTo(text, "guestPlay"));
     // options button
-    const optionsBtn = document.getElementById("optionsBtn");
-    if (!optionsBtn)
-        console.error("Failed to find optionsBtn element");
-    optionsBtn.addEventListener("click", () => showOptions(text));
+    const optionsBtn = getElement("optionsBtn");
+    optionsBtn.addEventListener("click", () => navigateTo(text, "options"));
 }
 export async function initConnectedHome(text) {
     // options button
-    const optionsBtn = document.getElementById("optionsBtn");
-    if (!optionsBtn)
-        console.error("Failed to find optionsBtn element");
-    else
-        optionsBtn.addEventListener("click", () => showOptions(text));
+    const optionsBtn = getElement("optionsBtn");
+    optionsBtn.addEventListener("click", () => navigateTo(text, "options"));
     // logout button
-    const logoutBtn = document.getElementById("logoutBtn");
-    if (!logoutBtn)
-        console.error("Failed to find logoutBtn element");
-    else
-        logoutBtn.addEventListener("click", logoutHandler);
+    const logoutBtn = getElement("logoutBtn");
+    logoutBtn.addEventListener("click", logoutHandler);
 }

@@ -1,22 +1,39 @@
 import test from 'node:test';
-import { getDisconnectedHome, getConnectedHome, initConnectedHome, initDisconnectedHome, getSignupForm} from './interface.js';
-import { loadLanguage, toggleLanguage, languages, currentLangIndex } from './languageManager.js';
+import { getDisconnectedHome, getConnectedHome, initConnectedHome, initDisconnectedHome, getSignupForm, getSigninForm, getGuestPlay, getOptions} from './interface.js';
+import { loadLanguage, toggleLanguage, languages, currentLangIndex, currentTexts } from './languageManager.js';
 import { initCSRFToken, isConnectedUser, logUser, registerUser } from './login.js';
 import type { params, Translations } from './types.js'
 import { OTPValidationHandler } from './handlers.js';
 import { getUrl } from './urls.js';
-import { setupPasswordToggle, validateForm, setupSignUpForm, showVerificationCode, setupBackButton } from './validator.js';
+import { setupPasswordToggle, validateForm, setupSignUpForm, showVerificationCode } from './validator.js';
+import { navigateTo, setupBackButton } from './navigation.js';
 
 console.log("Script working properly");  // to remove
 
 
-document.addEventListener("DOMContentLoaded", () => {
-  loadLanguage(languages[currentLangIndex].code, 'home');
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadLanguage(languages[currentLangIndex].code, 'home');
+
+  const initialView = (location.hash?.replace("#", "") || "home");
+
+  history.replaceState({ view: initialView }, "", `#${initialView}`);
+  console.log("initial replaceState ->", initialView);
+
+  window.addEventListener("popstate", (event) => {
+    const view = event.state?.view || location.hash.replace("#", "") || "home";
+    console.log("popstate ->", view, " event.state=", event.state);
+    if (currentTexts) {
+      navigateTo(currentTexts, view, false);
+    } else {
+      showHome(currentTexts!);
+    }
+  });
 });
 
 export function getElement<T extends HTMLElement>(id: string): T {
   const el = document.getElementById(id);
-  if (!el) throw new Error(`Elemento #${id} not found`);
+  if (!el) throw new Error(`Element #${id} not found`);
   return el as T;
 }
 
@@ -32,40 +49,17 @@ export function showSignUp(text: Translations) {
   const form = getElement<HTMLFormElement>("signupForm"); 
   setupSignUpForm(form, text);
 
-  const backBtn = getElement<HTMLButtonElement>("backBtn");
-  backBtn.addEventListener("click", () => showHome(text));
+  setupBackButton(text, "");
 }
 
 // show sign in
 export function showSignIn(text: Translations) {
   console.log(">> showSignIn() called");  // to remove
   const contentDiv = getElement<HTMLDivElement>('content');
-  contentDiv.innerHTML = `
-    <h2 class="text-xl font-bold mb-6 text-white">${text.signinTitle}</h2>
-    <form class="flex flex-col space-y-4">
-      <input type="text" name="pseudo" required placeholder="${text.login}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
-      <div class="relative">
-        <input type="password" name"password" required placeholder="${text.passwd}" class="px-4 py-2 pr-10 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none w-full">
-        <button type="button" id="togglePasswd" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-300 hover:text-white">
-          👁️
-        </button>
-      </div>
-      <button id="forgotPasswd" type="submit" class="text-sm italic bg-transparent text-red-600 border-none hover:underline">${text.forgotPasswd}</button>
-      <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">${text.signin}</button>
-	  <div id="formErrors" class="text-red-500 text-sm italic mt-2"></div>
-    </form>
-    <br>
-    <h3 class="text-xl font-bold mb-6 text-white">${text.other}</h3>
-    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">GOOGLE SIGN IN</button>
-    <br><br>
-    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">42AUTH</button>
-    <br>
-    <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
-  `;
+  contentDiv.innerHTML = getSigninForm(text);
 
   // show password button
   setupPasswordToggle("togglePasswd", "passwd");
-  setupPasswordToggle("togglePasswdConfirm", "passwdConfirm");
 
   const errorDiv = getElement<HTMLDivElement>("formErrors");
 
@@ -92,7 +86,7 @@ export function showSignIn(text: Translations) {
 
   // forgot password button
   const forgotPasswd = getElement<HTMLButtonElement>("forgotPasswd");
-  forgotPasswd.addEventListener("click", () => showForgotPasswd(text));
+  forgotPasswd.addEventListener("click", () => navigateTo(text, "forgotPass"));
 
   // back button
   setupBackButton(text, "");
@@ -134,6 +128,8 @@ export function showForgotPasswd(text: Translations) {
 			console.log(result.message)
 			if (result.success)
 			{
+
+        // add that at the history later
 				showVerificationCode(text, "", {otp_id: result.otp_id, context: "reset-password", handler: ()=>{console.log("Success ! go back to login page !")}, } )
 			}
 			else
@@ -159,25 +155,7 @@ export function showForgotPasswd(text: Translations) {
 export function showGuestPlay(text: Translations) {
   console.log(">> showGuestPlay() called");  // to remove
   const contentDiv = getElement<HTMLDivElement>('content');
-  contentDiv.innerHTML = `
-    <h2 class="text-xl font-bold mb-6 text-white">${text.guestTitle}</h2>
-    <form class="flex flex-col space-y-4">
-      <input type="text" placeholder="${text.nickname}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none" required>
-
-      <label class="text-white text-left">${text.chooseAvatar}</label>
-      <div class="flex justify-center space-x-4 pt-2">
-        <img src="/public/avatars/avatar1.png" alt="Avatar 1"
-         class="w-20 h-20 rounded-full object-cover cursor-pointer border-2 border-transparent hover:border-blue-400 avatar-option">
-        <img src="/public/avatars/avatar2.png" alt="Avatar 2"
-         class="w-20 h-20 rounded-full object-cover cursor-pointer border-2 border-transparent hover:border-blue-400 avatar-option">
-        <img src="/public/avatars/avatar3.png" alt="Avatar 3"
-          class="w-20 h-20 rounded-full object-cover cursor-pointer border-2 border-transparent hover:border-blue-400 avatar-option">
-      </div>
-
-      <button type="submit" class="bg-green-500 hover:bg-green-600 text-white py-2 rounded">${text.play}</button>
-    </form>
-    <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
-  `;
+  contentDiv.innerHTML = getGuestPlay(text);
 
   let selectedAvatar = null;
 
@@ -209,17 +187,7 @@ export function showGuestPlay(text: Translations) {
 export function showOptions(text: Translations) {
   console.log(">> showOptions() called");  // to remove
   const contentDiv = getElement<HTMLDivElement>('content');
-  contentDiv.innerHTML = `
-    <h2 class="text-xl font-bold mb-4 text-white">${text.options}</h2>
-    <p class="text-white">${text.optionsMessage}</p>
-    <div class="mt-6">
-      <p class="text-white">${text.lang}
-      <button id="langToggleBtn" class="bg-transparent text-white border border-white px-4 py-2 rounded">
-       ${text.language}
-      </button></p>
-    </div>
-    <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
-  `;
+  contentDiv.innerHTML = getOptions(text);
 
   // change language button
   const langToggleBtn = getElement<HTMLButtonElement>("langToggleBtn");

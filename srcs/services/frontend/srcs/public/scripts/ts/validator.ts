@@ -1,4 +1,5 @@
-import { getElement, showSignIn, showSignUp, showHome, showGuestPlay, showForgotPasswd, showOptions } from "./script.js";
+import { getElement } from "./script.js";
+import { setupBackButton } from "./navigation.js";
 import { params, Translations } from "./types.js";
 import { registerUser } from "./login.js";
 import { OTPValidationHandler } from "./handlers.js";
@@ -84,21 +85,5 @@ export function showVerificationCode(text: Translations, view: string, params: p
   setupBackButton(text, view);
 }
 
-export function setupBackButton(text: Translations, view: string) {
-  const backBtn = getElement<HTMLButtonElement>("backBtn");
 
-  backBtn.addEventListener("click", () => {
-    switch (view) {
-      case "signin":
-        showSignIn(text);
-        break;
-      case "signup":
-        showSignUp(text);
-        break;
-      default:
-        showHome(text);
-        break;
-    }
-  });
-}
 

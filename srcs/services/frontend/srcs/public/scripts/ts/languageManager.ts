@@ -1,5 +1,5 @@
-import { showOptions, showHome } from "./script";
-
+import { Translations } from "./types.js";
+import { navigateTo } from "./navigation.js";
 export const languages = [
   { code: 'en', label: 'English' },
   { code: 'fr', label: 'Français' },
@@ -7,7 +7,8 @@ export const languages = [
 ];
 
 export let currentLangIndex = 0;
-let currentTexts = null;
+export let currentTexts: Translations = {} as Translations;
+
 
 export async function loadLanguage(langCode: string, view = 'home') {
   try {
@@ -19,9 +20,9 @@ export async function loadLanguage(langCode: string, view = 'home') {
     currentLangIndex = languages.findIndex(l => l.code === langCode);
     if (currentLangIndex === -1) currentLangIndex = 0;
     if (view === 'options')
-      showOptions(currentTexts);
+      navigateTo(currentTexts, "options");
     else
-      showHome(currentTexts);
+      navigateTo(currentTexts, "");
   } catch (err) {
     console.error(err);
   }
@@ -42,6 +43,8 @@ export async function getTraductions(){
 
   } catch (err) {
     console.error(err);
+    if (currentTexts) return currentTexts;
+    return {} as Translations;
   }
 
 }
@@ -53,5 +56,3 @@ export function toggleLanguage() {
   html?.setAttribute("lang", nextLang)
   loadLanguage(nextLang, 'options');
 }
-
-// loadLanguage(languages[currentLangIndex].code);
