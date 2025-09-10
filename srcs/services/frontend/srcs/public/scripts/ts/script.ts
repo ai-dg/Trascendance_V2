@@ -1,9 +1,11 @@
 import test from 'node:test';
 import { getDisconnectedHome, getConnectedHome, initConnectedHome, initDisconnectedHome, getSignupForm} from './interface.js';
+import { loadLanguage, toggleLanguage, languages, currentLangIndex } from './languageManager.js';
 import { initCSRFToken, isConnectedUser, logUser, registerUser } from './login.js';
 import type { params, Translations } from './types.js'
 import { OTPValidationHandler } from './handlers.js';
 import { getUrl } from './urls.js';
+import { setupPasswordToggle, validateForm, setupSignUpForm, showVerificationCode, setupBackButton } from './validator.js';
 
 console.log("Script working properly");  // to remove
 
@@ -12,176 +14,32 @@ document.addEventListener("DOMContentLoaded", () => {
   loadLanguage(languages[currentLangIndex].code, 'home');
 });
 
+export function getElement<T extends HTMLElement>(id: string): T {
+  const el = document.getElementById(id);
+  if (!el) throw new Error(`Elemento #${id} not found`);
+  return el as T;
+}
 
+
+// show sign up
 export function showSignUp(text: Translations) {
-  console.log(">> showSignUp() called"); // to remove
-  const contentDiv = document.getElementById('content') as HTMLDivElement;
-  if (!contentDiv)
-    console.error("Failed to find content element");
-
-  // update DOM
+  const contentDiv = getElement<HTMLDivElement>("content");
   contentDiv.innerHTML = getSignupForm(text);
 
-  // show password button
-  const togglePasswdBtn = document.getElementById('togglePasswd') as HTMLButtonElement;
-  if (!togglePasswdBtn)
-    console.error("Failed to find togglePasswdBtn element");
+  setupPasswordToggle('togglePasswd', 'passwd');
+  setupPasswordToggle('togglePasswdConfirm', 'passwdConfirm');
 
-  const passwdInput = document.getElementById('passwd') as HTMLInputElement;
-  if (!passwdInput)
-    console.error("Failed to find passwdInput element");
+  const form = getElement<HTMLFormElement>("signupForm"); 
+  setupSignUpForm(form, text);
 
-  if (togglePasswdBtn && passwdInput) {
-    togglePasswdBtn.addEventListener("click", () => {
-      const isPassword = passwdInput.type === "password";
-      passwdInput.type = isPassword ? "text" : "password";
-    });
-  }
-
-  const togglePasswdConfirmBtn = document.getElementById('togglePasswdConfirm') as HTMLButtonElement;
-  if (!togglePasswdConfirmBtn)
-    console.error("Failed to find togglePasswdConfirmBtn element");
-
-  const passwdConfirmInput = document.getElementById('passwdConfirm') as HTMLInputElement;
-  if (!passwdConfirmInput)
-    console.error("Failed to find passwdConfirmInput element");
-
-  if (togglePasswdConfirmBtn && passwdConfirmInput) {
-    togglePasswdConfirmBtn.addEventListener("click", () => {
-      const isPassword = passwdConfirmInput.type === "password";
-      passwdConfirmInput.type = isPassword ? "text" : "password";
-    });
-  }
-
-  // sign up form
-  const form = document.querySelector("form") as HTMLFormElement;
-  if (!form)
-    console.error("Failed to find form element");
-  form.addEventListener("submit", (e: Event) => {
-    e.preventDefault();
-
-    const errorDiv = document.getElementById('formErrors') as HTMLDivElement;
-    if (!errorDiv)
-      console.error("Failed to find errorDiv element");
-
-    const loginInput = form.querySelector('input[id="login"]') as HTMLInputElement;
-    if (!loginInput)
-      console.error("Failed to find input element");
-    const login = loginInput.value.trim();
-
-    const emailInput = form.querySelector('input[id="email"]') as HTMLInputElement;
-    if (!emailInput)
-      console.error("Failed to find input element");
-    const email = emailInput.value.trim();
-
-    const passwdInput = form.querySelector('input[id="passwd"]') as HTMLInputElement;
-    if (!passwdInput)
-      console.error("Failed to find input element");
-    const passwd = passwdInput.value.trim();
-
-    const passwdConfirmInput = form.querySelector('input[id="passwdConfirm"]') as HTMLInputElement;
-    if (!passwdConfirmInput)
-      console.error("Failed to find input element");
-    const passwdConfirm = passwdConfirmInput.value.trim();
-    
-    const errors: string[] = [];
-    
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errors.push(text.errEmail);
-    }
-
-    if (passwd.length < 8) {
-      errors.push(text.errLength);
-    }
-    if (!/[A-Z]/.test(passwd)) {
-      errors.push(text.errUpper);
-    }
-    if (!/[a-z]/.test(passwd)) {
-      errors.push(text.errLower);
-    }
-    if (!/[0-9]/.test(passwd)) {
-      errors.push(text.errNbr);
-    }
-    if (passwdConfirm !== undefined && passwd !== passwdConfirm) {
-      errors.push(text.errMatch);
-    }
-    if (errors.length > 0) {
-      errorDiv.innerHTML = errors.map(err => `<p>- ${err}</p>`).join('');
-      return;
-    }
-
-    errorDiv.innerHTML = '';
-
-    // To remove after auth working
-    const view = 'signup';
-	
-	registerUser(login, passwd, email, text, view);
-    //showVerificationCode(text, view);
-
-  });
-
-  // back button
-  const backBtn = document.getElementById("backBtn") as HTMLButtonElement;
-  if (!backBtn)
-    console.error("Failed to find backBtn element");
+  const backBtn = getElement<HTMLButtonElement>("backBtn");
   backBtn.addEventListener("click", () => showHome(text));
-
 }
 
-// show verification code for 2FA
-export function showVerificationCode(text: Translations, view: string, params: params) {
-  const contentDiv = document.getElementById('content') as HTMLDivElement;
-  if (!contentDiv) {
-    console.error("Failed to find content element");
-    return;
-  }
-
-  contentDiv.innerHTML = `
-    <h2 class="otp-check text-xl font-bold mb-4 text-white">${text.verifyTitle}</h2>
-    <p class="text-white mb-4">${text.verifyInstruction}</p>
-    <div id="codeContainer" class="flex justify-center space-x-2">
-      ${Array.from({ length: 6 })
-        .map((_, i) => `<input id="code-${i}" type="text" maxlength="1" class="w-10 h-10 text-center rounded bg-gray-700 text-white focus:outline-none" />`)
-        .join('')}
-    </div>
-    <button id="verifyBtn" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">${text.verify}</button>
-    <br>
-    <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
-  `;
-
-  const inputs = document.querySelectorAll<HTMLInputElement>('#codeContainer input');
-  if (!inputs)
-    console.error("Failed to find inputs element");
-  inputs.forEach((input, idx) => {
-    input.addEventListener('input', () => {
-      input.value = input.value.replace(/\D/g, '');
-      if (input.value.length === 1 && idx < inputs.length - 1) {
-        inputs[idx + 1].focus();
-      }
-    });
-  });
-
-  // verify button
-  const verifyBtn = document.getElementById('verifyBtn') as HTMLButtonElement;
-  if (!verifyBtn)
-    console.error("Failed to find verifyBtn element");
-  verifyBtn.addEventListener('click', async () => OTPValidationHandler(params, inputs));
-
-  // back button
-  const backBtn = document.getElementById("backBtn") as HTMLButtonElement;
-  if (!backBtn)
-    console.error("Failed to find backBtn element");
-  if (view === 'signin')
-    backBtn.addEventListener("click", () => showSignIn(text));
-  else if (view === 'signup')
-    backBtn.addEventListener("click", () => showSignUp(text));
-}
-
+// show sign in
 export function showSignIn(text: Translations) {
   console.log(">> showSignIn() called");  // to remove
-  const contentDiv = document.getElementById('content') as HTMLDivElement;
-  if (!contentDiv)
-    console.error("Failed to find content element");
+  const contentDiv = getElement<HTMLDivElement>('content');
   contentDiv.innerHTML = `
     <h2 class="text-xl font-bold mb-6 text-white">${text.signinTitle}</h2>
     <form class="flex flex-col space-y-4">
@@ -206,25 +64,10 @@ export function showSignIn(text: Translations) {
   `;
 
   // show password button
-  const togglePasswdBtn = document.getElementById('togglePasswd') as HTMLButtonElement;
-  if (!togglePasswdBtn)
-    console.error("Failed to find togglePasswdBtn element");
+  setupPasswordToggle("togglePasswd", "passwd");
+  setupPasswordToggle("togglePasswdConfirm", "passwdConfirm");
 
-  const passwdInput = document.querySelector('input[type="password"]') as HTMLInputElement;
-  if (!passwdInput)
-    console.error("Failed to find passwdInput element");
-
-  if (togglePasswdBtn && passwdInput) {
-    togglePasswdBtn.addEventListener("click", () => {
-      const isPassword = passwdInput.type === "password";
-      passwdInput.type = isPassword ? "text" : "password";
-    });
-  }
-
-
-   const errorDiv = document.getElementById('formErrors') as HTMLDivElement;
-    if (!errorDiv)
-      console.error("Failed to find errorDiv element");
+  const errorDiv = getElement<HTMLDivElement>("formErrors");
 
 
   // login form
@@ -243,28 +86,21 @@ export function showSignIn(text: Translations) {
     const passwd = passwdInput.value;
     // To remove after auth working
     const view = 'signin';
-	logUser(login, passwd, text, view);
+	  logUser(login, passwd, text, view);
     // showVerificationCode(text, view);
   });
 
   // forgot password button
-  const forgotPasswd = document.getElementById("forgotPasswd") as HTMLButtonElement;
-  if (!forgotPasswd)
-    console.error("Failed to find forgotPasswd element");
+  const forgotPasswd = getElement<HTMLButtonElement>("forgotPasswd");
   forgotPasswd.addEventListener("click", () => showForgotPasswd(text));
 
   // back button
-  const backBtn = document.getElementById("backBtn") as HTMLButtonElement;
-  if (!backBtn)
-    console.error("Failed to find backBtn element");
-  backBtn.addEventListener("click", () => showHome(text));
+  setupBackButton(text, "");
 }
 
 export function showForgotPasswd(text: Translations) {
   console.log(">> showForgotPasswd() called");  // to remove
-  const contentDiv = document.getElementById('content') as HTMLDivElement;
-  if (!contentDiv)
-    console.error("Failed to find content element");
+  const contentDiv = getElement<HTMLDivElement>('content');
   contentDiv.innerHTML = `
     <h2 class="text-xl font-bold mb-6 text-white">${text.forgotPasswd}</h2>
     <form class="flex flex-col space-y-4">
@@ -317,17 +153,12 @@ export function showForgotPasswd(text: Translations) {
 })
 
   // back button
-  const backBtn = document.getElementById("backBtn") as HTMLButtonElement;
-  if (!backBtn)
-    console.error("Failed to find backBtn element");
-  backBtn.addEventListener("click", () => showSignIn(text));
+  setupBackButton(text, "signin");
 }
 
 export function showGuestPlay(text: Translations) {
   console.log(">> showGuestPlay() called");  // to remove
-  const contentDiv = document.getElementById('content') as HTMLDivElement;
-  if (!contentDiv)
-    console.error("Failed to find content element");
+  const contentDiv = getElement<HTMLDivElement>('content');
   contentDiv.innerHTML = `
     <h2 class="text-xl font-bold mb-6 text-white">${text.guestTitle}</h2>
     <form class="flex flex-col space-y-4">
@@ -372,17 +203,12 @@ export function showGuestPlay(text: Translations) {
   });
 
   // back button
-  const backBtn = document.getElementById("backBtn") as HTMLButtonElement;
-  if (!backBtn)
-    console.error("Failed to find backBtn element");
-  backBtn.addEventListener("click", () => showHome(text));
+  setupBackButton(text, "");
 }
 
 export function showOptions(text: Translations) {
   console.log(">> showOptions() called");  // to remove
-  const contentDiv = document.getElementById('content') as HTMLDivElement;
-  if (!contentDiv)
-    console.error("Failed to find content element");
+  const contentDiv = getElement<HTMLDivElement>('content');
   contentDiv.innerHTML = `
     <h2 class="text-xl font-bold mb-4 text-white">${text.options}</h2>
     <p class="text-white">${text.optionsMessage}</p>
@@ -396,25 +222,18 @@ export function showOptions(text: Translations) {
   `;
 
   // change language button
-  const langToggleBtn = document.getElementById('langToggleBtn') as HTMLButtonElement;
-  if (!langToggleBtn)
-    console.error("Failed to find langToggleBtn element");
+  const langToggleBtn = getElement<HTMLButtonElement>("langToggleBtn");
   langToggleBtn.addEventListener('click', toggleLanguage);
 
   // back button
-  const backBtn = document.getElementById("backBtn") as HTMLButtonElement;
-  if (!backBtn)
-    console.error("Failed to find backBtn element");
-  backBtn.addEventListener("click", async () => showHome(text));
+  setupBackButton(text, "");
 
 }
 
 export async function showHome(text: Translations) {
 	
   if (!text) return;
-  const contentDiv = document.getElementById('content') as HTMLDivElement;
-  if (!contentDiv)
-    console.error("Failed to find content element");
+  const contentDiv = getElement<HTMLDivElement>('content');
 
 	const isConnected = await isConnectedUser();
 console.log("user is connected : ", isConnected);
@@ -430,62 +249,3 @@ console.log("user is connected : ", isConnected);
 		await initDisconnectedHome(text);
 	}
 }
-
-const languages = [
-  { code: 'en', label: 'English' },
-  { code: 'fr', label: 'Français' },
-  { code: 'pt', label: 'Português' }
-];
-
-let currentLangIndex = 0;
-let currentTexts = null;
-
-async function loadLanguage(langCode: string, view = 'home') {
-  try {
-    const res = await fetch(`/api/translations?lang=${langCode}`);
-    if (!res.ok) throw new Error('Failed to load translations');
-
-    const data = await res.json();
-    currentTexts = data.text;
-    currentLangIndex = languages.findIndex(l => l.code === langCode);
-    if (currentLangIndex === -1) currentLangIndex = 0;
-    if (view === 'options')
-      showOptions(currentTexts);
-    else
-      showHome(currentTexts);
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-export async function getTraductions(){
-	const html = document.querySelector("html")
-  	const langCode =html?.getAttribute("lang")
-	  try {
-    const res = await fetch(`/api/translations?lang=${langCode}`);
-    if (!res.ok) throw new Error('Failed to load translations');
-
-    const data = await res.json();
-    currentTexts = data.text;
-    currentLangIndex = languages.findIndex(l => l.code === langCode);
-    if (currentLangIndex === -1) currentLangIndex = 0;
-	return currentTexts;
-
-  } catch (err) {
-    console.error(err);
-  }
-
-}
-
-
-
-
-function toggleLanguage() {
-  currentLangIndex = (currentLangIndex + 1) % languages.length;
-  const nextLang = languages[currentLangIndex].code;
-  const html = document.querySelector("html")
-  html?.setAttribute("lang", nextLang)
-  loadLanguage(nextLang, 'options');
-}
-
-// loadLanguage(languages[currentLangIndex].code);

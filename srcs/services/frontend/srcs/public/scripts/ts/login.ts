@@ -1,7 +1,7 @@
 import { getErrorMessage } from "./error.js";
 import { Translations } from "./types.js";
 import { getUrl } from "./urls.js";
-import { showVerificationCode } from "./script.js";
+import { showVerificationCode } from "./validator.js";
 import { getConnectedHome } from "./interface.js";
 import { log_handler, signupSuccessHandler } from "./handlers.js";
 
@@ -175,7 +175,8 @@ export async function logUser(pseudo: string, password: string, text:Translation
 			body: JSON.stringify(form)
 
 		})
-
+	const texttext = await res.text();
+	console.log("DEBUG RESPONSE:", texttext);
 		const result = await res.json();
 		if (! result)
 		{

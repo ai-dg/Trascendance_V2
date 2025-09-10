@@ -1,4 +1,4 @@
-import { getTraductions } from "./script.js"
+import { getTraductions } from "./languageManager.js"
 import { Translations } from "./types.js"
 import { showSignUp, showGuestPlay, showOptions, showSignIn } from "./script.js"
 import { logoutHandler } from "./login.js"
