@@ -87,7 +87,7 @@ services:
       - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
     volumes:
       - /data/node_modules
-      # - sqlite_data:/data
+      # - sqlite_data:/data/sqlite
       # - ./volume/redis_data:/data
       - ./services/auth/app:/data
     networks:

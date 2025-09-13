@@ -1,4 +1,4 @@
-import { getElement } from "./script.js";
+import { getElement, showChangePass } from "./script.js";
 import { setupBackButton } from "./navigation.js";
 import { params, Translations } from "./types.js";
 import { registerUser } from "./login.js";
@@ -48,8 +48,45 @@ export function setupSignUpForm(form: HTMLFormElement, text: Translations) {
   });
 }
 
+export function setupChangePassForm(form: HTMLFormElement, text: Translations) {
+  return new Promise((resolve, reject) => {
+  form.addEventListener("submit", (e: Event) => {
+    e.preventDefault();
+
+    const passwd = (form.querySelector('#passwd') as HTMLInputElement).value.trim();
+    const passwdConfirm = (form.querySelector('#passwdConfirm') as HTMLInputElement).value.trim();
+
+    const errorDiv = getElement<HTMLDivElement>('formErrors');
+    const errors: string[] = [];
+    
+    if (!passwd|| !passwdConfirm) {
+        reject(new Error("Input elements not found"));
+        return;
+      }
+
+      // check password validity
+      errorDiv.innerHTML = '';
+      if (passwd.length < 8) errors.push(text.errLength);
+      if (!/[A-Z]/.test(passwd)) errors.push(text.errUpper);
+      if (!/[a-z]/.test(passwd)) errors.push(text.errLower);
+      if (!/[0-9]/.test(passwd)) errors.push(text.errNbr);
+      if (passwd !== passwdConfirm) errors.push(text.errMatch);
+
+    if (errors.length > 0) {
+      errorDiv.innerHTML = errors.map(err => `<p>- ${err}</p>`).join('');
+      return;
+    }
+
+    errorDiv.innerHTML = '';
+    // Add change [password method]
+    resolve(passwd);
+  });
+  });
+}
+
 // show verification code for 2FA
-export function showVerificationCode(text: Translations, view: string, params: params) {
+export async function showVerificationCode(text: Translations, view: string, params: params): Promise<boolean> {
+  return new Promise((resolve) => {
   const contentDiv = getElement<HTMLDivElement>('content');
 
   contentDiv.innerHTML = `
@@ -79,10 +116,15 @@ export function showVerificationCode(text: Translations, view: string, params: p
 
   // verify button
   const verifyBtn = getElement<HTMLButtonElement>('verifyBtn');
-  verifyBtn.addEventListener('click', async () => OTPValidationHandler(params, inputs));
+  verifyBtn.addEventListener('click', async () => {
+    const is_valid = await OTPValidationHandler(params, inputs);
+    resolve(!!is_valid);
+  
+  });
 
   // back button
   setupBackButton(text, view);
+});
 }
 
 

@@ -345,26 +345,34 @@ export async function signup_otp_validation_route(request, reply)
 export async function reset_forgotten_password_route(request, reply)
 {
 
-	const { otp, otp_id } = request.body;
+	const { otp_id, password } = request.body;
+	if (!password) return reply.send({ success: false, message: "Password missing" }, 400);
+	console.log("password = %s", password);
 	const row = await redis.get(otp_id);
+	if (!row) {
+	  console.error("No OTP data found for otp_id:", otp_id);
+	  return reply.send({ success: false, message: "Invalid token" }, 401);
+	}
+	// if (!row) return reply.send({ success: false, message: "Invalid token" }, 401);
 	const data = JSON.parse(row)
 	if (!data)
 		return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
-	if (typeof(otp) !== "string" && otp.length != 6)
-		return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
-	const is_valid = await compare(otp, data.otp_hashed);
+	// if (!otp || (typeof(otp) !== "string" && otp.length != 6))
+	// 	return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
+	// const is_valid = await compare(otp, data.otp_hashed);
+	// if (!is_valid) return reply.send({ success: false, message: "the code is no longer valid, please try again" }, 403);
+	console.log("email = %s", data.email);
 	try {
-		if (!is_valid)
-			return reply.send({success: false, message: "the code is no longer valid, please try again"}, 403)
 		const passwordHash = await hash(password, 10);
-		await app.db.get("UPDATE users SET user_password= ? WHERE user_mail= ?", [passwordHash, email])
-		await redis.del(`${email}:reset-password`)
+		await app.db.get("UPDATE users SET user_password= ? WHERE user_mail= ?", [passwordHash, data.email])
+		await redis.del(`${data.email}:reset-password`)
 		return reply.send({success: true, message: "password changed"}, 201)
 
 	}
 	catch(err)
 	{
 		console.log(err)
+		console.log("BEM AQUI");
 		return reply.send(get_error_message(e.SERVER_ERROR, 500));
 	}
 

@@ -40,6 +40,9 @@ export interface Translations {
   verifyTitle: string;
   verifyInstruction: string;
   verify: string;
+
+  changePass: string;
+  changeBtn: string;
 }
 
 

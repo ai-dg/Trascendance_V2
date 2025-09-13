@@ -1,8 +1,8 @@
-import { getDisconnectedHome, getConnectedHome, initConnectedHome, initDisconnectedHome, getSignupForm, getSigninForm, getGuestPlay, getOptions } from './interface.js';
+import { getDisconnectedHome, getConnectedHome, initConnectedHome, initDisconnectedHome, getSignupForm, getSigninForm, getGuestPlay, getOptions, getForgotPass, getChangePass } from './interface.js';
 import { loadLanguage, toggleLanguage, languages, currentLangIndex, currentTexts } from './languageManager.js';
 import { initCSRFToken, isConnectedUser, logUser } from './login.js';
 import { getUrl } from './urls.js';
-import { setupPasswordToggle, setupSignUpForm, showVerificationCode } from './validator.js';
+import { setupPasswordToggle, setupSignUpForm, showVerificationCode, setupChangePassForm } from './validator.js';
 import { navigateTo, setupBackButton } from './navigation.js';
 console.log("Script working properly"); // to remove
 document.addEventListener("DOMContentLoaded", async () => {
@@ -70,22 +70,22 @@ export function showSignIn(text) {
     // back button
     setupBackButton(text, "");
 }
-export function showForgotPasswd(text) {
+export async function showForgotPasswd(text) {
     console.log(">> showForgotPasswd() called"); // to remove
     const contentDiv = getElement('content');
-    contentDiv.innerHTML = `
-    <h2 class="text-xl font-bold mb-6 text-white">${text.forgotPasswd}</h2>
-    <form class="flex flex-col space-y-4">
-      <input type="text" name="email" placeholder="${text.email}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
-      <button type="forgotPasswd" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">${text.resetPasswd}</button>
-      <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
-      </form>
-  `;
+    contentDiv.innerHTML = getForgotPass(text);
     const form = document.querySelector("form");
     if (!form)
         console.error("Failed to find form element");
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
+        // check email validity
+        const errorDiv = getElement("formErrors");
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.value)) {
+            errorDiv.innerHTML = text.errEmail;
+            return;
+        }
+        errorDiv.innerHTML = '';
         const email = form.email.value;
         console.log(email);
         const url = getUrl('auth/reset-password');
@@ -105,7 +105,30 @@ export function showForgotPasswd(text) {
                 console.log(result.message);
                 if (result.success) {
                     // add that at the history later
-                    showVerificationCode(text, "", { otp_id: result.otp_id, context: "reset-password", handler: () => { console.log("Success ! go back to login page !"); }, });
+                    const is_valid = await showVerificationCode(text, "", {
+                        otp_id: result.otp_id,
+                        context: "login",
+                        handler: () => { console.log("Success OTP!"); }
+                    });
+                    if (is_valid) {
+                        const newPasswd = await showChangePass(text);
+                        const changeRes = await fetch(getUrl('auth/reset-password/otp-validation'), {
+                            method: 'POST',
+                            headers: { 'content-type': 'application/json' },
+                            body: JSON.stringify({
+                                email,
+                                otp_id: result.otp_id,
+                                password: newPasswd
+                            })
+                        });
+                        const changeResult = await changeRes.json();
+                        if (changeResult.success) {
+                            console.log("Password changed!");
+                        }
+                        else {
+                            errorDiv.innerHTML = changeResult.message || "Error";
+                        }
+                    }
                 }
                 else {
                     // TODO: handle this message
@@ -117,10 +140,21 @@ export function showForgotPasswd(text) {
             // TODO: handle this message
             console.log(err);
         }
-        alert("MAIL SENDED");
     });
     // back button
     setupBackButton(text, "signin");
+}
+export async function showChangePass(text) {
+    const contentDiv = getElement('content');
+    contentDiv.innerHTML = getChangePass(text);
+    setupPasswordToggle('togglePasswd', 'passwd');
+    setupPasswordToggle('togglePasswdConfirm', 'passwdConfirm');
+    const form = document.querySelector("form");
+    if (!form)
+        console.error("Failed to find form element");
+    const pass = await setupChangePassForm(form, text);
+    setupBackButton(text, "signin");
+    return pass;
 }
 export function showGuestPlay(text) {
     console.log(">> showGuestPlay() called"); // to remove

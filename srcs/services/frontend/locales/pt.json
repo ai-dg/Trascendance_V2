@@ -40,5 +40,8 @@
 
   "verifyTitle": "Verificação de e-mail",
   "verifyInstruction": "Digite o código de 6 dígitos enviado para o seu e-mail.",
-  "verify": "Verificar"
+  "verify": "Verificar",
+
+  "changePass": "Crie uma nova senha",
+  "changeBtn": "Confirmar"
 }

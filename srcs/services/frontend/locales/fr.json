@@ -40,5 +40,8 @@
 
   "verifyTitle": "Vérification de l'e-mail",
   "verifyInstruction": "Entrez le code à 6 chiffres envoyé à votre adresse e-mail.",
-  "verify": "Vérifier"
+  "verify": "Vérifier",
+
+  "changePass": "Cree un nouveau mot de passe",
+  "changeBtn": "Confirmer"
 }

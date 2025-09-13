@@ -40,6 +40,9 @@
 
   "verifyTitle": "Email verification",
   "verifyInstruction": "Enter the 6-digit code sent to your email.",
-  "verify": "Verify"
+  "verify": "Verify",
+
+  "changePass": "Create a new password",
+  "changeBtn": "Confirm"
 
 }

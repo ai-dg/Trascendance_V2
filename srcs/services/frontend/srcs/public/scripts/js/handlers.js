@@ -25,9 +25,11 @@ export async function OTPValidationHandler(params, inputs) {
         console.log(result);
         if (result.success) {
             params.handler();
+            return true;
         }
         else {
             console.log('failure : ', result.message);
+            return false;
         }
     }
     catch (err) {

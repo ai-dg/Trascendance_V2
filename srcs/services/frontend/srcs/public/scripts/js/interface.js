@@ -99,6 +99,41 @@ export function getOptions(text) {
 		<button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
 	  `;
 }
+export function getForgotPass(text) {
+    return `
+    <h2 class="text-xl font-bold mb-6 text-white">${text.forgotPasswd}</h2>
+    <form class="flex flex-col space-y-4">
+      <input type="text" name="email" placeholder="${text.email}" class="px-4 py-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none">
+      <div id="formErrors" class="text-red-500 text-sm italic mt-2"></div>
+      <button type="forgotPasswd" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">${text.resetPasswd}</button>
+      <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
+      </form>
+  `;
+}
+export function getChangePass(text) {
+    return `
+    <h2 class="text-xl font-bold mb-6 text-white">${text.changePass}</h2>
+    <form class="flex flex-col space-y-4">
+     <div class="relative">
+		<input id="passwd" type="password" required placeholder="${text.passwd}" class="px-4 py-2 pr-10 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none w-full">
+		<button type="button" id="togglePasswd" required class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-300 hover:text-white">
+		  👁️
+		</button>
+	  </div>
+	  <div class="relative">
+		<input id="passwdConfirm" type="password" placeholder="${text.passwdConfirm}" class="px-4 py-2 pr-10 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none w-full">
+		<button type="button" id="togglePasswdConfirm" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-300 hover:text-white">
+		  👁️
+		</button>
+		</div>
+		
+      <div id="formErrors" class="text-red-500 text-sm italic mt-2"></div>
+      <button type="changePasswd" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">${text.changeBtn}</button>
+     <br>
+	  <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
+      </form>
+  `;
+}
 export async function getConnectedHome() {
     const text = await getTraductions();
     return `<h1 id="title" class="text-2xl font-bold text-white mb-6">TRANSCENDENCE</h1>
