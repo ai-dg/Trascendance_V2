@@ -97,9 +97,12 @@ export async function showForgotPasswd(text) {
                 },
                 body: JSON.stringify({ email })
             });
-            if (!res.ok)
+            if (!res.ok) {
                 // TODO: handle this message
                 console.log("KO");
+                errorDiv.innerHTML = "Error sending OTP";
+                return;
+            }
             else {
                 const result = await res.json();
                 console.log(result.message);
@@ -107,32 +110,30 @@ export async function showForgotPasswd(text) {
                     // add that at the history later
                     const is_valid = await showVerificationCode(text, "", {
                         otp_id: result.otp_id,
-                        context: "login",
+                        context: "verify",
                         handler: () => { console.log("Success OTP!"); }
                     });
-                    if (is_valid) {
-                        const newPasswd = await showChangePass(text);
-                        const changeRes = await fetch(getUrl('auth/reset-password/otp-validation'), {
-                            method: 'POST',
-                            headers: { 'content-type': 'application/json' },
-                            body: JSON.stringify({
-                                email,
-                                otp_id: result.otp_id,
-                                password: newPasswd
-                            })
-                        });
-                        const changeResult = await changeRes.json();
-                        if (changeResult.success) {
-                            console.log("Password changed!");
-                        }
-                        else {
-                            errorDiv.innerHTML = changeResult.message || "Error";
-                        }
+                    if (!is_valid) {
+                        console.log("KO");
+                        errorDiv.innerHTML = "Error sending OTP";
+                        return;
                     }
-                }
-                else {
-                    // TODO: handle this message
-                    console.log("fail");
+                    const newPasswd = await showChangePass(text);
+                    console.log({ email, otp_id: result.otp_id, password: newPasswd });
+                    const changeRes = await fetch(getUrl('auth/reset-password/otp-validation'), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ otp_id: result.otp_id, password: newPasswd })
+                    });
+                    const changeResult = await changeRes.json();
+                    if (changeResult.success) {
+                        console.log("Password changed!");
+                        navigateTo(text, "signin");
+                    }
+                    else {
+                        console.log("changeResult invalid");
+                        errorDiv.innerHTML = changeResult.message || "Error";
+                    }
                 }
             }
         }
@@ -145,16 +146,21 @@ export async function showForgotPasswd(text) {
     setupBackButton(text, "signin");
 }
 export async function showChangePass(text) {
-    const contentDiv = getElement('content');
-    contentDiv.innerHTML = getChangePass(text);
-    setupPasswordToggle('togglePasswd', 'passwd');
-    setupPasswordToggle('togglePasswdConfirm', 'passwdConfirm');
-    const form = document.querySelector("form");
-    if (!form)
-        console.error("Failed to find form element");
-    const pass = await setupChangePassForm(form, text);
-    setupBackButton(text, "signin");
-    return pass;
+    return new Promise((resolve) => {
+        const contentDiv = getElement('content');
+        contentDiv.innerHTML = getChangePass(text);
+        setupPasswordToggle('togglePasswd', 'passwd');
+        setupPasswordToggle('togglePasswdConfirm', 'passwdConfirm');
+        const form = document.querySelector("form");
+        if (!form) {
+            console.error("Failed to find form element");
+            return;
+        }
+        setupChangePassForm(form, text).then((pass) => {
+            resolve(pass);
+        });
+        setupBackButton(text, "signin");
+    });
 }
 export function showGuestPlay(text) {
     console.log(">> showGuestPlay() called"); // to remove

@@ -131,7 +131,7 @@ export async function logUser(pseudo, password, text, view) {
         });
         const texttext = await res.text();
         console.log("DEBUG RESPONSE:", texttext);
-        const result = await res.json();
+        const result = JSON.parse(texttext);
         if (!result) {
             errorDiv.textContent = "Server error";
             return;
@@ -142,6 +142,7 @@ export async function logUser(pseudo, password, text, view) {
         }
         else {
             //window.location.href ="/";
+            console.log("DEBUG otp_id recebido:", result.otp_id);
             showVerificationCode(text, view, { otp_id: result.otp_id, context: "login", handler: log_handler });
             errorDiv.textContent = result.message;
             console.log("a confirmation mail has been sended");

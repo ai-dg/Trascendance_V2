@@ -7,13 +7,19 @@ import {
 		signup_route,
 		login_otp_validation_route,
 		signup_otp_validation_route,
-		is_connected
+		is_connected,
+		verify_otp_route,
+		validate_otp_route
 
 } from "../controlers/controlers.js";
 
 
 export function routes(app, options)
 {
+	// OTP validation only
+	app.post('/verify', async (request, reply) => verify_otp_route(request, reply));
+	app.post('/verify/otp-validation', async (request, reply) => validate_otp_route(request, reply));
+
 	// login process
 	app.post('/login', async (request, reply) => login_route(request, reply))
 	app.post('/login/otp-validation', async (request, reply) => login_otp_validation_route(request,reply));	
