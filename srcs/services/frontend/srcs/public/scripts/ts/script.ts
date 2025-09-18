@@ -7,6 +7,7 @@ import { OTPValidationHandler } from './handlers.js';
 import { getUrl } from './urls.js';
 import { setupPasswordToggle, validateForm, setupSignUpForm, showVerificationCode, setupChangePassForm } from './validator.js';
 import { navigateTo, setupBackButton } from './navigation.js';
+import { getGameAsGuest } from './gameInterface.js';
 
 console.log("Script working properly");  // to remove
 
@@ -210,14 +211,19 @@ export function showGuestPlay(text: Translations) {
   const contentDiv = getElement<HTMLDivElement>('content');
   contentDiv.innerHTML = getGuestPlay(text);
 
-  let selectedAvatar = null;
+  let selectedAvatar: string | null = null;
 
   // avatar choices
   document.querySelectorAll('.avatar-option').forEach(img => {
     img.addEventListener('click', () => {
-      document.querySelectorAll('.avatar-option').forEach(i => i.classList.remove('border-blue-500'));
+      document.querySelectorAll<HTMLImageElement>('.avatar-option').forEach(i => {
+        i.classList.remove('border-blue-500', 'border-blue-400'); 
+        i.classList.add('border-transparent')
+    });
+      img.classList.remove('border-transparent');
       img.classList.add('border-blue-400');
       selectedAvatar = (img as HTMLImageElement).getAttribute('src');
+      console.log(selectedAvatar);
     });
   });
 
@@ -225,13 +231,29 @@ export function showGuestPlay(text: Translations) {
   const form = document.querySelector("form") as HTMLFormElement;
   if (!form)
     console.error("Failed to find form element");
+
+  const errorDiv = getElement<HTMLDivElement>("formErrors");
+  errorDiv.innerHTML = '';
+
   form.addEventListener("submit", (e: Event) => {
     e.preventDefault();
     const nicknameInput = form.querySelector('input[type="text"]') as HTMLInputElement;
-    if (!nicknameInput)
+    if (!nicknameInput) {
+      errorDiv.innerHTML = "no nickname";
       console.error("Failed to find input element");
-    const nickname = nicknameInput.value;
+      return ;
+    }
+    const nickname = nicknameInput.value.trim();
+
+    if (!selectedAvatar) {
+      errorDiv.innerHTML = "no avatar";
+      console.error("Failed to find input element");
+      return ;
+    }
+    navigateTo(text, "gameAsGuest");
   });
+
+
 
   // back button
   setupBackButton(text, "");

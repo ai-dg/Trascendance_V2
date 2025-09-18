@@ -90,7 +90,8 @@ export function getGuestPlay(text: Translations) {
 	        <img src="/public/avatars/avatar3.png" alt="Avatar 3"
 	          class="w-20 h-20 rounded-full object-cover cursor-pointer border-2 border-transparent hover:border-blue-400 avatar-option">
 	      </div>
-	      <button type="submit" class="bg-green-500 hover:bg-green-600 text-white py-2 rounded">${text.play}</button>
+		  <div id="formErrors" class="text-red-500 text-sm italic mt-2"></div>
+	      <button id="playBtn" type="submit" class="bg-green-500 hover:bg-green-600 text-white py-2 rounded">${text.play}</button>
 	    </form>
 	    <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
 	  `;
@@ -151,7 +152,7 @@ export async function getConnectedHome(){
 	const text = await getTraductions()
 	return `<h1 id="title" class="text-2xl font-bold text-white mb-6">TRANSCENDENCE</h1>
             <div class="menu flex flex-col space-y-4">
-                <button id="playAsGuestBtn" class="bg-transparent text-white border-none hover:underline">${text.playAsGuest}</button>
+                <button id="playBtn" class="bg-transparent text-white border-none hover:underline">${text.play}</button>
                 <button id="optionsBtn" class="bg-transparent text-white border-none hover:underline">${text.options}</button>
                 <button id="aboutBtn" class="bg-transparent text-white border-none hover:underline">${text.about}</button>
 				<button id="logoutBtn" class="bg-transparent text-white border-none hover:underline">${text.logout}</button>

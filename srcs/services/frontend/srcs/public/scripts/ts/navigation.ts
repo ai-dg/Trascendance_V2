@@ -1,5 +1,6 @@
 import { Translations } from "./types.js";
 import { getElement, showHome, showForgotPasswd, showGuestPlay, showOptions, showSignIn, showSignUp } from "./script.js";
+import { showGuestPlayGame } from "./showGame.js";
 
 export function navigateTo(text: Translations, view: string, doPush = true) {
   switch(view) {
@@ -21,6 +22,9 @@ export function navigateTo(text: Translations, view: string, doPush = true) {
     case "guestPlay":
       showGuestPlay(text);
       break;
+    case "gameAsGuest":
+        showGuestPlayGame(text);
+        break;
     default:
       showHome(text);
       break;

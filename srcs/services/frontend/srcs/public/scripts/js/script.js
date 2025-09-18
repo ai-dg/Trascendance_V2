@@ -170,21 +170,37 @@ export function showGuestPlay(text) {
     // avatar choices
     document.querySelectorAll('.avatar-option').forEach(img => {
         img.addEventListener('click', () => {
-            document.querySelectorAll('.avatar-option').forEach(i => i.classList.remove('border-blue-500'));
+            document.querySelectorAll('.avatar-option').forEach(i => {
+                i.classList.remove('border-blue-500', 'border-blue-400');
+                i.classList.add('border-transparent');
+            });
+            img.classList.remove('border-transparent');
             img.classList.add('border-blue-400');
             selectedAvatar = img.getAttribute('src');
+            console.log(selectedAvatar);
         });
     });
     // nickname form
     const form = document.querySelector("form");
     if (!form)
         console.error("Failed to find form element");
+    const errorDiv = getElement("formErrors");
+    errorDiv.innerHTML = '';
     form.addEventListener("submit", (e) => {
         e.preventDefault();
         const nicknameInput = form.querySelector('input[type="text"]');
-        if (!nicknameInput)
+        if (!nicknameInput) {
+            errorDiv.innerHTML = "no nickname";
             console.error("Failed to find input element");
-        const nickname = nicknameInput.value;
+            return;
+        }
+        const nickname = nicknameInput.value.trim();
+        if (!selectedAvatar) {
+            errorDiv.innerHTML = "no avatar";
+            console.error("Failed to find input element");
+            return;
+        }
+        navigateTo(text, "gameAsGuest");
     });
     // back button
     setupBackButton(text, "");

@@ -1,4 +1,5 @@
 import { getElement, showHome, showForgotPasswd, showGuestPlay, showOptions, showSignIn, showSignUp } from "./script.js";
+import { showGuestPlayGame } from "./showGame.js";
 export function navigateTo(text, view, doPush = true) {
     switch (view) {
         case "home":
@@ -18,6 +19,9 @@ export function navigateTo(text, view, doPush = true) {
             break;
         case "guestPlay":
             showGuestPlay(text);
+            break;
+        case "gameAsGuest":
+            showGuestPlayGame(text);
             break;
         default:
             showHome(text);
