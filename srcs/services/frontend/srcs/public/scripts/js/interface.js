@@ -160,6 +160,9 @@ export async function initDisconnectedHome(text) {
     optionsBtn.addEventListener("click", () => navigateTo(text, "options"));
 }
 export async function initConnectedHome(text) {
+    // play button
+    const playBtn = getElement("playBtn");
+    playBtn.addEventListener("click", () => navigateTo(text, "game", false));
     // options button
     const optionsBtn = getElement("optionsBtn");
     optionsBtn.addEventListener("click", () => navigateTo(text, "options"));

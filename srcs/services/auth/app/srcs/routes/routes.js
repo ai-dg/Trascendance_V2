@@ -9,7 +9,8 @@ import {
 		signup_otp_validation_route,
 		is_connected,
 		verify_otp_route,
-		validate_otp_route
+		validate_otp_route,
+		auth_me_route
 
 } from "../controlers/controlers.js";
 
@@ -43,7 +44,8 @@ export function routes(app, options)
 	app.post('/reset-password/otp-validation', async (request, reply) => reset_forgotten_password_route(request, reply));
 	
 
-
+	// get auth data
+	app.get('/me', async (request, reply) => auth_me_route(request, reply));
 	
 	
 	

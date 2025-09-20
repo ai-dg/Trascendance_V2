@@ -46,7 +46,7 @@ export function showSignIn(text) {
     setupPasswordToggle("togglePasswd", "passwd");
     const errorDiv = getElement("formErrors");
     // login form
-    const form = document.querySelector("form");
+    const form = contentDiv.querySelector("form");
     if (!form)
         console.error("Failed to find form element");
     form.addEventListener("submit", (e) => {
@@ -66,7 +66,10 @@ export function showSignIn(text) {
     });
     // forgot password button
     const forgotPasswd = getElement("forgotPasswd");
-    forgotPasswd.addEventListener("click", () => navigateTo(text, "forgotPass"));
+    forgotPasswd.addEventListener("click", (e) => {
+        e.preventDefault();
+        navigateTo(text, "forgotPass");
+    });
     // back button
     setupBackButton(text, "");
 }
@@ -200,7 +203,9 @@ export function showGuestPlay(text) {
             console.error("Failed to find input element");
             return;
         }
-        navigateTo(text, "gameAsGuest");
+        localStorage.setItem("guestNickname", nickname);
+        localStorage.setItem("guestAvatar", selectedAvatar);
+        navigateTo(text, "game", false);
     });
     // back button
     setupBackButton(text, "");

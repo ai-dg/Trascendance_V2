@@ -182,6 +182,9 @@ export async function getConnectedHome(){
  
  export async function initConnectedHome(text: Translations)
  {
+	// play button
+	const playBtn = getElement<HTMLButtonElement>("playBtn");
+	playBtn.addEventListener("click", () => navigateTo(text, "game", false));
 
 	  // options button
 	const optionsBtn = getElement<HTMLButtonElement>("optionsBtn");

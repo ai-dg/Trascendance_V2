@@ -444,43 +444,6 @@ export async function signup_otp_validation_route(request, reply)
 /**********************************************************************************************************************************************************/
 
 
-
-// export async function reset_forgotten_password_route(request, reply)
-// {
-
-// 	const { otp_id, password } = request.body;
-// 	if (!password) return reply.send({ success: false, message: "Password missing" }, 400);
-// 	console.log("password = %s", password);
-// 	const row = await redis.get(otp_id);
-// 	if (!row) {
-// 	  console.error("No OTP data found for otp_id:", otp_id);
-// 	  return reply.send({ success: false, message: "Invalid token" }, 401);
-// 	}
-// 	// if (!row) return reply.send({ success: false, message: "Invalid token" }, 401);
-// 	const data = JSON.parse(row)
-// 	if (!data)
-// 		return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
-// 	// if (!otp || (typeof(otp) !== "string" && otp.length != 6))
-// 	// 	return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
-// 	// const is_valid = await compare(otp, data.otp_hashed);
-// 	// if (!is_valid) return reply.send({ success: false, message: "the code is no longer valid, please try again" }, 403);
-// 	console.log("email = %s", data.email);
-// 	try {
-// 		const passwordHash = await hash(password, 10);
-// 		await app.db.run("UPDATE users SET user_password= ? WHERE user_mail= ?", [passwordHash, data.email])
-// 		await redis.del(`${data.email}:reset-password`)
-// 		return reply.send({success: true, message: "password changed"}, 201)
-
-// 	}
-// 	catch(err)
-// 	{
-// 		console.log(err);
-// 		return reply.send(get_error_message(e.SERVER_ERROR, 500));
-// 	}
-
-
-// }
-
 export async function reset_forgotten_password_route(request, reply) {
   console.log("[reset_forgotten_password_route] Início");
 
@@ -594,6 +557,43 @@ export async function reset_password_request_route(request, reply)  {
 
 
 
+/**********************************************************************************************************************************************************/
+/*** 																	get auth data 		  											  			***/
+/**********************************************************************************************************************************************************/
+
+
+export async function auth_me_route(request, reply) {
+  try {
+    const token = request.cookies.token;
+    if (!token) return reply.code(401).send({ success: false, message: "Not authenticated" });
+
+    let payload;
+    try {
+      payload = verify(token, process.env.JWT_SECRET);
+    } catch {
+      return reply.code(401).send({ success: false, message: "Invalid or expired token" });
+    }
+	const isProduction = process.env.NODE_ENV === 'PROD';
+    if (isProduction && payload.jti) {
+      const isRevoked = await redis.get(`jwt:${payload.jti}`);
+      if (isRevoked) {
+        return reply.code(401).send({ success: false, message: "Token revoked" });
+      }
+    }
+
+    const user = await app.db.get(
+      "SELECT user_id, pseudo, user_mail FROM users WHERE user_id = ?",
+      [payload.user_id]
+    );
+    if (!user) return reply.code(404).send({ success: false, message: "User not found" });
+
+    return reply.send({ success: true, user });
+
+  } catch (err) {
+    console.error("auth/me error:", err);
+    return reply.code(500).send({ success: false, message: "Internal app error" });
+  }
+}
 
 
 

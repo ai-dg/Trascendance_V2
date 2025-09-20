@@ -1,6 +1,6 @@
 import { Translations } from "./types.js";
 import { getElement, showHome, showForgotPasswd, showGuestPlay, showOptions, showSignIn, showSignUp } from "./script.js";
-import { showGuestPlayGame } from "./showGame.js";
+import { showGame } from "./showGame.js";
 
 export function navigateTo(text: Translations, view: string, doPush = true) {
   switch(view) {
@@ -22,20 +22,20 @@ export function navigateTo(text: Translations, view: string, doPush = true) {
     case "guestPlay":
       showGuestPlay(text);
       break;
-    case "gameAsGuest":
-        showGuestPlayGame(text);
+    case "game":
+        showGame(text);
         break;
     default:
       showHome(text);
       break;
   }
-    if (doPush) {
-        const current = history.state;
-        if (!current || current.view !== view) {
-          history.pushState({ view }, "", `#${view}`);
-          console.log("pushState ->", view);
-        }
-    }
+  if (doPush) {
+      const current = history.state;
+      if (!current || current.view !== view) {
+        history.pushState({ view }, "", `#${view}`);
+        console.log("pushState ->", view);
+      }
+  }
 }
 
 export function setupBackButton(text: Translations, view: string) {
