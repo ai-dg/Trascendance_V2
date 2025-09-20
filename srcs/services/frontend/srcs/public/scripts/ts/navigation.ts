@@ -1,6 +1,8 @@
 import { Translations } from "./types.js";
 import { getElement, showHome, showForgotPasswd, showGuestPlay, showOptions, showSignIn, showSignUp } from "./script.js";
 import { showGame } from "./showGame.js";
+import { showChangeAvatar } from "./changeProfile.js";
+import { showUpdateProfile } from "./gameInterface.js";
 
 export function navigateTo(text: Translations, view: string, doPush = true) {
   switch(view) {
@@ -25,6 +27,12 @@ export function navigateTo(text: Translations, view: string, doPush = true) {
     case "game":
         showGame(text);
         break;
+    case "changeAvatar":
+      showChangeAvatar(text);
+      break;
+    case "updateProfile":
+      showUpdateProfile(text);
+      break;
     default:
       showHome(text);
       break;

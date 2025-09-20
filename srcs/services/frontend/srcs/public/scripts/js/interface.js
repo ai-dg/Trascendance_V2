@@ -2,6 +2,7 @@ import { getTraductions } from "./languageManager.js";
 import { getElement } from "./script.js";
 import { logoutHandler } from "./login.js";
 import { navigateTo } from "./navigation.js";
+import { getCurrentUser } from "./showGame.js";
 export async function getDisconnectedHome() {
     const text = await getTraductions();
     return `<h1 id="title" class="text-2xl font-bold text-white mb-6">TRANSCENDENCE</h1>
@@ -138,7 +139,11 @@ export function getChangePass(text) {
 export async function getConnectedHome() {
     const text = await getTraductions();
     return `<h1 id="title" class="text-2xl font-bold text-white mb-6">TRANSCENDENCE</h1>
-            <div class="menu flex flex-col space-y-4">
+            <div class="w-full bg-white p-4 shadow-md flex justify-between items-center space-x-4">
+        	<img id="avatar-option" class="w-20 h-20 rounded-full object-cover cursor-pointer border-2 border-transparent hover:border-blue-400 avatar-option">
+        	<h1 id="gameUser" class="text-xl font-bold"></h1>
+			</div>
+			<div class="menu flex flex-col space-y-4">
                 <button id="playBtn" class="bg-transparent text-white border-none hover:underline">${text.play}</button>
                 <button id="optionsBtn" class="bg-transparent text-white border-none hover:underline">${text.options}</button>
                 <button id="aboutBtn" class="bg-transparent text-white border-none hover:underline">${text.about}</button>
@@ -160,6 +165,17 @@ export async function initDisconnectedHome(text) {
     optionsBtn.addEventListener("click", () => navigateTo(text, "options"));
 }
 export async function initConnectedHome(text) {
+    const user = await getCurrentUser();
+    const avatarElement = getElement('avatar-option');
+    const userElement = getElement('gameUser');
+    if (user) {
+        console.log("user.avatar: ", user.avatar);
+        avatarElement.src = user.avatar ?? '/public/avatars/default.png';
+        userElement.textContent = user.pseudo;
+        avatarElement.addEventListener('click', () => {
+            navigateTo(text, 'changeAvatar');
+        });
+    }
     // play button
     const playBtn = getElement("playBtn");
     playBtn.addEventListener("click", () => navigateTo(text, "game", false));

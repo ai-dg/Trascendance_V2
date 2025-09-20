@@ -7,7 +7,7 @@ import { OTPValidationHandler } from './handlers.js';
 import { getUrl } from './urls.js';
 import { setupPasswordToggle, validateForm, setupSignUpForm, showVerificationCode, setupChangePassForm } from './validator.js';
 import { navigateTo, setupBackButton } from './navigation.js';
-import { getGameAsGuest } from './gameInterface.js';
+import { getConnectedOptions, initConnectedOptions } from './gameInterface.js';
 
 console.log("Script working properly");  // to remove
 
@@ -266,17 +266,30 @@ export function showGuestPlay(text: Translations) {
   setupBackButton(text, "");
 }
 
-export function showOptions(text: Translations) {
+export async function showOptions(text: Translations) {
   console.log(">> showOptions() called");  // to remove
   const contentDiv = getElement<HTMLDivElement>('content');
-  contentDiv.innerHTML = getOptions(text);
 
-  // change language button
-  const langToggleBtn = getElement<HTMLButtonElement>("langToggleBtn");
-  langToggleBtn.addEventListener('click', toggleLanguage);
+  const isConnected = await isConnectedUser();
+  console.log("user is connected : ", isConnected);
+	if (isConnected)
+	{
+		await initCSRFToken()
+		contentDiv.innerHTML = await getConnectedOptions(text);
+		await initConnectedOptions(text);
+	}
+	else
+	{
+		contentDiv.innerHTML = await getOptions(text);
 
-  // back button
-  setupBackButton(text, "");
+    // change language button
+    const langToggleBtn = getElement<HTMLButtonElement>("langToggleBtn");
+    langToggleBtn.addEventListener('click', toggleLanguage);
+  
+    // back button
+    setupBackButton(text, "");
+		
+	}
 
 }
 

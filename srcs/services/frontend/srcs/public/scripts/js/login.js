@@ -4,10 +4,12 @@ import { showVerificationCode } from "./validator.js";
 import { log_handler, signupSuccessHandler } from "./handlers.js";
 export async function registerUser(pseudo, password, email, text, view) {
     const errorDiv = document.getElementById('formErrors');
+    const avatar = "/public/avatars/default.png";
     const form = {
         email,
         pseudo,
-        password
+        password,
+        avatar
     };
     try {
         const res = await fetch(getUrl('auth/signup'), {

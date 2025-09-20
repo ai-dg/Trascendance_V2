@@ -8,6 +8,7 @@ import validator from 'validator';
 import { get_error_message, get_success_message, get_message, e, } from '../messages.js';
 import { is_auth, signCSRFToken, generateCSRFToken, generateOTP, is_valid_path, is_valid_password  } from '../auth.js';
 import { mail_queue } from '../services/message-broker.js';
+import { update_avatar_route } from './updateProfileControlers.js';
 
 
 ///
@@ -332,8 +333,9 @@ export async function signup_route(request, reply)
 		let email =  request.body.email;
 		let password = request.body.password;
 		let pseudo = request.body.pseudo;
+		let avatar = request.body.avatar;
 		let message = ""
-		if (!email || !pseudo || !password)
+		if (!email || !pseudo || !password || !avatar)
 			message += "missing "
 		if (!email || email.length === 0)
 			message += "email "
@@ -429,7 +431,7 @@ export async function signup_otp_validation_route(request, reply)
 	try {
 		if (!is_valid)
 			return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
-		await app.db.run('INSERT INTO "users" ("user_mail", "pseudo", "user_password") VALUES (?, ?, ?)', [data.email, data.pseudo, data.passwordHash])
+		await app.db.run('INSERT INTO "users" ("user_mail", "pseudo", "user_password", "avatar") VALUES (?, ?, ?, ?)', [data.email, data.pseudo, data.passwordHash, data.avatar])
 		return reply.send({...get_success_message(data.email, data.pseudo), message: 'user created'}, 200)
 	}
 	catch(err)
@@ -582,7 +584,7 @@ export async function auth_me_route(request, reply) {
     }
 
     const user = await app.db.get(
-      "SELECT user_id, pseudo, user_mail FROM users WHERE user_id = ?",
+      "SELECT user_id, pseudo, user_mail, avatar FROM users WHERE user_id = ?",
       [payload.user_id]
     );
     if (!user) return reply.code(404).send({ success: false, message: "User not found" });

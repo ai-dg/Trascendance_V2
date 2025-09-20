@@ -13,6 +13,7 @@ import {
 		auth_me_route
 
 } from "../controlers/controlers.js";
+import { update_avatar_route } from "../controlers/updateProfileControlers.js";
 
 
 export function routes(app, options)
@@ -47,8 +48,8 @@ export function routes(app, options)
 	// get auth data
 	app.get('/me', async (request, reply) => auth_me_route(request, reply));
 	
-	
-	
+	// update profile
+	app.put('/update-avatar', async (request, reply) => update_avatar_route(request, reply));
 
 	
 

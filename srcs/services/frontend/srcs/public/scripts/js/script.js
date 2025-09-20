@@ -4,6 +4,7 @@ import { initCSRFToken, isConnectedUser, logUser } from './login.js';
 import { getUrl } from './urls.js';
 import { setupPasswordToggle, setupSignUpForm, showVerificationCode, setupChangePassForm } from './validator.js';
 import { navigateTo, setupBackButton } from './navigation.js';
+import { getConnectedOptions, initConnectedOptions } from './gameInterface.js';
 console.log("Script working properly"); // to remove
 document.addEventListener("DOMContentLoaded", async () => {
     await loadLanguage(languages[currentLangIndex].code, 'home');
@@ -210,15 +211,24 @@ export function showGuestPlay(text) {
     // back button
     setupBackButton(text, "");
 }
-export function showOptions(text) {
+export async function showOptions(text) {
     console.log(">> showOptions() called"); // to remove
     const contentDiv = getElement('content');
-    contentDiv.innerHTML = getOptions(text);
-    // change language button
-    const langToggleBtn = getElement("langToggleBtn");
-    langToggleBtn.addEventListener('click', toggleLanguage);
-    // back button
-    setupBackButton(text, "");
+    const isConnected = await isConnectedUser();
+    console.log("user is connected : ", isConnected);
+    if (isConnected) {
+        await initCSRFToken();
+        contentDiv.innerHTML = await getConnectedOptions(text);
+        await initConnectedOptions(text);
+    }
+    else {
+        contentDiv.innerHTML = await getOptions(text);
+        // change language button
+        const langToggleBtn = getElement("langToggleBtn");
+        langToggleBtn.addEventListener('click', toggleLanguage);
+        // back button
+        setupBackButton(text, "");
+    }
 }
 export async function showHome(text) {
     if (!text)

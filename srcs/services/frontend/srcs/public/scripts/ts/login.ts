@@ -10,11 +10,13 @@ import { log_handler, signupSuccessHandler } from "./handlers.js";
 
 export async function registerUser(pseudo: string, password: string, email: string, text:Translations, view:string){
 	const errorDiv = document.getElementById('formErrors') as HTMLElement;
+	const avatar = "/public/avatars/default.png";
 	const form =
 	{
 		email,
 		pseudo,
-		password
+		password,
+		avatar
 	}
 
 	try{
