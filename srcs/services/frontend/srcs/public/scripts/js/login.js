@@ -92,7 +92,7 @@ export function getCSRFToken() {
     return csrf_token;
 }
 export async function isConnectedUser() {
-    const url = getUrl('auth/is-connected');
+    const url = getUrl('/auth/is-connected');
     try {
         const res = await fetch(url, {
             method: "POST",

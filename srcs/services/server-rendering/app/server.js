@@ -11,7 +11,7 @@ import amqp from 'amqplib'
 export const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
 
-export let base_url = "localhost:8080";
+export let base_url = "localhost";
 const is_prod = process.env.NODE_ENV === "PROD"
 
 export const validation_queue = "email-validation-queue"
