@@ -5,6 +5,28 @@ services:
 #************************** 🧬 PROXY / NGINX *************************
 ######################################################################
 
+
+  modsecurity:
+    container_name: modsecurity 
+    build:
+      context: .
+      dockerfile: ./services/security/temp/Dockerfile
+      args:
+        HOME: ${HOME}
+        NODE_ENV: ${NODE_ENV}
+
+    ports:
+      - 443:443
+    networks:
+      - internal
+    expose:
+      - 443
+    env_file:
+      - .env
+    depends_on:
+      - gateway
+
+
   gateway:
     container_name: gateway
     build:
@@ -14,8 +36,8 @@ services:
     networks:
     - transcendence
     - internal
-    ports:
-      - "8080:80"
+    expose:
+      - 8080:80
     volumes:
       - ./services/gateway/nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./frontend:/usr/share/nginx/html
@@ -73,7 +95,7 @@ services:
     container_name: auth_app
     build:
       context: ./services/auth/app
-    ports:
+    expose:
       - 3000:3000
     environment:
       - NODE_ENV=${NODE_ENV}
