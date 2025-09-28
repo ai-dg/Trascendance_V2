@@ -17,7 +17,7 @@ export async function OTPValidationHandler(params:params, inputs: NodeListOf<HTM
 	  console.log("verifyBtn called : code ", code)
 	try{
 
-		console.log("OTP enviado:", code);
+		console.log("OTP sent:", code);
 		console.log("OTP id:", params.otp_id);
 		console.log(context);
 

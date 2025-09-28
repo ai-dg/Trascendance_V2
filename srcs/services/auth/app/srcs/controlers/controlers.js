@@ -72,7 +72,7 @@ export async function verify_otp_route(request, reply) {
   	try {
 		console.log(email);
   	  user = await app.db.get(`SELECT * FROM users WHERE user_mail = ?`, [email]);
-		console.log("user dps de verificar: ", user);
+		console.log("user verified: ", user);
 	} catch (err) {
   	  return reply.send(get_error_message(e.SQL_ERROR, 500));
   	}
@@ -106,6 +106,82 @@ export async function verify_otp_route(request, reply) {
 
   	if (!app.mailChannel)
   	  return reply.send(get_error_message(e.SQL_ERROR, 500));
+
+  	app.mailChannel.sendToQueue(mail_queue, Buffer.from(JSON.stringify(mailOptions)), {
+  	  persistent: true,
+  	});
+
+  	return reply.send({ success: true, status: "otp-validation", otp_id: id, expire_at });
+
+}
+
+export async function verify_otp_email_route(request, reply) {
+
+  	const token = request.cookies.token;
+	if (!token)
+		return reply.code(401).send({ success: false, message: "Not authenticated" });
+
+	let payload;
+	try {
+	    payload = verify(token, process.env.JWT_SECRET);
+		console.log(payload.user_id);
+	} catch {
+	    return reply.code(401).send({ success: false, message: "Invalid or expired token" });
+	}
+
+  	let user = null;
+  	try {
+		const info = await app.db.all(`PRAGMA table_info(users)`);
+		console.log(info);
+
+		console.log("Payload user_id:", payload.user_id);
+		const test = await app.db.all("SELECT * FROM users");
+		console.log("All users:", test);
+
+
+		const user_id = Number(payload.user_id);
+		console.log("user_id as number:", user_id);
+
+  	  	user = await app.db.get(`SELECT * FROM users WHERE user_id = ?`, [user_id]);
+		console.log("user verified: ", user);
+	} catch (err) {
+		console.log("User id not found");
+  	  return reply.send(get_error_message(e.SQL_ERROR, 500));
+  	}
+
+  	if (!user)
+  	  return reply.send(get_error_message(e.AUTH_INVALID_CREDENTIALS, 401));
+
+	const { email: newEmail } = request.body;
+
+  	const otp = generateOTP();
+  	const otp_hashed = await hash(otp, 10);
+  	const id = crypto.randomUUID();
+  	const expire_at = Date.now() + 5 * 60 * 1000;
+
+  	const data = {
+  	  email: newEmail,
+  	  otp_hashed,
+  	  user_id: user.user_id,
+  	  expire_at,
+  	  ip: request.ip,
+  	  user_agent: request.headers["user-agent"]
+  	};
+
+  	await redis.set(id, JSON.stringify(data), { EX: 300 });
+
+  	const mailOptions = {
+  	  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
+  	  to: newEmail,
+  	  subject: "Code de vérification",
+  	  text: `Votre code est : ${otp}`,
+  	  html: `<p>Votre code est : <b>${otp}</b></p>`
+  	};
+
+  	if (!app.mailChannel) {
+		console.log("mailChannel error");
+  	  return reply.send(get_error_message(e.SQL_ERROR, 500));
+	}
 
   	app.mailChannel.sendToQueue(mail_queue, Buffer.from(JSON.stringify(mailOptions)), {
   	  persistent: true,
@@ -447,56 +523,48 @@ export async function signup_otp_validation_route(request, reply)
 
 
 export async function reset_forgotten_password_route(request, reply) {
-  console.log("[reset_forgotten_password_route] Início");
 
   const { otp_id, password } = request.body;
-  console.log("[reset_forgotten_password_route] Body recebido:", { otp_id, password });
+  console.log("Body got:", { otp_id, password });
 
   if (!password) {
-    console.log("[reset_forgotten_password_route] Password ausente");
+    console.log("Password missing");
     return reply.send({ success: false, message: "Password missing" }, 400);
   }
 
   let row;
   try {
     row = await redis.get(otp_id);
-    console.log("[reset_forgotten_password_route] Valor no Redis:", row);
   } catch (err) {
-    console.error("[reset_forgotten_password_route] Erro no Redis.get:", err);
+    console.error("Redis.get error:", err);
     return reply.send(get_error_message(e.SERVER_ERROR, 500));
   }
 
   if (!row) {
-    console.error("[reset_forgotten_password_route] Nenhum dado de OTP encontrado");
+    console.error("No OTP found");
     return reply.send({ success: false, message: "Invalid token" }, 401);
   }
 
   let data;
   try {
     data = JSON.parse(row);
-    console.log("[reset_forgotten_password_route] Dados do Redis parseados:", data);
   } catch (err) {
-    console.error("[reset_forgotten_password_route] Erro ao fazer JSON.parse:", err);
     return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
   }
 
   try {
     const passwordHash = await hash(password, 10);
-    console.log("[reset_forgotten_password_route] Hash da nova senha gerado");
 
     const result = await app.db.run(
       "UPDATE users SET user_password = ? WHERE user_mail = ?",
       [passwordHash, data.email]
     );
-    console.log("[reset_forgotten_password_route] Resultado do UPDATE:", result);
 
     const delResult = await redis.del(otp_id);
-    console.log("[reset_forgotten_password_route] Redis DEL executado:", delResult);
 
-    console.log("[reset_forgotten_password_route] Senha alterada com sucesso");
+    console.log("Password changed");
     return reply.send({ success: true, message: "password changed" }, 201);
   } catch (err) {
-    console.error("[reset_forgotten_password_route] Erro final:", err);
     return reply.send(get_error_message(e.SERVER_ERROR, 500));
   }
 }

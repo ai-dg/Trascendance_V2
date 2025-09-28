@@ -1,3 +1,5 @@
+import { getUrl } from "./urls.js";
+import { setupChangePassForm, showVerificationCode } from "./validator.js";
 import { setupBackButton, navigateTo } from "./navigation.js";
 import { getElement } from "./script.js";
 async function changeAvatar(newAvatarPath) {
@@ -30,7 +32,7 @@ export function getChangeAvatar(text) {
 	        <img src="/public/avatars/avatar3.png" alt="Avatar 3"
 	          class="w-20 h-20 rounded-full object-cover cursor-pointer border-2 border-transparent hover:border-blue-400 avatar-option">
 	      </div>
-		  <div id="formErrors" class="text-red-500 text-sm italic mt-2"></div>
+		    <div id="formErrors" class="text-red-500 text-sm italic mt-2"></div>
 	      <button id="changeBtn" type="submit" class="bg-green-500 hover:bg-green-600 text-white py-2 rounded">Change</button>
 	    </form>
 	    <button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
@@ -83,4 +85,100 @@ export async function showChangeAvatar(text) {
     });
     // back button
     setupBackButton(text, "");
+}
+export async function changeUsername(newUsername) {
+    try {
+        const res = await fetch("/auth/update-username", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ username: newUsername }),
+        });
+        const result = await res.json();
+        if (result.success) {
+            console.log("Username updated:", result.username);
+            return { success: true, username: result.username };
+        }
+        else {
+            console.error("Error changing username:", result.message);
+            return { success: false, message: result.message };
+        }
+    }
+    catch (err) {
+        console.error("Request failed:", err);
+        return { success: false, message: "Network error" };
+    }
+}
+export async function changeEmail(text, newEmail) {
+    const errorDiv = getElement('formErrors');
+    try {
+        const res = await fetch(getUrl('auth/verify-email'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: newEmail })
+        });
+        const result = await res.json();
+        if (!result.success) {
+            return { success: false, message: result.message || "Error sending OTP" };
+        }
+        const is_valid = await showVerificationCode(text, "", {
+            otp_id: result.otp_id,
+            context: "verify-email",
+            handler: async () => { }
+        });
+        if (!is_valid) {
+            errorDiv.innerHTML = "OTP validation failed";
+            return { success: false, message: "OTP validation failed" };
+        }
+        navigateTo(text, "updateProfile");
+        const updateEmail = await fetch(getUrl('auth/update-email'), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: newEmail })
+        });
+        const updateRes = await updateEmail.json();
+        if (updateRes.success) {
+            alert("✅ Email updated to: " + updateRes.email);
+            return { success: true, email: updateRes.email };
+        }
+        else {
+            errorDiv.innerHTML = updateRes.message || "Error updating email";
+            return { success: false, message: updateRes.message || "Error updating email" };
+        }
+    }
+    catch (err) {
+        console.log(err);
+        errorDiv.innerHTML = "Internal Error";
+        return { success: false, message: "Internal Error" };
+    }
+}
+export async function changePassword(text) {
+    const errorDiv = getElement('formErrors');
+    try {
+        const form = document.querySelector("form");
+        if (!form) {
+            console.error("Failed to find form element");
+            return { success: false, message: "Form not found" };
+        }
+        const passwd = await setupChangePassForm(form, text);
+        const res = await fetch("/auth/update-password", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ password: passwd }),
+        });
+        const result = await res.json();
+        if (result.success) {
+            console.log("password updated:", result.password);
+            return { success: true, password: result.password };
+        }
+        else {
+            console.error("Error changing password:", result.message);
+            return { success: false, message: result.message };
+        }
+    }
+    catch (err) {
+        console.error("Request failed:", err);
+        return { success: false, message: "Network error" };
+    }
 }

@@ -9,11 +9,18 @@ import {
 		signup_otp_validation_route,
 		is_connected,
 		verify_otp_route,
+		verify_otp_email_route,
 		validate_otp_route,
 		auth_me_route
 
 } from "../controlers/controlers.js";
-import { update_avatar_route } from "../controlers/updateProfileControlers.js";
+import {
+		update_avatar_route,
+		update_email_route,
+		update_password_route,
+		update_username_route,
+		verify_email_route
+} from "../controlers/updateProfileControlers.js";
 
 
 export function routes(app, options)
@@ -21,6 +28,10 @@ export function routes(app, options)
 	// OTP validation only
 	app.post('/verify', async (request, reply) => verify_otp_route(request, reply));
 	app.post('/verify/otp-validation', async (request, reply) => validate_otp_route(request, reply));
+
+	// OTP validation email only
+	app.post('/verify-email', async (request, reply) => verify_otp_email_route(request, reply));
+	app.post('/verify-email/otp-validation', async (request, reply) => validate_otp_route(request, reply));
 
 	// login process
 	app.post('/login', async (request, reply) => login_route(request, reply))
@@ -50,7 +61,8 @@ export function routes(app, options)
 	
 	// update profile
 	app.put('/update-avatar', async (request, reply) => update_avatar_route(request, reply));
-
-	
-
+	app.put('/update-username', async (request, reply) => update_username_route(request, reply));
+	app.put('/update-email', async (request, reply) => update_email_route(request, reply));
+	app.post('/verify-email-valid', async (request, reply) => verify_email_route(request, reply));
+	app.put('/update-password', async (request, reply) => update_password_route(request, reply));
 }

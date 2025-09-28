@@ -12,7 +12,7 @@ export async function OTPValidationHandler(params, inputs) {
     const code = Array.from(inputs).map(i => i.value).join('');
     console.log("verifyBtn called : code ", code);
     try {
-        console.log("OTP enviado:", code);
+        console.log("OTP sent:", code);
         console.log("OTP id:", params.otp_id);
         console.log(context);
         const res = await fetch(getUrl(`auth/${context}/otp-validation`), {
