@@ -6,214 +6,28 @@
 Auth service running on port 3300
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'jihongda1102@gmail.comdddd',
+  to: 'test@test.coms',
   subject: 'Bienvenue ! Confirme ton adresse email ✨',
-  text: 'Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  456415 .',
+  text: 'Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  456818 .',
   html: '\t<p>Bienvenue sur <strong>Transcendance 42</strong> !</p>\n' +
-    '\t\t\t\t<p>Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  456415 .</p>\n' +
+    '\t\t\t\t<p>Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  456818 .</p>\n' +
     '\t\t\t\t<p>Ce lien est valable 2mn\n' +
     '\t\t\t\t<p>À très vite sur Transcendance 42 ! 👋</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as 4gTSQDdwVUtsUBbUyhHhfc
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'jihongda1102@gmail.comffff',
-  subject: 'Bienvenue ! Confirme ton adresse email ✨',
-  text: 'Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  695488 .',
-  html: '\t<p>Bienvenue sur <strong>Transcendance 42</strong> !</p>\n' +
-    '\t\t\t\t<p>Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  695488 .</p>\n' +
-    '\t\t\t\t<p>Ce lien est valable 2mn\n' +
-    '\t\t\t\t<p>À très vite sur Transcendance 42 ! 👋</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as Ahm3ehvaJ8PKFE4BJUveyz
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'jihongda1102@gmail.comffff',
-  subject: 'Bienvenue ! Confirme ton adresse email ✨',
-  text: 'Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  852906 .',
-  html: '\t<p>Bienvenue sur <strong>Transcendance 42</strong> !</p>\n' +
-    '\t\t\t\t<p>Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  852906 .</p>\n' +
-    '\t\t\t\t<p>Ce lien est valable 2mn\n' +
-    '\t\t\t\t<p>À très vite sur Transcendance 42 ! 👋</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as ZrkKC3PoV2Fdt3UJbkGA9K
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'jihongda1102@gmail.comffff',
-  subject: 'Bienvenue ! Confirme ton adresse email ✨',
-  text: 'Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  359087 .',
-  html: '\t<p>Bienvenue sur <strong>Transcendance 42</strong> !</p>\n' +
-    '\t\t\t\t<p>Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  359087 .</p>\n' +
-    '\t\t\t\t<p>Ce lien est valable 2mn\n' +
-    '\t\t\t\t<p>À très vite sur Transcendance 42 ! 👋</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as BaUto7YW6bMTdAdMUNJzoo
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'jihongda1102@gmail.comffff',
-  subject: 'Bienvenue ! Confirme ton adresse email ✨',
-  text: 'Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  723852 .',
-  html: '\t<p>Bienvenue sur <strong>Transcendance 42</strong> !</p>\n' +
-    '\t\t\t\t<p>Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  723852 .</p>\n' +
-    '\t\t\t\t<p>Ce lien est valable 2mn\n' +
-    '\t\t\t\t<p>À très vite sur Transcendance 42 ! 👋</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as P5hGYVo7mMPuCnx22zE3cx
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'jihongda1102@gmail.comddd',
-  subject: 'Bienvenue ! Confirme ton adresse email ✨',
-  text: 'Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  774301 .',
-  html: '\t<p>Bienvenue sur <strong>Transcendance 42</strong> !</p>\n' +
-    '\t\t\t\t<p>Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  774301 .</p>\n' +
-    '\t\t\t\t<p>Ce lien est valable 2mn\n' +
-    '\t\t\t\t<p>À très vite sur Transcendance 42 ! 👋</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as KhzGb3badgsnRdKBxB8EYk
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'test@test.com',
-  subject: 'Bienvenue ! Confirme ton adresse email ✨',
-  text: 'Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  378814 .',
-  html: '\t<p>Bienvenue sur <strong>Transcendance 42</strong> !</p>\n' +
-    '\t\t\t\t<p>Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  378814 .</p>\n' +
-    '\t\t\t\t<p>Ce lien est valable 2mn\n' +
-    '\t\t\t\t<p>À très vite sur Transcendance 42 ! 👋</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as Ho3ge2rZZH3zVEB85RTsJL
+✔ Mail envoyé : 250 2.0.0 Ok: queued as GbM9QuPpkmZZLNbyhtr8Cr
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
   to: 'test@test.com',
   subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 114839',
-  html: '<p>Votre code de connexion est : 114839</p>'
+  text: 'Votre code de connexion est : 219822',
+  html: '<p>Votre code de connexion est : 219822</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as EPHReKRQFbrpSPrv2qvSZA
+✔ Mail envoyé : 250 2.0.0 Ok: queued as oWJDrBmwL8zCKFgeeUvTKn
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
   to: 'test@test.com',
   subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 570417',
-  html: '<p>Votre code de connexion est : 570417</p>'
+  text: 'Votre code de connexion est : 291012',
+  html: '<p>Votre code de connexion est : 291012</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as PuxesrhgVQW4wVeAQkHGcZ
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'test@test.com',
-  subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 200817',
-  html: '<p>Votre code de connexion est : 200817</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as 8oKh9BaiuzKbXfo3R9Bkhe
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'test@test.com',
-  subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 717255',
-  html: '<p>Votre code de connexion est : 717255</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as HAHg7WSRVRxPLzkY3ak5NZ
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'test@test.com',
-  subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 681382',
-  html: '<p>Votre code de connexion est : 681382</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as Dh3CGjaFSVH6VayFKr5wa5
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'test@test.com',
-  subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 194229',
-  html: '<p>Votre code de connexion est : 194229</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as E2dRPAP2bri2X765fGMvPH
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'test@test.com',
-  subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 488689',
-  html: '<p>Votre code de connexion est : 488689</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as NUVZMQGLJBc6N36QKNFgiv
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'test@test.com',
-  subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 454120',
-  html: '<p>Votre code de connexion est : 454120</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as 8UkeWYKqHZf6G8hcQtMi5Q
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'test@test.com',
-  subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 170567',
-  html: '<p>Votre code de connexion est : 170567</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as LecAc6fEVmyPQ7mLwjZtSc
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'test@test.com',
-  subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 771698',
-  html: '<p>Votre code de connexion est : 771698</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as M4sJc5sM99Y7Zvoj6gftyf
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'test@test.com',
-  subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 130522',
-  html: '<p>Votre code de connexion est : 130522</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as 9VSqYKPFaSCE3Uc58oQwrk
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'test@test.com',
-  subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 185428',
-  html: '<p>Votre code de connexion est : 185428</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as XDqKxrXTV4PCb5Jex87S8T
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'test@test.com',
-  subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 821466',
-  html: '<p>Votre code de connexion est : 821466</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as XvBce5tT2gUzsH7nCESatp
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'test@test.com',
-  subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 131001',
-  html: '<p>Votre code de connexion est : 131001</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as 5tEwtuuwNhTMUkqQMho4hH
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'test@test.com',
-  subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 400978',
-  html: '<p>Votre code de connexion est : 400978</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as LdpHSxXzyGGrVBzAHwUSCm
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'test@test.com',
-  subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 323787',
-  html: '<p>Votre code de connexion est : 323787</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as 5kmt9EDSGxCWh9W2UdJBTA
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'test@test.com',
-  subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 814268',
-  html: '<p>Votre code de connexion est : 814268</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as eya6R598xMbEe4FUHctqKm
+✔ Mail envoyé : 250 2.0.0 Ok: queued as FY5m7gS83KPmTgPseawFPh

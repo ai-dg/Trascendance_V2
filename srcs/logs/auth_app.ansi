@@ -4,181 +4,29 @@
 [33m[nodemon] watching extensions: js,json[39m
 [32m[nodemon] starting `node server.js`[39m
 Auth service running on port 3000
-[2025-09-29T06:24:04.035Z] POST /is-connected
-[2025-09-29T06:24:06.906Z] POST /is-connected
-[2025-09-29T06:24:19.648Z] POST /signup
-jihongda1102@gmail.comdddd
-check pseudo :  undefined
-[2025-09-29T06:26:16.369Z] POST /is-connected
-[2025-09-29T06:26:26.331Z] POST /signup
-jihongda1102@gmail.comffff
-check pseudo :  undefined
-[2025-09-29T06:27:38.621Z] POST /signup
-jihongda1102@gmail.comffff
-check pseudo :  undefined
-[2025-09-29T06:27:48.126Z] POST /signup
-jihongda1102@gmail.comffff
-check pseudo :  undefined
-[2025-09-29T06:27:49.475Z] POST /signup/otp-validation
-{
-  success: false,
-  error: { code: 'AUTH_INVALID_TOKEN', message: 'invalid token' }
-}
-[2025-09-29T06:27:51.540Z] POST /signup
-jihongda1102@gmail.comffff
-check pseudo :  undefined
-[2025-09-29T06:27:52.736Z] POST /signup/otp-validation
-{
-  success: false,
-  error: { code: 'AUTH_INVALID_TOKEN', message: 'invalid token' }
-}
-[2025-09-29T06:29:53.542Z] POST /is-connected
-[2025-09-29T06:29:55.389Z] POST /is-connected
-[2025-09-29T06:29:55.890Z] POST /is-connected
-[2025-09-29T06:29:56.342Z] POST /is-connected
-[2025-09-29T06:30:10.024Z] POST /signup
-jihongda1102@gmail.comddd
-check pseudo :  undefined
-[2025-09-29T06:30:35.046Z] POST /signup/otp-validation
-[2025-09-29T06:30:36.404Z] POST /is-connected
-[2025-09-29T06:42:09.625Z] POST /is-connected
-[2025-09-29T06:42:13.119Z] POST /login
-seasd asd
-{
-  success: false,
-  error: {
-    code: 'AUTH_INVALID_CREDENTIALS',
-    message: 'Adresse e-mail ou mot de passe incorrect'
-  }
-}
-[2025-09-29T06:44:28.146Z] POST /is-connected
-[2025-09-29T06:44:31.130Z] POST /login
-sdf sdf
-{
-  success: false,
-  error: {
-    code: 'AUTH_INVALID_CREDENTIALS',
-    message: 'Adresse e-mail ou mot de passe incorrect'
-  }
-}
-[2025-09-29T06:44:34.407Z] POST /login
-sdf sdf
-{
-  success: false,
-  error: {
-    code: 'AUTH_INVALID_CREDENTIALS',
-    message: 'Adresse e-mail ou mot de passe incorrect'
-  }
-}
-[2025-09-29T06:46:02.076Z] POST /is-connected
-[2025-09-29T06:46:04.455Z] POST /login
-dsfgsdfg sdfg
-{
-  success: false,
-  error: {
-    code: 'AUTH_INVALID_CREDENTIALS',
-    message: 'Adresse e-mail ou mot de passe incorrect'
-  }
-}
-[2025-09-29T06:46:05.189Z] POST /login
-dsfgsdfg sdfg
-{
-  success: false,
-  error: {
-    code: 'AUTH_INVALID_CREDENTIALS',
-    message: 'Adresse e-mail ou mot de passe incorrect'
-  }
-}
-[2025-09-29T06:46:05.664Z] POST /login
-dsfgsdfg sdfg
-{
-  success: false,
-  error: {
-    code: 'AUTH_INVALID_CREDENTIALS',
-    message: 'Adresse e-mail ou mot de passe incorrect'
-  }
-}
-[2025-09-29T06:46:06.345Z] POST /login
-dsfgsdfg sdfg
-{
-  success: false,
-  error: {
-    code: 'AUTH_INVALID_CREDENTIALS',
-    message: 'Adresse e-mail ou mot de passe incorrect'
-  }
-}
-[2025-09-29T06:46:07.054Z] POST /login
-dsfgsdfg sdfg
-{
-  success: false,
-  error: {
-    code: 'AUTH_INVALID_CREDENTIALS',
-    message: 'Adresse e-mail ou mot de passe incorrect'
-  }
-}
-[2025-09-29T06:46:14.819Z] POST /login
-sdfg sdfgsdfgsdfg
-{
-  success: false,
-  error: {
-    code: 'AUTH_INVALID_CREDENTIALS',
-    message: 'Adresse e-mail ou mot de passe incorrect'
-  }
-}
-[2025-09-29T06:47:42.687Z] POST /is-connected
-[2025-09-29T06:47:45.696Z] POST /login
-fdhg fgh
-{
-  success: false,
-  error: {
-    code: 'AUTH_INVALID_CREDENTIALS',
-    message: 'Adresse e-mail ou mot de passe incorrect'
-  }
-}
-[2025-09-29T06:47:46.638Z] POST /login
-fdhg fgh
-{
-  success: false,
-  error: {
-    code: 'AUTH_INVALID_CREDENTIALS',
-    message: 'Adresse e-mail ou mot de passe incorrect'
-  }
-}
-[2025-09-29T06:48:18.777Z] POST /is-connected
-[2025-09-29T06:48:20.802Z] POST /login
-fdgh fdgh
-{
-  success: false,
-  error: {
-    code: 'AUTH_INVALID_CREDENTIALS',
-    message: 'Adresse e-mail ou mot de passe incorrect'
-  }
-}
-[2025-09-29T06:48:26.528Z] POST /login
-fdgh fdghf
-{
-  success: false,
-  error: {
-    code: 'AUTH_INVALID_CREDENTIALS',
-    message: 'Adresse e-mail ou mot de passe incorrect'
-  }
-}
-[2025-09-29T06:48:29.454Z] POST /login
-fdgh fdghfssdfgdsfg
-{
-  success: false,
-  error: {
-    code: 'AUTH_INVALID_CREDENTIALS',
-    message: 'Adresse e-mail ou mot de passe incorrect'
-  }
-}
-[2025-09-29T06:48:49.338Z] POST /signup
+[2025-09-29T07:06:39.815Z] POST /is-connected
+[2025-09-29T07:06:43.062Z] POST /is-connected
+[2025-09-29T07:06:46.293Z] POST /is-connected
+[2025-09-29T07:06:49.510Z] POST /is-connected
+[2025-09-29T07:12:07.075Z] POST /signup
 test@test.com
+[2025-09-29T07:12:15.397Z] POST /signup
+test@test.coms
+check pseudo :  {
+  user_id: 12,
+  user_mail: 'test@test.com',
+  pseudo: 'test',
+  user_password: '$2b$10$96oTA6hO5QNoZtZFeUzFXeOp/6o5gjST2kPAeP5vYaDE0YmMCrgk.',
+  created_at: '2025-09-29 06:49:01',
+  avatar: null
+}
+[2025-09-29T07:12:19.663Z] POST /signup
+test@test.coms
 check pseudo :  undefined
-[2025-09-29T06:49:00.958Z] POST /signup/otp-validation
-[2025-09-29T06:49:02.614Z] POST /is-connected
-[2025-09-29T06:49:07.546Z] POST /login
-test@test.com Agudeloji303@
+[2025-09-29T07:12:40.629Z] POST /signup/otp-validation
+[2025-09-29T07:12:42.194Z] POST /is-connected
+[2025-09-29T07:12:45.874Z] POST /login
+test1 Agudeloji303@
 {
   success: false,
   error: {
@@ -186,8 +34,8 @@ test@test.com Agudeloji303@
     message: 'Adresse e-mail ou mot de passe incorrect'
   }
 }
-[2025-09-29T06:49:09.052Z] POST /login
-test@test.com Agudeloji303@
+[2025-09-29T07:12:54.037Z] POST /login
+test1 Agudeloji303@
 {
   success: false,
   error: {
@@ -195,66 +43,12 @@ test@test.com Agudeloji303@
     message: 'Adresse e-mail ou mot de passe incorrect'
   }
 }
-[2025-09-29T06:49:19.385Z] POST /login
+[2025-09-29T07:13:00.753Z] POST /login
 test Agudeloji303@
-[2025-09-29T06:49:29.543Z] POST /signin/otp-validation
-[2025-09-29T06:49:30.879Z] POST /signin/otp-validation
-[2025-09-29T06:49:45.292Z] POST /signin/otp-validation
-[2025-09-29T06:50:52.189Z] POST /is-connected
-[2025-09-29T06:51:01.288Z] POST /login
-test@test.com Agudeloji303@
-{
-  success: false,
-  error: {
-    code: 'AUTH_INVALID_CREDENTIALS',
-    message: 'Adresse e-mail ou mot de passe incorrect'
-  }
-}
-[2025-09-29T06:51:14.042Z] POST /login
+[2025-09-29T07:13:26.247Z] POST /login
 test Agudeloji303@
-[2025-09-29T06:51:24.747Z] POST /signup/otp-validation
-SQLITE_CONSTRAINT: NOT NULL constraint failed: users.user_password
-{
-  success: false,
-  error: { code: 'SERVER_ERROR', message: 'unknown server error' }
-}
-[2025-09-29T06:52:43.724Z] POST /is-connected
-[2025-09-29T06:52:49.455Z] POST /login
-test Agudeloji303@
-[2025-09-29T06:52:58.847Z] POST /signup/otp-validation
-{
-  success: false,
-  error: { code: 'SERVER_ERROR', message: 'unknown server error' }
-}
-SQLITE_CONSTRAINT: NOT NULL constraint failed: users.user_password
-[2025-09-29T06:55:34.947Z] POST /is-connected
-[2025-09-29T06:55:40.932Z] POST /login
-test Agudeloji303@
-[2025-09-29T06:55:41.895Z] POST /login
-test Agudeloji303@
-[2025-09-29T06:55:42.517Z] POST /login
-test Agudeloji303@
-[2025-09-29T06:55:42.755Z] POST /login
-test Agudeloji303@
-[2025-09-29T06:55:43.393Z] POST /login
-test Agudeloji303@
-[2025-09-29T06:55:45.308Z] POST /login
-test Agudeloji303@
-[2025-09-29T06:55:46.990Z] POST /login
-test Agudeloji303@
-[2025-09-29T06:55:47.178Z] POST /login
-test Agudeloji303@
-[2025-09-29T06:55:47.355Z] POST /login
-test Agudeloji303@
-[2025-09-29T06:55:47.532Z] POST /login
-test Agudeloji303@
-[2025-09-29T06:59:30.962Z] POST /login
-test Agudeloji303@
-[2025-09-29T06:59:31.823Z] POST /login
-test Agudeloji303@
-[2025-09-29T06:59:33.173Z] POST /is-connected
-[2025-09-29T06:59:38.053Z] POST /login
-test Agudeloji303@
-[2025-09-29T07:01:13.882Z] POST /is-connected
-[2025-09-29T07:01:19.545Z] POST /login
-test Agudeloji303@
+[2025-09-29T07:34:14.732Z] POST /is-connected
+[2025-09-29T07:35:01.998Z] POST /is-connected
+[2025-09-29T07:49:48.272Z] POST /is-connected
+[2025-09-29T07:49:49.046Z] POST /is-connected
+[2025-09-29T07:49:58.145Z] POST /is-connected

@@ -108,6 +108,7 @@ export class SettingsPage {
       ]
     );
     
+    
     // Color Theme
     const themeCard = this.createColorThemeCard();
     
