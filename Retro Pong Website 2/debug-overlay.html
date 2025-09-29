@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Overlay "Ready to play?"</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .debug-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .debug-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 2px solid #ff1493;
+        }
+        .debug-title {
+            color: #ff1493;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .debug-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: #0f4c0f;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+        }
+        .error {
+            background: #4c0f0f;
+            border: 1px solid #ff0000;
+            color: #ff0000;
+        }
+        .info {
+            background: #0f0f4c;
+            border: 1px solid #0000ff;
+            color: #00ffff;
+        }
+        .warning {
+            background: #4c4c0f;
+            border: 1px solid #ffff00;
+            color: #ffff00;
+        }
+        .code {
+            background: #333;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1 class="debug-title">🐛 Debug - Overlay "Ready to play?"</h1>
+        
+        <div class="debug-section">
+            <h2 class="debug-title">🔍 Instructions de debug</h2>
+            <div class="debug-result info">
+                <strong>Pour déboguer le problème :</strong><br>
+                1. <strong>Ouvrez la console du navigateur</strong> (F12 → Console)<br>
+                2. <strong>Allez sur http://localhost:3000</strong><br>
+                3. <strong>Connectez-vous et lancez le jeu</strong><br>
+                4. <strong>Cliquez sur "START GAME"</strong><br>
+                5. <strong>Regardez les logs dans la console</strong>
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <h2 class="debug-title">📊 Logs attendus</h2>
+            <div class="debug-result success">
+                <strong>Si tout fonctionne, vous devriez voir :</strong><br>
+                <div class="code">
+startGame() called<br>
+GameManager exists, calling startGame()<br>
+GameManager.startGame() called<br>
+Game state after start: {player1Score: 0, player2Score: 0, gameRunning: true, winner: null}<br>
+notifyListeners called, listeners count: 1<br>
+updateGameState called with: {player1Score: 0, player2Score: 0, gameRunning: true, winner: null}<br>
+Found overlays: {gameOverOverlay: div, startOverlay: div}
+                </div>
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <h2 class="debug-title">🚨 Problèmes possibles</h2>
+            <div class="debug-result error">
+                <strong>Si vous voyez "GameManager is null!":</strong><br>
+                - Le canvas n'est pas correctement initialisé<br>
+                - Problème dans la méthode render() de GamePage
+            </div>
+            <div class="debug-result error">
+                <strong>Si vous ne voyez pas "updateGameState called":</strong><br>
+                - Les listeners ne sont pas correctement configurés<br>
+                - Problème dans setupGameListeners()
+            </div>
+            <div class="debug-result error">
+                <strong>Si vous voyez "Found overlays: {gameOverOverlay: null, startOverlay: null}":</strong><br>
+                - Les sélecteurs CSS ne trouvent pas les overlays<br>
+                - Problème avec les attributs data-overlay
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <h2 class="debug-title">🔧 Solutions possibles</h2>
+            <div class="debug-result warning">
+                <strong>Si GameManager est null :</strong><br>
+                - Vérifier que this.canvas existe avant de créer GameManager<br>
+                - Ajouter des logs dans la méthode render() de GamePage
+            </div>
+            <div class="debug-result warning">
+                <strong>Si les listeners ne fonctionnent pas :</strong><br>
+                - Vérifier que setupGameListeners() est appelé après la création du GameManager<br>
+                - Vérifier que addListener() fonctionne correctement
+            </div>
+            <div class="debug-result warning">
+                <strong>Si les overlays ne sont pas trouvés :</strong><br>
+                - Vérifier que les attributs data-overlay sont correctement définis<br>
+                - Utiliser des sélecteurs CSS plus spécifiques
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <h2 class="debug-title">📝 Rapport de debug</h2>
+            <div class="debug-result info">
+                <strong>Copiez-collez ici les logs de la console :</strong><br>
+                <textarea style="width: 100%; height: 100px; background: #333; color: #fff; border: 1px solid #666; padding: 10px; font-family: monospace;"></textarea>
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <h2 class="debug-title">✅ Résultat attendu</h2>
+            <div class="debug-result success">
+                <strong>Après le debug, l'overlay "Ready to play?" doit :</strong><br>
+                ✓ Disparaître immédiatement quand on clique "START GAME"<br>
+                ✓ Laisser le canvas du jeu visible<br>
+                ✓ Permettre de jouer avec W/S et ↑/↓<br>
+                ✓ Afficher le score qui se met à jour
+            </div>
+        </div>
+    </div>
+</body>
+</html>

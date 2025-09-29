@@ -194,7 +194,11 @@
     "build": "tsc -p srcs/config/tsconfig.json",
     "start": "node dist/config/server.js",
     "build:css": "postcss ./srcs/public/styles/input.css -o ./srcs/public/styles/tailwind.build.css --config srcs/config/postcss.config.cjs",
-     "dev:css": "postcss ./srcs/public/styles/input.css -o ./srcs/public/styles/output.css --config srcs/config/postcss.config.cjs --watch"
+      "dev:css": "postcss ./srcs/public/styles/input.css -o ./srcs/public/styles/output.css --config srcs/config/postcss.config.cjs --watch",
+    "watch:ts": "tsc -p srcs/config/tsconfig.json --watch",
+    "watch:css": "postcss ./srcs/public/styles/input.css -o ./srcs/public/styles/tailwind.build.css --config srcs/config/postcss.config.cjs --watch"
+  
+     
   },
   "keywords": [],
   "author": "",

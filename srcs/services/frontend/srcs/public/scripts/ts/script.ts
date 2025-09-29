@@ -1,4 +1,4 @@
-import test from 'node:test';
+// import test from 'node:test';
 import { getDisconnectedHome, getConnectedHome, initConnectedHome, initDisconnectedHome, getSignupForm, getSigninForm, getGuestPlay, getOptions, getForgotPass, getChangePass} from './interface.js';
 import { loadLanguage, toggleLanguage, languages, currentLangIndex, currentTexts } from './languageManager.js';
 import { initCSRFToken, isConnectedUser, logUser, registerUser } from './login.js';
@@ -8,8 +8,16 @@ import { getUrl } from './urls.js';
 import { setupPasswordToggle, validateForm, setupSignUpForm, showVerificationCode, setupChangePassForm } from './validator.js';
 import { navigateTo, setupBackButton } from './navigation.js';
 import { getConnectedOptions, initConnectedOptions } from './gameInterface.js';
+import { App } from './app.js';
 
-console.log("Script working properly");  // to remove
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.getElementById('app');
+  if (container) {
+    new App(container);
+  } else {
+    console.error('App container not found');
+  }
+});
 
 
 

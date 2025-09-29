@@ -1,0 +1,19 @@
+{
+  "name": "neon-arcade-pong",
+  "version": "1.0.0",
+  "description": "A synthwave-styled Pong game built with TypeScript and Tailwind CSS",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "serve": "python -m http.server 8000",
+    "start": "npm run build && npm run serve"
+  },
+  "keywords": ["pong", "game", "typescript", "tailwind", "synthwave", "arcade"],
+  "author": "Neon Arcade",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

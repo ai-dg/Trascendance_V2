@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test du jeu Pong - Corrections</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 2px solid #ff1493;
+        }
+        .test-title {
+            color: #ff1493;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: #0f4c0f;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+        }
+        .error {
+            background: #4c0f0f;
+            border: 1px solid #ff0000;
+            color: #ff0000;
+        }
+        .info {
+            background: #0f0f4c;
+            border: 1px solid #0000ff;
+            color: #00ffff;
+        }
+        .warning {
+            background: #4c4c0f;
+            border: 1px solid #ffff00;
+            color: #ffff00;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">🎮 Test du jeu Pong - Corrections des overlays</h1>
+        
+        <div class="test-section">
+            <h2 class="test-title">🐛 Problème identifié</h2>
+            <div class="test-result error">
+                <strong>Problème :</strong> L'overlay "Ready to play?" restait affiché même pendant le jeu<br>
+                <strong>Symptôme :</strong> Le jeu fonctionnait en arrière-plan (scores qui changent) mais l'overlay bloquait la vue
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">🔧 Corrections apportées</h2>
+            <div class="test-result success">
+                ✓ <strong>Sélecteurs améliorés :</strong> Utilisation d'attributs data-overlay pour identifier les overlays
+            </div>
+            <div class="test-result success">
+                ✓ <strong>Logique de gestion :</strong> Amélioration de la méthode updateGameState()
+            </div>
+            <div class="test-result success">
+                ✓ <strong>États du jeu :</strong> Gestion correcte des états gameRunning et winner
+            </div>
+            <div class="test-result success">
+                ✓ <strong>Attributs HTML :</strong> Ajout de data-overlay="start-game" et data-overlay="game-over"
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">🎯 Logique corrigée</h2>
+            <div class="test-result info">
+                <strong>Avant :</strong><br>
+                - Sélecteurs CSS complexes et fragiles<br>
+                - Logique de gestion des overlays confuse<br>
+                - Conflits entre les états du jeu
+            </div>
+            <div class="test-result success">
+                <strong>Après :</strong><br>
+                - Sélecteurs data-overlay fiables<br>
+                - Logique claire : winner → game-over, !gameRunning → start-game, gameRunning → hide all<br>
+                - Gestion d'état cohérente
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">🧪 Instructions de test</h2>
+            <div class="test-result warning">
+                <strong>Pour tester la correction :</strong><br>
+                1. <strong>Démarrage :</strong> L'overlay "Ready to play?" doit être visible au début<br>
+                2. <strong>Démarrage du jeu :</strong> Cliquez sur "START GAME" → l'overlay doit disparaître<br>
+                3. <strong>Pendant le jeu :</strong> Le canvas doit être visible, pas d'overlay<br>
+                4. <strong>Fin de jeu :</strong> Quand quelqu'un gagne → overlay "GAME OVER" doit apparaître<br>
+                5. <strong>Nouvelle partie :</strong> "PLAY AGAIN" → retour à l'overlay de démarrage
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">✅ Résultats attendus</h2>
+            <div class="test-result success">
+                ✓ <strong>Overlay de démarrage :</strong> Visible au début et après reset<br>
+                ✓ <strong>Pendant le jeu :</strong> Aucun overlay, canvas visible<br>
+                ✓ <strong>Fin de jeu :</strong> Overlay "GAME OVER" avec le gagnant<br>
+                ✓ <strong>Contrôles :</strong> Boutons PAUSE/RESUME fonctionnels<br>
+                ✓ <strong>Score :</strong> Mise à jour en temps réel
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">🎮 Contrôles du jeu</h2>
+            <div class="test-result info">
+                <strong>Joueur 1 :</strong> W (haut), S (bas)<br>
+                <strong>Joueur 2 :</strong> ↑ (haut), ↓ (bas)<br>
+                <strong>Objectif :</strong> Premier à 10 points gagne<br>
+                <strong>Balle :</strong> Maintenant dessinée comme un cercle (correction précédente)
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">✨ Résumé</h2>
+            <div class="test-result success">
+                <strong>🎉 Problème résolu !</strong><br>
+                Le jeu Pong fonctionne maintenant correctement avec une gestion d'overlay appropriée. L'overlay "Ready to play?" disparaît quand le jeu commence et réapparaît seulement quand nécessaire.
+            </div>
+        </div>
+    </div>
+</body>
+</html>

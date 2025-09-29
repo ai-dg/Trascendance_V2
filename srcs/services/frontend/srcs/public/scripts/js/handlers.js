@@ -28,14 +28,16 @@ export async function OTPValidationHandler(params, inputs) {
         console.log(result);
         if (result.success) {
             params.handler();
-            return true;
+            return { success: true };
         }
         else {
-            console.log('failure : ', result.message);
-            return false;
+            const errorMessage = result.error?.message || result.error || result.message || 'Unknown error';
+            console.log('failure : ', errorMessage);
+            return { success: false, error: errorMessage };
         }
     }
     catch (err) {
         console.log(err);
+        return { success: false, error: 'Network error. Please try again.' };
     }
 }

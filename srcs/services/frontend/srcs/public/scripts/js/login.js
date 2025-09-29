@@ -1,7 +1,7 @@
 import { getErrorMessage } from "./error.js";
 import { getUrl } from "./urls.js";
 import { showVerificationCode } from "./validator.js";
-import { log_handler, signupSuccessHandler } from "./handlers.js";
+import { signupSuccessHandler } from "./handlers.js";
 export async function registerUser(pseudo, password, email, text, view) {
     const errorDiv = document.getElementById('formErrors');
     const avatar = "/public/avatars/default.png";
@@ -21,23 +21,43 @@ export async function registerUser(pseudo, password, email, text, view) {
         });
         const result = await res.json();
         if (!result) {
-            errorDiv.textContent = "Server error";
-            return;
+            if (errorDiv) {
+                errorDiv.textContent = "Server error";
+            }
+            return { success: false, error: "Server error" };
         }
         if (!result.success) {
-            errorDiv.textContent = result.message;
-            return;
+            if (errorDiv) {
+                errorDiv.textContent = result.message;
+            }
+            return { success: false, error: result.message };
         }
         else {
             //window.location.href ="/";
             showVerificationCode(text, view, { otp_id: result.otp_id, context: "signup", handler: signupSuccessHandler });
-            errorDiv.textContent = result.message;
+            if (errorDiv) {
+                errorDiv.textContent = result.message;
+            }
             console.log("a confirmation mail has been sended");
+            // Return success with verification data
+            return {
+                success: true,
+                needsVerification: true,
+                verificationData: {
+                    otp_id: result.otp_id || 'temp_otp_id',
+                    context: "signup",
+                    handler: "signupSuccessHandler"
+                }
+            };
         }
         // http://auth/signup
     }
     catch (err) {
-        errorDiv.textContent = getErrorMessage(err);
+        const errorMessage = getErrorMessage(err);
+        if (errorDiv) {
+            errorDiv.textContent = errorMessage;
+        }
+        return { success: false, error: errorMessage };
     }
 }
 export async function initCSRFToken() {
@@ -135,23 +155,43 @@ export async function logUser(pseudo, password, text, view) {
         console.log("DEBUG RESPONSE:", texttext);
         const result = JSON.parse(texttext);
         if (!result) {
-            errorDiv.textContent = "Server error";
-            return;
+            if (errorDiv) {
+                errorDiv.textContent = "Server error";
+            }
+            return { success: false, error: "Server error" };
         }
         if (!result.success) {
-            errorDiv.textContent = result.message;
-            return;
+            if (errorDiv) {
+                errorDiv.textContent = result.message;
+            }
+            return { success: false, error: result.message };
         }
         else {
             //window.location.href ="/";
             console.log("DEBUG otp_id recebido:", result.otp_id);
-            showVerificationCode(text, view, { otp_id: result.otp_id, context: "login", handler: log_handler });
-            errorDiv.textContent = result.message;
+            showVerificationCode(text, view, { otp_id: result.otp_id, context: "signup", handler: signupSuccessHandler });
+            if (errorDiv) {
+                errorDiv.textContent = result.message;
+            }
             console.log("a confirmation mail has been sended");
+            // Return success with verification data
+            return {
+                success: true,
+                needsVerification: true,
+                verificationData: {
+                    otp_id: result.otp_id || 'temp_otp_id',
+                    context: "signup",
+                    handler: "signupSuccessHandler"
+                }
+            };
         }
         // http://auth/signup
     }
     catch (err) {
-        errorDiv.textContent = getErrorMessage(err);
+        const errorMessage = getErrorMessage(err);
+        if (errorDiv) {
+            errorDiv.textContent = errorMessage;
+        }
+        return { success: false, error: errorMessage };
     }
 }

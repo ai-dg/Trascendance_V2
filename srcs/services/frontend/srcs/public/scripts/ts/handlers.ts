@@ -1,4 +1,4 @@
-import { params } from "./types.js";
+import { type params } from "./types.js";
 import { getUrl } from "./urls.js";
 
 export async function log_handler(){
@@ -11,7 +11,7 @@ export async function signupSuccessHandler(){
 	window.location.href="/";	
 }
 
-export async function OTPValidationHandler(params:params, inputs: NodeListOf<HTMLInputElement>)  {
+export async function OTPValidationHandler(params:params, inputs: NodeListOf<HTMLInputElement>): Promise<{ success: boolean; error?: string }>  {
 	  const  context = params.context;
 	  const code = Array.from(inputs).map(i => i.value).join('');
 	  console.log("verifyBtn called : code ", code)
@@ -36,17 +36,18 @@ export async function OTPValidationHandler(params:params, inputs: NodeListOf<HTM
 		if (result.success)
 		{
 			params.handler();
-			return true;
+			return { success: true };
 		}
 		else{
-			console.log('failure : ', result.message)
-			return false;
+			const errorMessage = result.error?.message || result.error || result.message || 'Unknown error';
+			console.log('failure : ', errorMessage);
+			return { success: false, error: errorMessage };
 		}
 	}
 	catch (err)
 	{
 		console.log(err);
-		
+		return { success: false, error: 'Network error. Please try again.' };
 	}
 	
 

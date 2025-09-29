@@ -4,806 +4,216 @@
 [33m[nodemon] watching extensions: js,json[39m
 [32m[nodemon] starting `node server.js`[39m
 Auth service running on port 3300
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Error: getaddrinfo EAI_AGAIN rabbitmq
-    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
-  errno: -3001,
-  code: 'EAI_AGAIN',
-  syscall: 'getaddrinfo',
-  hostname: 'rabbitmq'
-}
-[31m[nodemon] app crashed - waiting for file changes before starting...[39m
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 349559',
-  html: '<p>Votre code est : 349559</p>'
+  to: 'jihongda1102@gmail.comdddd',
+  subject: 'Bienvenue ! Confirme ton adresse email ✨',
+  text: 'Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  456415 .',
+  html: '\t<p>Bienvenue sur <strong>Transcendance 42</strong> !</p>\n' +
+    '\t\t\t\t<p>Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  456415 .</p>\n' +
+    '\t\t\t\t<p>Ce lien est valable 2mn\n' +
+    '\t\t\t\t<p>À très vite sur Transcendance 42 ! 👋</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as mZrS7quFU4pK5NgLf8aL45
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
+✔ Mail envoyé : 250 2.0.0 Ok: queued as 4gTSQDdwVUtsUBbUyhHhfc
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 164250',
-  html: '<p>Votre code est : 164250</p>'
+  to: 'jihongda1102@gmail.comffff',
+  subject: 'Bienvenue ! Confirme ton adresse email ✨',
+  text: 'Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  695488 .',
+  html: '\t<p>Bienvenue sur <strong>Transcendance 42</strong> !</p>\n' +
+    '\t\t\t\t<p>Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  695488 .</p>\n' +
+    '\t\t\t\t<p>Ce lien est valable 2mn\n' +
+    '\t\t\t\t<p>À très vite sur Transcendance 42 ! 👋</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as NePAqSTWWXDUUSGEJ5mGTo
+✔ Mail envoyé : 250 2.0.0 Ok: queued as Ahm3ehvaJ8PKFE4BJUveyz
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 200027',
-  html: '<p>Votre code est : 200027</p>'
+  to: 'jihongda1102@gmail.comffff',
+  subject: 'Bienvenue ! Confirme ton adresse email ✨',
+  text: 'Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  852906 .',
+  html: '\t<p>Bienvenue sur <strong>Transcendance 42</strong> !</p>\n' +
+    '\t\t\t\t<p>Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  852906 .</p>\n' +
+    '\t\t\t\t<p>Ce lien est valable 2mn\n' +
+    '\t\t\t\t<p>À très vite sur Transcendance 42 ! 👋</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as nqdkRiUMY5HaBpc2NnAKng
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
+✔ Mail envoyé : 250 2.0.0 Ok: queued as ZrkKC3PoV2Fdt3UJbkGA9K
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 110081',
-  html: '<p>Votre code est : 110081</p>'
+  to: 'jihongda1102@gmail.comffff',
+  subject: 'Bienvenue ! Confirme ton adresse email ✨',
+  text: 'Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  359087 .',
+  html: '\t<p>Bienvenue sur <strong>Transcendance 42</strong> !</p>\n' +
+    '\t\t\t\t<p>Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  359087 .</p>\n' +
+    '\t\t\t\t<p>Ce lien est valable 2mn\n' +
+    '\t\t\t\t<p>À très vite sur Transcendance 42 ! 👋</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as 4Z7RFGzqNAYDLjqJScmTk7
+✔ Mail envoyé : 250 2.0.0 Ok: queued as BaUto7YW6bMTdAdMUNJzoo
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 498398',
-  html: '<p>Votre code est : 498398</p>'
+  to: 'jihongda1102@gmail.comffff',
+  subject: 'Bienvenue ! Confirme ton adresse email ✨',
+  text: 'Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  723852 .',
+  html: '\t<p>Bienvenue sur <strong>Transcendance 42</strong> !</p>\n' +
+    '\t\t\t\t<p>Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  723852 .</p>\n' +
+    '\t\t\t\t<p>Ce lien est valable 2mn\n' +
+    '\t\t\t\t<p>À très vite sur Transcendance 42 ! 👋</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as Uq7dMVwyBG9uuP7ZG6Xiiz
+✔ Mail envoyé : 250 2.0.0 Ok: queued as P5hGYVo7mMPuCnx22zE3cx
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 151403',
-  html: '<p>Votre code est : 151403</p>'
+  to: 'jihongda1102@gmail.comddd',
+  subject: 'Bienvenue ! Confirme ton adresse email ✨',
+  text: 'Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  774301 .',
+  html: '\t<p>Bienvenue sur <strong>Transcendance 42</strong> !</p>\n' +
+    '\t\t\t\t<p>Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  774301 .</p>\n' +
+    '\t\t\t\t<p>Ce lien est valable 2mn\n' +
+    '\t\t\t\t<p>À très vite sur Transcendance 42 ! 👋</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as LH5nhYvANFQN9uHc4meRHg
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
+✔ Mail envoyé : 250 2.0.0 Ok: queued as KhzGb3badgsnRdKBxB8EYk
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 115809',
-  html: '<p>Votre code est : 115809</p>'
+  to: 'test@test.com',
+  subject: 'Bienvenue ! Confirme ton adresse email ✨',
+  text: 'Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  378814 .',
+  html: '\t<p>Bienvenue sur <strong>Transcendance 42</strong> !</p>\n' +
+    '\t\t\t\t<p>Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  378814 .</p>\n' +
+    '\t\t\t\t<p>Ce lien est valable 2mn\n' +
+    '\t\t\t\t<p>À très vite sur Transcendance 42 ! 👋</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as SDQH2AYMZckMBkMScdVixu
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
+✔ Mail envoyé : 250 2.0.0 Ok: queued as Ho3ge2rZZH3zVEB85RTsJL
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 383837',
-  html: '<p>Votre code est : 383837</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as HyJrFkTRqzHv3Lg4zn8sPe
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 555951',
-  html: '<p>Votre code est : 555951</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as D6hxrfX3y6MULtw3SNXy3G
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 893027',
-  html: '<p>Votre code est : 893027</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as GZXDdnsmNrZxiBUYz7hbo9
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 793400',
-  html: '<p>Votre code est : 793400</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as KDADFTeLUTczk5Dy7CRJB3
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 240209',
-  html: '<p>Votre code est : 240209</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as mVwA7hcQmEsxXb4XcpGu2P
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 472295',
-  html: '<p>Votre code est : 472295</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as YPmm7woWgtEreugZAS4RyE
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 260895',
-  html: '<p>Votre code est : 260895</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as SjqJDdhEUPj8isr5qtGaM3
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 905029',
-  html: '<p>Votre code est : 905029</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as 5YCuiVyrFJURfFPZywimnJ
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 673814',
-  html: '<p>Votre code est : 673814</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as JNCMNC43P7DyrbHE79oGZU
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 669478',
-  html: '<p>Votre code est : 669478</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as 8VyELbWnRKnxvukmuFivpT
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 151866',
-  html: '<p>Votre code est : 151866</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as eoToAVks9v4JJFKk4hBc3J
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
+  to: 'test@test.com',
   subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 656544',
-  html: '<p>Votre code de connexion est : 656544</p>'
+  text: 'Votre code de connexion est : 114839',
+  html: '<p>Votre code de connexion est : 114839</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as UtwoATnnqryHfm35Y4eP56
+✔ Mail envoyé : 250 2.0.0 Ok: queued as EPHReKRQFbrpSPrv2qvSZA
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
+  to: 'test@test.com',
   subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 562111',
-  html: '<p>Votre code de connexion est : 562111</p>'
+  text: 'Votre code de connexion est : 570417',
+  html: '<p>Votre code de connexion est : 570417</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as X5SqZLActKFVhvAcizh8zM
+✔ Mail envoyé : 250 2.0.0 Ok: queued as PuxesrhgVQW4wVeAQkHGcZ
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
+  to: 'test@test.com',
   subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 309294',
-  html: '<p>Votre code de connexion est : 309294</p>'
+  text: 'Votre code de connexion est : 200817',
+  html: '<p>Votre code de connexion est : 200817</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as h4FZDcr9amjfaVckk9TyMe
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Error: getaddrinfo EAI_AGAIN rabbitmq
-    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
-  errno: -3001,
-  code: 'EAI_AGAIN',
-  syscall: 'getaddrinfo',
-  hostname: 'rabbitmq'
-}
-[31m[nodemon] app crashed - waiting for file changes before starting...[39m
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
+✔ Mail envoyé : 250 2.0.0 Ok: queued as 8oKh9BaiuzKbXfo3R9Bkhe
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 936103',
-  html: '<p>Votre code est : 936103</p>'
-}
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 580992',
-  html: '<p>Votre code est : 580992</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as fiRqTLbJgN9o4aEJZpRbtZ
-✔ Mail envoyé : 250 2.0.0 Ok: queued as V7QUM6SudDnBrKTBD2stmV
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 173614',
-  html: '<p>Votre code est : 173614</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as C7B87NVXW2QBGsDvGda8Gt
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 275104',
-  html: '<p>Votre code est : 275104</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as Zvm4C22mNKoc6JoyNvAvQq
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 675173',
-  html: '<p>Votre code est : 675173</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as h7kLvvfmvBJSs322EMQBN3
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 994408',
-  html: '<p>Votre code est : 994408</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as CouGu6RrgsyttwUX5Hqy6V
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 840618',
-  html: '<p>Votre code est : 840618</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as ZxMwLv5fPYvUo8ocuic4aZ
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 348112',
-  html: '<p>Votre code est : 348112</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as Qtxd4fF74jPgGGsxnj4rHd
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 335430',
-  html: '<p>Votre code est : 335430</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as FWYVJGW6YmoG6CRjdbSwPT
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 998511',
-  html: '<p>Votre code est : 998511</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as mpQEh92ntYeaMSaTo7NACy
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 113194',
-  html: '<p>Votre code est : 113194</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as cjtqFtYoyDbZfKgS5pAdaM
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Error: getaddrinfo EAI_AGAIN rabbitmq
-    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
-  errno: -3001,
-  code: 'EAI_AGAIN',
-  syscall: 'getaddrinfo',
-  hostname: 'rabbitmq'
-}
-[31m[nodemon] app crashed - waiting for file changes before starting...[39m
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Code de vérification',
-  text: 'Votre code est : 277804',
-  html: '<p>Votre code est : <b>277804</b></p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as 9Fp3RzJfeqqLL4sFocLHwy
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 463100',
-  html: '<p>Votre code est : 463100</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as ABKbFZGLSY3iifhPTvvVie
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 238136',
-  html: '<p>Votre code est : 238136</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as RbMhAra33EPBPA4wU6vmQ2
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 613743',
-  html: '<p>Votre code est : 613743</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as akf56FDiQk9E47vyXg7kpL
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 943204',
-  html: '<p>Votre code est : 943204</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as Y62VGckyMW86RjST358REz
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 619921',
-  html: '<p>Votre code est : 619921</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as 5X8GVEQrLD3dC9uQfVdaPF
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 100521',
-  html: '<p>Votre code est : 100521</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as 6rbWGFk2UcrVXczSdyrDnS
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 337757',
-  html: '<p>Votre code est : 337757</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as 5oBspsXfgiKwxjp8VQmiqy
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 566375',
-  html: '<p>Votre code est : 566375</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as 2TaCRHKxmhsJ64tDfW9ivy
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 414233',
-  html: '<p>Votre code est : 414233</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as GtzFybbXNQFYeHkg7ctpTN
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 291069',
-  html: '<p>Votre code est : 291069</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as CPnFCi4aGNYJEAZSF3D37V
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
+  to: 'test@test.com',
   subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 216803',
-  html: '<p>Votre code de connexion est : 216803</p>'
+  text: 'Votre code de connexion est : 717255',
+  html: '<p>Votre code de connexion est : 717255</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as e4jiZVjS8RSjrDtaXXe23y
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
+✔ Mail envoyé : 250 2.0.0 Ok: queued as HAHg7WSRVRxPLzkY3ak5NZ
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
+  to: 'test@test.com',
   subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 415107',
-  html: '<p>Votre code de connexion est : 415107</p>'
+  text: 'Votre code de connexion est : 681382',
+  html: '<p>Votre code de connexion est : 681382</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as N4X5PJYjiDaiYypcgg94CN
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
+✔ Mail envoyé : 250 2.0.0 Ok: queued as Dh3CGjaFSVH6VayFKr5wa5
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
+  to: 'test@test.com',
   subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 986256',
-  html: '<p>Votre code de connexion est : 986256</p>'
+  text: 'Votre code de connexion est : 194229',
+  html: '<p>Votre code de connexion est : 194229</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as LuQy6fVFxZFUqwvw7VBrqY
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
+✔ Mail envoyé : 250 2.0.0 Ok: queued as E2dRPAP2bri2X765fGMvPH
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
+  to: 'test@test.com',
   subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 849712',
-  html: '<p>Votre code de connexion est : 849712</p>'
+  text: 'Votre code de connexion est : 488689',
+  html: '<p>Votre code de connexion est : 488689</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as jtkFakbHCnxbipXKk5fpEz
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
+✔ Mail envoyé : 250 2.0.0 Ok: queued as NUVZMQGLJBc6N36QKNFgiv
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
+  to: 'test@test.com',
   subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 411783',
-  html: '<p>Votre code de connexion est : 411783</p>'
+  text: 'Votre code de connexion est : 454120',
+  html: '<p>Votre code de connexion est : 454120</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as 4HTfEMGsXD5frZxjaaXHeZ
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
+✔ Mail envoyé : 250 2.0.0 Ok: queued as 8UkeWYKqHZf6G8hcQtMi5Q
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
+  to: 'test@test.com',
   subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 909729',
-  html: '<p>Votre code de connexion est : 909729</p>'
+  text: 'Votre code de connexion est : 170567',
+  html: '<p>Votre code de connexion est : 170567</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as fXWhPfsLCfnjtQ2gozKeci
+✔ Mail envoyé : 250 2.0.0 Ok: queued as LecAc6fEVmyPQ7mLwjZtSc
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 272133',
-  html: '<p>Votre code est : 272133</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as BuASGvsGpa3TaCSyup4yp9
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
+  to: 'test@test.com',
   subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 935826',
-  html: '<p>Votre code de connexion est : 935826</p>'
+  text: 'Votre code de connexion est : 771698',
+  html: '<p>Votre code de connexion est : 771698</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as GXJpJWMqbYdRoBUKJqQ4ni
+✔ Mail envoyé : 250 2.0.0 Ok: queued as M4sJc5sM99Y7Zvoj6gftyf
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
-  subject: 'Mise a jour du mot de passe',
-  text: 'Votre code est : 546097',
-  html: '<p>Votre code est : 546097</p>'
-}
-✔ Mail envoyé : 250 2.0.0 Ok: queued as QfV6JqdXNLedcBfSegEis8
-{
-  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
+  to: 'test@test.com',
   subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 430154',
-  html: '<p>Votre code de connexion est : 430154</p>'
+  text: 'Votre code de connexion est : 130522',
+  html: '<p>Votre code de connexion est : 130522</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as Kuzh8uNeKRJXekgxvEUzYy
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
+✔ Mail envoyé : 250 2.0.0 Ok: queued as 9VSqYKPFaSCE3Uc58oQwrk
 {
   from: '"Transcendance 42" <no-reply@transcendance.42.com>',
-  to: 'nath@nath.com',
+  to: 'test@test.com',
   subject: 'Tentative de connexion',
-  text: 'Votre code de connexion est : 493179',
-  html: '<p>Votre code de connexion est : 493179</p>'
+  text: 'Votre code de connexion est : 185428',
+  html: '<p>Votre code de connexion est : 185428</p>'
 }
-✔ Mail envoyé : 250 2.0.0 Ok: queued as 9KwqfAVTcbqvjxrBXv6McY
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Error: getaddrinfo EAI_AGAIN rabbitmq
-    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
-  errno: -3001,
-  code: 'EAI_AGAIN',
-  syscall: 'getaddrinfo',
-  hostname: 'rabbitmq'
+✔ Mail envoyé : 250 2.0.0 Ok: queued as XDqKxrXTV4PCb5Jex87S8T
+{
+  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
+  to: 'test@test.com',
+  subject: 'Tentative de connexion',
+  text: 'Votre code de connexion est : 821466',
+  html: '<p>Votre code de connexion est : 821466</p>'
 }
-[31m[nodemon] app crashed - waiting for file changes before starting...[39m
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Error: getaddrinfo EAI_AGAIN rabbitmq
-    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
-  errno: -3001,
-  code: 'EAI_AGAIN',
-  syscall: 'getaddrinfo',
-  hostname: 'rabbitmq'
+✔ Mail envoyé : 250 2.0.0 Ok: queued as XvBce5tT2gUzsH7nCESatp
+{
+  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
+  to: 'test@test.com',
+  subject: 'Tentative de connexion',
+  text: 'Votre code de connexion est : 131001',
+  html: '<p>Votre code de connexion est : 131001</p>'
 }
-[31m[nodemon] app crashed - waiting for file changes before starting...[39m
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Error: getaddrinfo EAI_AGAIN rabbitmq
-    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
-  errno: -3001,
-  code: 'EAI_AGAIN',
-  syscall: 'getaddrinfo',
-  hostname: 'rabbitmq'
+✔ Mail envoyé : 250 2.0.0 Ok: queued as 5tEwtuuwNhTMUkqQMho4hH
+{
+  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
+  to: 'test@test.com',
+  subject: 'Tentative de connexion',
+  text: 'Votre code de connexion est : 400978',
+  html: '<p>Votre code de connexion est : 400978</p>'
 }
-[31m[nodemon] app crashed - waiting for file changes before starting...[39m
-[33m[nodemon] 3.1.10[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,json[39m
-[32m[nodemon] starting `node server.js`[39m
-Auth service running on port 3300
+✔ Mail envoyé : 250 2.0.0 Ok: queued as LdpHSxXzyGGrVBzAHwUSCm
+{
+  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
+  to: 'test@test.com',
+  subject: 'Tentative de connexion',
+  text: 'Votre code de connexion est : 323787',
+  html: '<p>Votre code de connexion est : 323787</p>'
+}
+✔ Mail envoyé : 250 2.0.0 Ok: queued as 5kmt9EDSGxCWh9W2UdJBTA
+{
+  from: '"Transcendance 42" <no-reply@transcendance.42.com>',
+  to: 'test@test.com',
+  subject: 'Tentative de connexion',
+  text: 'Votre code de connexion est : 814268',
+  html: '<p>Votre code de connexion est : 814268</p>'
+}
+✔ Mail envoyé : 250 2.0.0 Ok: queued as eya6R598xMbEe4FUHctqKm

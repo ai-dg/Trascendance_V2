@@ -1,5 +1,5 @@
 import { getErrorMessage } from "./error.js";
-import { Translations } from "./types.js";
+import { type Translations } from "./types.js";
 import { getUrl } from "./urls.js";
 import { showVerificationCode } from "./validator.js";
 import { getConnectedHome } from "./interface.js";
@@ -8,7 +8,7 @@ import { log_handler, signupSuccessHandler } from "./handlers.js";
 
 
 
-export async function registerUser(pseudo: string, password: string, email: string, text:Translations, view:string){
+export async function registerUser(pseudo: string, password: string, email: string, text:Translations, view:string): Promise<{ success: boolean; error?: string; needsVerification?: boolean; verificationData?: any }>{
 	const errorDiv = document.getElementById('formErrors') as HTMLElement;
 	const avatar = "/public/avatars/default.png";
 	const form =
@@ -28,34 +28,50 @@ export async function registerUser(pseudo: string, password: string, email: stri
 			body: JSON.stringify(form)
 
 		})
-
 		const result = await res.json();
 		if (! result)
 		{
-			errorDiv.textContent = "Server error";
-			return
+			if (errorDiv) {
+				errorDiv.textContent = "Server error";
+			}
+			return { success: false, error: "Server error" };
 		}
 		if (!result.success)
 		{
-			errorDiv.textContent =  result.message
-			return
+			if (errorDiv) {
+				errorDiv.textContent = result.message;
+			}
+			return { success: false, error: result.message };
 		}
 		else
 		{
 			//window.location.href ="/";
 			showVerificationCode(text, view, {otp_id: result.otp_id, context:"signup", handler: signupSuccessHandler})
-			errorDiv.textContent =  result.message
-			console.log("a confirmation mail has been sended")
+			if (errorDiv) {
+				errorDiv.textContent = result.message;
+			}
+			console.log("a confirmation mail has been sended");
+			
+			// Return success with verification data
+			return {
+				success: true,
+				needsVerification: true,
+				verificationData: {
+					otp_id: result.otp_id || 'temp_otp_id',
+					context: "signup",
+					handler: "signupSuccessHandler"
+				}
+			};
 		}
-
 		// http://auth/signup
 
-
 	}catch(err){
-		errorDiv.textContent = getErrorMessage(err);
-
+		const errorMessage = getErrorMessage(err);
+		if (errorDiv) {
+			errorDiv.textContent = errorMessage;
+		}
+		return { success: false, error: errorMessage };
 	}
-
 }
 
 
@@ -182,28 +198,48 @@ export async function logUser(pseudo: string, password: string, text:Translation
 		const result = JSON.parse(texttext);
 		if (! result)
 		{
-			errorDiv.textContent = "Server error";
-			return
+			if (errorDiv) {
+				errorDiv.textContent = "Server error";
+			}
+			return { success: false, error: "Server error" };
 		}
 		if (!result.success)
 		{
-			errorDiv.textContent =  result.message
-			return
+			if (errorDiv) {
+				errorDiv.textContent = result.message;
+			}
+			return { success: false, error: result.message };
 		}
 		else
 		{
 			//window.location.href ="/";
 			console.log("DEBUG otp_id recebido:", result.otp_id);
-			showVerificationCode(text, view, {otp_id: result.otp_id, context:"login", handler: log_handler});
-			errorDiv.textContent =  result.message
-			console.log("a confirmation mail has been sended")
+			showVerificationCode(text, view, {otp_id: result.otp_id, context:"signup", handler: signupSuccessHandler});
+			if (errorDiv) {
+				errorDiv.textContent = result.message;
+			}
+			console.log("a confirmation mail has been sended");
+			
+			// Return success with verification data
+			return {
+				success: true,
+				needsVerification: true,
+				verificationData: {
+					otp_id: result.otp_id || 'temp_otp_id',
+					context: "signup",
+					handler: "signupSuccessHandler"
+				}
+			};
 		}
 
 		// http://auth/signup
 
 
 	}catch(err){
-		errorDiv.textContent = getErrorMessage(err);
-
+		const errorMessage = getErrorMessage(err);
+		if (errorDiv) {
+			errorDiv.textContent = errorMessage;
+		}
+		return { success: false, error: errorMessage };
 	}
 }
