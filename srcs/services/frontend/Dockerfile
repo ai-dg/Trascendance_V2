@@ -7,7 +7,7 @@ RUN npm install
 
 COPY srcs ./srcs
 COPY locales ./locales
-RUN npm run build
+# RUN npm run build
 
 RUN npm install -g nodemon
 

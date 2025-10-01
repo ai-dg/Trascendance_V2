@@ -24,7 +24,10 @@ d: build
 
 watch:
 	( \
-		cd srcs/services/server-rendering/app && \
+		cd srcs/services/frontend && \
+		npm install && \
+		npm install ts && \
+		npm install typescript \
 		npm run watch:ts & \
 		npm run watch:css & \
 		wait \

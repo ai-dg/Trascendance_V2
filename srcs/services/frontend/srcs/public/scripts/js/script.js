@@ -1,3 +1,4 @@
+// import test from 'node:test';
 import { getDisconnectedHome, getConnectedHome, initConnectedHome, initDisconnectedHome, getSignupForm, getSigninForm, getGuestPlay, getOptions, getForgotPass, getChangePass } from './interface.js';
 import { loadLanguage, toggleLanguage, currentTexts } from './languageManager.js';
 import { initCSRFToken, isConnectedUser, logUser } from './login.js';
@@ -5,7 +6,16 @@ import { getUrl } from './urls.js';
 import { setupPasswordToggle, setupSignUpForm, showVerificationCode, setupChangePassForm } from './validator.js';
 import { navigateTo, setupBackButton } from './navigation.js';
 import { getConnectedOptions, initConnectedOptions } from './gameInterface.js';
-console.log("Script working properly"); // to remove
+import { App } from './app.js';
+document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('app');
+    if (container) {
+        new App(container);
+    }
+    else {
+        console.error('App container not found');
+    }
+});
 document.addEventListener("DOMContentLoaded", async () => {
     const html = document.querySelector("html");
     const langCode = html?.getAttribute("lang") || "en";
