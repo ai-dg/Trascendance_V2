@@ -2,7 +2,7 @@ import { UIManager } from '../modules/UIManager.js';
 import type { Translations } from '../types.js';
 import { getUrl } from '../urls.js';
 import { OTPValidationHandler } from '../handlers.js';
-import { getElement } from '../script.js';
+import { getElement } from '../main.js';
 
 export class CheckOtp {
   private uiManager: UIManager;

@@ -23,7 +23,7 @@ SERVICES=(
 
 for service in "${SERVICES[@]}"; do
   echo "⏳ Starting follower logs for : $service"
-  docker logs --follow "$service" > "$LOG_DIR/$service.ansi" 2>&1 &
+  docker logs --follow "$service" > "$LOG_DIR/$service.log" 2>&1 &
   echo $! >> "$PID_FILE"
 done
 

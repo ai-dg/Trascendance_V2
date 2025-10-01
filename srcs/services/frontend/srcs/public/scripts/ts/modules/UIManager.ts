@@ -13,6 +13,7 @@ export class UIManager {
   public clear(): void {
     this.container.innerHTML = '';
   }
+  
 
   public createElement(tag: string, className?: string, textContent?: string): HTMLElement {
     const element = document.createElement(tag);
