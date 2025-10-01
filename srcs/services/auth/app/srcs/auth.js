@@ -1,5 +1,5 @@
 import { redis, app } from '../server.js'
-import crypto from 'crypto';
+import crypto, { getCurves } from 'crypto';
 import jwt from 'jsonwebtoken';
 import { e } from './messages.js';
 
@@ -192,8 +192,23 @@ export async function confirm_email_token(token)
 	}
 	const query_result = await app.db.query(`INSERT INTO users (user_mail, user_password, pseudo) VALUES (?, ?, ?)`,	[email, passwordHash, pseudo]);
 	const insert = query_result[0];
-	if (insert && insert.affectedRows > 0)
-	return { success: true, message: "Account created !" };
+
+	
+	if (insert && insert.affectedRows > 0) {
+		const userId = insert.lastInsertRowid;
+		console.log("userId: " + userId);
+		const langRes = await fetch(getUrl('/language-manager/set-lang', {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ user_id: userId, lang: "en" })
+		}));
+		const lang = await langRes.json();
+		if (!lang.success) {
+			return { succes: false, message: "Couldn't reache lang database" };
+		}
+		console.log("SUCESSSSSSS");
+		return { success: true, message: "Account created !" };
+	}
 }
 export async function signup_otp_validation(token)
 {

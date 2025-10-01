@@ -507,7 +507,24 @@ export async function signup_otp_validation_route(request, reply)
 	try {
 		if (!is_valid)
 			return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
-		await app.db.run('INSERT INTO "users" ("user_mail", "pseudo", "user_password", "avatar") VALUES (?, ?, ?, ?)', [data.email, data.pseudo, data.passwordHash, data.avatar])
+		const insert = await app.db.run('INSERT INTO "users" ("user_mail", "pseudo", "user_password", "avatar") VALUES (?, ?, ?, ?)', [data.email, data.pseudo, data.passwordHash, data.avatar])
+		
+		if (insert && insert.changes > 0) {
+			console.log("insert: ", insert);
+		const userId = insert.lastID;
+		console.log("userId: " + userId);
+		const langRes = await fetch('http://language-manager:3001/create-lang', {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ user_id: userId, lang: "en" })
+		});
+		const lang = await langRes.json();
+		if (!lang.success) {
+			return { succes: false, message: "Couldn't reache lang database" };
+		}
+		console.log("SUCESSSSSSS");
+		}
+		
 		return reply.send({...get_success_message(data.email, data.pseudo), message: 'user created'}, 200)
 	}
 	catch(err)

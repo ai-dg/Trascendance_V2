@@ -121,14 +121,15 @@ services:
         condition: service_started
     restart: on-failure
 
-  language-manager_app:
+  language-manager:
     container_name: language-manager_app
     build:
-      context: ./services/language-manager/app
+      context: ./services/language-manager
     expose:
       - 3001
-    # volumes:
-    #   - sqlite_data:/data
+    volumes:
+      - ./services/language-manager:/data
+      - /data/node_modules
     networks:
       - internal
 

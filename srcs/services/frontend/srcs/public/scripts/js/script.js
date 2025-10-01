@@ -1,5 +1,5 @@
 import { getDisconnectedHome, getConnectedHome, initConnectedHome, initDisconnectedHome, getSignupForm, getSigninForm, getGuestPlay, getOptions, getForgotPass, getChangePass } from './interface.js';
-import { loadLanguage, toggleLanguage, languages, currentLangIndex, currentTexts } from './languageManager.js';
+import { loadLanguage, toggleLanguage, currentTexts } from './languageManager.js';
 import { initCSRFToken, isConnectedUser, logUser } from './login.js';
 import { getUrl } from './urls.js';
 import { setupPasswordToggle, setupSignUpForm, showVerificationCode, setupChangePassForm } from './validator.js';
@@ -7,7 +7,10 @@ import { navigateTo, setupBackButton } from './navigation.js';
 import { getConnectedOptions, initConnectedOptions } from './gameInterface.js';
 console.log("Script working properly"); // to remove
 document.addEventListener("DOMContentLoaded", async () => {
-    await loadLanguage(languages[currentLangIndex].code, 'home');
+    const html = document.querySelector("html");
+    const langCode = html?.getAttribute("lang") || "en";
+    console.log("language: " + langCode);
+    await loadLanguage(langCode, 'home');
     const initialView = (location.hash?.replace("#", "") || "home");
     history.replaceState({ view: initialView }, "", `#${initialView}`);
     console.log("initial replaceState ->", initialView);

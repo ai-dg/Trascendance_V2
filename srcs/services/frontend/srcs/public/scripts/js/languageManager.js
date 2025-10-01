@@ -27,6 +27,7 @@ export async function loadLanguage(langCode, view = 'home') {
 }
 export async function getTraductions() {
     const html = document.querySelector("html");
+    console.log("langCode: ", html?.getAttribute("lang"));
     const langCode = html?.getAttribute("lang");
     try {
         const res = await fetch(`/api/translations?lang=${langCode}`);

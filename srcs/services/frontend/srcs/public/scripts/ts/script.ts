@@ -14,7 +14,10 @@ console.log("Script working properly");  // to remove
 
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await loadLanguage(languages[currentLangIndex].code, 'home');
+  const html = document.querySelector("html");
+  const langCode = html?.getAttribute("lang") || "en";
+  console.log("language: " + langCode);
+  await loadLanguage(langCode, 'home');
 
   const initialView = (location.hash?.replace("#", "") || "home");
 
