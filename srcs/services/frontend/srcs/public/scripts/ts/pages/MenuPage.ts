@@ -1,5 +1,5 @@
 import { UIManager } from '../modules/UIManager.js';
-import type { User } from '../modules/AuthManager.js';
+import type { User } from '../modules/TypesManager.js';
 
 export class MenuPage {
   private uiManager: UIManager;

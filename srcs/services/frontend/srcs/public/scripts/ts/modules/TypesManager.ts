@@ -1,3 +1,5 @@
+
+// Language Manager interface
 export interface Translations {
   signinTitle: string;
   login: string;
@@ -36,6 +38,9 @@ export interface Translations {
   errNbr: string;
   errMatch: string;
   errEmail: string;
+  errInvalidChars: string;
+  errTooShort: string;
+  errTooLong: string;
 
   verifyTitle: string;
   verifyInstruction: string;
@@ -46,7 +51,7 @@ export interface Translations {
 }
 
 
-export interface params{
+export interface OTParams{
 	otp_id: string,
 	context: string,
 	handler: ()=>void;
@@ -55,3 +60,62 @@ export interface params{
 // Final Frontend
 
 // Interfaces from Retro Pong Website 2
+
+
+// Game Interface
+
+export interface GameState {
+  player1Score: number;
+  player2Score: number;
+  gameRunning: boolean;
+  winner: string | null;
+}
+
+export interface PaddleState {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  speed: number;
+}
+
+export interface BallState {
+  x: number;
+  y: number;
+  velocityX: number;
+  velocityY: number;
+  size: number;
+  speed: number;
+}
+
+export interface GameSettings {
+  ballSpeed: number;
+  paddleSpeed: number;
+  winningScore: number;
+}
+
+
+// Auth Manager Interface
+export interface User {
+  username: string;
+  email?: string;
+  id?: string;
+  avatar?: string;
+  isGuest?: boolean;
+}
+
+export interface LoginCredentials {
+  username: string;
+  password: string;
+}
+
+export interface RegisterCredentials {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface ForgotPasswordCredentials {
+  email: string;
+}

@@ -1,5 +1,5 @@
 import { UIManager } from '../modules/UIManager.js';
-import type { Translations } from '../types.js';
+import type { Translations } from '../modules/TypesManager.js';
 
 export class AuthPage {
   private uiManager: UIManager;

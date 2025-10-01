@@ -37,6 +37,9 @@
   "errNbr": "Password must contain at least one number.",
   "errMatch": "Passwords do not match.",
   "errEmail": "Please enter a valid email address.",
+  "errInvalidChars": "Username can only have lettres and numbers",
+  "errTooShort": "Username too short",
+  "errTooLong": "Username too long",
 
   "verifyTitle": "Email verification",
   "verifyInstruction": "Enter the 6-digit code sent to your email.",

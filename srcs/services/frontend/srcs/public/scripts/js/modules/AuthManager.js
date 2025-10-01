@@ -1,13 +1,15 @@
-import { getErrorMessage } from "../error.js";
-import { getUrl } from "../urls.js";
-import { signupSuccessHandler } from "../handlers.js";
+import { getErrorMessage } from './ErrorManager.js';
+import { RouterManager } from './RouterManager.js';
+import { OTPManagers } from './OTPManager.js';
 export class AuthManager {
     constructor(onBackToCheckOtp) {
         this.onBackToCheckOtp = onBackToCheckOtp;
         this.currentUser = null;
         this.listeners = [];
+        this.router = new RouterManager();
         this.loadUserFromStorage();
         this.onBackToCheckOtp = onBackToCheckOtp;
+        this.otpManager = new OTPManagers();
     }
     loadUserFromStorage() {
         const stored = localStorage.getItem('arcade_user');
@@ -29,7 +31,72 @@ export class AuthManager {
             localStorage.removeItem('arcade_user');
         }
     }
+    async isConnectedUser() {
+        const url = this.router.getUrl('auth/is-connected');
+        try {
+            const res = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "content-type": "application/json"
+                },
+                credentials: "include",
+                body: JSON.stringify({})
+            });
+            if (!res.ok) {
+                console.log("failed");
+                return false;
+            }
+            const result = await res.json();
+            if (result.success)
+                return true;
+            else
+                return false;
+        }
+        catch (err) {
+            console.log(err);
+            return false;
+        }
+    }
+    async getConnectedUser() {
+        try {
+            const res = await fetch(this.router.getUrl('auth/me'), {
+                method: 'GET',
+                credentials: 'include'
+            });
+            if (!res.ok)
+                throw new Error('Failed to get user');
+            const result = await res.json();
+            if (result.success) {
+                return result.data.user;
+            }
+        }
+        catch (err) {
+            console.error(err);
+        }
+        return null;
+    }
+    // TODO: this is the good getCurrentUser / to fix that later
+    // public async getCurrentUser() {
+    //   try {
+    //       const res = await fetch(this.router.getUrl('auth/me'), {
+    //           method: "GET",
+    //           credentials: "include",
+    //       });
+    //       if (!res.ok) {
+    //           return null;
+    //       }
+    //       const result = await res.json();
+    //       if (result.success) {
+    //           return result.user;
+    //       }
+    //       return null;
+    //   } catch (err) {
+    //       console.error("getCurrentUser error:", err);
+    //       return null;
+    //   }
+    // }
     getCurrentUser() {
+        console.log("current user:", this.currentUser);
         return this.currentUser;
     }
     isAuthenticated() {
@@ -60,7 +127,7 @@ export class AuthManager {
             password
         };
         try {
-            const res = await fetch(getUrl('auth/login'), {
+            const res = await fetch(this.router.getUrl('auth/login'), {
                 method: 'POST',
                 headers: {
                     'content-type': 'application/json'
@@ -74,41 +141,39 @@ export class AuthManager {
                 return { success: false, error: "Server error" };
             }
             if (!result.success) {
-                const errorMessage = result.error?.message || result.error || result.message || 'Unknown error';
+                const errorMessage = result.error?.message || result.error
+                    || result.message || 'Unknown error';
                 return { success: false, error: errorMessage };
             }
             else {
+                // const res = await this.
                 // OTP verification disabled for login - direct login success
-                this.currentUser = {
-                    username: pseudo,
-                    email: result.email || '',
-                    avatar: result.avatar || 'default.png',
-                    isGuest: false
-                };
-                return { success: true };
+                // this.currentUser = {
+                //   username: pseudo,
+                //   email: result.email || '',
+                //   avatar: result.avatar || 'default.png',
+                //   isGuest: false
+                // };
+                // return { success: true };
                 // OTP verification code (commented out for login)
-                /*
                 // Store OTP data for the CheckOtp page
-                (window as any).otpData = {
-                  otp_id: result.otp_id,
-                  context: "signin",
-                  handler: signupSuccessHandler
+                window.otpData = {
+                    otp_id: result.otp_id,
+                    context: "login",
+                    handler: this.otpManager.signupSuccessHandler
                 };
-                
-                console.log("OTP data stored:", (window as any).otpData);
+                console.log("OTP data stored:", window.otpData);
                 this.onBackToCheckOtp();
-                
                 // Return success with verification data
                 return {
-                  success: true,
-                  needsVerification: true,
-                  verificationData: {
-                    otp_id: result.otp_id || 'temp_otp_id',
-                    context: "signin",
-                    handler: "signupSuccessHandler"
-                  }
+                    success: true,
+                    needsVerification: true,
+                    verificationData: {
+                        otp_id: result.otp_id || 'temp_otp_id',
+                        context: "login",
+                        handler: "signupSuccessHandler"
+                    }
                 };
-                */
             }
         }
         catch (error) {
@@ -157,7 +222,7 @@ export class AuthManager {
             avatar
         };
         try {
-            const res = await fetch(getUrl('auth/signup'), {
+            const res = await fetch(this.router.getUrl('auth/signup'), {
                 method: 'POST',
                 headers: {
                     'content-type': 'application/json'
@@ -185,7 +250,7 @@ export class AuthManager {
                 window.otpData = {
                     otp_id: result.otp_id,
                     context: "signup",
-                    handler: signupSuccessHandler
+                    handler: this.otpManager.signupSuccessHandler
                 };
                 console.log("OTP data stored:", window.otpData);
                 this.onBackToCheckOtp();
@@ -277,4 +342,187 @@ export class AuthManager {
 //       }
 //     }, 500);
 //   });
+// }
+// import { getErrorMessage } from "./error.js";
+// import { type Translations } from "./types.js";
+// import { getUrl } from "./urls.js";
+// import { showVerificationCode } from "./validator.js";
+// import { getConnectedHome } from "./interface.js";
+// import { log_handler, signupSuccessHandler } from "./handlers.js";
+// export async function registerUser(pseudo: string, password: string, email: string, text:Translations, view:string): Promise<{ success: boolean; error?: string; needsVerification?: boolean; verificationData?: any }>{
+// 	const errorDiv = document.getElementById('formErrors') as HTMLElement;
+// 	const avatar = "/public/avatars/default.png";
+// 	const form =
+// 	{
+// 		email,
+// 		pseudo,
+// 		password,
+// 		avatar
+// 	}
+// 	try{
+// 		const res = await fetch(getUrl('auth/signup'),{
+// 			method:'POST',
+// 			headers : {
+// 				'content-type' : 'application/json'
+// 			},
+// 			body: JSON.stringify(form)
+// 		})
+// 		const result = await res.json();
+// 		if (! result)
+// 		{
+// 			if (errorDiv) {
+// 				errorDiv.textContent = "Server error";
+// 			}
+// 			return { success: false, error: "Server error" };
+// 		}
+// 		if (!result.success)
+// 		{
+// 			if (errorDiv) {
+// 				errorDiv.textContent = result.message;
+// 			}
+// 			return { success: false, error: result.message };
+// 		}
+// 		else
+// 		{
+// 			//window.location.href ="/";
+// 			showVerificationCode(text, view, {otp_id: result.otp_id, context:"signup", handler: signupSuccessHandler})
+// 			if (errorDiv) {
+// 				errorDiv.textContent = result.message;
+// 			}
+// 			console.log("a confirmation mail has been sended");
+// 			// Return success with verification data
+// 			return {
+// 				success: true,
+// 				needsVerification: true,
+// 				verificationData: {
+// 					otp_id: result.otp_id || 'temp_otp_id',
+// 					context: "signup",
+// 					handler: "signupSuccessHandler"
+// 				}
+// 			};
+// 		}
+// 		// http://auth/signup
+// 	}catch(err){
+// 		const errorMessage = getErrorMessage(err);
+// 		if (errorDiv) {
+// 			errorDiv.textContent = errorMessage;
+// 		}
+// 		return { success: false, error: errorMessage };
+// 	}
+// }
+// export async function initCSRFToken(){
+// 	try{
+// 		const res = await fetch(getUrl('auth/csrf-token'),
+// 		{
+// 			method:"GET",
+// 			credentials:'include'
+// 		})
+// 		if(!res)
+// 			console.error("can't connect to server, please try again later")
+// 		const result = await res.json();
+// 		if (result.success)
+// 		{
+// 			const token = result.data.csrfToken
+// 			const el = document.createElement("meta")
+// 			el.setAttribute('name', 'csrf-token')
+// 			el.setAttribute('content', token)
+// 			document.head.appendChild(el);
+// 		}
+// 		else
+// 		{
+// 			console.error("Not authenticated...")
+// 		}
+// 	}
+// 	catch(err)
+// 	{
+// 		console.error(getErrorMessage(err));
+// 	}
+// };
+// export async function logoutHandler(e:Event) {
+// 	const url = getUrl("auth/logout");
+// 	try{
+// 		const res = await fetch(url, {
+// 			method: "POST",
+// 			headers:{
+// 				"x-csrf-token": getCSRFToken()
+// 			},
+// 			credentials: 'include'
+// 		});
+// 		if (!res.ok)
+// 			console.log("Somethig went wrong here");
+// 		const result = await res.json()
+// 		window.location.href = '/';
+// 	}
+// 	catch(err)
+// 	{
+// 		console.log(err)
+// 		window.location.href = '/';
+// 	}
+// }
+// export function getCSRFToken() : string {
+//     let csrf_token : string | null = document.querySelector("meta[name='csrf-token']")!.getAttribute('content');
+// 	if (!csrf_token)
+// 		return ""
+//     return csrf_token
+// }
+// export async function logUser(pseudo: string, password: string, text:Translations, view:string){
+// 	const errorDiv = document.getElementById('formErrors') as HTMLElement;
+// 	const form =
+// 	{
+// 		pseudo,
+// 		password
+// 	}
+// 	try{
+// 		const res = await fetch(getUrl('auth/login'),{
+// 			method:'POST',
+// 			headers : {
+// 				'content-type' : 'application/json'
+// 			},
+// 			body: JSON.stringify(form)
+// 		})
+// 	const texttext = await res.text();
+// 	console.log("DEBUG RESPONSE:", texttext);
+// 		const result = JSON.parse(texttext);
+// 		if (! result)
+// 		{
+// 			if (errorDiv) {
+// 				errorDiv.textContent = "Server error";
+// 			}
+// 			return { success: false, error: "Server error" };
+// 		}
+// 		if (!result.success)
+// 		{
+// 			if (errorDiv) {
+// 				errorDiv.textContent = result.message;
+// 			}
+// 			return { success: false, error: result.message };
+// 		}
+// 		else
+// 		{
+// 			//window.location.href ="/";
+// 			console.log("DEBUG otp_id recebido:", result.otp_id);
+// 			showVerificationCode(text, view, {otp_id: result.otp_id, context:"signup", handler: signupSuccessHandler});
+// 			if (errorDiv) {
+// 				errorDiv.textContent = result.message;
+// 			}
+// 			console.log("a confirmation mail has been sended");
+// 			// Return success with verification data
+// 			return {
+// 				success: true,
+// 				needsVerification: true,
+// 				verificationData: {
+// 					otp_id: result.otp_id || 'temp_otp_id',
+// 					context: "signup",
+// 					handler: "signupSuccessHandler"
+// 				}
+// 			};
+// 		}
+// 		// http://auth/signup
+// 	}catch(err){
+// 		const errorMessage = getErrorMessage(err);
+// 		if (errorDiv) {
+// 			errorDiv.textContent = errorMessage;
+// 		}
+// 		return { success: false, error: errorMessage };
+// 	}
 // }

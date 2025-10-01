@@ -1,32 +1,4 @@
-export interface GameState {
-  player1Score: number;
-  player2Score: number;
-  gameRunning: boolean;
-  winner: string | null;
-}
-
-export interface PaddleState {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  speed: number;
-}
-
-export interface BallState {
-  x: number;
-  y: number;
-  velocityX: number;
-  velocityY: number;
-  size: number;
-  speed: number;
-}
-
-export interface GameSettings {
-  ballSpeed: number;
-  paddleSpeed: number;
-  winningScore: number;
-}
+import { GameState, BallState, GameSettings, PaddleState } from "./TypesManager.js";
 
 export class GameManager {
   private canvas: HTMLCanvasElement;

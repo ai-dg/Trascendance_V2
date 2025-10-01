@@ -1,10 +1,12 @@
-import { OTPValidationHandler } from '../handlers.js';
-import { getElement } from '../script.js';
+import { CheckManager } from '../modules/CheckManager.js';
+import { OTPManagers } from '../modules/OTPManager.js';
 export class CheckOtp {
     constructor(uiManager, onVerificationComplete, onBack) {
         this.uiManager = uiManager;
+        this.otpManager = new OTPManagers();
         this.onVerificationComplete = onVerificationComplete;
         this.onBack = onBack;
+        this.check = new CheckManager();
     }
     render(text, params) {
         const container = this.uiManager.createElement('div', 'retro-container size-full flex items-center justify-center p-8');
@@ -71,16 +73,16 @@ export class CheckOtp {
             });
         });
         // Verify button
-        const verifyBtn = getElement('verifyBtn');
+        const verifyBtn = this.check.getElement('verifyBtn');
         verifyBtn.addEventListener('click', async () => {
-            const result = await OTPValidationHandler(params, inputs);
+            const result = await this.otpManager.OTPValidationHandler(params, inputs);
             if (!result.success) {
                 this.showError(result.error || 'Invalid verification code. Please try again.');
             }
             this.onVerificationComplete(result.success);
         });
         // Back button
-        const backBtn = getElement('backBtn');
+        const backBtn = this.check.getElement('backBtn');
         backBtn.addEventListener('click', () => {
             this.onBack();
         });

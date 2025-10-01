@@ -26,4 +26,23 @@ export class RouterManager {
     notifyListeners(data) {
         this.listeners.forEach(callback => callback(this.currentPage, data));
     }
+    getBaseUrl() {
+        const element = document.querySelector("meta[name='api-base-url']");
+        const baseUrl = element?.getAttribute('content') ?? '';
+        return baseUrl;
+    }
+    getUrl(endpoint) {
+        if (endpoint[0] != '/')
+            endpoint = '/' + endpoint;
+        return window.location.protocol + '//' + this.getBaseUrl() + endpoint;
+    }
 }
+// TODO: Not using those two functions yet
+// function getWebSocketProtocol() {
+// 	return window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+// }
+// export function getWebSocketUrl(path: string): string {
+// 	if (path[0] !== '/')
+// 		path = '/' + path;
+// 	return getWebSocketProtocol() + '//' + getBaseUrl() + path;
+// }

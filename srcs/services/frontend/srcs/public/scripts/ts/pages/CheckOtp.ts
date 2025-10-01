@@ -1,18 +1,21 @@
 import { UIManager } from '../modules/UIManager.js';
-import type { Translations } from '../types.js';
-import { getUrl } from '../urls.js';
-import { OTPValidationHandler } from '../handlers.js';
-import { getElement } from '../main.js';
+import type { Translations } from '../modules/TypesManager.js';
+import { CheckManager } from '../modules/CheckManager.js';
+import { OTPManagers } from '../modules/OTPManager.js';
 
 export class CheckOtp {
   private uiManager: UIManager;
+  private check: CheckManager;
+  private otpManager: OTPManagers;
   private onVerificationComplete: (success: boolean) => void;
   private onBack: () => void;
 
   constructor(uiManager: UIManager, onVerificationComplete: (success: boolean) => void, onBack: () => void) {
     this.uiManager = uiManager;
+    this.otpManager = new OTPManagers();
     this.onVerificationComplete = onVerificationComplete;
     this.onBack = onBack;
+    this.check = new CheckManager();
   }
 
   public render(text: Translations, params: any): void {
@@ -109,9 +112,9 @@ export class CheckOtp {
     });
 
     // Verify button
-    const verifyBtn = getElement<HTMLButtonElement>('verifyBtn');
+    const verifyBtn = this.check.getElement<HTMLButtonElement>('verifyBtn');
     verifyBtn.addEventListener('click', async () => {
-      const result = await OTPValidationHandler(params, inputs);
+      const result = await this.otpManager.OTPValidationHandler(params, inputs);
       if (!result.success) {
         this.showError(result.error || 'Invalid verification code. Please try again.');
       }
@@ -119,7 +122,7 @@ export class CheckOtp {
     });
 
     // Back button
-    const backBtn = getElement<HTMLButtonElement>('backBtn');
+    const backBtn = this.check.getElement<HTMLButtonElement>('backBtn');
     backBtn.addEventListener('click', () => {
       this.onBack();
     });

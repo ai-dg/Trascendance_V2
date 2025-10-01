@@ -1,39 +1,21 @@
-import type { Translations } from '../types.js';
-import { getErrorMessage } from "../error.js";
-import { getUrl } from "../urls.js";
-import { signupSuccessHandler } from "../handlers.js";
+import { User, LoginCredentials, RegisterCredentials, ForgotPasswordCredentials } from './TypesManager.js';
+import type { Translations } from './TypesManager.js';
+import { getErrorMessage } from './ErrorManager.js';
+import { RouterManager } from './RouterManager.js';
+import { OTPManagers } from './OTPManager.js';
 
-export interface User {
-  username: string;
-  email?: string;
-  id?: string;
-  avatar?: string;
-  isGuest?: boolean;
-}
-
-export interface LoginCredentials {
-  username: string;
-  password: string;
-}
-
-export interface RegisterCredentials {
-  username: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
-
-export interface ForgotPasswordCredentials {
-  email: string;
-}
 
 export class AuthManager {
+  private otpManager: OTPManagers;
   private currentUser: User | null = null;
   private listeners: ((user: User | null) => void)[] = [];
+
+  private router = new RouterManager();
 
   constructor(private onBackToCheckOtp: () => void) {
     this.loadUserFromStorage();
     this.onBackToCheckOtp = onBackToCheckOtp;
+    this.otpManager = new OTPManagers();
   }
 
   private loadUserFromStorage(): void {
@@ -56,7 +38,80 @@ export class AuthManager {
     }
   }
 
+  public async isConnectedUser() {
+    const url = this.router.getUrl('auth/is-connected')
+    try {
+      const res = await fetch(url,
+        {
+          method:"POST",
+          headers:  {
+            "content-type": "application/json"		
+          },
+          credentials: "include",
+          body: JSON.stringify({})
+      })
+      if (!res.ok)
+      {
+        console.log("failed")
+        return false;
+      }
+      const result =  await res.json()
+      if (result.success)
+        return true;
+      else
+        return false;
+
+    }
+    catch(err)
+    {
+      console.log(err);
+      return false;
+    }
+  }
+
+  public async getConnectedUser() {
+    try {
+        const res = await fetch(this.router.getUrl('auth/me'), {
+            method: 'GET',
+            credentials: 'include'
+        });
+        if (!res.ok) throw new Error('Failed to get user');
+        const result = await res.json();
+        if (result.success) {
+            return result.data.user;
+        }
+    } catch (err) {
+        console.error(err);
+    }
+    return null;
+  }
+
+ // TODO: this is the good getCurrentUser / to fix that later
+
+  // public async getCurrentUser() {
+  //   try {
+  //       const res = await fetch(this.router.getUrl('auth/me'), {
+  //           method: "GET",
+  //           credentials: "include",
+  //       });
+
+  //       if (!res.ok) {
+  //           return null;
+  //       }
+
+  //       const result = await res.json();
+  //       if (result.success) {
+  //           return result.user;
+  //       }
+  //       return null;
+  //   } catch (err) {
+  //       console.error("getCurrentUser error:", err);
+  //       return null;
+  //   }
+  // }
+
   public getCurrentUser(): User | null {
+    console.log("current user:", this.currentUser);
     return this.currentUser;
   }
 
@@ -64,7 +119,9 @@ export class AuthManager {
     return this.currentUser !== null;
   }
 
-  public async login(credentials: LoginCredentials, text: Translations): Promise<{ success: boolean; error?: string; needsVerification?: boolean; verificationData?: any }> {
+  public async login(credentials: LoginCredentials, text: Translations): 
+      Promise<{ success: boolean; error?: string; needsVerification?: boolean; 
+      verificationData?: any }> {
     const loginInput = credentials.username;
     if (!loginInput.trim()) {
       return { success: false, error: 'Username is required' };
@@ -84,14 +141,16 @@ export class AuthManager {
     }
   }
 
-  public async logUser(pseudo: string, password: string, text: Translations, view: string): Promise<{ success: boolean; error?: string; needsVerification?: boolean; verificationData?: any }> {
+  public async logUser(pseudo: string, password: string, text: Translations, 
+      view: string): Promise<{ success: boolean; error?: string; 
+      needsVerification?: boolean; verificationData?: any }> {
     const form = {
       pseudo,
       password
     };
   
     try {
-      const res = await fetch(getUrl('auth/login'), {
+      const res = await fetch(this.router.getUrl('auth/login'), {
         method: 'POST',
         headers: {
           'content-type': 'application/json'
@@ -108,26 +167,28 @@ export class AuthManager {
       }
       
       if (!result.success) {
-        const errorMessage = result.error?.message || result.error || result.message || 'Unknown error';
+        const errorMessage = result.error?.message || result.error 
+          || result.message || 'Unknown error';
         return { success: false, error: errorMessage };
       } else {
+
+        // const res = await this.
         // OTP verification disabled for login - direct login success
-        this.currentUser = {
-          username: pseudo,
-          email: result.email || '',
-          avatar: result.avatar || 'default.png',
-          isGuest: false
-        };
+        // this.currentUser = {
+        //   username: pseudo,
+        //   email: result.email || '',
+        //   avatar: result.avatar || 'default.png',
+        //   isGuest: false
+        // };
         
-        return { success: true };
+        // return { success: true };
         
         // OTP verification code (commented out for login)
-        /*
         // Store OTP data for the CheckOtp page
         (window as any).otpData = {
           otp_id: result.otp_id,
-          context: "signin",
-          handler: signupSuccessHandler
+          context: "login",
+          handler: this.otpManager.signupSuccessHandler
         };
         
         console.log("OTP data stored:", (window as any).otpData);
@@ -139,11 +200,10 @@ export class AuthManager {
           needsVerification: true,
           verificationData: {
             otp_id: result.otp_id || 'temp_otp_id',
-            context: "signin",
+            context: "login",
             handler: "signupSuccessHandler"
           }
         };
-        */
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -151,7 +211,10 @@ export class AuthManager {
     }
   }
 
-  public async register(form: { username: string, email: string, password: string, confirmPassword: string }, text: Translations): Promise<{ success: boolean; error?: string; needsVerification?: boolean; verificationData?: any }> {
+  public async register(form: { username: string, email: string, 
+      password: string, confirmPassword: string }, text: Translations): 
+      Promise<{ success: boolean; error?: string; needsVerification?: boolean; 
+      verificationData?: any }> {
     const errors: string[] = [];
 
     const login = form.username;
@@ -180,7 +243,10 @@ export class AuthManager {
     }
   }
 
-  public async registerUser(pseudo: string, password: string, email: string, text:Translations, view:string): Promise<{ success: boolean; error?: string; needsVerification?: boolean; verificationData?: any }>{
+  public async registerUser(pseudo: string, password: string, 
+      email: string, text:Translations, view:string): 
+      Promise<{ success: boolean; error?: string; needsVerification?: 
+      boolean; verificationData?: any }>{
     const errorDiv = document.getElementById('formErrors') as HTMLElement;
     const avatar = "/public/avatars/default.png";
     const form =
@@ -192,7 +258,7 @@ export class AuthManager {
     }
   
     try{
-      const res = await fetch(getUrl('auth/signup'),{
+      const res = await fetch(this.router.getUrl('auth/signup'),{
         method:'POST',
         headers : {
           'content-type' : 'application/json'
@@ -225,7 +291,7 @@ export class AuthManager {
         (window as any).otpData = {
           otp_id: result.otp_id,
           context: "signup",
-          handler: signupSuccessHandler
+          handler: this.otpManager.signupSuccessHandler
         };
         
         console.log("OTP data stored:", (window as any).otpData);
@@ -479,39 +545,6 @@ export class AuthManager {
 
 
 
-
-
-// export async function isConnectedUser() {
-// 	const url = getUrl('auth/is-connected')
-// 	try {
-// 		const res = await fetch(url,
-// 			{
-// 				method:"POST",
-// 				headers:  {
-// 					"content-type": "application/json"		
-// 				},
-// 				credentials: "include",
-// 				body: JSON.stringify({})
-// 		})
-// 		if (!res.ok)
-// 		{
-// 			console.log("failed")
-// 			return false;
-// 		}
-// 		const result =  await res.json()
-// 		if (result.success)
-// 			return true;
-// 		else
-// 			return false;
-
-// 	}
-// 	catch(err)
-// 	{
-// 		console.log(err);
-// 		return false;
-// 	}
-	
-// }
 
 // export async function logUser(pseudo: string, password: string, text:Translations, view:string){
 // 	const errorDiv = document.getElementById('formErrors') as HTMLElement;

@@ -1,7 +1,8 @@
-import { AuthManager, type User } from './modules/AuthManager.js';
+import { User, OTParams } from './modules/TypesManager.js';
+import { AuthManager} from './modules/AuthManager.js';
 import { RouterManager, type Page } from './modules/RouterManager.js';
 import { UIManager } from './modules/UIManager.js';
-import { type Translations } from './types.js';
+import { type Translations } from './modules/TypesManager.js';
 import { AuthPage } from './pages/AuthPage.js';
 import { GuestPage } from './pages/GuestPage.js';
 import { MenuPage } from './pages/MenuPage.js';
@@ -93,7 +94,9 @@ export class App {
         this.guestPage.render();
         break;
       case 'menu':
-        this.menuPage.render(this.currentUser);
+        requestAnimationFrame(() => {
+          this.menuPage.render(this.currentUser);
+        });
         break;
       case 'game-ai':
         this.gamePageAI.render();
@@ -107,7 +110,7 @@ export class App {
       case 'check-otp':
         // TODO: Get translations from languageManager
         const text = {} as Translations; // Placeholder
-        const params = (window as any).otpData || { otp_id: 'temp_otp_id', context: 'signup', handler: () => console.log('Default handler called') };
+        const params: OTParams = (window as any).otpData || { otp_id: 'temp_otp_id', context: 'signup', handler: () => console.log('Default handler called') };
         console.log("Using OTP params:", params);
         this.checkOtpPage.render(text, params);
         break;
