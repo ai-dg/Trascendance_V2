@@ -379,24 +379,48 @@ function getCookieParams(maxAge){
 
 
 
-export async function logout_route(request, reply){
-		const token = request.cookies.token;
-		try{
-			const payload = verify(token, process.env.JWT_SECRET);
-			console.log(payload);
-			if (!payload)
-				return reply.send({success: true, message:"user already disconnected"}, 401)
-			else
-			{
-				await redis.set(`jwt:${payload.jti}`, "not valid", { EX: 1});
-				return reply.setCookie('token', token, getCookieParams(0))
-							.send({success: true, message:"user logged out"})
-			}		
-		}
-		catch (err){
-			return reply.send({success:false, message: "Internal app error"}, 500)
-	}
+// export async function logout_route(request, reply){
+// 		const token = request.cookies.token;
+// 		try{
+// 			const payload = verify(token, process.env.JWT_SECRET);
+// 			console.log(payload);
+// 			if (!payload)
+// 				return reply.send({success: true, message:"user already disconnected"}, 401)
+// 			else
+// 			{
+// 				await redis.set(`jwt:${payload.jti}`, "not valid", { EX: 1});
+// 				return reply.setCookie('token', '', getCookieParams(0))
+// 							.send({success: true, message:"user logged out"})
+// 			}		
+// 		}
+// 		catch (err){
+// 			return reply.send({success:false, message: "Internal app error"}, 500)
+// 	}
+// }
+
+export async function logout_route(request, reply) {
+  const token = request.cookies.token;
+
+  try {
+    if (!token) {
+      return reply.code(200).send({ success: true, message: "User already disconnected" });
+    }
+
+    const payload = verify(token, process.env.JWT_SECRET);
+    
+    await redis.set(`jwt:${payload.jti}`, "revoked"); 
+
+    reply.clearCookie('token', { path: '/', httpOnly: true, secure: true, sameSite: 'None' });
+	reply.clearCookie('csrf', { path: '/', httpOnly: true, secure: true, sameSite: 'None' });
+
+    return reply.send({ success: true, message: "User logged out" });
+
+  } catch (err) {
+    console.error(err);
+    return reply.code(500).send({ success: false, message: "Internal server error" });
+  }
 }
+
 
 
 /**********************************************************************************************************************************************************/
@@ -674,7 +698,7 @@ export async function auth_me_route(request, reply) {
     );
     if (!user) return reply.code(404).send({ success: false, message: "User not found" });
 
-    return reply.send({ success: true, user });
+    return reply.send({ success: true, data: { user } });
 
   } catch (err) {
     console.error("auth/me error:", err);

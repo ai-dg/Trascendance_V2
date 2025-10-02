@@ -279,12 +279,67 @@ export class AuthManager {
             return { success: false, error: errorMessage };
         }
     }
+    async initCSRFToken() {
+        try {
+            const res = await fetch(this.router.getUrl('auth/csrf-token'), {
+                method: "GET",
+                credentials: 'include'
+            });
+            if (!res)
+                console.error("can't connect to server, please try again later");
+            const result = await res.json();
+            if (result.success) {
+                const token = result.data.csrfToken;
+                const el = document.createElement("meta");
+                el.setAttribute('name', 'csrf-token');
+                el.setAttribute('content', token);
+                document.head.appendChild(el);
+            }
+            else {
+                console.error("Not authenticated...");
+            }
+        }
+        catch (err) {
+            console.error(getErrorMessage(err));
+        }
+    }
+    ;
+    getCSRFToken() {
+        const meta = document.querySelector("meta[name='csrf-token']");
+        if (!meta)
+            return "";
+        const csrf_token = meta.getAttribute('content');
+        if (!csrf_token)
+            return "";
+        return "";
+    }
+    async logoutHandler() {
+        const url = this.router.getUrl("auth/logout");
+        try {
+            const res = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "x-csrf-token": this.getCSRFToken()
+                },
+                credentials: 'include'
+            });
+            if (!res.ok)
+                console.log("Somethig went wrong here");
+            const result = await res.json();
+            window.location.href = '/';
+        }
+        catch (err) {
+            console.log(err);
+            window.location.href = '/';
+        }
+    }
     forgotPassword(credentials) {
         console.log('Forgot password requested for:', credentials.email);
     }
     logout() {
+        this.logoutHandler();
         this.currentUser = null;
-        this.saveUserToStorage();
+        // this.saveUserToStorage();
         this.notifyListeners();
     }
     addListener(callback) {
@@ -409,61 +464,6 @@ export class AuthManager {
 // 		}
 // 		return { success: false, error: errorMessage };
 // 	}
-// }
-// export async function initCSRFToken(){
-// 	try{
-// 		const res = await fetch(getUrl('auth/csrf-token'),
-// 		{
-// 			method:"GET",
-// 			credentials:'include'
-// 		})
-// 		if(!res)
-// 			console.error("can't connect to server, please try again later")
-// 		const result = await res.json();
-// 		if (result.success)
-// 		{
-// 			const token = result.data.csrfToken
-// 			const el = document.createElement("meta")
-// 			el.setAttribute('name', 'csrf-token')
-// 			el.setAttribute('content', token)
-// 			document.head.appendChild(el);
-// 		}
-// 		else
-// 		{
-// 			console.error("Not authenticated...")
-// 		}
-// 	}
-// 	catch(err)
-// 	{
-// 		console.error(getErrorMessage(err));
-// 	}
-// };
-// export async function logoutHandler(e:Event) {
-// 	const url = getUrl("auth/logout");
-// 	try{
-// 		const res = await fetch(url, {
-// 			method: "POST",
-// 			headers:{
-// 				"x-csrf-token": getCSRFToken()
-// 			},
-// 			credentials: 'include'
-// 		});
-// 		if (!res.ok)
-// 			console.log("Somethig went wrong here");
-// 		const result = await res.json()
-// 		window.location.href = '/';
-// 	}
-// 	catch(err)
-// 	{
-// 		console.log(err)
-// 		window.location.href = '/';
-// 	}
-// }
-// export function getCSRFToken() : string {
-//     let csrf_token : string | null = document.querySelector("meta[name='csrf-token']")!.getAttribute('content');
-// 	if (!csrf_token)
-// 		return ""
-//     return csrf_token
 // }
 // export async function logUser(pseudo: string, password: string, text:Translations, view:string){
 // 	const errorDiv = document.getElementById('formErrors') as HTMLElement;

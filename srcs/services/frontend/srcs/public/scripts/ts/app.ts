@@ -48,6 +48,7 @@ export class App {
     this.leaderboardPage = new LeaderboardPage(this.uiManager, this.handleBackToMenu.bind(this));
     this.settingsPage = new SettingsPage(this.uiManager, this.handleBackToMenu.bind(this));
 
+
     this.setupEventListeners();
     this.initialize();
   }
@@ -66,9 +67,10 @@ export class App {
     });
   }
 
-  private initialize(): void {
+  private async initialize(): Promise<void> {
     // Check if user is already logged in
-    this.currentUser = this.authManager.getCurrentUser();
+    this.currentUser = await this.getConnectedUser();
+    console.log("CURRENT USER: ", this.currentUser);
     if (this.currentUser) {
       this.currentPage = 'menu';
     }
@@ -83,8 +85,47 @@ export class App {
     }
   }
 
-  private render(): void {
+  private async getConnectedUser(): Promise<User | null> {
+    try {
+        const res = await fetch(this.routerManager.getUrl('auth/me'), {
+            method: 'GET',
+            credentials: 'include'
+        });
+        if (res.ok) {
+          const result = await res.json();
+          const user: User = {
+            id: result.data.user.user_id,
+            username: result.data.user.pseudo,
+            email: result.data.user.user_mail,
+            avatar: result.data.user.avatar,
+            isGuest: false
+          };
+          return user;
+          // get localStorage data;
+        }
+        let guestUser: User | null = null;
+
+        let guestNickname = localStorage.getItem("guestNickname") ?? "Guest";
+        let guestAvatar = localStorage.getItem("guestAvatar") ?? "default.png";
+        if (!guestAvatar || !guestNickname) {
+          guestUser = {
+            username: guestNickname,
+            avatar: guestAvatar,
+            isGuest: true
+        };
+      }
+        return guestUser;
+    } catch (err) {
+        console.error(err);
+    }
+    return null;
+  }
+
+  private async render(): Promise<void> {
     this.uiManager.clear();
+
+    this.currentUser = await this.getConnectedUser();
+    console.log("CURRENT USER RENDER: ", this.currentUser);
 
     switch (this.currentPage) {
       case 'auth':

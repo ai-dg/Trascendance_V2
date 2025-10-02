@@ -41,9 +41,10 @@ export class App {
             this.render();
         });
     }
-    initialize() {
+    async initialize() {
         // Check if user is already logged in
-        this.currentUser = this.authManager.getCurrentUser();
+        this.currentUser = await this.getConnectedUser();
+        console.log("CURRENT USER: ", this.currentUser);
         if (this.currentUser) {
             this.currentPage = 'menu';
         }
@@ -57,8 +58,45 @@ export class App {
             this.routerManager.navigateTo('auth');
         }
     }
-    render() {
+    async getConnectedUser() {
+        try {
+            const res = await fetch(this.routerManager.getUrl('auth/me'), {
+                method: 'GET',
+                credentials: 'include'
+            });
+            if (res.ok) {
+                const result = await res.json();
+                const user = {
+                    id: result.data.user.user_id,
+                    username: result.data.user.pseudo,
+                    email: result.data.user.user_mail,
+                    avatar: result.data.user.avatar,
+                    isGuest: false
+                };
+                return user;
+                // get localStorage data;
+            }
+            let guestUser = null;
+            let guestNickname = localStorage.getItem("guestNickname") ?? "Guest";
+            let guestAvatar = localStorage.getItem("guestAvatar") ?? "default.png";
+            if (!guestAvatar || !guestNickname) {
+                guestUser = {
+                    username: guestNickname,
+                    avatar: guestAvatar,
+                    isGuest: true
+                };
+            }
+            return guestUser;
+        }
+        catch (err) {
+            console.error(err);
+        }
+        return null;
+    }
+    async render() {
         this.uiManager.clear();
+        this.currentUser = await this.getConnectedUser();
+        console.log("CURRENT USER RENDER: ", this.currentUser);
         switch (this.currentPage) {
             case 'auth':
                 this.authPage.render();
