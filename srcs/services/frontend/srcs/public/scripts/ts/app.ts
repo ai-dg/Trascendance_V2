@@ -34,7 +34,11 @@ export class App {
   constructor(container: HTMLElement) {
     this.container = container;
     this.authManager = new AuthManager(this.handleBackToCheckOtp.bind(this));
-    this.routerManager = new RouterManager();
+    this.routerManager = new RouterManager((user: User | null) => {
+      this.currentUser = user;
+      // this.updateCurrentPage();
+    });
+
     this.uiManager = new UIManager(container);
 
     // Initialize pages
@@ -85,41 +89,7 @@ export class App {
     }
   }
 
-  private async getConnectedUser(): Promise<User | null> {
-    try {
-        const res = await fetch(this.routerManager.getUrl('auth/me'), {
-            method: 'GET',
-            credentials: 'include'
-        });
-        if (res.ok) {
-          const result = await res.json();
-          const user: User = {
-            id: result.data.user.user_id,
-            username: result.data.user.pseudo,
-            email: result.data.user.user_mail,
-            avatar: result.data.user.avatar,
-            isGuest: false
-          };
-          return user;
-          // get localStorage data;
-        }
-        let guestUser: User | null = null;
 
-        let guestNickname = localStorage.getItem("guestNickname") ?? "Guest";
-        let guestAvatar = localStorage.getItem("guestAvatar") ?? "default.png";
-        if (!guestAvatar || !guestNickname) {
-          guestUser = {
-            username: guestNickname,
-            avatar: guestAvatar,
-            isGuest: true
-        };
-      }
-        return guestUser;
-    } catch (err) {
-        console.error(err);
-    }
-    return null;
-  }
 
   private async render(): Promise<void> {
     this.uiManager.clear();
@@ -291,6 +261,9 @@ export class App {
       avatar: avatar,
       isGuest: true
     };
+
+    localStorage.setItem("guestNickname", nickname);
+    localStorage.setItem("guestAvatar", avatar);
     
     console.log('Playing as guest:', nickname, 'with avatar:', avatar);
     this.routerManager.navigateTo('menu');

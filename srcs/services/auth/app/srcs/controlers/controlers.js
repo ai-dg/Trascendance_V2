@@ -403,12 +403,18 @@ export async function logout_route(request, reply) {
 
   try {
     if (!token) {
-      return reply.code(200).send({ success: true, message: "User already disconnected" });
+      return reply.code(200).send({ success: true, message: "Guest logged out" });
     }
+	let payload;
+	try {
+		payload = verify(token, process.env.JWT_SECRET);
+	}
+	catch {
+		payload = null;
+	}
 
-    const payload = verify(token, process.env.JWT_SECRET);
-    
-    await redis.set(`jwt:${payload.jti}`, "revoked"); 
+	if (payload?.jti)
+    	await redis.set(`jwt:${payload.jti}`, "revoked"); 
 
     reply.clearCookie('token', { path: '/', httpOnly: true, secure: true, sameSite: 'None' });
 	reply.clearCookie('csrf', { path: '/', httpOnly: true, secure: true, sameSite: 'None' });

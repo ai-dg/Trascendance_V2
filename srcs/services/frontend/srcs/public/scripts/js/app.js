@@ -14,7 +14,10 @@ export class App {
         this.currentPage = 'auth';
         this.container = container;
         this.authManager = new AuthManager(this.handleBackToCheckOtp.bind(this));
-        this.routerManager = new RouterManager();
+        this.routerManager = new RouterManager((user) => {
+            this.currentUser = user;
+            // this.updateCurrentPage();
+        });
         this.uiManager = new UIManager(container);
         // Initialize pages
         this.authPage = new AuthPage(this.uiManager, this.handleLogin.bind(this), this.handleRegister.bind(this), this.handleForgotPassword.bind(this), this.handleShowGuestPage.bind(this), this.handleError.bind(this));
@@ -77,15 +80,17 @@ export class App {
                 // get localStorage data;
             }
             let guestUser = null;
-            let guestNickname = localStorage.getItem("guestNickname") ?? "Guest";
-            let guestAvatar = localStorage.getItem("guestAvatar") ?? "default.png";
-            if (!guestAvatar || !guestNickname) {
-                guestUser = {
-                    username: guestNickname,
-                    avatar: guestAvatar,
-                    isGuest: true
-                };
-            }
+            // let guestNickname = localStorage.getItem("guestNickname") ?? "Guest";
+            // let guestAvatar = localStorage.getItem("guestAvatar") ?? "default.png";
+            let guestNickname = localStorage.getItem("guestNickname");
+            let guestAvatar = localStorage.getItem("guestAvatar");
+            if (!guestAvatar || !guestNickname)
+                return null;
+            guestUser = {
+                username: guestNickname,
+                avatar: guestAvatar,
+                isGuest: true
+            };
             return guestUser;
         }
         catch (err) {
@@ -246,6 +251,8 @@ export class App {
             avatar: avatar,
             isGuest: true
         };
+        localStorage.setItem("guestNickname", nickname);
+        localStorage.setItem("guestAvatar", avatar);
         console.log('Playing as guest:', nickname, 'with avatar:', avatar);
         this.routerManager.navigateTo('menu');
     }

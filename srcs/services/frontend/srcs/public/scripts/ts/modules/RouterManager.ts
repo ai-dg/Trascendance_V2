@@ -1,3 +1,6 @@
+import { AuthManager } from "./AuthManager";
+import { User } from "./TypesManager";
+
 export type Page = 'auth' | 'guest' | 'menu' | 'game-ai' | 'game-local' | 'game-online' | 'leaderboard' | 'settings' | 'check-otp';
 
 export interface RouteData {
@@ -7,8 +10,10 @@ export interface RouteData {
 export class RouterManager {
   private currentPage: Page = 'auth';
   private listeners: ((page: Page, data?: RouteData) => void)[] = [];
+  private updateUserCallback?: (user: User | null) => void;
 
-  constructor() {
+  constructor(updateUserCallback?: (user: User | null) => void) {
+    this.updateUserCallback = updateUserCallback;
     this.loadInitialRoute();
   }
 
@@ -21,7 +26,12 @@ export class RouterManager {
     return this.currentPage;
   }
 
+  public setCurrentUser(user: User | null) {
+    this.updateUserCallback?.(user);
+  }
+
   public navigateTo(page: Page, data?: RouteData): void {
+
     if (this.currentPage !== page) {
       this.currentPage = page;
       this.notifyListeners(data);

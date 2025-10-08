@@ -1,7 +1,8 @@
 export class RouterManager {
-    constructor() {
+    constructor(updateUserCallback) {
         this.currentPage = 'auth';
         this.listeners = [];
+        this.updateUserCallback = updateUserCallback;
         this.loadInitialRoute();
     }
     loadInitialRoute() {
@@ -10,6 +11,9 @@ export class RouterManager {
     }
     getCurrentPage() {
         return this.currentPage;
+    }
+    setCurrentUser(user) {
+        this.updateUserCallback?.(user);
     }
     navigateTo(page, data) {
         if (this.currentPage !== page) {

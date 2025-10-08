@@ -214,7 +214,7 @@ export class AuthManager {
     }
     async registerUser(pseudo, password, email, text, view) {
         const errorDiv = document.getElementById('formErrors');
-        const avatar = "/public/avatars/default.png";
+        const avatar = "default.png";
         const form = {
             email,
             pseudo,
@@ -314,8 +314,8 @@ export class AuthManager {
         return "";
     }
     async logoutHandler() {
-        const url = this.router.getUrl("auth/logout");
         try {
+            const url = this.router.getUrl("auth/logout");
             const res = await fetch(url, {
                 method: "POST",
                 headers: {
@@ -326,6 +326,11 @@ export class AuthManager {
             if (!res.ok)
                 console.log("Somethig went wrong here");
             const result = await res.json();
+            localStorage.removeItem("guestNickname");
+            localStorage.removeItem("guestAvatar");
+            this.currentUser = null;
+            this.saveUserToStorage();
+            this.notifyListeners();
             window.location.href = '/';
         }
         catch (err) {
