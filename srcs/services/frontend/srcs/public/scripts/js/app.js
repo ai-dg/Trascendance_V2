@@ -44,23 +44,6 @@ export class App {
             this.render();
         });
     }
-    async initialize() {
-        // Check if user is already logged in
-        this.currentUser = await this.getConnectedUser();
-        console.log("CURRENT USER: ", this.currentUser);
-        if (this.currentUser) {
-            this.currentPage = 'menu';
-        }
-        this.render();
-    }
-    updateCurrentPage() {
-        if (this.currentUser) {
-            this.routerManager.navigateTo('menu');
-        }
-        else {
-            this.routerManager.navigateTo('auth');
-        }
-    }
     async getConnectedUser() {
         try {
             const res = await fetch(this.routerManager.getUrl('auth/me'), {
@@ -80,8 +63,6 @@ export class App {
                 // get localStorage data;
             }
             let guestUser = null;
-            // let guestNickname = localStorage.getItem("guestNickname") ?? "Guest";
-            // let guestAvatar = localStorage.getItem("guestAvatar") ?? "default.png";
             let guestNickname = localStorage.getItem("guestNickname");
             let guestAvatar = localStorage.getItem("guestAvatar");
             if (!guestAvatar || !guestNickname)
@@ -97,6 +78,23 @@ export class App {
             console.error(err);
         }
         return null;
+    }
+    async initialize() {
+        // Check if user is already logged in
+        this.currentUser = await this.getConnectedUser();
+        console.log("CURRENT USER: ", this.currentUser);
+        if (this.currentUser) {
+            this.currentPage = 'menu';
+        }
+        this.render();
+    }
+    updateCurrentPage() {
+        if (this.currentUser) {
+            this.routerManager.navigateTo('menu');
+        }
+        else {
+            this.routerManager.navigateTo('auth');
+        }
     }
     async render() {
         this.uiManager.clear();
