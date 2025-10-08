@@ -11,6 +11,9 @@ export class AuthManager {
         this.onBackToCheckOtp = onBackToCheckOtp;
         this.otpManager = new OTPManagers();
     }
+    setHandlers(handlers) {
+        this.onChangePasswordRequest = handlers.onChangePasswordRequest;
+    }
     loadUserFromStorage() {
         const stored = localStorage.getItem('arcade_user');
         if (stored) {
@@ -63,15 +66,25 @@ export class AuthManager {
                 method: 'GET',
                 credentials: 'include'
             });
-            if (!res.ok)
-                throw new Error('Failed to get user');
-            const result = await res.json();
-            if (result.success) {
-                return result.data.user;
+            if (res.ok) {
+                const result = await res.json();
+                if (result.success) {
+                    return result.data.user;
+                }
+            }
+            if (res.status === 401) {
+            }
+            else {
+                console.warn(`getConnectedUser: unexpected response (${res.status})`);
             }
         }
         catch (err) {
-            console.error(err);
+            if (err instanceof TypeError && err.message.includes("NetworkError")) {
+                console.debug("getConnectedUser: server internal error");
+            }
+            else {
+                console.error("getConnectedUser: unexpected error →", err);
+            }
         }
         return null;
     }
@@ -338,8 +351,65 @@ export class AuthManager {
             window.location.href = '/';
         }
     }
-    forgotPassword(credentials) {
-        console.log('Forgot password requested for:', credentials.email);
+    async forgotPassword(email) {
+        try {
+            const res = await fetch(this.router.getUrl('auth/reset-password'), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email })
+            });
+            if (!res.ok)
+                return { success: false, error: "Failed to request password reset" };
+            const result = await res.json();
+            if (!result.success)
+                return { success: false, error: result.message || "Unknown error" };
+            window.otpData = {
+                otp_id: result.otp_id,
+                context: "verify",
+                handler: () => {
+                    console.log("OTP verified, triggering Change Password UI first");
+                    this.onChangePasswordRequest?.();
+                }
+            };
+            console.log("OTP data stored:", window.otpData);
+            this.onBackToCheckOtp();
+            // Return success with verification data
+            return {
+                success: true,
+                needsVerification: true,
+                verificationData: {
+                    otp_id: result.otp_id || 'temp_otp_id',
+                    context: "verify",
+                    handler: () => {
+                        console.log("OTP verified, triggering Change Password UI");
+                        this.onChangePasswordRequest?.();
+                    }
+                }
+            };
+        }
+        catch (err) {
+            console.error("forgotPassword error:", err);
+            return { success: false, error: "Network error" };
+        }
+    }
+    async changePassword(email, password, otpId) {
+        try {
+            const res = await fetch(this.router.getUrl('auth/reset-password/otp-validation'), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, otp_id: otpId, password })
+            });
+            if (!res.ok)
+                return { success: false, error: "Failed to change password" };
+            const result = await res.json();
+            if (!result.success)
+                return { success: false, error: result.message || "Unknown error" };
+            return { success: true };
+        }
+        catch (err) {
+            console.error("changePassword error:", err);
+            return { success: false, error: "Network error" };
+        }
     }
     logout() {
         this.logoutHandler();

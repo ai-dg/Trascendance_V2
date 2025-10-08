@@ -42,13 +42,13 @@ export class App {
     this.uiManager = new UIManager(container);
 
     // Initialize pages
-    this.authPage = new AuthPage(this.uiManager, this.handleLogin.bind(this), this.handleRegister.bind(this), this.handleForgotPassword.bind(this), this.handleShowGuestPage.bind(this), this.handleError.bind(this));
+    this.authPage = new AuthPage(this.uiManager, this.authManager, this.handleLogin.bind(this), this.handleRegister.bind(this), this.handleForgotPassword.bind(this), this.handleChangePassword.bind(this), this.handleShowGuestPage.bind(this), this.handleError.bind(this));
     this.guestPage = new GuestPage(this.uiManager, this.handleBackToAuth.bind(this), this.handlePlayAsGuest.bind(this));
     this.menuPage = new MenuPage(this.uiManager, this.handlePlayGameAI.bind(this), this.handlePlayGameLocal.bind(this), this.handlePlayGameOnline.bind(this), this.handleViewLeaderboard.bind(this), this.handleChatWithFriends.bind(this), this.handleSettings.bind(this), this.handleLogout.bind(this));
     this.gamePageAI = new GamePageAI(this.uiManager, this.handleBackToMenu.bind(this));
     this.gamePageLocal = new GamePageLocal(this.uiManager, this.handleBackToMenu.bind(this));
     this.gamePageOnline = new GamePageOnline(this.uiManager, this.handleBackToMenu.bind(this));
-    this.checkOtpPage = new CheckOtp(this.uiManager, this.handleOtpVerificationComplete.bind(this), this.handleBackToAuth.bind(this));
+    this.checkOtpPage = new CheckOtp(this.uiManager, this.handleOtpVerificationComplete.bind(this), this.handleNewChangePassword.bind(this), this.handleBackToAuth.bind(this));
     this.leaderboardPage = new LeaderboardPage(this.uiManager, this.handleBackToMenu.bind(this));
     this.settingsPage = new SettingsPage(this.uiManager, this.handleBackToMenu.bind(this));
 
@@ -72,42 +72,52 @@ export class App {
   }
 
   private async getConnectedUser(): Promise<User | null> {
-        try {
-            const res = await fetch(this.routerManager.getUrl('auth/me'), {
-                method: 'GET',
-                credentials: 'include'
-            });
-            if (res.ok) {
-                const result = await res.json();
-                const user = {
-                    id: result.data.user.user_id,
-                    username: result.data.user.pseudo,
-                    email: result.data.user.user_mail,
-                    avatar: result.data.user.avatar,
-                    isGuest: false
-                };
-                return user;
-                // get localStorage data;
-            }
-            let guestUser: User | null = null;
-            
-            let guestNickname = localStorage.getItem("guestNickname");
-            let guestAvatar = localStorage.getItem("guestAvatar");
+      try {
+          const res = await fetch(this.routerManager.getUrl('auth/me'), {
+              method: 'GET',
+              credentials: 'include'
+          });
+          if (res.ok) {
+              const result = await res.json();
+              const user = {
+                  id: result.data.user.user_id,
+                  username: result.data.user.pseudo,
+                  email: result.data.user.user_mail,
+                  avatar: result.data.user.avatar,
+                  isGuest: false
+              };
+              return user;
+              // get localStorage data;
+          }
 
-            if (!guestAvatar || !guestNickname)
-                return null;
+          if (res.status === 401) {
 
+          } else {
+            console.warn(`getConnectedUser: unexpected status ${res.status}`);
+          }
+          let guestUser: User | null = null;
+          
+          let guestNickname = localStorage.getItem("guestNickname");
+          let guestAvatar = localStorage.getItem("guestAvatar");
+          
+          if (guestAvatar && guestNickname) {
             guestUser = {
                 username: guestNickname,
                 avatar: guestAvatar,
                 isGuest: true
             };
             return guestUser;
+          }
+          return null;
+      }
+      catch (err) {
+          if (err instanceof TypeError && err.message.includes("NetworkError")) {
+            console.debug("getConnectedUser: server internal error");
+        } else {
+            console.error("getConnectedUser: unexpected error →", err);
         }
-        catch (err) {
-            console.error(err);
-        }
-        return null;
+      }
+      return null;
     }
 
   private async initialize(): Promise<void> {
@@ -221,9 +231,41 @@ export class App {
     this.authPage.showError(error);
   }
 
-  private handleForgotPassword(email: string): void {
-    this.authManager.forgotPassword({ email });
+  private async handleForgotPassword(email: string): Promise<void> {
     console.log('Forgot password requested for:', email);
+    const response = await this.authManager.forgotPassword(email);
+    console.log('Response ', response);
+    if (response.success && response.needsVerification) {
+      this.routerManager.navigateTo('check-otp', response.verificationData);
+    } else if (!response.success) {
+      console.error(response.error);
+    }
+  }
+
+  private async handleChangePassword(email: string, password: string): Promise<void> {
+    console.log('Change password requested for:', email);
+    const otpId = (window as any).otpData?.otp_id;
+    if (!otpId) return console.error("OTP ID missing");
+
+    const response = await this.authManager.changePassword(email, password, otpId);
+    if (response.success) {
+      console.log("Password changed succesfully");
+      (window as any).otpData = null;
+      this.authPage.showLogin();
+    } else {
+      console.error(response.error);
+    }
+  }
+
+  private handleNewChangePassword(success: boolean): void {
+    if (success) {
+      console.log('OTP verification successful, redirecting to change password');
+      // Clear OTP data
+      this.authPage.handleChangePassword;
+    } else {
+      console.log('OTP verification failed');
+      // Stay on check-otp page to retry
+    }
   }
 
   private handleLogout(): void {

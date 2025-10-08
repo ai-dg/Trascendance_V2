@@ -8,12 +8,14 @@ export class CheckOtp {
   private check: CheckManager;
   private otpManager: OTPManagers;
   private onVerificationComplete: (success: boolean) => void;
+  private onChangePassword: (success: boolean) => void;
   private onBack: () => void;
 
-  constructor(uiManager: UIManager, onVerificationComplete: (success: boolean) => void, onBack: () => void) {
+  constructor(uiManager: UIManager, onVerificationComplete: (success: boolean) => void, onChangePassword: (success: boolean) => void, onBack: () => void) {
     this.uiManager = uiManager;
     this.otpManager = new OTPManagers();
     this.onVerificationComplete = onVerificationComplete;
+    this.onChangePassword = onChangePassword;
     this.onBack = onBack;
     this.check = new CheckManager();
   }
@@ -117,6 +119,12 @@ export class CheckOtp {
       const result = await this.otpManager.OTPValidationHandler(params, inputs);
       if (!result.success) {
         this.showError(result.error || 'Invalid verification code. Please try again.');
+      }
+      console.log("Params context: ", params.context);
+      if (params.context === 'verify') {
+        // this.onChangePassword(result.success);
+        console.log("Skipping params.handler()");
+        return ;
       }
       this.onVerificationComplete(result.success);
     });

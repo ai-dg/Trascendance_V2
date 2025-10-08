@@ -9,6 +9,7 @@ export class AuthManager {
   private otpManager: OTPManagers;
   private currentUser: User | null = null;
   private listeners: ((user: User | null) => void)[] = [];
+  private onChangePasswordRequest?: () => void;
 
   private router = new RouterManager();
 
@@ -16,6 +17,10 @@ export class AuthManager {
     this.loadUserFromStorage();
     this.onBackToCheckOtp = onBackToCheckOtp;
     this.otpManager = new OTPManagers();
+  }
+
+  public setHandlers(handlers: { onChangePasswordRequest?: () => void}) {
+    this.onChangePasswordRequest = handlers.onChangePasswordRequest;
   }
 
   private loadUserFromStorage(): void {
@@ -75,13 +80,22 @@ export class AuthManager {
             method: 'GET',
             credentials: 'include'
         });
-        if (!res.ok) throw new Error('Failed to get user');
-        const result = await res.json();
-        if (result.success) {
+        if (res.ok) {
+          const result = await res.json();
+          if (result.success) {
             return result.data.user;
+          }
+        }
+        if (res.status === 401) {
+        } else {
+            console.warn(`getConnectedUser: unexpected response (${res.status})`);
         }
     } catch (err) {
-        console.error(err);
+        if (err instanceof TypeError && err.message.includes("NetworkError")) {
+            console.debug("getConnectedUser: server internal error");
+        } else {
+            console.error("getConnectedUser: unexpected error →", err);
+        }
     }
     return null;
   }
@@ -391,9 +405,78 @@ export class AuthManager {
   }
   
 
-  public forgotPassword(credentials: ForgotPasswordCredentials): void {
-    console.log('Forgot password requested for:', credentials.email);
+  public async forgotPassword(email: string): Promise<{
+    success: boolean;
+    error?: string;
+    needsVerification?: boolean;
+    verificationData?: { otp_id: string; context: string; handler: any };
+  }> {
+    try {
+      const res = await fetch(this.router.getUrl('auth/reset-password'), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+    
+    if (!res.ok) return { success: false, error: "Failed to request password reset" };
+    
+    const result = await res.json();
+    if (!result.success) return { success: false, error: result.message || "Unknown error" };
+    
+    (window as any).otpData = {
+      otp_id: result.otp_id,
+      context: "verify",
+      handler: () => {
+          console.log("OTP verified, triggering Change Password UI first");
+          this.onChangePasswordRequest?.();
+        }
+    };
+    
+    console.log("OTP data stored:", (window as any).otpData);
+    this.onBackToCheckOtp();
+    
+    // Return success with verification data
+    return {
+      success: true,
+      needsVerification: true,
+      verificationData: {
+        otp_id: result.otp_id || 'temp_otp_id',
+        context: "verify",
+        handler: () => {
+          console.log("OTP verified, triggering Change Password UI");
+          this.onChangePasswordRequest?.();
+        }
+      }
+    };
+
+    } catch (err) {
+      console.error("forgotPassword error:", err);
+      return { success: false, error: "Network error" };
+    }
+}
+
+public async changePassword(email: string, password: string, otpId: string): Promise<{
+  success:boolean;
+  error?: string;
+}> {
+  try {
+    const res = await fetch(this.router.getUrl('auth/reset-password/otp-validation'), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, otp_id: otpId, password })
+    });
+
+    if (!res.ok) return { success: false, error: "Failed to change password" };
+
+    const result = await res.json();
+    if (!result.success) return { success: false, error: result.message || "Unknown error" };
+
+    return { success: true };
+  } catch (err) {
+    console.error("changePassword error:", err);
+    return { success: false, error: "Network error" };
   }
+}
 
   public logout(): void { // TODO: Implement logout
     this.logoutHandler();

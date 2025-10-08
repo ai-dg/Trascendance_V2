@@ -1,7 +1,8 @@
 export class AuthPage {
-    constructor(uiManager, onLogin, onRegister, onForgotPassword, onPlayAsGuest, onError) {
+    constructor(uiManager, authManager, onLogin, onRegister, onForgotPassword, onChangePassword, onPlayAsGuest, onError) {
         this.isLogin = true;
         this.showForgotPassword = false;
+        this.showChangePassword = false;
         this.formData = {
             username: '',
             email: '',
@@ -11,20 +12,26 @@ export class AuthPage {
         this.errors = [];
         this.text = {};
         this.uiManager = uiManager;
+        this.authManager = authManager;
         this.onLogin = onLogin;
         this.onRegister = onRegister;
         this.onForgotPassword = onForgotPassword;
+        this.onChangePassword = onChangePassword;
         this.onPlayAsGuest = onPlayAsGuest;
         this.onError = onError;
+        this.authManager.setHandlers({
+            onChangePasswordRequest: this.handleChangePassword.bind(this),
+        });
     }
     render() {
+        console.log("render: ", this.showChangePassword);
         const container = this.uiManager.createElement('div', 'retro-container size-full flex items-center justify-center p-8');
         const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-md');
         const card = this.uiManager.createElement('div', 'auth-card bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-8 shadow-[0_0_30px_#ff1493]');
         // Header
         const header = this.uiManager.createElement('div', 'text-center mb-8');
-        const title = this.uiManager.createElement('h1', 'retro-title text-3x2 mb-2', this.showForgotPassword ? 'RESET PASSWORD' : (this.isLogin ? 'LOGIN' : 'REGISTER'));
-        const subtitle = this.uiManager.createElement('p', 'retro-subtitle text-sm', this.showForgotPassword ? 'ENTER YOUR EMAIL TO RESET' : (this.isLogin ? 'ACCESS THE ARCADE' : 'JOIN THE ARCADE'));
+        const title = this.uiManager.createElement('h1', 'retro-title text-3x2 mb-2', this.showForgotPassword ? 'RESET PASSWORD' : this.showChangePassword ? 'CHANGE PASS' : (this.isLogin ? 'LOGIN' : 'REGISTER'));
+        const subtitle = this.uiManager.createElement('p', 'retro-subtitle text-sm', this.showForgotPassword ? 'ENTER YOUR EMAIL TO RESET' : this.showChangePassword ? 'ENTER YOUR NEW PASSWORD' : (this.isLogin ? 'ACCESS THE ARCADE' : 'JOIN THE ARCADE'));
         header.appendChild(title);
         header.appendChild(subtitle);
         // Error Messages
@@ -45,6 +52,17 @@ export class AuthPage {
             form.appendChild(emailField);
             // Submit button for forgot password
             const submitButton = this.uiManager.createButton('RESET PASSWORD', 'w-full retro-button bg-[#ff1493] text-black hover:bg-transparent hover:text-[#ff1493] border-2 border-[#ff1493] py-3', () => this.onForgotPassword(this.formData.email));
+            submitButton.type = 'submit';
+            form.appendChild(submitButton);
+        }
+        else if (this.showChangePassword) {
+            // Change Password Form - only email field
+            const passwordField = this.createField('PASSWORD', 'password', 'password', 'Enter your new password');
+            const passwordConfirmField = this.createField('PASSWORD CONFIRM', 'password', 'confirmPassword', 'Enter again your new password');
+            form.appendChild(passwordField);
+            form.appendChild(passwordConfirmField);
+            // Submit button for Change password
+            const submitButton = this.uiManager.createButton('CHANGE PASSWORD', 'w-full retro-button bg-[#ff1493] text-black hover:bg-transparent hover:text-[#ff1493] border-2 border-[#ff1493] py-3', () => this.onChangePassword(this.formData.email, this.formData.password, this.formData.confirmPassword));
             submitButton.type = 'submit';
             form.appendChild(submitButton);
         }
@@ -81,6 +99,14 @@ export class AuthPage {
             backToLoginButton.addEventListener('click', this.handleBackToLogin.bind(this));
             toggleContainer.appendChild(backToLoginButton);
         }
+        else if (this.showChangePassword) {
+            // Show "Back to Login" when in forgot password mode
+            const backToLoginButton = this.uiManager.createElement('button', 'toggle-link');
+            backToLoginButton.textContent = "Wrong email?";
+            backToLoginButton.type = 'button';
+            backToLoginButton.addEventListener('click', this.handleBackToForgotPassword.bind(this));
+            toggleContainer.appendChild(backToLoginButton);
+        }
         else {
             // Show normal toggle buttons
             const toggleButton = this.uiManager.createElement('button', 'toggle-link');
@@ -105,7 +131,7 @@ export class AuthPage {
         card.appendChild(header);
         card.appendChild(form);
         // OAuth Buttons (only show when not in forgot password mode)
-        if (!this.showForgotPassword) {
+        if (!this.showForgotPassword || !this.showChangePassword) {
             const oauthContainer = this.uiManager.createElement('div', 'mt-6 space-y-3');
             // Divider
             const divider = this.uiManager.createElement('div', 'flex items-center my-4');
@@ -152,13 +178,39 @@ export class AuthPage {
     handleSubmit(e) {
         e.preventDefault();
         this.errors = [];
-        if (this.isLogin) {
+        if (this.showForgotPassword) {
+            if (!this.formData.email) {
+                this.errors.push('Please fill in all fields');
+                this.render();
+                return;
+            }
+            this.onForgotPassword(this.formData.email);
+            return;
+        }
+        else if (this.showChangePassword) {
+            if (!this.formData.password || !this.formData.confirmPassword) {
+                this.errors.push('Please fill in all fields');
+                this.render();
+                return;
+            }
+            if (this.formData.password === this.formData.confirmPassword) {
+                this.onChangePassword(this.formData.email, this.formData.password, this.formData.confirmPassword);
+                return;
+            }
+            else {
+                const newErrors = [];
+                newErrors.push('Password do not match');
+                this.errors = newErrors;
+            }
+        }
+        else if (this.isLogin) {
             if (!this.formData.username || !this.formData.password) {
                 this.errors.push('Please fill in all fields');
                 this.render();
                 return;
             }
             this.onLogin(this.formData.username, this.formData.password);
+            return;
         }
         else {
             const newErrors = [];
@@ -180,6 +232,7 @@ export class AuthPage {
                 return;
             }
             this.onRegister(this.formData.username, this.formData.email, this.formData.password, this.formData.confirmPassword);
+            return;
         }
     }
     toggleMode() {
@@ -203,13 +256,32 @@ export class AuthPage {
         this.errors = [];
         this.render();
     }
+    handleChangePassword() {
+        this.showForgotPassword = false;
+        this.showChangePassword = true;
+        this.errors = [];
+        this.render();
+    }
     handleBackToLogin() {
         this.showForgotPassword = false;
         this.errors = [];
         this.render();
     }
+    handleBackToForgotPassword() {
+        this.showChangePassword = false;
+        this.showForgotPassword = true;
+        this.errors = [];
+        this.render();
+    }
     showError(error) {
         this.errors = [error];
+        this.render();
+    }
+    showLogin() {
+        this.showForgotPassword = false;
+        this.showChangePassword = false;
+        this.isLogin = true;
+        this.errors = [];
         this.render();
     }
 }

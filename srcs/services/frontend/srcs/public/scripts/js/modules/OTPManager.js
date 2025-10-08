@@ -11,6 +11,12 @@ export class OTPManagers {
         alert("sign up success !!!!!!! Have to display front message");
         window.location.href = "/";
     }
+    // public async changePasswordSuccessHandler(){
+    //     // TODO: remplacer l'alerte par un vrai message !
+    //     // alert("forgot password success !!!!!!! Have to display front message")
+    // 	// ??????????
+    //     window.location.href="/";	
+    // }
     async OTPValidationHandler(params, inputs) {
         const context = params.context;
         const code = Array.from(inputs).map(i => i.value).join('');
@@ -24,6 +30,7 @@ export class OTPManagers {
                 headers: {
                     'content-type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify({ otp: code, otp_id: params.otp_id })
             });
             if (!res)
