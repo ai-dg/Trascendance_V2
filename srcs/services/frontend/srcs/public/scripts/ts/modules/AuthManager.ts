@@ -3,6 +3,7 @@ import type { Translations } from './TypesManager.js';
 import { getErrorMessage } from './ErrorManager.js';
 import { RouterManager } from './RouterManager.js';
 import { OTPManagers } from './OTPManager.js';
+import { OTParams } from './TypesManager.js';
 
 
 export class AuthManager {
@@ -10,6 +11,8 @@ export class AuthManager {
   private currentUser: User | null = null;
   private listeners: ((user: User | null) => void)[] = [];
   private onChangePasswordRequest?: () => void;
+
+  public otpData: OTParams | null = null;
 
   private router = new RouterManager();
 
@@ -100,30 +103,6 @@ export class AuthManager {
     return null;
   }
 
- // TODO: this is the good getCurrentUser / to fix that later
-
-  // public async getCurrentUser() {
-  //   try {
-  //       const res = await fetch(this.router.getUrl('auth/me'), {
-  //           method: "GET",
-  //           credentials: "include",
-  //       });
-
-  //       if (!res.ok) {
-  //           return null;
-  //       }
-
-  //       const result = await res.json();
-  //       if (result.success) {
-  //           return result.user;
-  //       }
-  //       return null;
-  //   } catch (err) {
-  //       console.error("getCurrentUser error:", err);
-  //       return null;
-  //   }
-  // }
-
   public getCurrentUser(): User | null {
     console.log("current user:", this.currentUser);
     return this.currentUser;
@@ -185,27 +164,14 @@ export class AuthManager {
           || result.message || 'Unknown error';
         return { success: false, error: errorMessage };
       } else {
-
-        // const res = await this.
-        // OTP verification disabled for login - direct login success
-        // this.currentUser = {
-        //   username: pseudo,
-        //   email: result.email || '',
-        //   avatar: result.avatar || 'default.png',
-        //   isGuest: false
-        // };
-        
-        // return { success: true };
-        
-        // OTP verification code (commented out for login)
         // Store OTP data for the CheckOtp page
-        (window as any).otpData = {
+        this.otpData = {
           otp_id: result.otp_id,
           context: "login",
           handler: this.otpManager.signupSuccessHandler
         };
         
-        console.log("OTP data stored:", (window as any).otpData);
+        console.log("OTP data stored:", this.otpData);
         this.onBackToCheckOtp();
         
         // Return success with verification data
@@ -302,13 +268,13 @@ export class AuthManager {
         // checkVerificationCode(text, view, {otp_id: result.otp_id, context:"signup", handler: signupSuccessHandler})
         
         // Store OTP data for the CheckOtp page
-        (window as any).otpData = {
+        this.otpData = {
           otp_id: result.otp_id,
           context: "signup",
           handler: this.otpManager.signupSuccessHandler
         };
         
-        console.log("OTP data stored:", (window as any).otpData);
+        console.log("OTP data stored:", this.otpData);
         this.onBackToCheckOtp();
         if (errorDiv) {
           errorDiv.textContent = result.message;
@@ -412,6 +378,7 @@ export class AuthManager {
     verificationData?: { otp_id: string; context: string; handler: any };
   }> {
     try {
+      console.log("in authmanager: otpdata: ", this.otpData);
       const res = await fetch(this.router.getUrl('auth/reset-password'), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -423,7 +390,7 @@ export class AuthManager {
     const result = await res.json();
     if (!result.success) return { success: false, error: result.message || "Unknown error" };
     
-    (window as any).otpData = {
+    this.otpData = {
       otp_id: result.otp_id,
       context: "verify",
       handler: () => {
@@ -432,9 +399,9 @@ export class AuthManager {
         }
     };
     
-    console.log("OTP data stored:", (window as any).otpData);
+    console.log("OTP data stored HERE:", this.otpData);
     this.onBackToCheckOtp();
-    
+    console.log("AQUI DPS DE onbacktocheckotp");
     // Return success with verification data
     return {
       success: true,
@@ -444,7 +411,7 @@ export class AuthManager {
         context: "verify",
         handler: () => {
           console.log("OTP verified, triggering Change Password UI");
-          this.onChangePasswordRequest?.();
+          // this.onChangePasswordRequest?.();
         }
       }
     };

@@ -19,6 +19,7 @@ export class AuthPage {
         this.onChangePassword = onChangePassword;
         this.onPlayAsGuest = onPlayAsGuest;
         this.onError = onError;
+        this.boundHandleSubmit = this.handleSubmit.bind(this);
         this.authManager.setHandlers({
             onChangePasswordRequest: this.handleChangePassword.bind(this),
         });
@@ -45,7 +46,7 @@ export class AuthPage {
         }
         // Form
         const form = this.uiManager.createElement('form', 'space-y-6');
-        form.addEventListener('submit', this.handleSubmit.bind(this));
+        form.addEventListener('submit', this.boundHandleSubmit);
         if (this.showForgotPassword) {
             // Forgot Password Form - only email field
             const emailField = this.createField('EMAIL', 'email', 'email', 'Enter your email');
@@ -62,7 +63,7 @@ export class AuthPage {
             form.appendChild(passwordField);
             form.appendChild(passwordConfirmField);
             // Submit button for Change password
-            const submitButton = this.uiManager.createButton('CHANGE PASSWORD', 'w-full retro-button bg-[#ff1493] text-black hover:bg-transparent hover:text-[#ff1493] border-2 border-[#ff1493] py-3', () => this.onChangePassword(this.formData.email, this.formData.password, this.formData.confirmPassword));
+            const submitButton = this.uiManager.createButton('CHANGE PASSWORD', 'w-full retro-button bg-[#ff1493] text-black hover:bg-transparent hover:text-[#ff1493] border-2 border-[#ff1493] py-3', () => { });
             submitButton.type = 'submit';
             form.appendChild(submitButton);
         }
@@ -176,6 +177,7 @@ export class AuthPage {
         return fieldContainer;
     }
     handleSubmit(e) {
+        console.log("handleSubmit called");
         e.preventDefault();
         this.errors = [];
         if (this.showForgotPassword) {
@@ -193,15 +195,18 @@ export class AuthPage {
                 this.render();
                 return;
             }
-            if (this.formData.password === this.formData.confirmPassword) {
-                this.onChangePassword(this.formData.email, this.formData.password, this.formData.confirmPassword);
-                return;
-            }
-            else {
+            console.log(this.formData.password, " ", this.formData.confirmPassword);
+            if (this.formData.password !== this.formData.confirmPassword) {
+                console.log("strings dont match");
                 const newErrors = [];
                 newErrors.push('Password do not match');
                 this.errors = newErrors;
+                this.render();
+                return;
             }
+            console.log("strings matched");
+            this.onChangePassword(this.formData.email, this.formData.password, this.formData.confirmPassword);
+            return;
         }
         else if (this.isLogin) {
             if (!this.formData.username || !this.formData.password) {

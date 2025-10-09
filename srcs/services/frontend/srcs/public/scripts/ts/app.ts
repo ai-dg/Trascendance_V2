@@ -42,7 +42,7 @@ export class App {
     this.uiManager = new UIManager(container);
 
     // Initialize pages
-    this.authPage = new AuthPage(this.uiManager, this.authManager, this.handleLogin.bind(this), this.handleRegister.bind(this), this.handleForgotPassword.bind(this), this.handleChangePassword.bind(this), this.handleShowGuestPage.bind(this), this.handleError.bind(this));
+    this.authPage = new AuthPage(this.uiManager, this.authManager, this.handleLogin.bind(this), this.handleRegister.bind(this), this.appHandleForgotPassword.bind(this), this.handleChangePassword.bind(this), this.handleShowGuestPage.bind(this), this.handleError.bind(this));
     this.guestPage = new GuestPage(this.uiManager, this.handleBackToAuth.bind(this), this.handlePlayAsGuest.bind(this));
     this.menuPage = new MenuPage(this.uiManager, this.handlePlayGameAI.bind(this), this.handlePlayGameLocal.bind(this), this.handlePlayGameOnline.bind(this), this.handleViewLeaderboard.bind(this), this.handleChatWithFriends.bind(this), this.handleSettings.bind(this), this.handleLogout.bind(this));
     this.gamePageAI = new GamePageAI(this.uiManager, this.handleBackToMenu.bind(this));
@@ -170,9 +170,9 @@ export class App {
       case 'check-otp':
         // TODO: Get translations from languageManager
         const text = {} as Translations; // Placeholder
-        const params: OTParams = (window as any).otpData || { otp_id: 'temp_otp_id', context: 'signup', handler: () => console.log('Default handler called') };
-        console.log("Using OTP params:", params);
-        this.checkOtpPage.render(text, params);
+        this.authManager.otpData ?? { otp_id: 'temp_otp_id', context: 'signup', handler: () => console.log('Default handler called') };
+        console.log("Using OTP params:", this.authManager.otpData);
+        this.checkOtpPage.render(text, this.authManager.otpData);
         break;
       case 'leaderboard':
         this.leaderboardPage.render();
@@ -231,7 +231,7 @@ export class App {
     this.authPage.showError(error);
   }
 
-  private async handleForgotPassword(email: string): Promise<void> {
+  private async appHandleForgotPassword(email: string): Promise<void> {
     console.log('Forgot password requested for:', email);
     const response = await this.authManager.forgotPassword(email);
     console.log('Response ', response);
@@ -244,13 +244,13 @@ export class App {
 
   private async handleChangePassword(email: string, password: string): Promise<void> {
     console.log('Change password requested for:', email);
-    const otpId = (window as any).otpData?.otp_id;
+    const otpId = this.authManager.otpData?.otp_id;
     if (!otpId) return console.error("OTP ID missing");
 
     const response = await this.authManager.changePassword(email, password, otpId);
     if (response.success) {
       console.log("Password changed succesfully");
-      (window as any).otpData = null;
+      this.authManager.otpData = null;
       this.authPage.showLogin();
     } else {
       console.error(response.error);
@@ -300,13 +300,14 @@ export class App {
 
   private handleBackToCheckOtp(): void {
     this.routerManager.navigateTo('check-otp');
+    this.render();
   }
 
   private handleOtpVerificationComplete(success: boolean): void {
     if (success) {
       console.log('OTP verification successful, redirecting to menu');
       // Clear OTP data
-      (window as any).otpData = null;
+      this.authManager.otpData = null;
       // Update current user and navigate to menu
       this.currentUser = this.authManager.getCurrentUser();
       this.routerManager.navigateTo('menu');
