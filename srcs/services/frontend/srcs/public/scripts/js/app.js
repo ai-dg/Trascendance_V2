@@ -8,6 +8,7 @@ import { GamePageAI, GamePageLocal, GamePageOnline } from './pages/GamePage.js';
 import { CheckOtp } from './pages/CheckOtp.js';
 import { LeaderboardPage } from './pages/LeaderboardPage.js';
 import { SettingsPage } from './pages/SettingsPage.js';
+import { CheckManager } from './modules/CheckManager.js';
 export class App {
     constructor(container) {
         this.currentUser = null;
@@ -19,8 +20,9 @@ export class App {
             // this.updateCurrentPage();
         });
         this.uiManager = new UIManager(container);
+        this.checkManager = new CheckManager();
         // Initialize pages
-        this.authPage = new AuthPage(this.uiManager, this.authManager, this.handleLogin.bind(this), this.handleRegister.bind(this), this.appHandleForgotPassword.bind(this), this.handleChangePassword.bind(this), this.handleShowGuestPage.bind(this), this.handleError.bind(this));
+        this.authPage = new AuthPage(this.uiManager, this.authManager, this.checkManager, this.handleLogin.bind(this), this.handleRegister.bind(this), this.appHandleForgotPassword.bind(this), this.handleChangePassword.bind(this), this.handleShowGuestPage.bind(this), this.handleError.bind(this));
         this.guestPage = new GuestPage(this.uiManager, this.handleBackToAuth.bind(this), this.handlePlayAsGuest.bind(this));
         this.menuPage = new MenuPage(this.uiManager, this.handlePlayGameAI.bind(this), this.handlePlayGameLocal.bind(this), this.handlePlayGameOnline.bind(this), this.handleViewLeaderboard.bind(this), this.handleChatWithFriends.bind(this), this.handleSettings.bind(this), this.handleLogout.bind(this));
         this.gamePageAI = new GamePageAI(this.uiManager, this.handleBackToMenu.bind(this));

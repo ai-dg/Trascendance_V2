@@ -34,13 +34,43 @@ export class UIManager {
     return button;
   }
 
-  public createInput(type: string, placeholder: string, className: string): HTMLInputElement {
-    const input = document.createElement('input');
-    input.type = type;
-    input.placeholder = placeholder;
-    input.className = className;
-    return input;
+  public createInput(type: string, placeholder: string, className: string): HTMLDivElement {
+    const wrapper = document.createElement('div');
+  wrapper.className = 'relative w-full';
+
+  const input = document.createElement('input');
+  input.type = type;
+  input.placeholder = placeholder;
+  input.className = className + (type === 'password' ? ' pr-10' : '');
+  wrapper.appendChild(input);
+
+  if (type === 'password') {
+    const toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.innerHTML = '👁️';
+    toggleBtn.className = `
+      absolute right-2 text-[#ff1493] bg-black rounded
+      hover:text-black hover:bg-[#ff1493]
+      focus:outline-none transition-all duration-150
+      p-1
+    `;
+    toggleBtn.addEventListener('click', () => {
+      const isHidden = input.type === 'password';
+      input.type = isHidden ? 'text' : 'password';
+      toggleBtn.innerHTML = '👁️';
+    });
+    wrapper.appendChild(toggleBtn);
   }
+
+  return wrapper;
+}
+    
+    // const input = document.createElement('input');
+    // input.type = type;
+    // input.placeholder = placeholder;
+    // input.className = className;
+    // return input;
+
 
   public createCanvas(width: number, height: number, className: string): HTMLCanvasElement {
     const canvas = document.createElement('canvas');

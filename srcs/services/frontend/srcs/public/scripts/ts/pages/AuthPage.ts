@@ -1,10 +1,12 @@
 import { UIManager } from '../modules/UIManager.js';
 import type { Translations } from '../modules/TypesManager.js';
 import type { AuthManager } from '../modules/AuthManager.js';
+import { CheckManager } from '../modules/CheckManager.js';
 
 export class AuthPage {
   private uiManager: UIManager;
   private authManager: AuthManager;
+  private checkManager: CheckManager;
   private onLogin: (username: string, password: string) => void;
   private onRegister: (username: string, email: string, password: string, confirmPassword: string) => void;
   private onForgotPassword: (email: string) => void;
@@ -33,6 +35,7 @@ export class AuthPage {
   constructor(
     uiManager: UIManager,
     authManager: AuthManager,
+    checkManager: CheckManager,
     onLogin: (username: string, password: string) => void,
     onRegister: (username: string, email: string, password: string, confirmPassword: string) => void,
     onForgotPassword: (email: string) => void,
@@ -49,6 +52,7 @@ export class AuthPage {
     this.onPlayAsGuest = onPlayAsGuest;
     this.onError = onError;
     this.boundHandleSubmit = this.handleSubmit.bind(this);
+    this.checkManager = new CheckManager();
 
     this.authManager.setHandlers({
       onChangePasswordRequest: this.handleChangePassword.bind(this),
@@ -288,6 +292,13 @@ export class AuthPage {
         this.render();
         return ;
       }
+      const passwordErrors = this.checkManager.checkPassword(this.text, this.formData.password);
+      if (passwordErrors.length > 0) {
+        this.errors = passwordErrors;
+        this.render();
+        return;
+      }
+      
       console.log("strings matched");
       this.onChangePassword(this.formData.email, this.formData.password, this.formData.confirmPassword);
       return ;

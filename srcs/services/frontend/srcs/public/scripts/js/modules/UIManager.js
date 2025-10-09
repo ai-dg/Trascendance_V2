@@ -23,12 +23,37 @@ export class UIManager {
         return button;
     }
     createInput(type, placeholder, className) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'relative w-full';
         const input = document.createElement('input');
         input.type = type;
         input.placeholder = placeholder;
-        input.className = className;
-        return input;
+        input.className = className + (type === 'password' ? ' pr-10' : '');
+        wrapper.appendChild(input);
+        if (type === 'password') {
+            const toggleBtn = document.createElement('button');
+            toggleBtn.type = 'button';
+            toggleBtn.innerHTML = '👁️';
+            toggleBtn.className = `
+      absolute right-2 text-[#ff1493] bg-black rounded
+      hover:text-black hover:bg-[#ff1493]
+      focus:outline-none transition-all duration-150
+      p-1
+    `;
+            toggleBtn.addEventListener('click', () => {
+                const isHidden = input.type === 'password';
+                input.type = isHidden ? 'text' : 'password';
+                toggleBtn.innerHTML = isHidden ? '🙈' : '👁️';
+            });
+            wrapper.appendChild(toggleBtn);
+        }
+        return wrapper;
     }
+    // const input = document.createElement('input');
+    // input.type = type;
+    // input.placeholder = placeholder;
+    // input.className = className;
+    // return input;
     createCanvas(width, height, className) {
         const canvas = document.createElement('canvas');
         canvas.width = width;

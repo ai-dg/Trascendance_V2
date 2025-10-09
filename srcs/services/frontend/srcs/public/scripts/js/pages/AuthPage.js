@@ -1,5 +1,6 @@
+import { CheckManager } from '../modules/CheckManager.js';
 export class AuthPage {
-    constructor(uiManager, authManager, onLogin, onRegister, onForgotPassword, onChangePassword, onPlayAsGuest, onError) {
+    constructor(uiManager, authManager, checkManager, onLogin, onRegister, onForgotPassword, onChangePassword, onPlayAsGuest, onError) {
         this.isLogin = true;
         this.showForgotPassword = false;
         this.showChangePassword = false;
@@ -20,6 +21,7 @@ export class AuthPage {
         this.onPlayAsGuest = onPlayAsGuest;
         this.onError = onError;
         this.boundHandleSubmit = this.handleSubmit.bind(this);
+        this.checkManager = new CheckManager();
         this.authManager.setHandlers({
             onChangePasswordRequest: this.handleChangePassword.bind(this),
         });
@@ -201,6 +203,12 @@ export class AuthPage {
                 const newErrors = [];
                 newErrors.push('Password do not match');
                 this.errors = newErrors;
+                this.render();
+                return;
+            }
+            const passwordErrors = this.checkManager.checkPassword(this.text, this.formData.password);
+            if (passwordErrors.length > 0) {
+                this.errors = passwordErrors;
                 this.render();
                 return;
             }
