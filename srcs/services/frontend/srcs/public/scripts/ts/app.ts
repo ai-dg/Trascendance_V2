@@ -11,6 +11,7 @@ import { CheckOtp } from './pages/CheckOtp.js';
 import { LeaderboardPage } from './pages/LeaderboardPage.js';
 import { SettingsPage } from './pages/SettingsPage.js';
 import { CheckManager } from './modules/CheckManager.js';
+import { UpdateProfilePage } from './pages/UpdateProfilePage.js';
 
 
 export class App {
@@ -30,8 +31,9 @@ export class App {
   private gamePageOnline: GamePageOnline;
   private checkOtpPage: CheckOtp;
   private leaderboardPage: LeaderboardPage;
-  private settingsPage: SettingsPage;
+  private settingsPage!: SettingsPage;
   private checkManager: CheckManager;
+  private updateProfilePage: UpdateProfilePage;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -53,7 +55,9 @@ export class App {
     this.gamePageOnline = new GamePageOnline(this.uiManager, this.handleBackToMenu.bind(this));
     this.checkOtpPage = new CheckOtp(this.uiManager, this.handleOtpVerificationComplete.bind(this), this.handleNewChangePassword.bind(this), this.handleBackToAuth.bind(this));
     this.leaderboardPage = new LeaderboardPage(this.uiManager, this.handleBackToMenu.bind(this));
-    this.settingsPage = new SettingsPage(this.uiManager, this.handleBackToMenu.bind(this));
+    this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.handleSettings.bind(this), this.currentUser);
+    if (this.currentUser)
+      this.settingsPage = new SettingsPage(this.uiManager, this.routerManager, this.authManager, this.handleBackToMenu.bind(this), this.currentUser ?? null, this.currentUser?.isGuest ?? true);
 
 
     this.setupEventListeners();
@@ -181,7 +185,12 @@ export class App {
         this.leaderboardPage.render();
         break;
       case 'settings':
+        this.settingsPage = new SettingsPage(this.uiManager, this.routerManager, this.authManager, this.handleBackToMenu.bind(this), this.currentUser ?? null, this.currentUser?.isGuest ?? true);
         this.settingsPage.render();
+        break;
+      case 'update-profile':
+        this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.handleSettings.bind(this), this.currentUser);
+        this.updateProfilePage.render();
         break;
     }
   }

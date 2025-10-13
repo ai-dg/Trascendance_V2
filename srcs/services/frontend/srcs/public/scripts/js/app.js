@@ -9,6 +9,7 @@ import { CheckOtp } from './pages/CheckOtp.js';
 import { LeaderboardPage } from './pages/LeaderboardPage.js';
 import { SettingsPage } from './pages/SettingsPage.js';
 import { CheckManager } from './modules/CheckManager.js';
+import { UpdateProfilePage } from './pages/UpdateProfilePage.js';
 export class App {
     constructor(container) {
         this.currentUser = null;
@@ -30,7 +31,9 @@ export class App {
         this.gamePageOnline = new GamePageOnline(this.uiManager, this.handleBackToMenu.bind(this));
         this.checkOtpPage = new CheckOtp(this.uiManager, this.handleOtpVerificationComplete.bind(this), this.handleNewChangePassword.bind(this), this.handleBackToAuth.bind(this));
         this.leaderboardPage = new LeaderboardPage(this.uiManager, this.handleBackToMenu.bind(this));
-        this.settingsPage = new SettingsPage(this.uiManager, this.handleBackToMenu.bind(this));
+        this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.handleSettings.bind(this), this.currentUser);
+        if (this.currentUser)
+            this.settingsPage = new SettingsPage(this.uiManager, this.routerManager, this.authManager, this.handleBackToMenu.bind(this), this.currentUser ?? null, this.currentUser?.isGuest ?? true);
         this.setupEventListeners();
         this.initialize();
     }
@@ -145,7 +148,12 @@ export class App {
                 this.leaderboardPage.render();
                 break;
             case 'settings':
+                this.settingsPage = new SettingsPage(this.uiManager, this.routerManager, this.authManager, this.handleBackToMenu.bind(this), this.currentUser ?? null, this.currentUser?.isGuest ?? true);
                 this.settingsPage.render();
+                break;
+            case 'update-profile':
+                this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.handleSettings.bind(this), this.currentUser);
+                this.updateProfilePage.render();
                 break;
         }
     }

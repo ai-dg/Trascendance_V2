@@ -1,5 +1,10 @@
 export class UIManager {
     constructor(container) {
+        this.defaultAvatars = [
+            { id: 'avatar1', name: 'Military Duck', description: 'Tactical', filename: 'avatar1.png' },
+            { id: 'avatar2', name: 'Detective Duck', description: 'Mysterious', filename: 'avatar2.png' },
+            { id: 'avatar3', name: 'Gentleman Duck', description: 'Classy', filename: 'avatar3.png' },
+        ];
         this.container = container;
     }
     clear() {
@@ -43,7 +48,7 @@ export class UIManager {
             toggleBtn.addEventListener('click', () => {
                 const isHidden = input.type === 'password';
                 input.type = isHidden ? 'text' : 'password';
-                toggleBtn.innerHTML = isHidden ? '🙈' : '👁️';
+                toggleBtn.innerHTML = '👁️';
             });
             wrapper.appendChild(toggleBtn);
         }
@@ -166,5 +171,29 @@ export class UIManager {
                 resolve();
             }, duration);
         });
+    }
+    createAvatarSelector(onSelect, selectedAvatarId) {
+        const avatarContainer = this.createElement('div', 'flex justify-center gap-6');
+        this.defaultAvatars.forEach((avatar) => {
+            const avatarOption = this.createElement('div', 'flex flex-col items-center cursor-pointer group');
+            avatarOption.setAttribute('data-avatar', avatar.id);
+            const isSelected = avatar.id === selectedAvatarId;
+            const avatarCircle = this.createElement('div', `w-24 h-24 rounded-full border-4 ${isSelected ? 'border-[#ff1493]' : 'border-transparent'} group-hover:border-[#ff1493] transition-all duration-300 overflow-hidden bg-gray-800 flex items-center justify-center`);
+            const avatarImage = this.createElement('img', 'w-full h-full object-cover');
+            avatarImage.src = `/public/avatars/${avatar.filename}`;
+            avatarImage.alt = avatar.name;
+            avatarImage.onerror = () => {
+                avatarImage.src = '/public/avatars/default.png';
+            };
+            avatarCircle.appendChild(avatarImage);
+            const avatarName = this.createElement('div', 'retro-text text-sm mt-2 text-center', avatar.name);
+            const avatarDesc = this.createElement('div', 'retro-text text-xs opacity-60 text-center', avatar.description);
+            avatarOption.appendChild(avatarCircle);
+            avatarOption.appendChild(avatarName);
+            avatarOption.appendChild(avatarDesc);
+            avatarOption.addEventListener('click', () => onSelect(avatar.id));
+            avatarContainer.appendChild(avatarOption);
+        });
+        return avatarContainer;
     }
 }

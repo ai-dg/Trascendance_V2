@@ -1,5 +1,8 @@
+import { UpdateProfilePage } from './UpdateProfilePage.js';
 export class SettingsPage {
-    constructor(uiManager, onBack) {
+    constructor(uiManager, routerManager, authManager, onBack, user, isGuest = false) {
+        this.user = user;
+        this.isGuest = isGuest;
         this.settings = {
             soundEnabled: true,
             musicVolume: 75,
@@ -19,6 +22,8 @@ export class SettingsPage {
             { id: 'neon', name: 'NEON', colors: ['#ff6600', '#ff0080', '#8000ff'] }
         ];
         this.uiManager = uiManager;
+        this.routerManager = routerManager;
+        this.authManager = authManager;
         this.onBack = onBack;
     }
     render() {
@@ -54,12 +59,20 @@ export class SettingsPage {
             this.createSliderSetting('BALL SPEED', 'ballSpeed', 3, 12, ''),
             this.createSliderSetting('PADDLE SPEED', 'paddleSpeed', 4, 15, '')
         ]);
-        // Color Theme
-        const themeCard = this.createColorThemeCard();
+        // Update profile or sign in with language manager in both
+        let userSettings;
+        if (this.isGuest) {
+            // create guest settings
+        }
+        else {
+            // create user settings
+            userSettings = this.userSettings();
+        }
         settingsGrid.appendChild(audioCard);
         settingsGrid.appendChild(visualCard);
         settingsGrid.appendChild(gameCard);
-        settingsGrid.appendChild(themeCard);
+        if (userSettings)
+            settingsGrid.appendChild(userSettings);
         // Reset Button
         const resetContainer = this.uiManager.createElement('div', 'text-center mt-8');
         const resetButton = this.uiManager.createButton('RESET TO DEFAULTS', 'retro-button bg-transparent text-red-400 px-6 py-3 rounded border-2 border-red-400 hover:bg-red-400 hover:text-black transition-all duration-200', () => this.resetToDefaults());
@@ -141,39 +154,67 @@ export class SettingsPage {
         container.appendChild(slider);
         return container;
     }
-    createColorThemeCard() {
-        const card = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff6600] rounded-lg p-6');
+    userSettings() {
+        const card = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 rounded-lg p-6');
+        const color = '#ff1493';
+        card.style.borderColor = color;
+        // Header
         const header = this.uiManager.createElement('div', 'flex items-center gap-3 mb-6');
-        const icon = this.uiManager.createIcon('palette', 'w-6 h-6 text-[#ff6600]');
-        const title = this.uiManager.createElement('h3', 'retro-text text-lg text-[#ff6600]', 'COLOR THEME');
+        const icon = this.uiManager.createIcon('user', 'w-6 h-6');
+        icon.style.color = color;
+        const title = this.uiManager.createElement('h3', 'retro-text text-lg');
+        title.textContent = "USER SETTINGS";
         header.appendChild(icon);
         header.appendChild(title);
-        const themesGrid = this.uiManager.createElement('div', 'grid grid-cols-2 gap-3');
-        this.colorThemes.forEach(theme => {
-            const themeCard = this.uiManager.createElement('div', 'p-4 rounded-lg border-2 cursor-pointer transition-all duration-200');
-            themeCard.style.borderColor = this.settings.colorTheme === theme.id ? '#ff6600' : 'rgba(255, 255, 255, 0.2)';
-            themeCard.style.backgroundColor = this.settings.colorTheme === theme.id ? 'rgba(255, 102, 0, 0.2)' : 'transparent';
-            const themeContent = this.uiManager.createElement('div', 'text-center');
-            const themeName = this.uiManager.createElement('div', 'retro-text text-sm mb-2', theme.name);
-            const colorsContainer = this.uiManager.createElement('div', 'flex justify-center gap-2');
-            theme.colors.forEach(color => {
-                const colorDot = this.uiManager.createElement('div', 'w-4 h-4 rounded-full border border-white/20');
-                colorDot.style.backgroundColor = color;
-                colorsContainer.appendChild(colorDot);
-            });
-            themeContent.appendChild(themeName);
-            themeContent.appendChild(colorsContainer);
-            themeCard.appendChild(themeContent);
-            themeCard.addEventListener('click', () => {
-                this.settings.colorTheme = theme.id;
-                this.render(); // Re-render to update selection
-            });
-            themesGrid.appendChild(themeCard);
+        // Buttons container
+        const buttonsContainer = this.uiManager.createElement('div', 'flex flex-col items-center gap-4');
+        const button1 = this.uiManager.createButton('UPDATE PROFILE', 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200', () => {
+            console.log('UPDATE PROFILE clicked');
+            const updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, () => this.render(), this.user);
+            updateProfilePage.render();
         });
+        const button2 = this.uiManager.createButton('LANGUAGE', 'retro-button bg-transparent text-[#ff1493] px-4 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200', () => {
+            console.log('LANGUAGE clicked');
+        });
+        buttonsContainer.appendChild(button1);
+        buttonsContainer.appendChild(button2);
         card.appendChild(header);
-        card.appendChild(themesGrid);
+        card.appendChild(buttonsContainer);
         return card;
     }
+    // private createColorThemeCard(): HTMLElement {
+    //   const card = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff6600] rounded-lg p-6');
+    //   const header = this.uiManager.createElement('div', 'flex items-center gap-3 mb-6');
+    //   const icon = this.uiManager.createIcon('palette', 'w-6 h-6 text-[#ff6600]');
+    //   const title = this.uiManager.createElement('h3', 'retro-text text-lg text-[#ff6600]', 'COLOR THEME');
+    //   header.appendChild(icon);
+    //   header.appendChild(title);
+    //   const themesGrid = this.uiManager.createElement('div', 'grid grid-cols-2 gap-3');
+    //   this.colorThemes.forEach(theme => {
+    //     const themeCard = this.uiManager.createElement('div', 'p-4 rounded-lg border-2 cursor-pointer transition-all duration-200');
+    //     themeCard.style.borderColor = this.settings.colorTheme === theme.id ? '#ff6600' : 'rgba(255, 255, 255, 0.2)';
+    //     themeCard.style.backgroundColor = this.settings.colorTheme === theme.id ? 'rgba(255, 102, 0, 0.2)' : 'transparent';
+    //     const themeContent = this.uiManager.createElement('div', 'text-center');
+    //     const themeName = this.uiManager.createElement('div', 'retro-text text-sm mb-2', theme.name);
+    //     const colorsContainer = this.uiManager.createElement('div', 'flex justify-center gap-2');
+    //     theme.colors.forEach(color => {
+    //       const colorDot = this.uiManager.createElement('div', 'w-4 h-4 rounded-full border border-white/20');
+    //       colorDot.style.backgroundColor = color;
+    //       colorsContainer.appendChild(colorDot);
+    //     });
+    //     themeContent.appendChild(themeName);
+    //     themeContent.appendChild(colorsContainer);
+    //     themeCard.appendChild(themeContent);
+    //     themeCard.addEventListener('click', () => {
+    //       this.settings.colorTheme = theme.id;
+    //       this.render(); // Re-render to update selection
+    //     });
+    //     themesGrid.appendChild(themeCard);
+    //   });
+    //   card.appendChild(header);
+    //   card.appendChild(themesGrid);
+    //   return card;
+    // }
     resetToDefaults() {
         this.settings = {
             soundEnabled: true,

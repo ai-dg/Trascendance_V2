@@ -57,6 +57,27 @@ export interface OTParams{
 	handler: ()=>void;
 }
 
+// settings page
+
+export interface Settings {
+  soundEnabled: boolean;
+  musicVolume: number;
+  effectsVolume: number;
+  fullscreen: boolean;
+  scanLines: boolean;
+  glowEffects: boolean;
+  ballSpeed: number;
+  paddleSpeed: number;
+  showFPS: boolean;
+  colorTheme: string;
+}
+
+export interface ColorTheme {
+  id: string;
+  name: string;
+  colors: string[];
+}
+
 // Final Frontend
 
 // Interfaces from Retro Pong Website 2

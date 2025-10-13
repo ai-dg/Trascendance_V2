@@ -43,49 +43,18 @@ export class GuestPage {
     // Avatar Selection Section
     const avatarSection = this.uiManager.createElement('div', 'mb-8');
     const avatarLabel = this.uiManager.createElement('h2', 'retro-text text-xl text-center mb-6', 'CHOOSE YOUR AVATAR');
-    
-    const avatarContainer = this.uiManager.createElement('div', 'flex justify-center gap-6');
-    
-    // Avatar Options
-    const avatars = [
-      { id: 'avatar1', name: 'Military Duck', description: 'Tactical', filename: 'avatar1.png' },
-      { id: 'avatar2', name: 'Detective Duck', description: 'Mysterious', filename: 'avatar2.png' },
-      { id: 'avatar3', name: 'Gentleman Duck', description: 'Classy', filename: 'avatar3.png' }
-    ];
-    
-    avatars.forEach((avatar, index) => {
-      const avatarOption = this.uiManager.createElement('div', 'flex flex-col items-center cursor-pointer group');
-      avatarOption.setAttribute('data-avatar', avatar.id);
-      
-      const avatarCircle = this.uiManager.createElement('div', 'w-24 h-24 rounded-full border-4 border-transparent group-hover:border-[#ff1493] transition-all duration-300 overflow-hidden bg-gray-800 flex items-center justify-center');
-      
-      // Create image element
-      const avatarImage = this.uiManager.createElement('img', 'w-full h-full object-cover') as HTMLImageElement;
-      avatarImage.src = `/public/avatars/${avatar.filename}`;
-      avatarImage.alt = avatar.name;
-      avatarImage.onerror = () => {
-        // Fallback to default avatar if image fails to load
-        avatarImage.src = '/public/avatars/default.png';
-      };
-      
-      avatarCircle.appendChild(avatarImage);
-      
-      const avatarName = this.uiManager.createElement('div', 'retro-text text-sm mt-2 text-center', avatar.name);
-      const avatarDesc = this.uiManager.createElement('div', 'retro-text text-xs opacity-60 text-center', avatar.description);
-      
-      avatarOption.appendChild(avatarCircle);
-      avatarOption.appendChild(avatarName);
-      avatarOption.appendChild(avatarDesc);
-      
-      // Add click handler
-      avatarOption.addEventListener('click', () => this.selectAvatar(avatar.id, avatarOption));
-      
-      avatarContainer.appendChild(avatarOption);
-    });
-    
+
+    const avatarContainer = this.uiManager.createAvatarSelector((avatarId) => {
+    const element = avatarContainer.querySelector(`[data-avatar="${avatarId}"]`);
+      if (element instanceof HTMLElement) {
+        this.selectAvatar(avatarId, element);
+      }
+    }, this.selectedAvatar);
+
+
     avatarSection.appendChild(avatarLabel);
     avatarSection.appendChild(avatarContainer);
-    
+
     // Separator
     const separator3 = this.uiManager.createElement('div', 'w-full h-px bg-gradient-to-r from-transparent via-[#ff1493] to-transparent my-8');
     

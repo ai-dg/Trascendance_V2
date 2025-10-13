@@ -343,9 +343,9 @@ export class AuthManager {
                     this.onChangePasswordRequest?.();
                 }
             };
-            console.log("OTP data stored HERE:", this.otpData);
+            console.log("OTP data stored HERE:", this.otpData); // TODO: remove this line
             this.onBackToCheckOtp();
-            console.log("AQUI DPS DE onbacktocheckotp");
+            console.log("AQUI DPS DE onbacktocheckotp"); // TODO: remove this line
             // Return success with verification data
             return {
                 success: true,

@@ -69,7 +69,7 @@ export class MenuPage {
             const userText = this.uiManager.createElement('span', 'text-[#00ffff]', `PLAYER: ${user.username.toUpperCase()}`);
             // Avatar
             const avatarImg = this.uiManager.createElement('img', 'w-8 h-8 rounded-full border-2 border-[#00ffff] object-cover');
-            avatarImg.src = user.avatar ? `/public/avatars/${user.avatar}` : '/public/avatars/default.png';
+            avatarImg.src = user.avatar ? `public/avatars/${user.avatar}.png` : 'public/avatars/default.png';
             avatarImg.alt = 'User Avatar';
             userWelcome.appendChild(userIcon);
             userWelcome.appendChild(avatarImg);
