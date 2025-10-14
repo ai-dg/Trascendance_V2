@@ -230,53 +230,54 @@ export class SettingsPage {
   }
 
   private userSettings(): HTMLElement {
-  const card = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 rounded-lg p-6');
-  const color = '#ff1493';
-  card.style.borderColor = color;
+    const card = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 rounded-lg p-6');
+    const color = '#ff1493';
+    card.style.borderColor = color;
 
-  // Header
-  const header = this.uiManager.createElement('div', 'flex items-center gap-3 mb-6');
-  const icon = this.uiManager.createIcon('user', 'w-6 h-6');
-  icon.style.color = color;
-  const title = this.uiManager.createElement('h3', 'retro-text text-lg');
-  title.textContent = "USER SETTINGS";
+    // Header
+    const header = this.uiManager.createElement('div', 'flex items-center gap-3 mb-6');
+    const icon = this.uiManager.createIcon('user', 'w-6 h-6');
+    icon.style.color = color;
+    const title = this.uiManager.createElement('h3', 'retro-text text-lg');
+    title.textContent = "USER SETTINGS";
 
-  header.appendChild(icon);
-  header.appendChild(title);
+    header.appendChild(icon);
+    header.appendChild(title);
 
-  // Buttons container
-  const buttonsContainer = this.uiManager.createElement('div', 'flex flex-col items-center gap-4');
+    // Buttons container
+    const buttonsContainer = this.uiManager.createElement('div', 'flex flex-col items-center gap-4');
 
-  const button1 = this.uiManager.createButton(
-    'UPDATE PROFILE',
-    'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200',
-    () => {
-      console.log('UPDATE PROFILE clicked');
-      const updateProfilePage = new UpdateProfilePage(
-        this.uiManager,
-        this.routerManager,
-        this.authManager,
-        () => this.render(),
-        this.user
-      );
-      updateProfilePage.render();
-    });
+    const button1 = this.uiManager.createButton(
+      'UPDATE PROFILE',
+      'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200',
+      () => {
+        console.log('UPDATE PROFILE clicked');
+        const updateProfilePage = new UpdateProfilePage(
+          this.uiManager,
+          this.routerManager,
+          this.authManager,
+          () => this.render(),
+          this.user
+        );
+        updateProfilePage.render();
+      });
 
-  const button2 = this.uiManager.createButton(
-    'LANGUAGE',
-    'retro-button bg-transparent text-[#ff1493] px-4 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200',
-    () => {
-      console.log('LANGUAGE clicked');
-    });
+    const button2 = this.uiManager.createButton(
+      'LANGUAGE',
+      'retro-button bg-transparent text-[#ff1493] px-4 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200',
+      () => {
+        console.log('LANGUAGE clicked');
+      });
 
-  buttonsContainer.appendChild(button1);
-  buttonsContainer.appendChild(button2);
+    buttonsContainer.appendChild(button1);
+    buttonsContainer.appendChild(button2);
 
-  card.appendChild(header);
-  card.appendChild(buttonsContainer);
+    card.appendChild(header);
+    card.appendChild(buttonsContainer);
 
-  return card;
-}
+    return card;
+  }
+
 
 
 

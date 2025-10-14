@@ -19,7 +19,8 @@ import {
 		update_email_route,
 		update_password_route,
 		update_username_route,
-		verify_email_route
+		verify_email_route,
+		delete_account_route
 } from "../controlers/updateProfileControlers.js";
 
 
@@ -65,4 +66,7 @@ export function routes(app, options)
 	app.put('/update-email', async (request, reply) => update_email_route(request, reply));
 	app.post('/verify-email-valid', async (request, reply) => verify_email_route(request, reply));
 	app.put('/update-password', async (request, reply) => update_password_route(request, reply));
+
+	// delete account
+	app.delete('/delete-account', async (request, reply) => delete_account_route(request, reply));
 }

@@ -2,6 +2,7 @@ import { app, redis, base_url} from '../../server.js';
 import pkg from 'jsonwebtoken';
 const { sign, verify } = pkg;
 import { compare, hash } from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 import crypto from 'crypto'
 import xss from 'xss';
 import validator from 'validator';
@@ -210,4 +211,45 @@ export async function update_password_route(request, reply) {
         console.error("update_password error:", err);
         return reply.code(500).send({ success: false, message: "Internal server error" });
     }
+}
+
+export async function delete_account_route(request, reply) {
+    try {
+        const { email, password } = request.body;
+
+        if (!email || !password)
+            return reply.send({ success: false, message: "Missing email or password "});
+
+        console.log("email:", email, "password:", password);
+        const user = await app.db.get(`SELECT * FROM users WHERE user_mail = ?`, [email]);
+        if (!user)
+			return reply.send({ success: false, message: "User not found." }, 404);
+
+        console.log(user);
+        const isValid = await bcrypt.compare(password, user.user_password);
+		if (!isValid)
+			return reply.status(401).send({ success: false, message: "Incorrect password." });
+       
+        console.log("Before deleting");
+        await app.db.run(`DELETE FROM users WHERE user_mail = ?`, [email]);
+        console.log("After deleting");
+       
+        try {
+            const langRes = await fetch('http://language-manager:3001/delete-lang', {
+                method: 'DELETE',
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user_id: user.user_id })
+            });
+            const lang = await langRes.json();
+            if (!langRes.succes)
+                console.warn("Could not remove language record:", lang.message);
+		    } catch (langErr) {
+			    console.warn("Language microservice unreachable:", langErr.message);
+		    }
+
+            return reply.send({ success: true, message: 'Account for ${email} deleted successfully.'}, 200);
+        } catch (err) {
+            console.error("delete_account_route error:", err.message);
+            return reply.send({ success: false, message: "Server error while deleting account." });
+        }
 }

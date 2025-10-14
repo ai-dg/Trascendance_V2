@@ -2,11 +2,13 @@ import { UIManager } from '../modules/UIManager.js';
 import type { User } from '../modules/TypesManager.js';
 import type { RouterManager } from '../modules/RouterManager.js';
 import { AuthManager } from '../modules/AuthManager.js';
+import { CheckManager } from '../modules/CheckManager.js';
 
 export class UpdateProfilePage {
     private uiManager: UIManager;
     private routerManager: RouterManager;
     private authManager: AuthManager;
+    private checkManager: CheckManager;
     private onBack: () => void;
     private user?: User | null;
 
@@ -16,6 +18,7 @@ export class UpdateProfilePage {
       this.onBack = onBack;
       this.user = user ?? null;
       this.authManager = authManager;
+      this.checkManager = new CheckManager();
     }
 
     public render(): void {
@@ -43,7 +46,6 @@ export class UpdateProfilePage {
         avatarImg.title = 'Click to change avatar';
         avatarImg.addEventListener('click', () => {
           console.log('Change avatar clicked');
-          // TODO: abrir modal ou seletor de avatar
           this.renderAvatarSelector();
         });
 
@@ -74,7 +76,6 @@ export class UpdateProfilePage {
             fieldContainer.appendChild(currentValueText);
           }
       
-            // Input principal
             const inputWrapper = this.uiManager.createElement('div', 'relative w-full');
             const input = this.uiManager.createElement(
               'input',
@@ -85,7 +86,6 @@ export class UpdateProfilePage {
             input.placeholder = placeholder;
             inputWrapper.appendChild(input);
         
-            // Toggle button para password
             if (inputType === 'password') {
               const toggleBtn = this.uiManager.createElement('button', `
                 absolute right-2 text-[#ff1493] bg-black rounded
@@ -157,6 +157,7 @@ export class UpdateProfilePage {
           'text',
           'Enter new username',
           async (value) => {
+            
             const res = await fetch(this.routerManager.getUrl('auth/update-username'), {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -244,7 +245,18 @@ export class UpdateProfilePage {
         card.appendChild(avatarSection);
         card.appendChild(usernameField);
         card.appendChild(emailField);
-        card.appendChild(passwordField);    
+        card.appendChild(passwordField);
+        
+        // delete account
+        const deleteButton = this.uiManager.createButton(
+          'DELETE ACCOUNT',
+          'retro-button bg-[#ff0000] text-red px-6 py-2 rounded border-2 border-[#ff0000] hover:bg-[#ff3333] hover:text-white shadow-[0_0_10px_#ff0000] hover:shadow-[0_0_20px_#ff0000] transition-all duration-200',
+          () => {
+            console.log('DELETE ACCOUNT clicked');
+            this.handlerDeleteAccount();
+        });
+
+
         // Back button (optional)
         const backButton = this.uiManager.createButton(
           'BACK TO SETTINGS',
@@ -253,7 +265,8 @@ export class UpdateProfilePage {
             console.log('Back to settings clicked');
             this.onBack();
           }
-        );  
+        );
+        card.appendChild(deleteButton);
         card.appendChild(backButton);
         container.appendChild(card);    
         return container;
@@ -318,4 +331,115 @@ export class UpdateProfilePage {
     }
 
 
+
+  private handlerDeleteAccount() {
+      console.log("Opening delete confirmation screen");
+
+      const container = this.uiManager.createElement(
+        'div',
+        'retro-container size-full flex flex-col items-center justify-center p-8'
+      );
+
+      const card = this.uiManager.createElement(
+        'div',
+        'bg-black/40 backdrop-blur-sm border-2 border-[#ff0000] rounded-lg p-8 shadow-[0_0_30px_#ff0000] w-full max-w-md flex flex-col items-center gap-6 text-center'
+      );
+
+      const title = this.uiManager.createElement(
+      'h1',
+      'retro-title text-3xl text-[#ff0000]',
+      'ARE YOU SURE?'
+    );
+
+    const warningText = this.uiManager.createElement(
+      'p',
+      'text-[#ff6666] text-sm' + ' mb-4',
+      'This action is permanent and cannot be undone.'
+    );
+
+    const passwordWrapper = this.uiManager.createElement(
+      'div',
+      'relative w-full'
+    );
+
+    const passwordInput = this.uiManager.createElement('input', 
+          'w-full px-6 py-4 pr-10 bg-black/60 border-[#00ffff] text-[#00ffff] placeholder:text-[#00ffff]/50 focus:border-[#ff1493] focus:ring-[#ff1493] retro-text', 
+        ) as HTMLInputElement;
+    passwordInput.type = 'password';
+    passwordInput.placeholder = 'Enter your password';
+    passwordWrapper.appendChild(passwordInput);
+      
+    const toggleButton = this.uiManager.createElement('button', `
+                absolute top-1/2 right-2 transform -translate-y-1/2 z-10
+                text-[#ff1493] bg-black rounded
+                focus:outline-none transition-all duration-150
+                p-1
+              `) as HTMLButtonElement;
+        
+    toggleButton.type = 'button';
+    toggleButton.innerHTML = '👁️';
+    toggleButton.addEventListener('click', () => {
+      passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
+    });
+
+    passwordWrapper.appendChild(toggleButton);
+
+
+    const deleteButton = this.uiManager.createButton(
+      'DELETE ACCOUNT',
+      'retro-button bg-[#ff0000] text-red px-6 py-2 rounded border-2 border-[#ff0000] hover:bg-[#ff3333] hover:text-white shadow-[0_0_10px_#ff0000] hover:shadow-[0_0_20px_#ff0000] transition-all duration-200',
+      async () => {
+        const password = passwordInput.value.trim();
+        if (!password) {
+          alert('Please enter your password');
+          return;
+        }
+
+        try {
+          if (!this.user) {
+            alert('User not found.');
+            return;
+          }
+
+          const res = await fetch(this.routerManager.getUrl('auth/delete-account'), {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              email: this.user.email!,
+              password: password,
+            }),
+          });
+
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error(text || 'Failed to delete account');
+          }
+
+          alert('Your account has been deleted successfully.');
+          window.location.href = '/';
+        } catch (err) {
+          console.error('Error deleting account:', err);
+          alert('An error occurred while deleting your account.');
+        }
+      }
+    );
+
+    const backButton = this.uiManager.createButton(
+      'CANCEL',
+      'retro-button bg-transparent text-[#00ffff] px-6 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200',
+      () => this.render()
+    );
+
+    card.appendChild(title);
+    card.appendChild(warningText);
+    card.appendChild(passwordWrapper);
+    card.appendChild(deleteButton);
+    card.appendChild(backButton);
+
+    container.appendChild(card);
+
+    this.uiManager.clear();
+    this.uiManager.container.appendChild(container);
+    }
 }
