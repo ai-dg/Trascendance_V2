@@ -22,6 +22,11 @@ import {
 		verify_email_route,
 		delete_account_route
 } from "../controlers/updateProfileControlers.js";
+import {
+		oauth_login_route,
+		oauth_callback_route,
+		oauth_update_profile_route
+} from "../controlers/42auth.js";
 
 
 export function routes(app, options)
@@ -69,4 +74,9 @@ export function routes(app, options)
 
 	// delete account
 	app.delete('/delete-account', async (request, reply) => delete_account_route(request, reply));
+
+	// 42auth 
+	app.get('/42/login', async (request, reply) => oauth_login_route(request, reply));
+	app.get('/42/callback', async (request, reply) => oauth_callback_route(request, reply));
+	app.put('/42/update', async (request, reply) => oauth_update_profile_route(request, reply));
 }

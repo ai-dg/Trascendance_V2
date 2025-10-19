@@ -97,7 +97,13 @@ export class MenuPage {
       
       // Avatar
       const avatarImg = this.uiManager.createElement('img', 'w-8 h-8 rounded-full border-2 border-[#00ffff] object-cover') as HTMLImageElement;
-      avatarImg.src = user.avatar ? `public/avatars/${user.avatar}.png` : 'public/avatars/default.png';
+      if (!user.avatar) {
+        avatarImg.src = 'public/avatars/default.png';
+      } else if (user.avatar.startsWith('http')) {
+        avatarImg.src = user.avatar;
+      } else {
+        avatarImg.src = `public/avatars/${user.avatar}.png`;
+      }
       avatarImg.alt = 'User Avatar';
       
       userWelcome.appendChild(userIcon);

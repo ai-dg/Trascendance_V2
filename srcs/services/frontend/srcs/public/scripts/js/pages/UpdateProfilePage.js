@@ -20,7 +20,15 @@ export class UpdateProfilePage {
         const title = this.uiManager.createElement('h1', 'retro-title text-3xl mb-4', 'USER SETTINGS');
         const avatarSection = this.uiManager.createElement('div', 'flex flex-col items-center gap-2');
         const avatarImg = this.uiManager.createElement('img', 'w-16 h-16 rounded-full border-2 border-[#ff1493] cursor-pointer');
-        avatarImg.src = this.user?.avatar ? `public/avatars/${this.user.avatar}.png` : 'public/avatars/default.png';
+        if (!this.user || !this.user.avatar) {
+            avatarImg.src = 'public/avatars/default.png';
+        }
+        else if (this.user.avatar.startsWith('http')) {
+            avatarImg.src = this.user.avatar;
+        }
+        else {
+            avatarImg.src = `public/avatars/${this.user.avatar}.png`;
+        }
         avatarImg.alt = 'User Avatar';
         avatarImg.title = 'Click to change avatar';
         avatarImg.addEventListener('click', () => {

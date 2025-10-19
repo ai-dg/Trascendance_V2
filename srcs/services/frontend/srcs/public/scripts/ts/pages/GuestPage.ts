@@ -119,9 +119,9 @@ export class GuestPage {
     
     // Map avatar ID to filename
     const avatarMap: { [key: string]: string } = {
-      'avatar1': 'avatar1.png',
-      'avatar2': 'avatar2.png', 
-      'avatar3': 'avatar3.png'
+      'avatar1': 'avatar1',
+      'avatar2': 'avatar2', 
+      'avatar3': 'avatar3'
     };
     
     const avatarFilename = avatarMap[this.selectedAvatar] || 'default.png';
