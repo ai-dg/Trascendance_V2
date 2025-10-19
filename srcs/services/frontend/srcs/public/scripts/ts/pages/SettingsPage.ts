@@ -262,18 +262,68 @@ export class SettingsPage {
         updateProfilePage.render();
       });
 
-    const button2 = this.uiManager.createButton(
-      'LANGUAGE',
-      'retro-button bg-transparent text-[#ff1493] px-4 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200',
-      () => {
-        console.log('LANGUAGE clicked');
-      });
+    // const button2 = this.uiManager.createButton(
+    //   'LANGUAGE',
+    //   'retro-button bg-transparent text-[#ff1493] px-4 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200',
+    //   () => {
+    //     console.log('LANGUAGE clicked');
+    //   });
+
+    const languages = [
+        { code: 'en', flag: '🇬🇧' },
+        { code: 'fr', flag: '🇫🇷' },
+        { code: 'pt', flag: '🇧🇷' },
+    ];
+
+    let currentLangIndex = 0;
+
+    const languageButtonWrapper = this.uiManager.createElement(
+        'div',
+        'flex items-center gap-2 cursor-pointer'
+    );
+
+    const languageLabel = this.uiManager.createElement(
+        'span',
+        'retro-text text-[#ff1493]',
+        'LANGUAGE:'
+    );
+
+    const languageFlag = this.uiManager.createElement(
+        'span',
+        'text-2xl',
+        languages[currentLangIndex].flag
+    );
+
+    languageFlag.addEventListener('click', async () => {
+        // alterna para a próxima língua
+        currentLangIndex = (currentLangIndex + 1) % languages.length;
+        const nextLang = languages[currentLangIndex];
+
+        // atualiza a bandeira visualmente
+        languageFlag.textContent = nextLang.flag;
+
+        // envia a nova língua para o backend
+        // await fetch('https://localhost:3001/set-lang', {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     credentials: 'include',
+        //     body: JSON.stringify({ lang: nextLang.code })
+        // });
+      
+        // // recarrega traduções do JSON correspondente
+        // const translations = await loadTranslations(nextLang.code);
+        // updateUIWithTranslations(translations);
+    });
 
     buttonsContainer.appendChild(button1);
-    buttonsContainer.appendChild(button2);
 
+
+    languageButtonWrapper.appendChild(languageLabel);
+    languageButtonWrapper.appendChild(languageFlag);
     card.appendChild(header);
     card.appendChild(buttonsContainer);
+    card.appendChild(languageButtonWrapper);
+
 
     return card;
   }

@@ -1,4 +1,9 @@
-import { get_user_lang_route, set_user_lang_route, delete_user_lang_route, create_user_lang_route } from "../controlers/controlers.js";
+import { 
+        get_user_lang_route, 
+        set_user_lang_route, 
+        delete_user_lang_route, 
+        create_user_lang_route 
+} from "../controlers/controlers.js";
 
 
 export function routes(app) {

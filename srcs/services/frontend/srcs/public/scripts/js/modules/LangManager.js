@@ -1,50 +1,48 @@
-"use strict";
-// import { Translations } from "./types.js";
-// import { navigateTo } from "./navigation.js";
-// export const languages = [
-//   { code: 'en', label: 'English' },
-//   { code: 'fr', label: 'Français' },
-//   { code: 'pt', label: 'Português' }
-// ];
-// export let currentLangIndex = 0;
-// export let currentTexts: Translations = {} as Translations;
-// export async function loadLanguage(langCode: string, view = 'home') {
-//   try {
-//     const res = await fetch(`/api/translations?lang=${langCode}`);
-//     if (!res.ok) throw new Error('Failed to load translations');
-//     const data = await res.json();
-//     currentTexts = data.text;
-//     currentLangIndex = languages.findIndex(l => l.code === langCode);
-//     if (currentLangIndex === -1) currentLangIndex = 0;
-//     if (view === 'options')
-//       navigateTo(currentTexts, "options");
-//     else
-//       navigateTo(currentTexts, "");
-//   } catch (err) {
-//     console.error(err);
-//   }
-// }
-// export async function getTraductions(){
-// 	const html = document.querySelector("html")
-//   	const langCode =html?.getAttribute("lang")
-// 	  try {
-//     const res = await fetch(`/api/translations?lang=${langCode}`);
-//     if (!res.ok) throw new Error('Failed to load translations');
-//     const data = await res.json();
-//     currentTexts = data.text;
-//     currentLangIndex = languages.findIndex(l => l.code === langCode);
-//     if (currentLangIndex === -1) currentLangIndex = 0;
-// 	return currentTexts;
-//   } catch (err) {
-//     console.error(err);
-//     if (currentTexts) return currentTexts;
-//     return {} as Translations;
-//   }
-// }
-// export function toggleLanguage() {
-//   currentLangIndex = (currentLangIndex + 1) % languages.length;
-//   const nextLang = languages[currentLangIndex].code;
-//   const html = document.querySelector("html")
-//   html?.setAttribute("lang", nextLang)
-//   loadLanguage(nextLang, 'options');
-// }
+export class LanguageManager {
+    constructor(routerManager) {
+        this.routerManager = routerManager;
+        this.currentLang = 'en';
+        this.translations = {};
+    }
+    async init() {
+        try {
+            const res = await fetch(this.routerManager.getUrl('language-manager/get-lang'), {
+                credentials: 'include'
+            });
+            if (res.ok) {
+                const data = await res.json();
+                this.currentLang = data.lang || 'en';
+            }
+        }
+        catch {
+            this.currentLang = 'en';
+        }
+        await this.loadTranslations();
+    }
+    async loadTranslations() {
+        try {
+            const url = "/public/locales/" + this.currentLang + ".json";
+            const res = await fetch(url);
+            this.translations = res.ok ? await res.json() : {};
+        }
+        catch {
+            this.translations = {};
+        }
+    }
+    async setLang(langCode) {
+        this.currentLang = langCode;
+        await fetch(this.routerManager.getUrl('language-manager/set-lang'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ lang: langCode })
+        });
+        await this.loadTranslations();
+    }
+    t(key) {
+        return this.translations[key] || key;
+    }
+    getCurrentLang() {
+        return this.currentLang;
+    }
+}

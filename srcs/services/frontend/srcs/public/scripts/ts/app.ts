@@ -12,6 +12,7 @@ import { LeaderboardPage } from './pages/LeaderboardPage.js';
 import { SettingsPage } from './pages/SettingsPage.js';
 import { CheckManager } from './modules/CheckManager.js';
 import { UpdateProfilePage } from './pages/UpdateProfilePage.js';
+import { LanguageManager } from './modules/LangManager.js';
 
 
 export class App {
@@ -34,6 +35,7 @@ export class App {
   private settingsPage!: SettingsPage;
   private checkManager: CheckManager;
   private updateProfilePage: UpdateProfilePage;
+  private languageManager: LanguageManager;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -45,6 +47,8 @@ export class App {
 
     this.uiManager = new UIManager(container);
     this.checkManager = new CheckManager();
+    this.languageManager = new LanguageManager(this.routerManager);
+
 
     // Initialize pages
     this.authPage = new AuthPage(this.uiManager, this.authManager, this.checkManager, this.handleLogin.bind(this), this.handleRegister.bind(this), this.appHandleForgotPassword.bind(this), this.handleChangePassword.bind(this), this.handleShowGuestPage.bind(this), this.handleError.bind(this));
@@ -131,6 +135,7 @@ export class App {
     // Check if user is already logged in
     this.currentUser = await this.getConnectedUser();
     console.log("CURRENT USER: ", this.currentUser);
+    await this.languageManager.init();
     if (this.currentUser) {
       this.currentPage = 'menu';
     }
