@@ -8,10 +8,19 @@ const server = Fastify();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+
+console.log(join(process.cwd(), "locales"));
+server.register(fastifyStatic, {
+  root: join(process.cwd(), "locales"),
+  prefix: "/locales/",
+  decorateReply: false
+});
+
 server.register(fastifyStatic, {
   root: join(__dirname, "../public"),
   prefix: "/public/",
 });
+
 
 server.get("/api/hello", async () => {
   return { msg: "Hello from Fastify + TS + Tailwind!" };

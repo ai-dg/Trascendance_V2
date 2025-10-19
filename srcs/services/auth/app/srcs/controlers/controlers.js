@@ -347,18 +347,34 @@ export async function login_otp_validation_route(request, reply)
 		const secretKey = process.env.JWT_SECRET;	
 		const token = sign(payload, secretKey, { expiresIn: '1h' });
 		await redis.set(`jwt:${jti}`, 'valid', { EX: 3600 });
+
+		let userLang = 'en';
+		console.log("USER_ID:", data.user_id);
+		try {
+			const langRes = await fetch(`http://language-manager:3001/get-lang?user_id=${data.user_id}`);
+			const langData = await langRes.json();
+			userLang = langData.lang || 'en';
+		} catch (err) {
+			console.error("Error fetching user language:", err);
+			userLang = 'en';
+		}
+
 		return reply.setCookie('token', token, {
 			httpOnly: true,
 			sameSite: 'none',
 			secure: true,
 			path: '/',
 			maxAge: 3600
+		}).setCookie('lang', userLang, {
+			httpOnly: false,
+			sameSite: 'none',
+			secure: true,
+			path: '/',
+			maxAge: 3600
 		}).send({...get_success_message(data.email, data.pseudo)}, 200)
-		}
-	catch(err)
-		{
-			return reply.send(get_error_message(e.app_ERROR, 500))
-		}	
+	} catch(err) {
+		return reply.send(get_error_message(e.app_ERROR, 500))
+	}	
 }
 
 

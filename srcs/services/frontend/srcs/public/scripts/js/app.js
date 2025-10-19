@@ -35,7 +35,7 @@ export class App {
         this.leaderboardPage = new LeaderboardPage(this.uiManager, this.handleBackToMenu.bind(this));
         this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.handleSettings.bind(this), this.currentUser);
         if (this.currentUser)
-            this.settingsPage = new SettingsPage(this.uiManager, this.routerManager, this.authManager, this.handleBackToMenu.bind(this), this.currentUser ?? null, this.currentUser?.isGuest ?? true);
+            this.settingsPage = new SettingsPage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.handleBackToMenu.bind(this), this.currentUser ?? null, this.currentUser?.isGuest ?? true);
         this.setupEventListeners();
         this.initialize();
     }
@@ -151,7 +151,7 @@ export class App {
                 this.leaderboardPage.render();
                 break;
             case 'settings':
-                this.settingsPage = new SettingsPage(this.uiManager, this.routerManager, this.authManager, this.handleBackToMenu.bind(this), this.currentUser ?? null, this.currentUser?.isGuest ?? true);
+                this.settingsPage = new SettingsPage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.handleBackToMenu.bind(this), this.currentUser ?? null, this.currentUser?.isGuest ?? true);
                 this.settingsPage.render();
                 break;
             case 'update-profile':

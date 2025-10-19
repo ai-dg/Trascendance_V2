@@ -1,6 +1,6 @@
 import { UpdateProfilePage } from './UpdateProfilePage.js';
 export class SettingsPage {
-    constructor(uiManager, routerManager, authManager, onBack, user, isGuest = false) {
+    constructor(uiManager, routerManager, authManager, languageManager, onBack, user, isGuest = false) {
         this.user = user;
         this.isGuest = isGuest;
         this.settings = {
@@ -24,6 +24,7 @@ export class SettingsPage {
         this.uiManager = uiManager;
         this.routerManager = routerManager;
         this.authManager = authManager;
+        this.languageManager = languageManager;
         this.onBack = onBack;
     }
     render() {
@@ -184,26 +185,27 @@ export class SettingsPage {
             { code: 'fr', flag: '🇫🇷' },
             { code: 'pt', flag: '🇧🇷' },
         ];
-        let currentLangIndex = 0;
+        const currentLangCode = this.languageManager.getCurrentLang();
+        let currentLangIndex = languages.findIndex(l => l.code === currentLangCode);
+        if (currentLangIndex === -1)
+            currentLangIndex = 0;
         const languageButtonWrapper = this.uiManager.createElement('div', 'flex items-center gap-2 cursor-pointer');
         const languageLabel = this.uiManager.createElement('span', 'retro-text text-[#ff1493]', 'LANGUAGE:');
         const languageFlag = this.uiManager.createElement('span', 'text-2xl', languages[currentLangIndex].flag);
         languageFlag.addEventListener('click', async () => {
-            // alterna para a próxima língua
             currentLangIndex = (currentLangIndex + 1) % languages.length;
             const nextLang = languages[currentLangIndex];
-            // atualiza a bandeira visualmente
             languageFlag.textContent = nextLang.flag;
-            // envia a nova língua para o backend
-            // await fetch('https://localhost:3001/set-lang', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     credentials: 'include',
-            //     body: JSON.stringify({ lang: nextLang.code })
-            // });
-            // // recarrega traduções do JSON correspondente
-            // const translations = await loadTranslations(nextLang.code);
-            // updateUIWithTranslations(translations);
+            try {
+                if (this.user && this.user.id)
+                    await this.languageManager.setLang(nextLang.code, this.user?.id);
+                else
+                    await this.languageManager.setLang(nextLang.code);
+                await this.render();
+            }
+            catch (err) {
+                console.error("Error changing language:", err);
+            }
         });
         buttonsContainer.appendChild(button1);
         languageButtonWrapper.appendChild(languageLabel);

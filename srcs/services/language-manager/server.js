@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import cookie from '@fastify/cookie';
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 import { routes } from './srcs/routes/routes.js';
@@ -28,6 +29,10 @@ export async function setupLanguagedb() {
 		process.exit(1);
 	}
 }
+
+app.register(cookie, {
+  secret: process.env.COOKIE_SECRET,
+});
 
 app.get('/', async () => {
 	return { status: 'ok', service: 'language-manager' };

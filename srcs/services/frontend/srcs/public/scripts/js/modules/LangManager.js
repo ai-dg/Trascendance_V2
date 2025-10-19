@@ -6,13 +6,9 @@ export class LanguageManager {
     }
     async init() {
         try {
-            const res = await fetch(this.routerManager.getUrl('language-manager/get-lang'), {
-                credentials: 'include'
-            });
-            if (res.ok) {
-                const data = await res.json();
-                this.currentLang = data.lang || 'en';
-            }
+            const cookies = document.cookie.split(';').map(c => c.trim());
+            const langCookie = cookies.find(c => c.startsWith('lang='));
+            this.currentLang = langCookie?.split('=')[1] || 'en';
         }
         catch {
             this.currentLang = 'en';
@@ -21,7 +17,7 @@ export class LanguageManager {
     }
     async loadTranslations() {
         try {
-            const url = "/public/locales/" + this.currentLang + ".json";
+            const url = "/locales/" + this.currentLang + ".json";
             const res = await fetch(url);
             this.translations = res.ok ? await res.json() : {};
         }
@@ -29,14 +25,20 @@ export class LanguageManager {
             this.translations = {};
         }
     }
-    async setLang(langCode) {
+    async setLang(langCode, userId) {
         this.currentLang = langCode;
-        await fetch(this.routerManager.getUrl('language-manager/set-lang'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ lang: langCode })
-        });
+        if (userId) {
+            await fetch(this.routerManager.getUrl('language-manager/set-lang'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ user_id: userId, lang: langCode })
+            });
+        }
+        else {
+            localStorage.setItem('guest-lang', langCode);
+            document.cookie = `lang=${langCode}; path=/; max-age=31536000`;
+        }
         await this.loadTranslations();
     }
     t(key) {

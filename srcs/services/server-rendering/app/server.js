@@ -55,7 +55,7 @@ app.register(view, {
 export function loadTranslations(lang = 'en') {
   const filePath = join(__dirname, `../../locales/${lang}.json`);
   if (fs.existsSync(filePath)) {
-    return JSON.parse(fs.readFileSync(filePath));
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
   } else {
     return JSON.parse(fs.readFileSync(join(__dirname, '../../locales/en.json')));
   }
@@ -76,3 +76,4 @@ const start = async () => {
 };
 
 start();
+

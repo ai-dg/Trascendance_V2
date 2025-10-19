@@ -1,4 +1,5 @@
 import type { AuthManager } from '../modules/AuthManager.js';
+import { LanguageManager } from '../modules/LangManager.js';
 import type { RouterManager } from '../modules/RouterManager.js';
 import { User, Settings, ColorTheme  } from '../modules/TypesManager.js';
 import { UIManager } from '../modules/UIManager.js';
@@ -9,6 +10,7 @@ export class SettingsPage {
   private uiManager: UIManager;
   private routerManager: RouterManager;
   private authManager: AuthManager;
+  private languageManager: LanguageManager;
   private onBack: () => void;
   private settings: Settings = {
     soundEnabled: true,
@@ -30,10 +32,11 @@ export class SettingsPage {
     { id: 'neon', name: 'NEON', colors: ['#ff6600', '#ff0080', '#8000ff'] }
   ];
 
-  constructor(uiManager: UIManager, routerManager: RouterManager, authManager: AuthManager, onBack: () => void, private user?: User | null, private isGuest: boolean = false) {
+  constructor(uiManager: UIManager, routerManager: RouterManager, authManager: AuthManager, languageManager: LanguageManager, onBack: () => void, private user?: User | null, private isGuest: boolean = false) {
     this.uiManager = uiManager;
     this.routerManager = routerManager;
     this.authManager = authManager;
+    this.languageManager = languageManager;
     this.onBack = onBack;
   }
 
@@ -275,7 +278,9 @@ export class SettingsPage {
         { code: 'pt', flag: '🇧🇷' },
     ];
 
-    let currentLangIndex = 0;
+    const currentLangCode = this.languageManager.getCurrentLang();
+    let currentLangIndex = languages.findIndex(l => l.code === currentLangCode);
+    if (currentLangIndex === -1) currentLangIndex = 0;
 
     const languageButtonWrapper = this.uiManager.createElement(
         'div',
@@ -295,24 +300,19 @@ export class SettingsPage {
     );
 
     languageFlag.addEventListener('click', async () => {
-        // alterna para a próxima língua
         currentLangIndex = (currentLangIndex + 1) % languages.length;
         const nextLang = languages[currentLangIndex];
 
-        // atualiza a bandeira visualmente
         languageFlag.textContent = nextLang.flag;
-
-        // envia a nova língua para o backend
-        // await fetch('https://localhost:3001/set-lang', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     credentials: 'include',
-        //     body: JSON.stringify({ lang: nextLang.code })
-        // });
-      
-        // // recarrega traduções do JSON correspondente
-        // const translations = await loadTranslations(nextLang.code);
-        // updateUIWithTranslations(translations);
+        try {
+          if (this.user && this.user.id)
+            await this.languageManager.setLang(nextLang.code, this.user?.id);
+          else
+            await this.languageManager.setLang(nextLang.code);
+          await this.render();
+        } catch (err) {
+          console.error("Error changing language:", err);
+        }
     });
 
     buttonsContainer.appendChild(button1);

@@ -153,11 +153,9 @@ export async function confirm_email(request, reply)
 
 
 export async function translate_route(req, reply){
-{
-	console.log("Query param: ", req.query);
-  const lang = req.query.lang || 'en';
-  const text = loadTranslations(lang);
-  reply.send({ text, lang });
-}
+		console.log("Cookie param: ", req.cookies);
+  		const lang = req.cookies.lang || 'en';
+  		const text = loadTranslations(lang);
+  		reply.send({ text, lang });
 }
 	
