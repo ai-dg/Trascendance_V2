@@ -6,10 +6,13 @@
   "options": "PARAMETRES",
   "about": "INFOS??",
 
-  "optionsMessage": "PARAMETRES ICI???",
+  "optionsMessage": "PERSONNALISEZ VOTRE EXPÉRIENCE D'ARCADE",
   "lang": "LANGUE: ",
   "language": "FRANCAIS",
-  "back": "RETURN",
+  "back": "RETOUR",
+  "backtoMenu": "RETOUR AU MENU",
+  "resettoDefaults": "RÉINITIALISER PAR DÉFAUT",
+  "settingsSaved": "LES PARAMÈTRES SONT ENREGISTRÉS AUTOMATIQUEMENT • LES MODIFICATIONS S'APPLIQUENT IMMÉDIATEMENT",
 
   "signinTitle": "POUR SE CONNECTER:",
   "signIn": "CONNECT TOI ICI",
@@ -26,10 +29,12 @@
   "passwdConfirm": "VERIFIE TON MOT DE PASSE",
   "otherUp": "OU CREE TON COMPTE AVEC",
 
-  "guestTitle": "JOUE COMME INVITE",
+  "guestTitle": "JOUE COMME INVITÉ",
   "nickname": "SURNOM",
   "chooseAvatar": "CHOISIS UN AVATAR",
   "play": "JOUER",
+  "welcomeGuest": "BIENVENU, INVITE!",
+  "guestMessage": "CONNECTEZ-VOUS POUR SAUVEGARDER VOS PARAMÈTRES OU JOUER EN INVITÉ",
 
   "errLength": "Le mot de passe doit contenir au moins 8 caractères.",
   "errUpper": "Le mot de passe doit contenir au moins une lettre majuscule.",

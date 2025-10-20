@@ -6,10 +6,13 @@
   "options": "CONFIGURACOES",
   "about": "SOBRE",
 
-  "optionsMessage": "CONFIGS AQUI??",
+  "optionsMessage": "CUSTOMIZE SUA EXPERIENCIA NO ARCADE",
   "lang": "IDIOMA: ",
   "language": "PORTUGUES",
   "back": "VOLTAR",
+  "backtoMenu": "VOLTAR PARA O MENU",
+  "resettoDefaults": "REDEFINIR PARA PADRÕES",
+  "settingsSaved": "AS CONFIGURAÇÕES SÃO SALVAS AUTOMATICAMENTE • AS ALTERAÇÕES SÃO APLICADAS IMEDIATAMENTE",
 
   "signinTitle": "PARA SE CONECTAR",
   "signIn": "CONECTE-SE AQUI",
@@ -30,6 +33,8 @@
   "nickname": "APELIDO",
   "chooseAvatar": "ESCOLHA UM AVATAR",
   "play": "JOGAR",
+  "welcomeGuest": "BEM VINDO, CONVIDADO!",
+  "guestMessage": "FAÇA LOGIN PARA SALVAR SUAS CONFIGURAÇÕES OU JOGAR COMO CONVIDADO",
 
   "errLength": "A senha deve conter pelo menos 8 caracteres.",
   "errUpper": "A senha deve conter pelo menos uma letra maiúscula.",

@@ -3,13 +3,16 @@
   "signin": "SIGN IN",
   "signup": "SIGN UP",
   "playAsGuest": "PLAY AS GUEST",
-  "options": "OPTIONS",
+  "options": "SETTINGS",
   "about": "ABOUT",
 
-  "optionsMessage": "OPTIONS HERE??",
+  "optionsMessage": "CUSTOMIZE YOUR ARCADE EXPERIENCE",
   "lang": "LANGUAGE: ",
   "language": "ENGLISH",
   "back": "RETURN",
+  "backtoMenu": "BACK TO MENU",
+  "resettoDefaults": "RESET TO DEFAULTS",
+  "settingsSaved": "SETTINGS ARE SAVED AUTOMATICALLY • CHANGES APPLY IMMEDIATELY",
 
   "signinTitle": "TO SIGN IN:",
   "signIn": "CONNECT HERE",
@@ -30,6 +33,8 @@
   "nickname": "NICKNAME",
   "chooseAvatar": "CHOOSE YOUR AVATAR",
   "play": "PLAY",
+  "welcomeGuest": "WELCOME, GUEST!",
+  "guestMessage": "SIGN IN TO SAVE YOUR SETTINGS OR PLAY AS GUEST",
 
   "errLength": "Password must be at least 8 characters long.",
   "errUpper": "Password must contain at least one uppercase letter.",

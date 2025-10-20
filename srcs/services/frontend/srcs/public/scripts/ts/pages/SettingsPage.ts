@@ -3,6 +3,7 @@ import { LanguageManager } from '../modules/LangManager.js';
 import type { RouterManager } from '../modules/RouterManager.js';
 import { User, Settings, ColorTheme  } from '../modules/TypesManager.js';
 import { UIManager } from '../modules/UIManager.js';
+import type { AuthPage } from './AuthPage.js';
 import { UpdateProfilePage } from './UpdateProfilePage.js';
 
 
@@ -11,6 +12,7 @@ export class SettingsPage {
   private routerManager: RouterManager;
   private authManager: AuthManager;
   private languageManager: LanguageManager;
+  private authPage: AuthPage;
   private onBack: () => void;
   private settings: Settings = {
     soundEnabled: true,
@@ -25,18 +27,23 @@ export class SettingsPage {
     colorTheme: 'synthwave'
   };
 
-  private colorThemes: ColorTheme[] = [
-    { id: 'synthwave', name: 'SYNTHWAVE', colors: ['#ff1493', '#00ffff', '#9d4edd'] },
-    { id: 'classic', name: 'CLASSIC', colors: ['#00ff00', '#ffff00', '#ff0000'] },
-    { id: 'cyberpunk', name: 'CYBERPUNK', colors: ['#ff00ff', '#00ff00', '#0080ff'] },
-    { id: 'neon', name: 'NEON', colors: ['#ff6600', '#ff0080', '#8000ff'] }
-  ];
+  private t(key: string): string {
+    return this.languageManager.t(key);
+  }
 
-  constructor(uiManager: UIManager, routerManager: RouterManager, authManager: AuthManager, languageManager: LanguageManager, onBack: () => void, private user?: User | null, private isGuest: boolean = false) {
+  // private colorThemes: ColorTheme[] = [
+  //   { id: 'synthwave', name: 'SYNTHWAVE', colors: ['#ff1493', '#00ffff', '#9d4edd'] },
+  //   { id: 'classic', name: 'CLASSIC', colors: ['#00ff00', '#ffff00', '#ff0000'] },
+  //   { id: 'cyberpunk', name: 'CYBERPUNK', colors: ['#ff00ff', '#00ff00', '#0080ff'] },
+  //   { id: 'neon', name: 'NEON', colors: ['#ff6600', '#ff0080', '#8000ff'] }
+  // ];
+
+  constructor(uiManager: UIManager, routerManager: RouterManager, authManager: AuthManager, languageManager: LanguageManager, authPage: AuthPage, onBack: () => void, private user?: User | null, private isGuest: boolean = false) {
     this.uiManager = uiManager;
     this.routerManager = routerManager;
     this.authManager = authManager;
     this.languageManager = languageManager;
+    this.authPage = authPage;
     this.onBack = onBack;
   }
 
@@ -47,15 +54,15 @@ export class SettingsPage {
     
     // Header
     const header = this.uiManager.createElement('div', 'text-center mb-8');
-    const title = this.uiManager.createElement('h1', 'retro-title text-3xl mb-4', 'SETTINGS');
-    const subtitle = this.uiManager.createElement('p', 'retro-subtitle', 'CUSTOMIZE YOUR ARCADE EXPERIENCE');
+    const title = this.uiManager.createElement('h1', 'retro-title text-3xl mb-4', this.t('options'));
+    const subtitle = this.uiManager.createElement('p', 'retro-subtitle', this.t('optionsMessage'));
     
     header.appendChild(title);
     header.appendChild(subtitle);
     
     // Back Button
     const backButton = this.uiManager.createButton(
-      'BACK TO MENU',
+      this.t('backtoMenu'),
       'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mb-8',
       this.onBack
     );
@@ -106,7 +113,7 @@ export class SettingsPage {
     let userSettings: HTMLElement | undefined;
     if (this.isGuest) {
       // create guest settings
-
+      userSettings = this.guestSettings();
     }
     else {
       // create user settings
@@ -124,7 +131,7 @@ export class SettingsPage {
     // Reset Button
     const resetContainer = this.uiManager.createElement('div', 'text-center mt-8');
     const resetButton = this.uiManager.createButton(
-      'RESET TO DEFAULTS',
+      this.t("resettodefaults"),
       'retro-button bg-transparent text-red-400 px-6 py-3 rounded border-2 border-red-400 hover:bg-red-400 hover:text-black transition-all duration-200',
       () => this.resetToDefaults()
     );
@@ -132,7 +139,7 @@ export class SettingsPage {
     
     // Save Notice
     const saveNotice = this.uiManager.createElement('div', 'text-center mt-6 retro-text text-xs opacity-40');
-    const noticeText = this.uiManager.createElement('p', '', 'SETTINGS ARE SAVED AUTOMATICALLY • CHANGES APPLY IMMEDIATELY');
+    const noticeText = this.uiManager.createElement('p', '', this.t("settingsSaved"));
     saveNotice.appendChild(noticeText);
     
     content.appendChild(header);
@@ -232,6 +239,81 @@ export class SettingsPage {
     return container;
   }
 
+  private guestSettings(): HTMLElement {
+
+      const card = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 rounded-lg p-6');
+      card.style.borderColor = '#ff1493';
+    
+      const header = this.uiManager.createElement(
+        "h2",
+        "retro-title text-[#ff1493] text-2xl mb-2",
+        this.t("welcomeGuest")
+      );
+      const subtitle = this.uiManager.createElement(
+        "p",
+        "retro-text text-center text-sm opacity-70",
+        this.t("guestMessage")
+      );
+    
+      const buttonsContainer = this.uiManager.createElement(
+        "div",
+        "w-full flex flex-col gap-4 mt-4"
+      );
+    
+      // Sign In Button
+      const signInBtn = this.uiManager.createButton(
+        "SIGN IN",
+        "w-full retro-button bg-[#00ffff] text-black hover:bg-[#00ffff]/80 border-2 border-[#00ffff] py-3",
+        // () => this.authPage.handleSignIn()
+        () => console.log("to handle signin")
+      );
+    
+      // Sign Up Button
+      const signUpBtn = this.uiManager.createButton(
+        "SIGN UP",
+        "w-full retro-button bg-transparent text-[#ff1493] border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black py-3",
+        // () => this.handleSignUp()
+        () => console.log("to handle signup")
+      );
+    
+      // Divider
+      const divider = this.uiManager.createElement("div", "flex items-center my-2");
+      const line = this.uiManager.createElement("div", "flex-1 h-px bg-gradient-to-r from-transparent via-[#ff1493] to-transparent");
+      const orText = this.uiManager.createElement("span", "px-4 retro-text text-sm text-[#ff1493]", "OR");
+      divider.appendChild(line);
+      divider.appendChild(orText);
+      divider.appendChild(line.cloneNode(true));
+    
+      // Google Sign In Button
+      const googleBtn = this.uiManager.createButton(
+        "SIGN IN WITH GOOGLE",
+        "w-full retro-button bg-white text-black hover:bg-gray-100 border-2 border-white py-3 flex items-center justify-center gap-3",
+        () => this.authPage.handleGoogleSignIn()
+      );
+    
+      // 42Auth Button
+      const auth42Btn = this.uiManager.createButton(
+        "SIGN IN WITH 42",
+        "w-full retro-button bg-[#00babc] text-white hover:bg-[#00a0a2] border-2 border-[#00babc] py-3 flex items-center justify-center gap-3",
+        () => this.authPage.handle42SignIn()
+      );
+    
+      buttonsContainer.appendChild(signInBtn);
+      buttonsContainer.appendChild(signUpBtn);
+      buttonsContainer.appendChild(divider);
+      buttonsContainer.appendChild(googleBtn);
+      buttonsContainer.appendChild(auth42Btn);
+    
+      
+      card.appendChild(header);
+      card.appendChild(subtitle);
+      card.appendChild(buttonsContainer);
+      card.appendChild(this.createLanguageSelector(false));
+
+      return card;
+      
+  }
+
   private userSettings(): HTMLElement {
     const card = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 rounded-lg p-6');
     const color = '#ff1493';
@@ -265,71 +347,48 @@ export class SettingsPage {
         updateProfilePage.render();
       });
 
-    // const button2 = this.uiManager.createButton(
-    //   'LANGUAGE',
-    //   'retro-button bg-transparent text-[#ff1493] px-4 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200',
-    //   () => {
-    //     console.log('LANGUAGE clicked');
-    //   });
+      card.appendChild(header);
+      card.appendChild(buttonsContainer);
+      card.appendChild(this.createLanguageSelector(true));
 
+    return card;
+  }
+
+  private createLanguageSelector(includeUserId = false): HTMLElement {
     const languages = [
-        { code: 'en', flag: '🇬🇧' },
-        { code: 'fr', flag: '🇫🇷' },
-        { code: 'pt', flag: '🇧🇷' },
+      { code: "en", flag: "🇬🇧" },
+      { code: "fr", flag: "🇫🇷" },
+      { code: "pt", flag: "🇧🇷" },
     ];
 
     const currentLangCode = this.languageManager.getCurrentLang();
     let currentLangIndex = languages.findIndex(l => l.code === currentLangCode);
     if (currentLangIndex === -1) currentLangIndex = 0;
 
-    const languageButtonWrapper = this.uiManager.createElement(
-        'div',
-        'flex items-center gap-2 cursor-pointer'
-    );
+    const wrapper = this.uiManager.createElement("div", "flex items-center gap-2 mt-6 cursor-pointer");
+    const label = this.uiManager.createElement("span", "retro-text text-[#ff1493]", "LANGUAGE:");
+    const flag = this.uiManager.createElement("span", "text-2xl", languages[currentLangIndex].flag);
 
-    const languageLabel = this.uiManager.createElement(
-        'span',
-        'retro-text text-[#ff1493]',
-        'LANGUAGE:'
-    );
-
-    const languageFlag = this.uiManager.createElement(
-        'span',
-        'text-2xl',
-        languages[currentLangIndex].flag
-    );
-
-    languageFlag.addEventListener('click', async () => {
-        currentLangIndex = (currentLangIndex + 1) % languages.length;
-        const nextLang = languages[currentLangIndex];
-
-        languageFlag.textContent = nextLang.flag;
-        try {
-          if (this.user && this.user.id)
-            await this.languageManager.setLang(nextLang.code, this.user?.id);
-          else
-            await this.languageManager.setLang(nextLang.code);
-          await this.render();
-        } catch (err) {
-          console.error("Error changing language:", err);
-        }
+    flag.addEventListener("click", async () => {
+      currentLangIndex = (currentLangIndex + 1) % languages.length;
+      const nextLang = languages[currentLangIndex];
+      flag.textContent = nextLang.flag;
+      try {
+        if (includeUserId && this.user && this.user.id)
+          await this.languageManager.setLang(nextLang.code, this.user.id);
+        else
+          await this.languageManager.setLang(nextLang.code);
+        await this.render();
+      } catch (err) {
+        console.error("Error changing language:", err);
+      }
     });
 
-    buttonsContainer.appendChild(button1);
+    wrapper.appendChild(label);
+    wrapper.appendChild(flag);
 
-
-    languageButtonWrapper.appendChild(languageLabel);
-    languageButtonWrapper.appendChild(languageFlag);
-    card.appendChild(header);
-    card.appendChild(buttonsContainer);
-    card.appendChild(languageButtonWrapper);
-
-
-    return card;
+    return wrapper;
   }
-
-
-
 
 
   // private createColorThemeCard(): HTMLElement {
@@ -394,202 +453,3 @@ export class SettingsPage {
   }
 }
 
-
-// import { getTraductions, toggleLanguage } from "./languageManager.js"
-// import { Translations } from "./types.js"
-// import { getElement } from "./script.js"
-// import { logoutHandler } from "./login.js"
-// import { navigateTo, setupBackButton } from "./navigation.js"
-// import { getCurrentUser } from "./showGame.js"
-// import { changeUsername, changeEmail, changePassword } from "./changeProfile.js"
-// import { getUrl } from "./urls.js"
-// import { setupPasswordToggle } from "./validator.js"
-
-// export function getConnectedOptions(text: Translations) {
-// 	return `
-// 		<h2 class="text-xl font-bold mb-4 text-white">${text.options}</h2>
-// 		<p class="text-white">${text.optionsMessage}</p>
-// 		<div class="mt-6">
-// 		  <p class="text-white">${text.lang}
-// 		  <button id="langToggleBtn" class="bg-transparent text-white border border-white px-4 py-2 rounded">
-// 		   ${text.language}
-// 		  </button></p>
-//           <br>
-//           <button id="updateProfileBtn" class="bg-transparent text-white border border-white px-4 py-2 rounded">
-// 		   Update Profile
-// 		  </button></p>
-// 		</div>
-// 		<button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
-// 	  `;
-// }
-
-//  export async function initConnectedOptions(text: Translations)
-//  {
-//     const user = await getCurrentUser();
-//     const contentDiv = getElement<HTMLDivElement>('content');
-//     contentDiv.innerHTML = getConnectedOptions(text);
-
-//     // update profile button
-//     const updateProfileBtn = getElement<HTMLButtonElement>("updateProfileBtn");
-//     updateProfileBtn.addEventListener('click', () => {
-//         navigateTo(text, "updateProfile");
-//     });
-
-//     // change language button
-//     const langToggleBtn = getElement<HTMLButtonElement>("langToggleBtn");
-//     langToggleBtn.addEventListener('click', toggleLanguage);
-    
-//     // back button
-//     setupBackButton(text, "");
-
-//  }
-
-//  export async function getUpdateProfile(text:Translations) {
-
-//     const user = await getCurrentUser();
-
-//     return `
-// 		<h2 class="text-xl font-bold mb-4 text-white">Update Profile</h2>
-		
-// 		<div class="mb-4">
-// 			<label class="block text-white mb-1">Username: <span class="font-semibold">${user?.pseudo ?? ''}</span></label>
-// 			<br>
-//             <div class="flex space-x-2">
-// 				<input id="usernameInput" type="text" placeholder="New username"
-// 					class="px-4 py-2 pr-10 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none w-full">
-// 				<button id="changeUsernameBtn"
-// 					class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Change</button>
-// 			</div>
-// 		</div>
-//         <br>
-
-// 		<div class="mb-4">
-// 			<label class="block text-white mb-1">Email: <span class="font-semibold">${user?.user_mail ?? ''}</span></label>
-// 			<br>
-//             <div class="flex space-x-2">
-// 				<input id="emailInput" type="email" placeholder="New email"
-// 					class="px-4 py-2 pr-10 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none w-full">
-// 				<button id="changeEmailBtn"
-// 					class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Change</button>
-// 			</div>
-// 		</div>
-//         <br>
-
-// 		<div class="mb-4">
-// 			<label class="block text-white mb-1">Password:</label>
-// 			<br>
-// 			<form class="flex flex-col space-y-4">
-//      		<div class="relative">
-// 				<input id="passwd" type="password" required placeholder="${text.passwd}" class="px-4 py-2 pr-10 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none w-full">
-// 				<button type="button" id="togglePasswd" required class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-300 hover:text-white">
-// 				  👁️
-// 				</button>
-// 	 		</div>
-// 	 		<div class="relative">
-// 				<input id="passwdConfirm" type="password" placeholder="${text.passwdConfirm}" class="px-4 py-2 pr-10 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none w-full">
-// 				<button type="button" id="togglePasswdConfirm" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-300 hover:text-white">
-// 				  👁️
-// 				</button>
-// 			</div>
-// 			<br>
-// 			<button id="changePasswordBtn"
-// 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Change Password</button>
-// 			</form>
-// 		</div>
-// 		<div id="formErrors" class="text-red-500 text-sm italic mt-2"></div>
-// 		<button id="backBtn" class="mt-4 text-blue-400 underline">${text.back}</button>
-// 	`;
-//  }
-
-//  export async function showUpdateProfile(text:Translations) {
-//     const contentDiv = getElement<HTMLDivElement>('content');
-//     contentDiv.innerHTML = await getUpdateProfile(text);
-	
-// 	const errorDiv = getElement<HTMLDivElement>('formErrors');
-// 	errorDiv.innerHTML = "";
-
-// 	setupPasswordToggle('togglePasswd', 'passwd');
-//   	setupPasswordToggle('togglePasswdConfirm', 'passwdConfirm');
-
-//     getElement<HTMLButtonElement>('changeUsernameBtn')?.addEventListener('click', async () => {
-// 		const newUsername = (getElement<HTMLInputElement>('usernameInput')?.value ?? '').trim();
-// 		console.log("Change username ->", newUsername);
-
-// 		if (!newUsername) {
-// 		    errorDiv.innerHTML = "No username entered";
-// 		    return;
-// 		}
-	
-// 		console.log("Change username ->", newUsername);
-	
-// 		const result = await changeUsername(newUsername);
-// 		if (result.success) {
-// 		    alert("✅ Username changed to: " + result.username);
-// 		} else {
-// 		    errorDiv.innerHTML = "Error: " + result.message;
-// 		}
-// 	});
-
-// 	getElement<HTMLButtonElement>('changeEmailBtn')?.addEventListener('click', async () => {
-// 		const newEmail = (getElement<HTMLInputElement>('emailInput')?.value ?? '').trim();
-// 		console.log("Change email ->", newEmail);
-
-// 		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
-// 	    	errorDiv.innerHTML = "Invalid email format";
-// 	    	return;
-// 		}
-// 		if (!newEmail) {
-// 		    errorDiv.innerHTML = "No email entered";
-// 		    return;
-// 		}
-
-// 		const res = await fetch(getUrl('auth/verify-email-valid'), {
-// 			method: 'POST',
-// 			headers: { 'Content-Type': 'application/json' },
-// 			body: JSON.stringify({ email: newEmail })
-// 		});
-
-// 		const valid = await res.json();
-// 		if (!valid.success) {
-// 			errorDiv.innerHTML = valid.message;
-// 			return ;
-// 		} else {
-// 			console.log("email is valid");
-// 		}
-	
-// 		console.log("Change email ->", newEmail);
-	
-// 		const result = await changeEmail(text, newEmail);
-// 		if (result.success) {
-// 		    alert("✅ Email changed to: " + result.email);
-// 		} else {
-// 		    errorDiv.innerHTML = "Error: " + result.message;
-// 		}
-
-// 	});
-
-// 	getElement<HTMLButtonElement>('changePasswordBtn')?.addEventListener('click', async () => {
-// 		const passwdInput = getElement<HTMLInputElement>('passwd');
-// 		const passwdInputConfirm = getElement<HTMLInputElement>('passwd');
-// 		const newPass = (passwdInput?.value ?? '').trim();
-// 		const confirmPass = (passwdInputConfirm?.value ?? '').trim();
-// 		if (newPass !== confirmPass) {
-// 			errorDiv.innerHTML = "Passwords do not match!";
-// 			return;
-// 		}
-// 		console.log("Change password ->", newPass);
-
-// 		const res = await changePassword(text);
-// 		if (res.success) {
-// 			alert("✅ Password changed to: " + res.password);
-// 			passwdInput.value = '';
-// 			passwdInputConfirm.value = '';
-// 		} else {
-// 			errorDiv.innerHTML = "Error: " + res.message;
-// 		}
-
-// 	});
-
-//     // back button
-//     setupBackButton(text, "showOptions");
-//  }

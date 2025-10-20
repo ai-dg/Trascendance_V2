@@ -64,8 +64,6 @@ export class RouterManager {
 }
 
 
-
-
 // TODO: Not using those two functions yet
 
 // function getWebSocketProtocol() {

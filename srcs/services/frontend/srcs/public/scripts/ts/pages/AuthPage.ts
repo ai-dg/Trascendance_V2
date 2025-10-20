@@ -344,13 +344,13 @@ export class AuthPage {
     this.render();
   }
 
-  private handleGoogleSignIn(): void {
+  public handleGoogleSignIn(): void {
     // TODO: Implement Google OAuth
     console.log('Google Sign In clicked');
     // This would typically redirect to Google OAuth or open a popup
   }
 
-  private handle42SignIn(): void {
+  public handle42SignIn(): void {
     // TODO: Implement 42 OAuth
     console.log('42 Sign In clicked');
     window.location.href = 'https://localhost/auth/42/login';
