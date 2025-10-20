@@ -191,6 +191,37 @@ export async function verify_otp_email_route(request, reply) {
 
 }
 
+///
+/**********************************************************************************************************************************************************/
+/*** 																	Middleware for sessionID and token		  											  			***/
+/**********************************************************************************************************************************************************/
+
+
+
+async function validateSession(request, reply) {
+  const token = request.cookies.token;
+  const sessionId = request.cookies.sessionId;
+
+  if (!token || !sessionId) {
+    throw { statusCode: 401, message: "Unauthorized" };
+  }
+
+  try {
+    const payload = verify(token, process.env.JWT_SECRET);
+
+    const validSession = await redis.get(`session:user:${payload.user_id}`);
+
+    if (!validSession || validSession !== sessionId) {
+      throw { statusCode: 401, message: "Session expired or invalid" };
+    }
+
+    request.user = payload;
+  } catch (err) {
+    throw { statusCode: 401, message: "Unauthorized" };
+  }
+}
+
+
 
 
 
@@ -202,6 +233,8 @@ export async function verify_otp_email_route(request, reply) {
 
 export async function login_route(request, reply){
 	
+
+
 		let user = null;	
 		const {pseudo, password} = request.body;
 		console.log(pseudo, password)
@@ -359,12 +392,22 @@ export async function login_otp_validation_route(request, reply)
 			userLang = 'en';
 		}
 
+		const sessionId = crypto.randomUUID();
+
+		await redis.set(`session:user:${data.user_id}`, sessionId, { EX: 3600 });
+
 		return reply.setCookie('token', token, {
 			httpOnly: true,
 			sameSite: 'none',
 			secure: true,
 			path: '/',
 			maxAge: 3600
+		}).setCookie('sessionId', sessionId, {
+		    httpOnly: true,
+		    sameSite: 'none',
+		    secure: true,
+		    path: '/',
+		    maxAge: 3600
 		}).setCookie('lang', userLang, {
 			httpOnly: false,
 			sameSite: 'none',
@@ -394,26 +437,6 @@ function getCookieParams(maxAge){
 }
 
 
-
-// export async function logout_route(request, reply){
-// 		const token = request.cookies.token;
-// 		try{
-// 			const payload = verify(token, process.env.JWT_SECRET);
-// 			console.log(payload);
-// 			if (!payload)
-// 				return reply.send({success: true, message:"user already disconnected"}, 401)
-// 			else
-// 			{
-// 				await redis.set(`jwt:${payload.jti}`, "not valid", { EX: 1});
-// 				return reply.setCookie('token', '', getCookieParams(0))
-// 							.send({success: true, message:"user logged out"})
-// 			}		
-// 		}
-// 		catch (err){
-// 			return reply.send({success:false, message: "Internal app error"}, 500)
-// 	}
-// }
-
 export async function logout_route(request, reply) {
   const token = request.cookies.token;
 
@@ -432,8 +455,14 @@ export async function logout_route(request, reply) {
 	if (payload?.jti)
     	await redis.set(`jwt:${payload.jti}`, "revoked"); 
 
+
+	const user_id = payload?.user_id;
+	if (user_id)
+		await redis.del(`session:user:${user_id}`);
+
     reply.clearCookie('token', { path: '/', httpOnly: true, secure: true, sameSite: 'None' });
 	reply.clearCookie('csrf', { path: '/', httpOnly: true, secure: true, sameSite: 'None' });
+	reply.clearCookie('sessionId', { path: '/', httpOnly: true, secure: true, sameSite: 'none' });
 
     return reply.send({ success: true, message: "User logged out" });
 
@@ -587,12 +616,14 @@ export async function signup_otp_validation_route(request, reply)
 
 export async function reset_forgotten_password_route(request, reply) {
 
+	
+
   const { otp_id, password } = request.body;
   console.log("Body got:", { otp_id, password });
 
   if (!password) {
     console.log("Password missing");
-    return reply.send({ success: false, message: "Password missing" }, 400);
+    return reply.status(400).send({ success: false, message: "Password missing" });
   }
 
   let row;
@@ -618,12 +649,15 @@ export async function reset_forgotten_password_route(request, reply) {
   try {
     const passwordHash = await hash(password, 10);
 
-    const result = await app.db.run(
+    await app.db.run(
       "UPDATE users SET user_password = ? WHERE user_mail = ?",
       [passwordHash, data.email]
     );
 
-    const delResult = await redis.del(otp_id);
+	const userRow = await app.db.get(`SELECT user_id FROM users WHERE user_mail = ?`, [data.email]);
+	await redis.del(`session:user:${userRow.user_id}`);
+
+    await redis.del(otp_id);
 
     console.log("Password changed");
     return reply.send({ success: true, message: "password changed" }, 201);
@@ -644,6 +678,7 @@ export async function reset_forgotten_password_route(request, reply) {
 
 
 export async function reset_password_request_route(request, reply)  {
+
 		const email = request.body.email;
 		console.log("email: ", email);
 		let user = null;
@@ -657,6 +692,15 @@ export async function reset_password_request_route(request, reply)  {
 		}
 		if (user)
 		{
+			// const sessionId = crypto.randomUUID();
+			// await redis.set(`session:user:${user.user_id}`, sessionId, { EX: 3600 });
+
+			// try {
+			// 	await validateSession(request, reply);
+			// } catch (err) {
+			// 	return reply.code(err.statusCode || 401).send({ error: err.message });
+			// }
+
 			const otp = generateOTP();
 			const otp_hashed = await hash(otp, 10);
 

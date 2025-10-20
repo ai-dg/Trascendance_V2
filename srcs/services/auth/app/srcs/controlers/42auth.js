@@ -55,7 +55,7 @@ export async function oauth_callback_route(request, reply) {
 
             if (!existingUser) {
                 const tempPassword = crypto.randomBytes(16).toString('hex');
-                await db.run(
+                const result = await db.run(
                     `INSERT INTO users (user_mail, pseudo, user_password, avatar, created_at) VALUES (?, ?, ?, ?, datetime('now'))`,
                     [userData.email, userData.login, tempPassword, userData.image.versions.medium]
                 );
@@ -75,7 +75,20 @@ export async function oauth_callback_route(request, reply) {
 		    const token = sign(payload, secretKey, { expiresIn: '1h' });
 		    await redis.set(`jwt:${jti}`, 'valid', { EX: 3600 });
 
-            reply.setCookie('token', token, { path: '/' , httpOnly: true, sameSite: 'lax' });
+            const sessionId = crypto.randomUUID();
+            
+            await redis.set(`session:user:${userId}`, sessionId, { EX: 3600 });
+
+            reply.setCookie('token', token, { 
+                path: '/' , 
+                httpOnly: true, 
+                sameSite: 'lax' 
+            }).setCookie('sessionId', sessionId, {
+                httpOnly: true,
+                sameSite: 'none',
+                secure: true,
+                path: '/',
+                maxAge: 3600});
 
             return reply.redirect('/');
         } catch (err) {
