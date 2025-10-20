@@ -131,7 +131,7 @@ export class SettingsPage {
     // Reset Button
     const resetContainer = this.uiManager.createElement('div', 'text-center mt-8');
     const resetButton = this.uiManager.createButton(
-      this.t("resettodefaults"),
+      this.t("resettoDefaults"),
       'retro-button bg-transparent text-red-400 px-6 py-3 rounded border-2 border-red-400 hover:bg-red-400 hover:text-black transition-all duration-200',
       () => this.resetToDefaults()
     );
@@ -346,6 +346,8 @@ export class SettingsPage {
         );
         updateProfilePage.render();
       });
+
+      buttonsContainer.appendChild(button1);
 
       card.appendChild(header);
       card.appendChild(buttonsContainer);

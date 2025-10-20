@@ -81,7 +81,7 @@ export class SettingsPage {
             settingsGrid.appendChild(userSettings);
         // Reset Button
         const resetContainer = this.uiManager.createElement('div', 'text-center mt-8');
-        const resetButton = this.uiManager.createButton(this.t("resettodefaults"), 'retro-button bg-transparent text-red-400 px-6 py-3 rounded border-2 border-red-400 hover:bg-red-400 hover:text-black transition-all duration-200', () => this.resetToDefaults());
+        const resetButton = this.uiManager.createButton(this.t("resettoDefaults"), 'retro-button bg-transparent text-red-400 px-6 py-3 rounded border-2 border-red-400 hover:bg-red-400 hover:text-black transition-all duration-200', () => this.resetToDefaults());
         resetContainer.appendChild(resetButton);
         // Save Notice
         const saveNotice = this.uiManager.createElement('div', 'text-center mt-6 retro-text text-xs opacity-40');
@@ -215,6 +215,7 @@ export class SettingsPage {
             const updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, () => this.render(), this.user);
             updateProfilePage.render();
         });
+        buttonsContainer.appendChild(button1);
         card.appendChild(header);
         card.appendChild(buttonsContainer);
         card.appendChild(this.createLanguageSelector(true));
