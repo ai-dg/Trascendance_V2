@@ -9,7 +9,7 @@ export class SettingsPage {
     //   { id: 'cyberpunk', name: 'CYBERPUNK', colors: ['#ff00ff', '#00ff00', '#0080ff'] },
     //   { id: 'neon', name: 'NEON', colors: ['#ff6600', '#ff0080', '#8000ff'] }
     // ];
-    constructor(uiManager, routerManager, authManager, languageManager, authPage, onBack, user, isGuest = false) {
+    constructor(uiManager, routerManager, authManager, languageManager, authPage, onBack, onUpdateProfile, user, isGuest = false) {
         this.user = user;
         this.isGuest = isGuest;
         this.settings = {
@@ -30,6 +30,7 @@ export class SettingsPage {
         this.languageManager = languageManager;
         this.authPage = authPage;
         this.onBack = onBack;
+        this.onUpdateProfile = onUpdateProfile;
     }
     render() {
         const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-start p-8');
@@ -167,9 +168,9 @@ export class SettingsPage {
         const subtitle = this.uiManager.createElement("p", "retro-text text-center text-sm opacity-70", this.t("guestMessage"));
         const buttonsContainer = this.uiManager.createElement("div", "w-full flex flex-col gap-4 mt-4");
         // Sign In Button
-        const signInBtn = this.uiManager.createButton(this.t("signIn"), "w-full retro-button bg-[#00ffff] text-black hover:bg-[#00ffff]/80 border-2 border-[#00ffff] py-3", () => console.log("to handle signin"));
+        const signInBtn = this.uiManager.createButton(this.t("signin"), "w-full retro-button bg-[#00ffff] text-black hover:bg-[#00ffff]/80 border-2 border-[#00ffff] py-3", () => console.log("to handle signin"));
         // Sign Up Button
-        const signUpBtn = this.uiManager.createButton(this.t("signUp"), "w-full retro-button bg-transparent text-[#ff1493] border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black py-3", () => console.log("to handle signup"));
+        const signUpBtn = this.uiManager.createButton(this.t("signup"), "w-full retro-button bg-transparent text-[#ff1493] border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black py-3", () => console.log("to handle signup"));
         // Divider
         const divider = this.uiManager.createElement("div", "flex items-center my-2");
         const line = this.uiManager.createElement("div", "flex-1 h-px bg-gradient-to-r from-transparent via-[#ff1493] to-transparent");
@@ -178,9 +179,9 @@ export class SettingsPage {
         divider.appendChild(orText);
         divider.appendChild(line.cloneNode(true));
         // Google Sign In Button
-        const googleBtn = this.uiManager.createButton(this.t("signInWithGoogle"), "w-full retro-button bg-white text-black hover:bg-gray-100 border-2 border-white py-3 flex items-center justify-center gap-3", () => this.authPage.handleGoogleSignIn());
+        const googleBtn = this.uiManager.createButton(this.t("sign_in_with_google"), "w-full retro-button bg-white text-black hover:bg-gray-100 border-2 border-white py-3 flex items-center justify-center gap-3", () => this.authPage.handleGoogleSignIn());
         // 42Auth Button
-        const auth42Btn = this.uiManager.createButton(this.t("signInWith42"), "w-full retro-button bg-[#00babc] text-white hover:bg-[#00a0a2] border-2 border-[#00babc] py-3 flex items-center justify-center gap-3", () => this.authPage.handle42SignIn());
+        const auth42Btn = this.uiManager.createButton(this.t("sign_in_with_42"), "w-full retro-button bg-[#00babc] text-white hover:bg-[#00a0a2] border-2 border-[#00babc] py-3 flex items-center justify-center gap-3", () => this.authPage.handle42SignIn());
         buttonsContainer.appendChild(signInBtn);
         buttonsContainer.appendChild(signUpBtn);
         buttonsContainer.appendChild(divider);
@@ -208,7 +209,7 @@ export class SettingsPage {
         const buttonsContainer = this.uiManager.createElement('div', 'flex flex-col items-center gap-4');
         const button1 = this.uiManager.createButton(this.t('update_profile'), 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200', () => {
             console.log('UPDATE PROFILE clicked');
-            const updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.languageManager, () => this.render(), this.user);
+            const updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.languageManager, () => this.render(), this.onUpdateProfile.bind(this), this.user);
             updateProfilePage.render();
         });
         buttonsContainer.appendChild(button1);

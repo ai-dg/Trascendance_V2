@@ -135,6 +135,9 @@
   "errNbr": "A senha deve conter pelo menos um número.",
   "errMatch": "As senhas não coincidem.",
   "errEmail": "Por favor, insira um endereço de e-mail válido.",
+  "errInvalidChars": "O nome de usuário pode conter apenas letras e números.",
+  "errTooShort": "Nome de usuário muito curto.",
+  "errTooLong": "Nome de usuário muito longo.",
 
   "verifyTitle": "Verificação de e-mail",
   "verifyInstruction": "Digite o código de 6 dígitos enviado para o seu e-mail.",

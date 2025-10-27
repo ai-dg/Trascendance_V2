@@ -131,6 +131,9 @@
   "errNbr": "Le mot de passe doit contenir au moins un chiffre.",
   "errMatch": "Les mots de passe ne correspondent pas.",
   "errEmail": "Veuillez saisir une adresse e-mail valide.",
+  "errInvalidChars": "Le nom d'utilisateur ne peut contenir que des lettres et des chiffres.",
+  "errTooShort": "Nom d'utilisateur trop court.",
+  "errTooLong": "Nom d'utilisateur trop long.",
 
   "verifyTitle": "Vérification de l'e-mail",
   "verifyInstruction": "Entrez le code à 6 chiffres envoyé à votre adresse e-mail.",

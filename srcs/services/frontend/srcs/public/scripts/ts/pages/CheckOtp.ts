@@ -11,14 +11,16 @@ export class CheckOtp {
   private languageManager: LanguageManager;
   private onVerificationComplete: (success: boolean) => void;
   private onChangePassword: (success: boolean) => void;
+  private onUpdateProfile: (success: boolean) => void;
   private onBack: () => void;
 
-  constructor(uiManager: UIManager, languageManager: LanguageManager, onVerificationComplete: (success: boolean) => void, onChangePassword: (success: boolean) => void, onBack: () => void) {
+  constructor(uiManager: UIManager, languageManager: LanguageManager, onVerificationComplete: (success: boolean) => void, onChangePassword: (success: boolean) => void, onUpdateProfile: (success: boolean) => void, onBack: () => void) {
     this.uiManager = uiManager;
     this.languageManager = languageManager;
     this.otpManager = new OTPManagers();
     this.onVerificationComplete = onVerificationComplete;
     this.onChangePassword = onChangePassword;
+    this.onUpdateProfile = onUpdateProfile;
     this.onBack = onBack;
     this.check = new CheckManager(this.languageManager);
   }
@@ -132,6 +134,10 @@ export class CheckOtp {
         // this.onChangePassword(result.success);
         console.log("Skipping params.handler()");
         return ;
+      }
+      else if (params.context === 'update-email') {
+        console.log("Going to update profile");
+        this.onUpdateProfile(result.success);
       }
       this.onVerificationComplete(result.success);
     });

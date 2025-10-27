@@ -1,6 +1,6 @@
 import { CheckManager } from '../modules/CheckManager.js';
 export class UpdateProfilePage {
-    constructor(uiManager, routerManager, authManager, languageManager, onBack, user) {
+    constructor(uiManager, routerManager, authManager, languageManager, onBack, onUpdateProfile, user) {
         this.uiManager = uiManager;
         this.routerManager = routerManager;
         this.onBack = onBack;
@@ -8,6 +8,7 @@ export class UpdateProfilePage {
         this.authManager = authManager;
         this.languageManager = languageManager;
         this.checkManager = new CheckManager(this.languageManager);
+        this.onUpdateProfile = onUpdateProfile;
     }
     t(key) {
         return this.languageManager.t(key);
@@ -130,8 +131,9 @@ export class UpdateProfilePage {
                 body: JSON.stringify({ username: value })
             });
             if (!res.ok) {
-                const text = await res.text();
-                throw new Error(text || this.t('failedUpdateUsername'));
+                // const text = await res.text();
+                const message3 = await res.json();
+                throw new Error(message3.message || this.t('failedUpdateUsername'));
             }
             if (this.user)
                 this.user.username = value;
@@ -153,38 +155,78 @@ export class UpdateProfilePage {
                 console.log(emailErrorDiv);
                 return;
             }
-            const res = await fetch(this.routerManager.getUrl('/auth/verify-email'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: "include",
-                body: JSON.stringify({ email: value })
-            });
-            if (!res.ok) {
-                const text = await res.text();
-                throw new Error(text || this.t('failedRequestOTP'));
-            }
-            const data = await res.json();
-            console.log("OTP sent:", data);
-            this.authManager.otpData = {
-                otp_id: data.otp_id,
-                context: "verify-email",
-                handler: async () => {
-                    const res2 = await fetch(this.routerManager.getUrl('/auth/update-email'), {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify({ email: value })
-                    });
-                    if (!res2.ok) {
-                        const text = await res2.text();
-                        throw new Error(text || this.t('failedUpdateEmail'));
-                    }
-                    if (this.user)
-                        this.user.email = value;
-                    this.render();
+            try {
+                const res = await fetch(this.routerManager.getUrl('/auth/verify-email-valid'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: "include",
+                    body: JSON.stringify({ email: value })
+                });
+                if (!res.ok) {
+                    const message = await res.json();
+                    throw new Error(message.message || this.t('failedRequestOTP'));
                 }
-            },
+                const data1 = await res.json();
+                console.log("OTP sent:", data1);
+                if (!data1.success)
+                    throw new Error(data1.message || this.t('failedUpdateEmail'));
+                const res3 = await fetch(this.routerManager.getUrl('/auth/verify-email'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: "include",
+                    body: JSON.stringify({ email: value })
+                });
+                if (!res3.ok) {
+                    const message = await res3.json();
+                    throw new Error(message.message || this.t('failedRequestOTP'));
+                }
+                const data = await res3.json();
                 this.routerManager.navigateTo('check-otp', data.otp_id);
+                this.authManager.otpData = {
+                    otp_id: data.otp_id,
+                    context: "verify-email",
+                    handler: async () => {
+                        try {
+                            const res2 = await fetch(this.routerManager.getUrl('/auth/update-email'), {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                credentials: 'include',
+                                body: JSON.stringify({ email: value })
+                            });
+                            if (!res2.ok) {
+                                // const text = await res2.text();
+                                const message2 = await res2.json();
+                                if (this.authManager.otpData)
+                                    this.authManager.otpData.context = "update-profile";
+                                throw new Error(message2.message || this.t('failedUpdateEmail'));
+                            }
+                            if (this.user)
+                                this.user.email = value;
+                            if (this.authManager.otpData)
+                                this.authManager.otpData.context = "update-profile";
+                            this.render();
+                        }
+                        catch (error) {
+                            if (error instanceof Error) {
+                                if (this.authManager.otpData)
+                                    this.authManager.otpData.context = "update-profile";
+                                throw new Error(error.message || this.t('failedUpdateEmail'));
+                            }
+                            else {
+                                if (this.authManager.otpData)
+                                    this.authManager.otpData.context = "update-profile";
+                                throw new Error(this.t('failedUpdateEmail'));
+                            }
+                        }
+                    }
+                };
+            }
+            catch (error) {
+                if (error instanceof Error)
+                    throw new Error(error.message || this.t('failedRequestOTP'));
+                else
+                    throw new Error(this.t('failedRequestOTP'));
+            }
         }, false, this.user?.email);
         // Password Fields (with confirm)
         const { fieldContainer: passwordField, errorDiv: passwordErrorDiv } = createField(this.t('password'), 'password', this.t('enter_password'), async (value, confirmValue) => {
@@ -210,8 +252,9 @@ export class UpdateProfilePage {
                 body: JSON.stringify({ password: value })
             });
             if (!res.ok) {
-                const text = await res.text();
-                throw new Error(text || this.t('failedUpdatePassword'));
+                // const text = await res.text();
+                const message = await res.json();
+                throw new Error(message.message || this.t('failedUpdatePassword'));
             }
             this.render();
         }, true);

@@ -57,11 +57,11 @@ export class App {
     this.gamePageAI = new GamePageAI(this.uiManager, this.handleBackToMenu.bind(this));
     this.gamePageLocal = new GamePageLocal(this.uiManager, this.handleBackToMenu.bind(this));
     this.gamePageOnline = new GamePageOnline(this.uiManager, this.handleBackToMenu.bind(this));
-    this.checkOtpPage = new CheckOtp(this.uiManager, this.languageManager, this.handleOtpVerificationComplete.bind(this), this.handleNewChangePassword.bind(this), this.handleBackToAuth.bind(this));
+    this.checkOtpPage = new CheckOtp(this.uiManager, this.languageManager, this.handleOtpVerificationComplete.bind(this), this.handleNewChangePassword.bind(this), this.handleBackToUpdateProfile.bind(this), this.handleBackToAuth.bind(this));
     this.leaderboardPage = new LeaderboardPage(this.uiManager, this.handleBackToMenu.bind(this));
-    this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.handleSettings.bind(this), this.currentUser);
+    this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.handleSettings.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser);
     if (this.currentUser)
-      this.settingsPage = new SettingsPage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.authPage, this.handleBackToMenu.bind(this), this.currentUser ?? null, this.currentUser?.isGuest ?? true);
+      this.settingsPage = new SettingsPage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.authPage, this.handleBackToMenu.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser ?? null, this.currentUser?.isGuest ?? true);
 
 
     this.setupEventListeners();
@@ -190,11 +190,11 @@ export class App {
         this.leaderboardPage.render();
         break;
       case 'settings':
-        this.settingsPage = new SettingsPage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.authPage, this.handleBackToMenu.bind(this), this.currentUser ?? null, this.currentUser?.isGuest ?? true);
+        this.settingsPage = new SettingsPage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.authPage, this.handleBackToMenu.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser ?? null, this.currentUser?.isGuest ?? true);
         this.settingsPage.render();
         break;
       case 'update-profile':
-        this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.handleSettings.bind(this), this.currentUser);
+        this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.handleSettings.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser);
         this.updateProfilePage.render();
         break;
     }
@@ -350,6 +350,16 @@ export class App {
   private handleShowGuestPage(): void {
     this.routerManager.navigateTo('guest');
   }
+
+  private handleBackToUpdateProfile(success: boolean): void {
+    if (success) {
+      console.log("Email updated successfully!");
+      this.routerManager.navigateTo('update-profile');
+    } else {
+      console.log("Problem to update e-mail");
+      // this.routerManager.navigateTo('update-profile');
+    }
+  } 
 
   private handlePlayAsGuest(nickname: string, avatar: string): void {
     // Create a guest user object

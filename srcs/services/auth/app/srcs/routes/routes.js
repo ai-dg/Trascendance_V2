@@ -20,7 +20,8 @@ import {
 		update_password_route,
 		update_username_route,
 		verify_email_route,
-		delete_account_route
+		delete_account_route,
+		verify_update_email_route
 } from "../controlers/updateProfileControlers.js";
 import {
 		oauth_login_route,
@@ -66,6 +67,7 @@ export function routes(app, options)
 	app.get('/me', async (request, reply) => auth_me_route(request, reply));
 	
 	// update profile
+	app.get('/verify-username', async (request, reply) => verify_update_email_route(request, reply));
 	app.put('/update-avatar', async (request, reply) => update_avatar_route(request, reply));
 	app.put('/update-username', async (request, reply) => update_username_route(request, reply));
 	app.put('/update-email', async (request, reply) => update_email_route(request, reply));

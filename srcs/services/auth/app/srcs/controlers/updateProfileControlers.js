@@ -144,6 +144,50 @@ export async function update_email_route(request, reply) {
     }
 }
 
+export async function verify_update_email_route(request, reply) {
+    try {
+        const token = request.cookies.token;
+        if (!token)
+            return reply.code(401).send({ success: false, message: "Not authenticated" });
+
+        let payload;
+        try {
+            payload = verify(token, process.env.JWT_SECRET);
+        } catch {
+            return reply.code(401).send({ success: false, message: "Invalid or expired token" });
+        }
+
+        console.log("Payload:", payload);
+        console.log("Cookies:", request.cookies);
+        console.log("Body:", request.body);
+
+        const{ email } = request.body;
+        if (!email)
+            return reply.code(400).send({ success: false, message: "No email provided" });
+        
+
+        try {
+            const result = await app.db.get(
+                "SELECT user_id FROM users WHERE user_mail = ?",
+                [email]
+            );
+            if (result) {
+                return reply.code(400).send({ success: false, message: "Email already taken"});
+            }
+        } catch (dbErr) {
+             if (dbErr.code === "SQLITE_CONSTRAINT") {
+                return reply.code(400).send({ success: false, message: "SQLite error" });
+            }
+            throw dbErr;
+        }
+        return reply.code(200).send({ success: true, message: "Email available"});
+            
+    } catch (err) {
+        console.error("update_email error:", err);
+        return reply.code(500).send({ success: false, message: "Internal server error" });
+    }
+}
+
 export async function verify_email_route(request, reply) {
 
     const token = request.cookies.token;

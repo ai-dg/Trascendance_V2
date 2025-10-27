@@ -14,6 +14,7 @@ export class SettingsPage {
   private languageManager: LanguageManager;
   private authPage: AuthPage;
   private onBack: () => void;
+  private onUpdateProfile: (success: boolean) => void;
   private settings: Settings = {
     soundEnabled: true,
     musicVolume: 75,
@@ -38,13 +39,14 @@ export class SettingsPage {
   //   { id: 'neon', name: 'NEON', colors: ['#ff6600', '#ff0080', '#8000ff'] }
   // ];
 
-  constructor(uiManager: UIManager, routerManager: RouterManager, authManager: AuthManager, languageManager: LanguageManager, authPage: AuthPage, onBack: () => void, private user?: User | null, private isGuest: boolean = false) {
+  constructor(uiManager: UIManager, routerManager: RouterManager, authManager: AuthManager, languageManager: LanguageManager, authPage: AuthPage, onBack: () => void, onUpdateProfile: (success: boolean) => void, private user?: User | null, private isGuest: boolean = false) {
     this.uiManager = uiManager;
     this.routerManager = routerManager;
     this.authManager = authManager;
     this.languageManager = languageManager;
     this.authPage = authPage;
     this.onBack = onBack;
+    this.onUpdateProfile = onUpdateProfile;
   }
 
   public render(): void {
@@ -261,14 +263,14 @@ export class SettingsPage {
 
   // Sign In Button
   const signInBtn = this.uiManager.createButton(
-    this.t("signIn"),
+    this.t("signin"),
     "w-full retro-button bg-[#00ffff] text-black hover:bg-[#00ffff]/80 border-2 border-[#00ffff] py-3",
     () => console.log("to handle signin") 
   );
 
   // Sign Up Button
   const signUpBtn = this.uiManager.createButton(
-    this.t("signUp"),
+    this.t("signup"),
     "w-full retro-button bg-transparent text-[#ff1493] border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black py-3",
     () => console.log("to handle signup") 
   );
@@ -283,14 +285,14 @@ export class SettingsPage {
 
   // Google Sign In Button
   const googleBtn = this.uiManager.createButton(
-    this.t("signInWithGoogle"),
+    this.t("sign_in_with_google"),
     "w-full retro-button bg-white text-black hover:bg-gray-100 border-2 border-white py-3 flex items-center justify-center gap-3",
     () => this.authPage.handleGoogleSignIn() 
   );
 
   // 42Auth Button
   const auth42Btn = this.uiManager.createButton(
-    this.t("signInWith42"),
+    this.t("sign_in_with_42"),
     "w-full retro-button bg-[#00babc] text-white hover:bg-[#00a0a2] border-2 border-[#00babc] py-3 flex items-center justify-center gap-3",
     () => this.authPage.handle42SignIn() 
   );
@@ -338,6 +340,7 @@ export class SettingsPage {
         this.authManager,
         this.languageManager,
         () => this.render(),
+        this.onUpdateProfile.bind(this),
         this.user
       );
       updateProfilePage.render();

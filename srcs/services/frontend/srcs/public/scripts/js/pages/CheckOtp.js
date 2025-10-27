@@ -1,12 +1,13 @@
 import { CheckManager } from '../modules/CheckManager.js';
 import { OTPManagers } from '../modules/OTPManager.js';
 export class CheckOtp {
-    constructor(uiManager, languageManager, onVerificationComplete, onChangePassword, onBack) {
+    constructor(uiManager, languageManager, onVerificationComplete, onChangePassword, onUpdateProfile, onBack) {
         this.uiManager = uiManager;
         this.languageManager = languageManager;
         this.otpManager = new OTPManagers();
         this.onVerificationComplete = onVerificationComplete;
         this.onChangePassword = onChangePassword;
+        this.onUpdateProfile = onUpdateProfile;
         this.onBack = onBack;
         this.check = new CheckManager(this.languageManager);
     }
@@ -89,6 +90,10 @@ export class CheckOtp {
                 // this.onChangePassword(result.success);
                 console.log("Skipping params.handler()");
                 return;
+            }
+            else if (params.context === 'update-email') {
+                console.log("Going to update profile");
+                this.onUpdateProfile(result.success);
             }
             this.onVerificationComplete(result.success);
         });
