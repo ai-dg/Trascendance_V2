@@ -167,24 +167,20 @@ export class SettingsPage {
         const subtitle = this.uiManager.createElement("p", "retro-text text-center text-sm opacity-70", this.t("guestMessage"));
         const buttonsContainer = this.uiManager.createElement("div", "w-full flex flex-col gap-4 mt-4");
         // Sign In Button
-        const signInBtn = this.uiManager.createButton("SIGN IN", "w-full retro-button bg-[#00ffff] text-black hover:bg-[#00ffff]/80 border-2 border-[#00ffff] py-3", 
-        // () => this.authPage.handleSignIn()
-        () => console.log("to handle signin"));
+        const signInBtn = this.uiManager.createButton(this.t("signIn"), "w-full retro-button bg-[#00ffff] text-black hover:bg-[#00ffff]/80 border-2 border-[#00ffff] py-3", () => console.log("to handle signin"));
         // Sign Up Button
-        const signUpBtn = this.uiManager.createButton("SIGN UP", "w-full retro-button bg-transparent text-[#ff1493] border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black py-3", 
-        // () => this.handleSignUp()
-        () => console.log("to handle signup"));
+        const signUpBtn = this.uiManager.createButton(this.t("signUp"), "w-full retro-button bg-transparent text-[#ff1493] border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black py-3", () => console.log("to handle signup"));
         // Divider
         const divider = this.uiManager.createElement("div", "flex items-center my-2");
         const line = this.uiManager.createElement("div", "flex-1 h-px bg-gradient-to-r from-transparent via-[#ff1493] to-transparent");
-        const orText = this.uiManager.createElement("span", "px-4 retro-text text-sm text-[#ff1493]", "OR");
+        const orText = this.uiManager.createElement("span", "px-4 retro-text text-sm text-[#ff1493]", this.t("or"));
         divider.appendChild(line);
         divider.appendChild(orText);
         divider.appendChild(line.cloneNode(true));
         // Google Sign In Button
-        const googleBtn = this.uiManager.createButton("SIGN IN WITH GOOGLE", "w-full retro-button bg-white text-black hover:bg-gray-100 border-2 border-white py-3 flex items-center justify-center gap-3", () => this.authPage.handleGoogleSignIn());
+        const googleBtn = this.uiManager.createButton(this.t("signInWithGoogle"), "w-full retro-button bg-white text-black hover:bg-gray-100 border-2 border-white py-3 flex items-center justify-center gap-3", () => this.authPage.handleGoogleSignIn());
         // 42Auth Button
-        const auth42Btn = this.uiManager.createButton("SIGN IN WITH 42", "w-full retro-button bg-[#00babc] text-white hover:bg-[#00a0a2] border-2 border-[#00babc] py-3 flex items-center justify-center gap-3", () => this.authPage.handle42SignIn());
+        const auth42Btn = this.uiManager.createButton(this.t("signInWith42"), "w-full retro-button bg-[#00babc] text-white hover:bg-[#00a0a2] border-2 border-[#00babc] py-3 flex items-center justify-center gap-3", () => this.authPage.handle42SignIn());
         buttonsContainer.appendChild(signInBtn);
         buttonsContainer.appendChild(signUpBtn);
         buttonsContainer.appendChild(divider);
@@ -205,14 +201,14 @@ export class SettingsPage {
         const icon = this.uiManager.createIcon('user', 'w-6 h-6');
         icon.style.color = color;
         const title = this.uiManager.createElement('h3', 'retro-text text-lg');
-        title.textContent = "USER SETTINGS";
+        title.textContent = this.t("user_settings");
         header.appendChild(icon);
         header.appendChild(title);
         // Buttons container
         const buttonsContainer = this.uiManager.createElement('div', 'flex flex-col items-center gap-4');
-        const button1 = this.uiManager.createButton('UPDATE PROFILE', 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200', () => {
+        const button1 = this.uiManager.createButton(this.t('update_profile'), 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200', () => {
             console.log('UPDATE PROFILE clicked');
-            const updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, () => this.render(), this.user);
+            const updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.languageManager, () => this.render(), this.user);
             updateProfilePage.render();
         });
         buttonsContainer.appendChild(button1);
@@ -232,7 +228,7 @@ export class SettingsPage {
         if (currentLangIndex === -1)
             currentLangIndex = 0;
         const wrapper = this.uiManager.createElement("div", "flex items-center gap-2 mt-6 cursor-pointer");
-        const label = this.uiManager.createElement("span", "retro-text text-[#ff1493]", "LANGUAGE:");
+        const label = this.uiManager.createElement("span", "retro-text text-[#ff1493]", this.t("language"));
         const flag = this.uiManager.createElement("span", "text-2xl", languages[currentLangIndex].flag);
         flag.addEventListener("click", async () => {
             currentLangIndex = (currentLangIndex + 1) % languages.length;

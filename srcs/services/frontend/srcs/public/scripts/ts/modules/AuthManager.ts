@@ -215,7 +215,7 @@ export class AuthManager {
     
     try {
       // Use the existing registerUser function which handles verification internally
-      const result = await this.registerUser(login, passwd, email, text, 'signup');
+      const result = await this.registerUser(login, passwd, email, 'signup');
       return result;
     } catch (error) {
       console.error('Registration failed:', error);
@@ -224,7 +224,7 @@ export class AuthManager {
   }
 
   public async registerUser(pseudo: string, password: string, 
-      email: string, text:Translations, view:string): 
+      email: string, view:string): 
       Promise<{ success: boolean; error?: string; needsVerification?: 
       boolean; verificationData?: any }>{
     const errorDiv = document.getElementById('formErrors') as HTMLElement;

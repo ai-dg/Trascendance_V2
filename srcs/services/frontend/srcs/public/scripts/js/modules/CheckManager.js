@@ -1,8 +1,12 @@
 import { AuthManager } from "./AuthManager.js";
 export class CheckManager {
     // TODO: maybe should get Translations text in the constructor
-    constructor() {
+    constructor(languageManager) {
         this.auth = new AuthManager(() => console.log("To register user or login in someone"));
+        this.languageManager = languageManager;
+    }
+    t(key) {
+        return this.languageManager.t(key);
     }
     getElement(id) {
         const el = document.getElementById(id);
@@ -10,43 +14,43 @@ export class CheckManager {
             throw new Error(`Element #${id} not found`);
         return el;
     }
-    checkEmail(text, email) {
+    checkEmail(email) {
         const errors = [];
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-            errors.push(text.errEmail);
+            errors.push(this.t('errEmail'));
         return errors;
     }
-    checkPassword(text, passwd) {
+    checkPassword(passwd) {
         const errors = [];
         if (passwd.length < 8)
-            errors.push(text.errLength);
+            errors.push(this.t('errLength'));
         if (!/[A-Z]/.test(passwd))
-            errors.push(text.errUpper);
+            errors.push(this.t('errUpper'));
         if (!/[a-z]/.test(passwd))
-            errors.push(text.errLower);
+            errors.push(this.t('errLower'));
         if (!/[0-9]/.test(passwd))
-            errors.push(text.errNbr);
+            errors.push(this.t('errNbr'));
         return errors;
     }
-    checkUsername(text, login) {
+    checkUsername(login) {
         const errors = [];
         if (!/^[A-Za-z0-9]+$/.test(login)) {
-            errors.push(text.errInvalidChars || "Username can only have lettres and numbers");
+            errors.push(this.t('errInvalidChars') || "Username can only have lettres and numbers");
         }
         if (login.length < 3)
-            errors.push(text.errTooShort || "Username too short");
+            errors.push(this.t('errTooShort') || "Username too short");
         if (login.length > 20)
-            errors.push(text.errTooLong || "Username too long");
+            errors.push(this.t('errTooLong') || "Username too long");
         return errors;
     }
-    checkForm(text, login, email, passwd) {
+    checkForm(login, email, passwd) {
         let errors = [];
-        errors = errors.concat(this.checkUsername(text, login));
-        errors = errors.concat(this.checkEmail(text, email));
-        errors = errors.concat(this.checkPassword(text, passwd));
+        errors = errors.concat(this.checkUsername(login));
+        errors = errors.concat(this.checkEmail(email));
+        errors = errors.concat(this.checkPassword(passwd));
         return errors;
     }
-    setupSignUpForm(form, text) {
+    setupSignUpForm(form) {
         form.addEventListener("submit", (e) => {
             e.preventDefault();
             const login = form.querySelector('#login').value.trim();
@@ -54,7 +58,7 @@ export class CheckManager {
             const passwd = form.querySelector('#passwd').value.trim();
             const passwdConfirm = form.querySelector('#passwdConfirm').value.trim();
             const errorDiv = this.getElement('formErrors');
-            const errors = this.checkForm(text, login, email, passwd);
+            const errors = this.checkForm(login, email, passwd);
             if (passwd != passwdConfirm)
                 errors.concat("Passwords dont match!");
             if (errors.length > 0) {
@@ -62,7 +66,7 @@ export class CheckManager {
                 return;
             }
             errorDiv.innerHTML = '';
-            this.auth.registerUser(login, passwd, email, text, 'signup');
+            this.auth.registerUser(login, passwd, email, 'signup');
         });
     }
     setupChangePassForm(form, text) {
@@ -79,7 +83,7 @@ export class CheckManager {
                 }
                 if (passwd != passwdConfirm)
                     errors.concat("Passwords dont match!");
-                errors = errors.concat(this.checkPassword(text, passwd));
+                errors = errors.concat(this.checkPassword(passwd));
                 if (errors.length > 0) {
                     errorDiv.innerHTML = errors.map(err => `<p>- ${err}</p>`).join('');
                     return;

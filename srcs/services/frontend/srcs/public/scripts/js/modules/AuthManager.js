@@ -188,7 +188,7 @@ export class AuthManager {
         }
         try {
             // Use the existing registerUser function which handles verification internally
-            const result = await this.registerUser(login, passwd, email, text, 'signup');
+            const result = await this.registerUser(login, passwd, email, 'signup');
             return result;
         }
         catch (error) {
@@ -196,7 +196,7 @@ export class AuthManager {
             return { success: false, error: 'Registration failed. Please try again.' };
         }
     }
-    async registerUser(pseudo, password, email, text, view) {
+    async registerUser(pseudo, password, email, view) {
         const errorDiv = document.getElementById('formErrors');
         const avatar = "default.png";
         const form = {

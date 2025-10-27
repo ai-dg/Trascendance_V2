@@ -3,22 +3,29 @@ import type { User } from '../modules/TypesManager.js';
 import type { RouterManager } from '../modules/RouterManager.js';
 import { AuthManager } from '../modules/AuthManager.js';
 import { CheckManager } from '../modules/CheckManager.js';
+import type { LanguageManager } from '../modules/LangManager.js';
 
 export class UpdateProfilePage {
     private uiManager: UIManager;
     private routerManager: RouterManager;
     private authManager: AuthManager;
     private checkManager: CheckManager;
+    private languageManager: LanguageManager;
     private onBack: () => void;
     private user?: User | null;
 
-    constructor(uiManager: UIManager, routerManager: RouterManager, authManager: AuthManager, onBack: () => void, user?: User | null) {
+    constructor(uiManager: UIManager, routerManager: RouterManager, authManager: AuthManager, languageManager: LanguageManager, onBack: () => void, user?: User | null) {
       this.uiManager = uiManager;
       this.routerManager = routerManager;
       this.onBack = onBack;
       this.user = user ?? null;
       this.authManager = authManager;
-      this.checkManager = new CheckManager();
+      this.languageManager = languageManager;
+      this.checkManager = new CheckManager(this.languageManager);
+    }
+
+    private t(key: string): string {
+      return this.languageManager.t(key);
     }
 
     public render(): void {
@@ -38,7 +45,7 @@ export class UpdateProfilePage {
         );
 
         // Avatar Section
-        const title = this.uiManager.createElement('h1', 'retro-title text-3xl mb-4', 'USER SETTINGS');
+        const title = this.uiManager.createElement('h1', 'retro-title text-3xl mb-4', this.t('userSettingsTitle'));
         const avatarSection = this.uiManager.createElement('div', 'flex flex-col items-center gap-2');
         const avatarImg = this.uiManager.createElement('img', 'w-16 h-16 rounded-full border-2 border-[#ff1493] cursor-pointer') as HTMLImageElement;
         if (!this.user || !this.user.avatar) {
@@ -48,14 +55,14 @@ export class UpdateProfilePage {
         } else {
           avatarImg.src = `public/avatars/${this.user.avatar}.png`;
         }
-        avatarImg.alt = 'User Avatar';
-        avatarImg.title = 'Click to change avatar';
+        avatarImg.alt = this.t('avatarAlt');
+        avatarImg.title = this.t('avatarTitle');
         avatarImg.addEventListener('click', () => {
           console.log('Change avatar clicked');
           this.renderAvatarSelector();
         });
 
-        const avatarLabel = this.uiManager.createElement('p', 'retro-subtitle text-sm opacity-70', 'CLICK TO CHANGE AVATAR');
+        const avatarLabel = this.uiManager.createElement('p', 'retro-subtitle text-sm opacity-70', this.t('clickToChangeAvatar'));
         card.appendChild(title);
         avatarSection.appendChild(avatarImg);
         avatarSection.appendChild(avatarLabel);
@@ -66,7 +73,7 @@ export class UpdateProfilePage {
           placeholder: string,
           changeHandler: (value: string, confirmValue?: string) => Promise<void> | void,
           withConfirm = false,
-          currentValue?: string
+          currentValue?: string,
         ) => {
           const fieldContainer = this.uiManager.createElement('div', 'flex flex-col gap-2 w-full'); 
         
@@ -77,7 +84,7 @@ export class UpdateProfilePage {
             const currentValueText = this.uiManager.createElement(
               'p',
               'text-[#ff1493] text-sm italic mb-1',
-              `Current: ${currentValue}`
+              `${this.t('current')}: ${currentValue}`
             );
             fieldContainer.appendChild(currentValueText);
           }
@@ -117,7 +124,7 @@ export class UpdateProfilePage {
                 'w-full px-6 py-4 bg-black/60 border-[#00ffff] text-[#00ffff] placeholder:text-[#00ffff]/50 focus:border-[#ff1493] focus:ring-[#ff1493] retro-text pr-10'
               ) as HTMLInputElement;
               confirmInput.type = inputType;
-              confirmInput.placeholder = `Confirm ${placeholder.toLowerCase()}`;
+              confirmInput.placeholder = `${this.t('confirm')} ${placeholder.toLowerCase()}`;
               confirmWrapper.appendChild(confirmInput);
           
               const confirmToggle = this.uiManager.createElement('button', `
@@ -137,13 +144,14 @@ export class UpdateProfilePage {
             }
 
           const errorDiv = this.uiManager.createElement('div', 'text-red-500 text-sm mt-1');
+          fieldContainer.appendChild(errorDiv);
       
           const button = this.uiManager.createButton(
-            'CHANGE',
+            this.t('change'),
             'retro-button bg-transparent text-[#ff1493] px-4 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200 self-end',
             async () => {
               console.log(`${labelText} changed to:`, input.value, withConfirm ? confirmInput?.value : '');
-              errorDiv.textContent = '';
+              errorDiv.innerHTML = '';
               try {
                 await changeHandler(input.value, confirmInput?.value);                
               } catch (err: any) {
@@ -152,18 +160,30 @@ export class UpdateProfilePage {
             }
           );    
           fieldContainer.appendChild(button);
-          fieldContainer.appendChild(errorDiv);
       
-          return fieldContainer;
+          return { fieldContainer, errorDiv };
         };
 
+        // let errorDiv: HTMLElement | undefined;
+
         // Username Field
-        const usernameField = createField(
-          'USERNAME',
+        const { fieldContainer: usernameField, errorDiv: usernameErrorDiv } = createField(
+          this.t('username'),
           'text',
-          'Enter new username',
+          this.t('usernamePlaceholder'),
           async (value) => {
-            
+            const usernameErrors = this.checkManager.checkUsername(value);
+            if (usernameErrors.length > 0) {
+              if (usernameErrorDiv)
+                usernameErrorDiv.innerHTML = '';
+              usernameErrors.forEach((error) => {
+                const errorMessage = this.uiManager.createElement('p', '', error);
+                usernameErrorDiv?.appendChild(errorMessage);
+              });
+              console.log("usernameErrors:", usernameErrors);
+              console.log(usernameErrorDiv);
+              return ;
+            }
             const res = await fetch(this.routerManager.getUrl('auth/update-username'), {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -172,7 +192,7 @@ export class UpdateProfilePage {
           });
           if (!res.ok) {
               const text = await res.text();
-              throw new Error(text || 'Failed to update username');
+              throw new Error(text || this.t('failedUpdateUsername'));
           }
           if (this.user) this.user.username = value;
           this.render();
@@ -182,12 +202,25 @@ export class UpdateProfilePage {
         );
 
         // Email Field
-        const emailField = createField(
-          'EMAIL',
+        const { fieldContainer: emailField, errorDiv: emailErrorDiv } = createField(
+          this.t('email'),
           'email',
-          'Enter new email',
+          this.t('emailPlaceholder'),
           async (value) => {
-            // TODO: checks to add
+            if (!value)
+                throw new Error(this.t('noEmailEntered'));
+            const emailErrors = this.checkManager.checkEmail(value);
+            if (emailErrors.length > 0) {
+              if (emailErrorDiv)
+                emailErrorDiv.innerHTML = '';
+              emailErrors.forEach((error) => {
+                const errorMessage = this.uiManager.createElement('p', '', error);
+                emailErrorDiv?.appendChild(errorMessage);
+              });
+              console.log("emailErrors:", emailErrors);
+              console.log(emailErrorDiv);
+              return ;
+            }
             const res = await fetch(this.routerManager.getUrl('/auth/verify-email'), { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -196,7 +229,7 @@ export class UpdateProfilePage {
             });
             if (!res.ok) {
                 const text = await res.text();
-                throw new Error(text || 'Failed to request OTP');
+                throw new Error(text || this.t('failedRequestOTP'));
             }
             const data = await res.json();
             console.log("OTP sent:", data);
@@ -213,7 +246,7 @@ export class UpdateProfilePage {
                     });
                     if (!res2.ok) {
                         const text = await res2.text();
-                        throw new Error(text || 'Failed to update email');
+                        throw new Error(text || this.t('failedUpdateEmail'));
                     }
                     if (this.user) this.user.email = value;
                     this.render();
@@ -222,17 +255,29 @@ export class UpdateProfilePage {
         this.routerManager.navigateTo('check-otp', data.otp_id);
         },
           false,
-          this.user?.email
+          this.user?.email,
         );
 
         // Password Fields (with confirm)
-        const passwordField = createField(
-            'PASSWORD',
+        const { fieldContainer: passwordField, errorDiv: passwordErrorDiv } = createField(
+            this.t('password'),
             'password',
-            'Enter new password',
+            this.t('enter_password'),
             async (value, confirmValue) => {
                 // TODO: checks to add
                 if (value !== confirmValue) throw new Error("Passwords don't match");
+                const passwordErrors = this.checkManager.checkPassword(value);
+            if (passwordErrors.length > 0) {
+              if (passwordErrorDiv)
+                passwordErrorDiv.innerHTML = '';
+              passwordErrors.forEach((error) => {
+                const errorMessage = this.uiManager.createElement('p', '', error);
+                passwordErrorDiv?.appendChild(errorMessage);
+              });
+              console.log("passwordErrors:", passwordErrors);
+              console.log(passwordErrorDiv);
+              return ;
+            }
             const res = await fetch(this.routerManager.getUrl('auth/update-password'), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -241,7 +286,7 @@ export class UpdateProfilePage {
                 });
                 if (!res.ok) {
                     const text = await res.text();
-                    throw new Error(text || 'Failed to update password');
+                    throw new Error(text || this.t('failedUpdatePassword'));
                 }
                 this.render();
             },
@@ -255,7 +300,7 @@ export class UpdateProfilePage {
         
         // delete account
         const deleteButton = this.uiManager.createButton(
-          'DELETE ACCOUNT',
+          this.t('deleteAccount'),
           'retro-button bg-[#ff0000] text-red px-6 py-2 rounded border-2 border-[#ff0000] hover:bg-[#ff3333] hover:text-white shadow-[0_0_10px_#ff0000] hover:shadow-[0_0_20px_#ff0000] transition-all duration-200',
           () => {
             console.log('DELETE ACCOUNT clicked');
@@ -265,7 +310,7 @@ export class UpdateProfilePage {
 
         // Back button (optional)
         const backButton = this.uiManager.createButton(
-          'BACK TO SETTINGS',
+          this.t('backToSettings'),
           'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 mt-4',
           () => {
             console.log('Back to settings clicked');
@@ -292,7 +337,7 @@ export class UpdateProfilePage {
       const title = this.uiManager.createElement(
         'h1',
         'retro-title text-3xl mb-6',
-        'CHOOSE YOUR AVATAR'
+        this.t('chooseYourAvatar')
       );
 
       const avatarContainer = this.uiManager.createAvatarSelector(
@@ -307,7 +352,7 @@ export class UpdateProfilePage {
 
             if (!res.ok) {
               const text = await res.text();
-              throw new Error(text || 'Failed to update avatar');
+              throw new Error(text || this.t('failedUpdateAvatar'));
             }
 
             if (this.user) this.user.avatar = avatarId;
@@ -321,7 +366,7 @@ export class UpdateProfilePage {
       );
 
       const backButton = this.uiManager.createButton(
-        'BACK',
+        this.t('back'),
         'retro-button bg-transparent text-[#00ffff] px-8 py-3 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200',
         () => this.render()
       );
@@ -354,13 +399,13 @@ export class UpdateProfilePage {
       const title = this.uiManager.createElement(
       'h1',
       'retro-title text-3xl text-[#ff0000]',
-      'ARE YOU SURE?'
+      this.t('areYouSure')
     );
 
     const warningText = this.uiManager.createElement(
       'p',
       'text-[#ff6666] text-sm' + ' mb-4',
-      'This action is permanent and cannot be undone.'
+      this.t('permanentActionWarning')
     );
 
     const passwordWrapper = this.uiManager.createElement(
@@ -372,7 +417,7 @@ export class UpdateProfilePage {
           'w-full px-6 py-4 pr-10 bg-black/60 border-[#00ffff] text-[#00ffff] placeholder:text-[#00ffff]/50 focus:border-[#ff1493] focus:ring-[#ff1493] retro-text', 
         ) as HTMLInputElement;
     passwordInput.type = 'password';
-    passwordInput.placeholder = 'Enter your password';
+    passwordInput.placeholder = this.t('enterYourPassword');
     passwordWrapper.appendChild(passwordInput);
       
     const toggleButton = this.uiManager.createElement('button', `
@@ -392,18 +437,18 @@ export class UpdateProfilePage {
 
 
     const deleteButton = this.uiManager.createButton(
-      'DELETE ACCOUNT',
+      this.t('deleteAccount'),
       'retro-button bg-[#ff0000] text-red px-6 py-2 rounded border-2 border-[#ff0000] hover:bg-[#ff3333] hover:text-white shadow-[0_0_10px_#ff0000] hover:shadow-[0_0_20px_#ff0000] transition-all duration-200',
       async () => {
         const password = passwordInput.value.trim();
         if (!password) {
-          alert('Please enter your password');
+          alert(this.t('enterPasswordAlert'));
           return;
         }
 
         try {
           if (!this.user) {
-            alert('User not found.');
+            alert(this.t('userNotFoundAlert'));
             return;
           }
 
@@ -419,20 +464,20 @@ export class UpdateProfilePage {
 
           if (!res.ok) {
             const text = await res.text();
-            throw new Error(text || 'Failed to delete account');
+            throw new Error(text || this.t('failedDeleteAccount'));
           }
 
-          alert('Your account has been deleted successfully.');
+          alert(this.t('accountDeleteSuccess'));
           window.location.href = '/';
         } catch (err) {
           console.error('Error deleting account:', err);
-          alert('An error occurred while deleting your account.');
+          alert(this.t('errorDeletingAccount'));
         }
       }
     );
 
     const backButton = this.uiManager.createButton(
-      'CANCEL',
+      this.t('cancel'),
       'retro-button bg-transparent text-[#00ffff] px-6 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200',
       () => this.render()
     );

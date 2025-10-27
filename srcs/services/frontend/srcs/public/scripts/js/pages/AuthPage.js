@@ -1,6 +1,6 @@
 import { CheckManager } from '../modules/CheckManager.js';
 export class AuthPage {
-    constructor(uiManager, authManager, checkManager, onLogin, onRegister, onForgotPassword, onChangePassword, onPlayAsGuest, onError) {
+    constructor(uiManager, authManager, checkManager, languageManager, onLogin, onRegister, onForgotPassword, onChangePassword, onPlayAsGuest, onError) {
         this.isLogin = true;
         this.showForgotPassword = false;
         this.showChangePassword = false;
@@ -14,6 +14,7 @@ export class AuthPage {
         this.text = {};
         this.uiManager = uiManager;
         this.authManager = authManager;
+        this.languageManager = languageManager;
         this.onLogin = onLogin;
         this.onRegister = onRegister;
         this.onForgotPassword = onForgotPassword;
@@ -21,10 +22,13 @@ export class AuthPage {
         this.onPlayAsGuest = onPlayAsGuest;
         this.onError = onError;
         this.boundHandleSubmit = this.handleSubmit.bind(this);
-        this.checkManager = new CheckManager();
+        this.checkManager = new CheckManager(this.languageManager);
         this.authManager.setHandlers({
             onChangePasswordRequest: this.handleChangePassword.bind(this),
         });
+    }
+    t(key) {
+        return this.languageManager.t(key);
     }
     render() {
         console.log("render: ", this.showChangePassword);
@@ -33,11 +37,19 @@ export class AuthPage {
         const card = this.uiManager.createElement('div', 'auth-card bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-8 shadow-[0_0_30px_#ff1493]');
         // Header
         const header = this.uiManager.createElement('div', 'text-center mb-8');
-        const title = this.uiManager.createElement('h1', 'retro-title text-3x2 mb-2', this.showForgotPassword ? 'RESET PASSWORD' : this.showChangePassword ? 'CHANGE PASS' : (this.isLogin ? 'LOGIN' : 'REGISTER'));
-        const subtitle = this.uiManager.createElement('p', 'retro-subtitle text-sm', this.showForgotPassword ? 'ENTER YOUR EMAIL TO RESET' : this.showChangePassword ? 'ENTER YOUR NEW PASSWORD' : (this.isLogin ? 'ACCESS THE ARCADE' : 'JOIN THE ARCADE'));
+        const title = this.uiManager.createElement('h1', 'retro-title text-3x2 mb-2', this.showForgotPassword
+            ? this.t('reset_password')
+            : this.showChangePassword
+                ? this.t('change_password')
+                : (this.isLogin ? this.t('login') : this.t('register')));
+        const subtitle = this.uiManager.createElement('p', 'retro-subtitle text-sm', this.showForgotPassword
+            ? this.t('enter_email_to_reset')
+            : this.showChangePassword
+                ? this.t('enter_new_password')
+                : (this.isLogin ? this.t('access_the_arcade') : this.t('join_the_arcade')));
         header.appendChild(title);
         header.appendChild(subtitle);
-        // Error Messages
+        // Error messages
         if (this.errors.length > 0) {
             const errorContainer = this.uiManager.createElement('div', 'mb-6 p-4 bg-red-900/30 border border-red-500 rounded-lg');
             this.errors.forEach(error => {
@@ -50,78 +62,64 @@ export class AuthPage {
         const form = this.uiManager.createElement('form', 'space-y-6');
         form.addEventListener('submit', this.boundHandleSubmit);
         if (this.showForgotPassword) {
-            // Forgot Password Form - only email field
-            const emailField = this.createField('EMAIL', 'email', 'email', 'Enter your email');
+            const emailField = this.createField(this.t('email'), 'email', 'email', this.t('enter_email'));
             form.appendChild(emailField);
-            // Submit button for forgot password
-            const submitButton = this.uiManager.createButton('RESET PASSWORD', 'w-full retro-button bg-[#ff1493] text-black hover:bg-transparent hover:text-[#ff1493] border-2 border-[#ff1493] py-3', () => this.onForgotPassword(this.formData.email));
+            const submitButton = this.uiManager.createButton(this.t('reset_password'), 'w-full retro-button bg-[#ff1493] text-black hover:bg-transparent hover:text-[#ff1493] border-2 border-[#ff1493] py-3', () => this.onForgotPassword(this.formData.email));
             submitButton.type = 'submit';
             form.appendChild(submitButton);
         }
         else if (this.showChangePassword) {
-            // Change Password Form - only email field
-            const passwordField = this.createField('PASSWORD', 'password', 'password', 'Enter your new password');
-            const passwordConfirmField = this.createField('PASSWORD CONFIRM', 'password', 'confirmPassword', 'Enter again your new password');
+            const passwordField = this.createField(this.t('password'), 'password', 'password', this.t('enter_new_password_placeholder'));
+            const passwordConfirmField = this.createField(this.t('password_confirm'), 'password', 'confirmPassword', this.t('enter_again_new_password'));
             form.appendChild(passwordField);
             form.appendChild(passwordConfirmField);
-            // Submit button for Change password
-            const submitButton = this.uiManager.createButton('CHANGE PASSWORD', 'w-full retro-button bg-[#ff1493] text-black hover:bg-transparent hover:text-[#ff1493] border-2 border-[#ff1493] py-3', () => { });
+            const submitButton = this.uiManager.createButton(this.t('change_password'), 'w-full retro-button bg-[#ff1493] text-black hover:bg-transparent hover:text-[#ff1493] border-2 border-[#ff1493] py-3', () => { });
             submitButton.type = 'submit';
             form.appendChild(submitButton);
         }
         else {
-            // Normal Login/Register Form
-            // Username field
-            const usernameField = this.createField('USERNAME', 'text', 'username', 'Enter username');
+            const usernameField = this.createField(this.t('username'), 'text', 'username', this.t('enter_username'));
             form.appendChild(usernameField);
-            // Email field (only for register)
             if (!this.isLogin) {
-                const emailField = this.createField('EMAIL', 'email', 'email', 'Enter email');
+                const emailField = this.createField(this.t('email'), 'email', 'email', this.t('enter_email'));
                 form.appendChild(emailField);
             }
-            // Password field
-            const passwordField = this.createField('PASSWORD', 'password', 'password', 'Enter password');
+            const passwordField = this.createField(this.t('password'), 'password', 'password', this.t('enter_password'));
             form.appendChild(passwordField);
-            // Confirm Password field (only for register)
             if (!this.isLogin) {
-                const confirmPasswordField = this.createField('CONFIRM PASSWORD', 'password', 'confirmPassword', 'Confirm password');
+                const confirmPasswordField = this.createField(this.t('confirm_password'), 'password', 'confirmPassword', this.t('confirm_password_placeholder'));
                 form.appendChild(confirmPasswordField);
             }
-            // Submit button
-            const submitButton = this.uiManager.createButton(this.isLogin ? 'LOGIN' : 'CREATE ACCOUNT', 'w-full retro-button bg-[#ff1493] text-black hover:bg-transparent hover:text-[#ff1493] border-2 border-[#ff1493] py-3', () => { });
+            const submitButton = this.uiManager.createButton(this.isLogin ? this.t('login') : this.t('create_account'), 'w-full retro-button bg-[#ff1493] text-black hover:bg-transparent hover:text-[#ff1493] border-2 border-[#ff1493] py-3', () => { });
             submitButton.type = 'submit';
             form.appendChild(submitButton);
         }
-        // Toggle button
+        // Toggle section
         const toggleContainer = this.uiManager.createElement('div', 'text-center mt-6');
         if (this.showForgotPassword) {
-            // Show "Back to Login" when in forgot password mode
             const backToLoginButton = this.uiManager.createElement('button', 'toggle-link');
-            backToLoginButton.textContent = "Back to LOGIN";
+            backToLoginButton.textContent = this.t('back_to_login');
             backToLoginButton.type = 'button';
             backToLoginButton.addEventListener('click', this.handleBackToLogin.bind(this));
             toggleContainer.appendChild(backToLoginButton);
         }
         else if (this.showChangePassword) {
-            // Show "Back to Login" when in forgot password mode
             const backToLoginButton = this.uiManager.createElement('button', 'toggle-link');
-            backToLoginButton.textContent = "Wrong email?";
+            backToLoginButton.textContent = this.t('wrong_email');
             backToLoginButton.type = 'button';
             backToLoginButton.addEventListener('click', this.handleBackToForgotPassword.bind(this));
             toggleContainer.appendChild(backToLoginButton);
         }
         else {
-            // Show normal toggle buttons
             const toggleButton = this.uiManager.createElement('button', 'toggle-link');
-            toggleButton.textContent = this.isLogin ? "Don't have an account? REGISTER" : "Already have an account? LOGIN";
+            toggleButton.textContent = this.isLogin ? this.t('dont_have_account') : this.t('already_have_account');
             toggleButton.type = 'button';
             toggleButton.addEventListener('click', this.toggleMode.bind(this));
             toggleContainer.appendChild(toggleButton);
-            // Forgot password button (only show on login mode)
             if (this.isLogin) {
                 const forgotPasswordContainer = this.uiManager.createElement('div', 'text-center mt-3');
                 const forgotPasswordButton = this.uiManager.createElement('button', 'toggle-link');
-                forgotPasswordButton.textContent = "Forgot your password?";
+                forgotPasswordButton.textContent = this.t('forgot_your_password');
                 forgotPasswordButton.type = 'button';
                 forgotPasswordButton.addEventListener('click', this.handleForgotPassword.bind(this));
                 forgotPasswordContainer.appendChild(forgotPasswordButton);
@@ -129,33 +127,30 @@ export class AuthPage {
             }
         }
         const demoInfo = this.uiManager.createElement('div', 'mt-6 p-4 bg-[#9d4edd]/20 border border-[#9d4edd] rounded-lg');
-        const demoText = this.uiManager.createElement('div', 'retro-text text-xs text-[#9d4edd] text-center', 'TRANSCENDANCE PROJECT');
+        const demoText = this.uiManager.createElement('div', 'retro-text text-xs text-[#9d4edd] text-center', this.t('project_name'));
         demoInfo.appendChild(demoText);
         card.appendChild(header);
         card.appendChild(form);
-        // OAuth Buttons (only show when not in forgot password mode)
         if (!this.showForgotPassword || !this.showChangePassword) {
             const oauthContainer = this.uiManager.createElement('div', 'mt-6 space-y-3');
-            // Divider
             const divider = this.uiManager.createElement('div', 'flex items-center my-4');
             const dividerLine = this.uiManager.createElement('div', 'flex-1 h-px bg-gradient-to-r from-transparent via-[#ff1493] to-transparent');
-            const dividerText = this.uiManager.createElement('span', 'px-4 retro-text text-sm text-[#ff1493]', 'OR');
+            const dividerText = this.uiManager.createElement('span', 'px-4 retro-text text-sm text-[#ff1493]', this.t('or'));
             divider.appendChild(dividerLine);
             divider.appendChild(dividerText);
             divider.appendChild(this.uiManager.createElement('div', 'flex-1 h-px bg-gradient-to-r from-transparent via-[#ff1493] to-transparent'));
-            // Google Sign In Button
-            const googleBtn = this.uiManager.createButton('SIGN IN WITH GOOGLE', 'w-full retro-button bg-white text-black hover:bg-gray-100 border-2 border-white py-3 flex items-center justify-center gap-3', () => this.handleGoogleSignIn());
-            // 42Auth Button
-            const auth42Btn = this.uiManager.createButton('SIGN IN WITH 42', 'w-full retro-button bg-[#00babc] text-white hover:bg-[#00a0a2] border-2 border-[#00babc] py-3 flex items-center justify-center gap-3', () => this.handle42SignIn());
+            const googleBtn = this.uiManager.createButton(this.t('sign_in_with_google'), 'w-full retro-button bg-white text-black hover:bg-gray-100 border-2 border-white py-3 flex items-center justify-center gap-3', () => this.handleGoogleSignIn());
+            const auth42Btn = this.uiManager.createButton(this.t('sign_in_with_42'), 'w-full retro-button bg-[#00babc] text-white hover:bg-[#00a0a2] border-2 border-[#00babc] py-3 flex items-center justify-center gap-3', () => this.handle42SignIn());
             oauthContainer.appendChild(divider);
             oauthContainer.appendChild(googleBtn);
             oauthContainer.appendChild(auth42Btn);
-            const playAsGuestBtn = this.uiManager.createButton('PLAY AS GUEST', 'w-full retro-button bg-[#00ffff] text-black hover:bg-[#00ffff]/80 hover:text-black border-2 border-[#00ffff] py-3 mt-6', this.onPlayAsGuest);
+            const playAsGuestBtn = this.uiManager.createButton(this.t('play_as_guest'), 'w-full retro-button bg-[#00ffff] text-black hover:bg-[#00ffff]/80 hover:text-black border-2 border-[#00ffff] py-3 mt-6', this.onPlayAsGuest);
             card.appendChild(oauthContainer);
             card.appendChild(playAsGuestBtn);
         }
         card.appendChild(toggleContainer);
         card.appendChild(demoInfo);
+        card.appendChild(this.createLanguageSelector());
         content.appendChild(card);
         container.appendChild(content);
         this.uiManager.clear();
@@ -206,7 +201,7 @@ export class AuthPage {
                 this.render();
                 return;
             }
-            const passwordErrors = this.checkManager.checkPassword(this.text, this.formData.password);
+            const passwordErrors = this.checkManager.checkPassword(this.formData.password);
             if (passwordErrors.length > 0) {
                 this.errors = passwordErrors;
                 this.render();
@@ -247,6 +242,36 @@ export class AuthPage {
             this.onRegister(this.formData.username, this.formData.email, this.formData.password, this.formData.confirmPassword);
             return;
         }
+    }
+    createLanguageSelector() {
+        const languages = [
+            { code: "en", flag: "🇬🇧" },
+            { code: "fr", flag: "🇫🇷" },
+            { code: "pt", flag: "🇧🇷" },
+        ];
+        const currentLangCode = this.languageManager.getCurrentLang();
+        let currentLangIndex = languages.findIndex(l => l.code === currentLangCode);
+        if (currentLangIndex === -1)
+            currentLangIndex = 0;
+        const wrapper = this.uiManager.createElement("div", "flex items-center justify-center gap-2 mt-6 cursor-pointer");
+        const label = this.uiManager.createElement("span", "retro-text text-[#ff1493]", "LANGUAGE:");
+        const flag = this.uiManager.createElement("span", "text-2xl", languages[currentLangIndex].flag);
+        flag.addEventListener("click", async () => {
+            currentLangIndex = (currentLangIndex + 1) % languages.length;
+            const nextLang = languages[currentLangIndex];
+            flag.textContent = nextLang.flag;
+            try {
+                await this.languageManager.setLang(nextLang.code);
+                await this.languageManager.loadTranslations();
+                this.render();
+            }
+            catch (err) {
+                console.error("Error changing language:", err);
+            }
+        });
+        wrapper.appendChild(label);
+        wrapper.appendChild(flag);
+        return wrapper;
     }
     toggleMode() {
         this.isLogin = !this.isLogin;

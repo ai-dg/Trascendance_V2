@@ -2,22 +2,29 @@ import { UIManager } from '../modules/UIManager.js';
 import type { Translations } from '../modules/TypesManager.js';
 import { CheckManager } from '../modules/CheckManager.js';
 import { OTPManagers } from '../modules/OTPManager.js';
+import type { LanguageManager } from '../modules/LangManager.js';
 
 export class CheckOtp {
   private uiManager: UIManager;
   private check: CheckManager;
   private otpManager: OTPManagers;
+  private languageManager: LanguageManager;
   private onVerificationComplete: (success: boolean) => void;
   private onChangePassword: (success: boolean) => void;
   private onBack: () => void;
 
-  constructor(uiManager: UIManager, onVerificationComplete: (success: boolean) => void, onChangePassword: (success: boolean) => void, onBack: () => void) {
+  constructor(uiManager: UIManager, languageManager: LanguageManager, onVerificationComplete: (success: boolean) => void, onChangePassword: (success: boolean) => void, onBack: () => void) {
     this.uiManager = uiManager;
+    this.languageManager = languageManager;
     this.otpManager = new OTPManagers();
     this.onVerificationComplete = onVerificationComplete;
     this.onChangePassword = onChangePassword;
     this.onBack = onBack;
-    this.check = new CheckManager();
+    this.check = new CheckManager(this.languageManager);
+  }
+
+  private t(key: string): string {
+    return this.languageManager.t(key);
   }
 
   public render(text: Translations, params: any): void {
@@ -30,10 +37,10 @@ export class CheckOtp {
     // Header
     const header = this.uiManager.createElement('div', 'text-center mb-8');
     const title = this.uiManager.createElement('h1', 'retro-text text-3xl font-bold text-[#00ffff] mb-2');
-    title.textContent = text.verifyTitle || 'Verify Your Account';
+    title.textContent = text.verifyTitle || this.t("verifyTitle");
     
     const subtitle = this.uiManager.createElement('p', 'text-white/80 text-sm');
-    subtitle.textContent = text.verifyInstruction || 'Please enter the verification code sent to your email';
+    subtitle.textContent = text.verifyInstruction || this.t("verifyInstruction");
     
     header.appendChild(title);
     header.appendChild(subtitle);
@@ -51,58 +58,58 @@ export class CheckOtp {
       input.maxLength = 1;
       codeContainer.appendChild(input);
     }
-    
+
     // Error Display
     const errorDiv = this.uiManager.createElement('div', 'text-red-400 text-center text-sm hidden');
     errorDiv.id = 'otpError';
-    
+
     // Buttons
     const buttonContainer = this.uiManager.createElement('div', 'space-y-3');
-    
+
     const verifyBtn = this.uiManager.createButton(
-      text.verify || 'Verify',
+      text.verify || this.t("verify"),
       'w-full retro-button bg-[#00ffff] text-black hover:bg-[#00ffff]/80 hover:text-black border-2 border-[#00ffff] py-3',
       () => {}
     ) as HTMLButtonElement;
     verifyBtn.id = 'verifyBtn';
-    
+
     const backBtn = this.uiManager.createButton(
-      text.back || 'Back',
+      text.back || this.t("back"),
       'w-full retro-button bg-transparent text-[#00ffff] hover:bg-[#00ffff]/10 border-2 border-[#00ffff] py-3',
       () => {}
     ) as HTMLButtonElement;
     backBtn.id = 'backBtn';
-    
+
     buttonContainer.appendChild(verifyBtn);
     buttonContainer.appendChild(backBtn);
-    
+
     otpContainer.appendChild(codeContainer);
     otpContainer.appendChild(errorDiv);
     otpContainer.appendChild(buttonContainer);
-    
+
     // Assemble the card
     card.appendChild(header);
     card.appendChild(otpContainer);
-    
+
     content.appendChild(card);
     container.appendChild(content);
-    
+
     // Clear existing content and add new content
     this.uiManager.container.innerHTML = '';
     this.uiManager.container.appendChild(container);
-    
+
     // Set up event listeners
     this.setupEventListeners(params, text);
   }
 
   private setupEventListeners(params: any, text: Translations): void {
     const inputs = document.querySelectorAll<HTMLInputElement>('#codeContainer input');
-    
+
     if (!inputs) {
       console.error("Failed to find inputs element");
       return;
     }
-    
+
     // Auto-focus and move to next input
     inputs.forEach((input, idx) => {
       input.addEventListener('input', () => {
@@ -118,7 +125,7 @@ export class CheckOtp {
     verifyBtn.addEventListener('click', async () => {
       const result = await this.otpManager.OTPValidationHandler(params, inputs);
       if (!result.success) {
-        this.showError(result.error || 'Invalid verification code. Please try again.');
+        this.showError(result.error || this.t("otpError"));  // Use translation for error message
       }
       console.log("Params context: ", params.context);
       if (params.context === 'verify') {
