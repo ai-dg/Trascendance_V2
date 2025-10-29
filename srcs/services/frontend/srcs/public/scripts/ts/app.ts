@@ -1,4 +1,4 @@
-import { User, OTParams } from './modules/TypesManager.js';
+import type { User } from './modules/TypesManager.js';
 import { AuthManager} from './modules/AuthManager.js';
 import { RouterManager, type Page } from './modules/RouterManager.js';
 import { UIManager } from './modules/UIManager.js';
