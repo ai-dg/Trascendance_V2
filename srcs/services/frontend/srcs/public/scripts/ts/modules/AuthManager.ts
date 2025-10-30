@@ -1,9 +1,9 @@
-import { User, LoginCredentials, RegisterCredentials, ForgotPasswordCredentials } from './TypesManager.js';
+import type { User, LoginCredentials } from './TypesManager.js';
 import type { Translations } from './TypesManager.js';
+import type { OTParams } from './TypesManager.js';
 import { getErrorMessage } from './ErrorManager.js';
 import { RouterManager } from './RouterManager.js';
 import { OTPManagers } from './OTPManager.js';
-import { OTParams } from './TypesManager.js';
 
 
 export class AuthManager {

@@ -15,6 +15,7 @@ export class App {
     constructor(container) {
         this.currentUser = null;
         this.currentPage = 'auth';
+        this.generalSocket = null;
         this.container = container;
         this.authManager = new AuthManager(this.handleBackToCheckOtp.bind(this));
         this.routerManager = new RouterManager((user) => {
@@ -104,6 +105,8 @@ export class App {
         await this.languageManager.init();
         if (this.currentUser) {
             this.currentPage = 'menu';
+            this.generalSocket = await this.initSocket('/remote-players/general');
+            console.log(this.generalSocket);
         }
         this.render();
     }
@@ -114,6 +117,19 @@ export class App {
         else {
             this.routerManager.navigateTo('auth');
         }
+    }
+    async initSocket(endpoint, handle = (data) => { console.log(data); }) {
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const sock = new WebSocket(wsProtocol + '//' + window.location.host + endpoint, []);
+        sock.onerror = function (error) {
+            console.error('Erreur WebSocket:', error);
+        };
+        sock.onopen = () => console.log("✅ Connected on websocket", endpoint, " !!!!");
+        sock.onmessage = (msg) => {
+            let data = JSON.parse(msg.data);
+            handle(data);
+        };
+        return sock;
     }
     async render() {
         this.uiManager.clear();

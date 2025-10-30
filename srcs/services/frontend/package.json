@@ -171,7 +171,6 @@
     "toad-cache": "^3.7.0",
     "toidentifier": "^1.0.1",
     "ts-interface-checker": "^0.1.13",
-    "tsc": "^2.0.4",
     "undici-types": "^7.10.0",
     "universalify": "^2.0.1",
     "update-browserslist-db": "^1.1.3",

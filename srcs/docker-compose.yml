@@ -47,6 +47,7 @@ services:
     depends_on:
       - auth_app
       - live-chat_app
+      - remote-players_app
 
 
 ######################################################################
@@ -153,8 +154,26 @@ services:
       context: ./services/remote-players/app
     expose:
       - 3003
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
+      - CSRF_SECRET=${CSRF_SECRET}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
+      - FORTYTWO_CLIENT_ID=${FORTYTWO_CLIENT_ID}
+      - FORTYTWO_CLIENT_SECRET=${FORTYTWO_CLIENT_SECRET}
+      - FORTYTWO_REDIRECT_URI=${FORTYTWO_REDIRECT_URI}
     networks:
       - internal
+    volumes:
+      - /data/node_modules
+      # - sqlite_data:/data/sqlite
+      # - ./volume/redis_data:/data
+      - ./services/remote-players/app:/data
 
   match-maker_app:
     container_name: match-maker_app

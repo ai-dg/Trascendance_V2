@@ -1,5 +1,5 @@
 import { RouterManager } from "./RouterManager.js";
-import { OTParams } from "./TypesManager.js";
+import type { OTParams } from "./TypesManager.js";
 
 export class OTPManagers {
     private router: RouterManager;
