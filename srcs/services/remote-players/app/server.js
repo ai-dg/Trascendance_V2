@@ -86,10 +86,8 @@ app.get('/', async () => {
 });
 
 
-await app.register(async function (fastify) {
-	console.log("🔧 Enregistrement du contexte WebSocket");
-    fastify.get('/general', { websocket: true , preHandler: isConnectedWSSHook, logLevel: 'debug'}, (socket, req) => {
-    console.log("🎯 🎯 🎯 HANDLER APPELÉ 🎯 🎯 🎯");
+async function generalSocketRoute(socket, req){
+	 console.log("🎯 🎯 🎯 HANDLER APPELÉ 🎯 🎯 🎯");
 	try
 	{
 		const userId = req.user
@@ -123,7 +121,52 @@ await app.register(async function (fastify) {
 	catch(err){
 		console.error(err);		
 	}
-    });
+}
+
+
+async function gameSocketRoute(socket, req){
+	 console.log("🎯 🎯 🎯 HANDLER APPELÉ 🎯 🎯 🎯");
+	try
+	{
+		const userId = req.user
+		console.log(userId)
+		generalConnections.set(userId, socket)
+
+	
+
+	// connection.socket est le WebSocket
+
+
+		redis.set(`online:${userId}`, 'true');
+	
+		// Exemple : recevoir des messages
+		socket.on('message', message => {
+			console.log('Message reçu du client :', message.toString());
+		});
+	
+		// Exemple : envoyer un message au client
+		
+		socket.send(JSON.stringify({ type: 'welcome', payload: 'Bienvenue sur le canal game' }));
+
+		// Gestion de la fermeture
+		socket.on('close', () => {
+			generalConnections.delete(userId);
+			redis.del(`online:${userId}`);
+			console.log('Connexion WebSocket fermée');
+		});
+
+	}
+	catch(err){
+		console.error(err);		
+	}
+
+}
+
+
+await app.register(async function (fastify) {
+	console.log("🔧 Enregistrement du contexte WebSocket");
+    fastify.get('/general', { websocket: true , preHandler: isConnectedWSSHook, logLevel: 'debug'}, async (socket, req) => generalSocketRoute(socket, req));
+    fastify.get('/game', { websocket: true , preHandler: isConnectedWSSHook, logLevel: 'debug'}, async (socket, req) => gameSocketRoute(socket, req));
 	console.log("✅ Route /general enregistrée");
 });
 

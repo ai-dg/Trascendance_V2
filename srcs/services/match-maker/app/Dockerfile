@@ -7,14 +7,40 @@ RUN apt update && apt upgrade -y \
 	&& apt clean \
 	&& rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+VOLUME ["/data"]
 
-COPY package.json .
-COPY server.js .
+WORKDIR /data
 
-RUN npm init -y \
-	&& npm install fastify
+COPY package.json ./
+COPY package-lock.json ./
+
+RUN npm install -g nodemon
+
+RUN npm install --package-lock \
+	dotenv \
+	mysql2 \
+	fastify@latest \
+	@fastify/formbody \
+	@fastify/helmet \
+	@fastify/rate-limit \
+	@fastify/cors \
+	bcryptjs \
+	jsonwebtoken \
+	@fastify/cookie \
+	@fastify/csrf-protection \
+	redis \
+	xss \
+	validator \
+	nodemailer \
+	@grpc/grpc-js \
+	@grpc/proto-loader \
+	amqplib \
+	@fastify/websocket
+	# sqlite3 \
+	# sqlite
+	
+COPY . .
 
 EXPOSE 3003
 
-CMD ["node", "server.js"]
+CMD ["nodemon", "--config", "nodemon.json"]

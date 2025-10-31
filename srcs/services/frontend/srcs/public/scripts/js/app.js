@@ -16,6 +16,8 @@ export class App {
         this.currentUser = null;
         this.currentPage = 'auth';
         this.generalSocket = null;
+        this.gameSocket = null;
+        this.TournamentSocket = null;
         this.container = container;
         this.authManager = new AuthManager(this.handleBackToCheckOtp.bind(this));
         this.routerManager = new RouterManager((user) => {
@@ -107,6 +109,8 @@ export class App {
             this.currentPage = 'menu';
             this.generalSocket = await this.initSocket('/remote-players/general');
             console.log(this.generalSocket);
+            this.gameSocket = await this.initSocket('/remote-players/game');
+            console.log(this.gameSocket);
         }
         this.render();
     }

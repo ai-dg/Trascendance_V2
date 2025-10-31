@@ -61,6 +61,7 @@ services:
 # REMOTE_PLAYER_SERVICE : 3003
 # MATCH_MAKING : 3004
 # SERVER-RENDERING : 3003
+# CANVAS-AI : 3007
 
   server-rendering_app:
     container_name: server-rendering_app
@@ -176,14 +177,58 @@ services:
       # - ./volume/redis_data:/data
       - ./services/remote-players/app:/data
 
+
+  canvas-ai_app:
+    container_name: canvas-ai_app
+    build:
+      context: ./services/canvas-ai/app
+    expose:
+      - 3007
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
+      - CSRF_SECRET=${CSRF_SECRET}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
+      # - FORTYTWO_CLIENT_ID=${FORTYTWO_CLIENT_ID}
+      # - FORTYTWO_CLIENT_SECRET=${FORTYTWO_CLIENT_SECRET}
+      # - FORTYTWO_REDIRECT_URI=${FORTYTWO_REDIRECT_URI}
+    networks:
+      - internal
+    volumes:
+      - /data/node_modules
+      # - sqlite_data:/data/sqlite
+      # - ./volume/redis_data:/data
+      - ./services/canvas-ai/app:/data
+
   match-maker_app:
     container_name: match-maker_app
     build:
       context: ./services/match-maker/app
     expose:
       - 3004
-    # volumes:
-    #   - sqlite_data:/data
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
+      - CSRF_SECRET=${CSRF_SECRET}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
+      # - FORTYTWO_CLIENT_ID=${FORTYTWO_CLIENT_ID}
+      # - FORTYTWO_CLIENT_SECRET=${FORTYTWO_CLIENT_SECRET}
+      # - FORTYTWO_REDIRECT_URI=${FORTYTWO_REDIRECT_URI}
+    volumes:
+      - /data/node_modules
+      # - sqlite_data:/data/sqlite
+      # - ./volume/redis_data:/data
+      - ./services/match-maker/app:/data
     networks:
       - internal
 

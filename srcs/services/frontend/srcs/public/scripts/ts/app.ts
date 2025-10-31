@@ -23,6 +23,8 @@ export class App {
   private currentUser: User | null = null;
   private currentPage: Page = 'auth';
   generalSocket: WebSocket | null =  null;
+  gameSocket: WebSocket | null =  null;
+  TournamentSocket: WebSocket | null =  null;
 
   // Page instances
   private authPage: AuthPage;
@@ -141,6 +143,8 @@ export class App {
       this.currentPage = 'menu';
 	  	this.generalSocket = await this.initSocket('/remote-players/general');
 		console.log(this.generalSocket)
+		this.gameSocket = await this.initSocket('/remote-players/game');
+		console.log(this.gameSocket)
     }
     this.render();
   }
