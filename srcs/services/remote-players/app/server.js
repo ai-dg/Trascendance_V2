@@ -86,69 +86,43 @@ app.get('/', async () => {
 });
 
 
-
-// app.addHook('onRequest', async (request, reply) => {
-// 	if (request.method === "GET" && request.url.startsWith("/general"))
-// 	{
-// 		console.log("ok 1")
-// 		await isConnectedWSSHook(request, reply)
-// 		console.log("ok 2")
-// 	}
-// 	else 
-// 	{
-// 		console.log("nok")
-// 		return reply.code(401).send({ error: 'Non autorisé' });
-// 	}
-// 	});
-
-
-// app.get('/general', { websocket: true }, (socket, req) => {
-//         console.log("🎯 🎯 🎯 HANDLER APPELÉ 🎯 🎯 🎯");
-//         console.log("test1 in general Socket Handler")
-// 	try
-// 	{
-// 		const userId = req.user
-// 		console.log(userId)
-// 		console.log(req)
-// 		let ws = socket.socket;
-// 		generalConnections.set(userId, ws)
-
-	
-
-// 	// connection.socket est le WebSocket
-
-
-// 		redis.set(`online:${userId}`, 'true');
-	
-// 		// Exemple : recevoir des messages
-// 		ws.on('message', message => {
-// 			console.log('Message reçu du client :', message.toString());
-// 		});
-	
-// 		// Exemple : envoyer un message au client
-// 		ws.send(JSON.stringify({ type: 'welcome', payload: 'Bienvenue sur le canal global' }));
-	
-// 		// Gestion de la fermeture
-// 		ws.on('close', () => {
-// 			generalConnections.delete(userId);
-// 			redis.del(`online:${userId}`);
-// 			console.log('Connexion WebSocket fermée');
-// 		});
-
-// 	}
-// 	catch(err){
-// 		console.error(err);		
-// 	}
-//     })
-
-app.register(async function (fastify) {
+await app.register(async function (fastify) {
 	console.log("🔧 Enregistrement du contexte WebSocket");
-    fastify.get('/general', { websocket: true , preHandler: isConnectedWSSHook}, (socket, req) => {
-        console.log("🎯 🎯 🎯 HANDLER APPELÉ 🎯 🎯 🎯");
-        console.log("Type de socket:", typeof socket);
-        console.log("req:", req.url);
+    fastify.get('/general', { websocket: true , preHandler: isConnectedWSSHook, logLevel: 'debug'}, (socket, req) => {
+    console.log("🎯 🎯 🎯 HANDLER APPELÉ 🎯 🎯 🎯");
+	try
+	{
+		const userId = req.user
+		console.log(userId)
+		generalConnections.set(userId, socket)
 
-        socket.send(JSON.stringify({ test: 'hello' }));
+	
+
+	// connection.socket est le WebSocket
+
+
+		redis.set(`online:${userId}`, 'true');
+	
+		// Exemple : recevoir des messages
+		socket.on('message', message => {
+			console.log('Message reçu du client :', message.toString());
+		});
+	
+		// Exemple : envoyer un message au client
+		
+		socket.send(JSON.stringify({ type: 'welcome', payload: 'Bienvenue sur le canal global' }));
+
+		// Gestion de la fermeture
+		socket.on('close', () => {
+			generalConnections.delete(userId);
+			redis.del(`online:${userId}`);
+			console.log('Connexion WebSocket fermée');
+		});
+
+	}
+	catch(err){
+		console.error(err);		
+	}
     });
 	console.log("✅ Route /general enregistrée");
 });
@@ -157,6 +131,7 @@ app.register(async function (fastify) {
 
 const start = async () => {
 	try {
+		console.log(app.printRoutes());
 		 await app.listen({ port: 3003, host: '0.0.0.0' });
 		console.log('Remote-player service running');
 	} catch (err) {

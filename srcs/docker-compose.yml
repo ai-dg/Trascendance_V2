@@ -48,6 +48,7 @@ services:
       - auth_app
       - live-chat_app
       - remote-players_app
+      - frontend_app  
 
 
 ######################################################################
