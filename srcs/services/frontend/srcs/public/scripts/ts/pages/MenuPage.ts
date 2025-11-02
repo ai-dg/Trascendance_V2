@@ -77,9 +77,11 @@ export class MenuPage {
   }
 
   public render(user: User | null): void {
-    const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
+    // const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
+    const container = this.uiManager.createElement('div', 'retro-container size-full flex p-8');
     
-    const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-4xl');
+    const content = this.uiManager.createElement('div', 'relative z-10 w-full flex-1 mx-auto');
+    content.style.maxWidth = '1000px';
     
     // Header
     const header = this.uiManager.createElement('div', 'text-center mb-12');
@@ -148,13 +150,70 @@ export class MenuPage {
       const scanLineInner = this.uiManager.createElement('div', 'absolute inset-0 bg-gradient-to-b from-transparent via-[var(--item-color)]/10 to-transparent animate-pulse');
       scanLineInner.style.backgroundSize = '100% 200%';
       scanLine.appendChild(scanLineInner);
-      
+
       menuItem.appendChild(content);
       menuItem.appendChild(scanLine);
       menuItem.addEventListener('click', item.action);
       
       menuGrid.appendChild(menuItem);
     });
+
+
+    // div lateral social
+    const socialDiv = this.uiManager.createElement('div', 'w-80 bg-black/60 backdrop-blur-md border-l-2 border-[#00ffff] flex flex-col py-6 px-4 mb-12');
+    // socialDiv.style.height = `${menuGrid.offsetHeight}px`;
+    socialDiv.style.minHeight = '700px';
+    socialDiv.style.border = '2px solid red';
+
+    // Header Social
+    const socialHeader = this.uiManager.createElement('h3', 'retro-text text-xl text-[#00ffff] mb-4');
+    socialHeader.textContent = 'SOCIAL';
+
+    // Online List
+    const onlineList = this.uiManager.createElement('div', 'w-full mb-6');
+    const onlineTitle = this.uiManager.createElement('h4', 'retro-text text-lg text-[#00ffff] mb-2');
+    onlineTitle.textContent = 'Online';
+
+    const onlineListContent = this.uiManager.createElement('div', 'text-[#00ffff] opacity-80');
+    onlineListContent.textContent = 'List of online users goes here...';
+
+    onlineList.appendChild(onlineTitle);
+    onlineList.appendChild(onlineListContent);
+
+    // Notifications
+    const notifications = this.uiManager.createElement('div', 'w-full');
+    const notificationsTitle = this.uiManager.createElement('h4', 'retro-text text-lg text-[#00ffff] mb-2');
+    notificationsTitle.textContent = 'Notifications';
+
+    const notificationsContent = this.uiManager.createElement('div', 'text-[#00ffff] opacity-80');
+    notificationsContent.textContent = 'Notifications list goes here...';
+
+    notifications.appendChild(notificationsTitle);
+    notifications.appendChild(notificationsContent);
+
+    socialDiv.appendChild(socialHeader);
+    socialDiv.appendChild(onlineList);
+    socialDiv.appendChild(notifications);
+
+    const mainGrid = this.uiManager.createElement('div', 'flex gap-6 w-full');
+
+    // Menu Grid Wrapper
+    const menuGridWrapper = this.uiManager.createElement('div', 'flex-1 h-full');
+    menuGridWrapper.appendChild(menuGrid);
+
+    // Social Div Wrapper
+    const socialDivWrapper = this.uiManager.createElement('div', 'w-80 flex flex-col flex-shrink-0');
+    socialDivWrapper.style.justifySelf = 'end';
+    // socialDivWrapper.style.height = `${menuGridWrapper.offsetHeight}px`;
+    // socialDivWrapper.style.height = '100%';
+    // socialDivWrapper.style.minHeight = '100vh';
+    socialDivWrapper.appendChild(socialDiv);
+
+    mainGrid.style.alignItems = 'stretch';
+
+    mainGrid.appendChild(menuGridWrapper);
+    mainGrid.appendChild(socialDivWrapper);
+
     
     // Stats Panel
     const statsPanel = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-6 mb-8');
@@ -203,12 +262,14 @@ export class MenuPage {
     versionInfo.appendChild(versionText);
     
     content.appendChild(header);
-    content.appendChild(menuGrid);
+    // content.appendChild(menuGrid);
+    content.appendChild(mainGrid);
     content.appendChild(statsPanel);
     content.appendChild(footer);
     content.appendChild(versionInfo);
     
     container.appendChild(content);
+    // container.appendChild(socialDiv);
     
     this.uiManager.clear();
     this.uiManager.container.appendChild(container);
