@@ -11,6 +11,7 @@ import { SettingsPage } from './pages/SettingsPage.js';
 import { CheckManager } from './modules/CheckManager.js';
 import { UpdateProfilePage } from './pages/UpdateProfilePage.js';
 import { LanguageManager } from './modules/LangManager.js';
+import { LiveChatPage } from './pages/LiveChatPage.js';
 export class App {
     constructor(container) {
         this.currentUser = null;
@@ -36,6 +37,7 @@ export class App {
         this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.handleSettings.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser);
         if (this.currentUser)
             this.settingsPage = new SettingsPage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.authPage, this.handleBackToMenu.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser ?? null, this.currentUser?.isGuest ?? true);
+        this.liveChatPage = new LiveChatPage(this.uiManager);
         this.setupEventListeners();
         this.initialize();
     }
@@ -157,6 +159,10 @@ export class App {
             case 'update-profile':
                 this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.handleSettings.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser);
                 this.updateProfilePage.render();
+                break;
+            case 'live-chat':
+                this.liveChatPage = new LiveChatPage(this.uiManager);
+                this.liveChatPage.render(this.currentUser);
                 break;
         }
     }
@@ -288,6 +294,10 @@ export class App {
     handleChatWithFriends() {
         // TODO: Implement chat functionality
         console.log('Chat with friends functionality not yet implemented');
+        if (this.currentUser && this.currentUser.isGuest == false)
+            this.routerManager.navigateTo('live-chat');
+        else
+            console.log('Connect to chat wih friends');
     }
     handleBackToMenu() {
         this.routerManager.navigateTo('menu');
