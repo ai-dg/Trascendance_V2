@@ -1,6 +1,6 @@
 import { AuthManager } from "./AuthManager.js";
 import type { LanguageManager } from "./LangManager.js";
-import { Translations } from "./TypesManager.js";
+import type { Translations } from "./TypesManager.js";
 
 
 export class CheckManager {

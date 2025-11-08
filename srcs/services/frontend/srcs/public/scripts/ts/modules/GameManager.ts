@@ -1,4 +1,4 @@
-import { GameState, BallState, GameSettings, PaddleState } from "./TypesManager.js";
+import type { GameState, BallState, GameSettings, PaddleState } from "./TypesManager.js";
 
 export class GameManager {
   private canvas: HTMLCanvasElement;
