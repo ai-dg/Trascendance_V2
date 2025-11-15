@@ -46,7 +46,7 @@ async function isConnectedWSSHook(request, reply) {
 	{
 		console.log("no token found")
 		if (isWebSocket)
-			throw new Error("Unauthorised")
+			throw new Error("Unauthorized")
 		return reply.code(401).send({ error: 'Non autorisé' });
 	}
     try {
@@ -55,14 +55,14 @@ async function isConnectedWSSHook(request, reply) {
     	if (!val || !val.jti)
 		{
 			if (isWebSocket)
-				throw new Error("Unauthorised")
+				throw new Error("Unauthorized")
 			return reply.code(401).send({ error: 'Non autorisé' });
 		}
 		const exists = await redis.get(`jwt:${val.jti}`);
 		if (!exists || exists === "not valid")
 		{
 			if (isWebSocket)
-				throw new Error("Unauthorised")
+				throw new Error("Unauthorized")
 			return reply.code(401).send({ error: 'Non autorisé' });
 		}
 		const payload = jwt.verify(token, process.env.JWT_SECRET);
@@ -71,7 +71,7 @@ async function isConnectedWSSHook(request, reply) {
     } catch (err) {
 		console.log(err)
 		if (isWebSocket)
-			throw new Error("Unauthorised")
+			throw new Error("Unauthorized")
         return reply.code(401).send({ error: 'Non autorisé' });
     }	
 	console.log("END OK CONNECTED WSSHOOK")
@@ -105,6 +105,48 @@ async function generalSocketRoute(socket, req){
 		socket.on('message', message => {
 			console.log('Message reçu du client :', message.toString());
 		});
+
+		socket.on('add-friend', async(data) => {
+			const { senderId, receiverId } = data;
+			
+			socket.send(JSON.stringify({
+				type: 'add-friend',
+				payload: { 
+					senderId,
+					receiverId,
+					message: `User ${senderId} wants to add user ${receiverId} as a friend`
+				}
+			}));
+
+			try {
+				const resDB = await fetch('http://live-chat/friend-request/', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ receiverId })
+				});
+				if (!resDB.ok) {
+					console.error('Failed to request friend in DB');
+					return ;
+				}
+			} catch (error) {
+				console.error("Error to friend request: ", error);
+				return ;
+			}
+
+			const receiverSocket = generalConnections.get(receiverId);
+			if (receiverSocket) {
+				receiverSocket.send(JSON.stringify({
+					type: 'friend-request',
+					payload: {
+						senderId,
+						message: '${senderId} wants to be your friend!'
+					}
+				}));
+			} else {
+				await redis.set('friend-request:${receiverId}:${senderId}', 'pending');
+				console.log(`Friend request from ${senderId} saved in Redis for ${receiverId}`);
+			}
+		})
 	
 		// Exemple : envoyer un message au client
 		

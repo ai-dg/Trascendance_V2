@@ -1,7 +1,8 @@
-FROM node:20-bullseye
+FROM node:20
 
 WORKDIR /data
 
+COPY . .
 COPY package*.json ./
 
 RUN npm install --production

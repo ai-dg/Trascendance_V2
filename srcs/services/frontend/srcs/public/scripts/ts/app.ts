@@ -67,7 +67,7 @@ export class App {
     this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.handleSettings.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser);
     if (this.currentUser)
       this.settingsPage = new SettingsPage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.authPage, this.handleBackToMenu.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser ?? null, this.currentUser?.isGuest ?? true);
-    this.liveChatPage = new LiveChatPage(this.uiManager);
+    this.liveChatPage = new LiveChatPage(this.uiManager, this.routerManager, this.languageManager, this.generalSocket, this.handleBackToMenu.bind(this));
 
     this.setupEventListeners();
     this.initialize();
@@ -221,7 +221,7 @@ export class App {
         this.updateProfilePage.render();
         break;
       case 'live-chat':
-        this.liveChatPage = new LiveChatPage(this.uiManager);
+        this.liveChatPage = new LiveChatPage(this.uiManager, this.routerManager, this.languageManager, this.generalSocket, this.handleBackToMenu.bind(this));
         this.liveChatPage.render(this.currentUser);
         break;
     }

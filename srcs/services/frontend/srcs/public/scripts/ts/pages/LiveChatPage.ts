@@ -1,14 +1,32 @@
 import { UIManager } from '../modules/UIManager.js';
 import type { User } from '../modules/TypesManager.js';
+import type { LanguageManager } from '../modules/LangManager.js';
+import type { RouterManager } from '../modules/RouterManager.js';
 
 
 export class LiveChatPage {
     private uiManager: UIManager;
+    private routerManager: RouterManager;
+    private languageManager: LanguageManager;
+    private generalSocket: WebSocket | null;
+    private onBack: () => void;
 
     constructor(
-        uiManager: UIManager
+        uiManager: UIManager,
+        routerManager: RouterManager,
+        languageManager: LanguageManager,
+        generalSocket: WebSocket | null,
+        onBack: () => void
     ) {
         this.uiManager = uiManager;
+        this.routerManager = routerManager;
+        this.languageManager = languageManager;
+        this.generalSocket = generalSocket;
+        this.onBack = onBack;
+    }
+
+    private t(key: string): string {
+      return this.languageManager.t(key);
     }
 
     public render(user: User | null): void {
@@ -28,13 +46,30 @@ export class LiveChatPage {
         const profileDiv = this.uiManager.createElement('div', 'bg-black/60 p-4 min-h-[700px] flex-shrink-0 w-60');
         profileDiv.textContent = 'User Profile goes here';
 
+        const avatarSection = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
+        const avatarImg = this.uiManager.createElement('img', 'w-12 h-12 rounded-full border-2 border-[#ff1493] cursor-pointer') as HTMLImageElement;
+        if (!user || !user.avatar)
+            avatarImg.src = 'public/avatars/default.png';
+        else if (user.avatar.startsWith('http'))
+            avatarImg.src = user.avatar;
+        else
+            avatarImg.src = `public/avatars/${user.avatar}.png`;
+
+        const username = this.uiManager.createElement('p', 'retro-subtitle text-lg text-[#00ffff] font-bold');
+        username.textContent = user ? user.username : 'USERNAME';
+
+        avatarSection.appendChild(avatarImg);
+        avatarSection.appendChild(username);
+
+        profileDiv.appendChild(avatarSection);
+
         // Chat Column
-        const chatDiv = this.uiManager.createElement('div', 'flex-1 bg-black/60 p-4 flex flex-col min-h-[700px]');
+        const chatDiv = this.uiManager.createElement('div', 'flex flex-col flex-grow bg-black/60 p-4 min-h-[700px]');
 
         const messagesDiv = this.uiManager.createElement('div', 'flex-1 overflow-y-auto mb-2 p-2 border border-gray-700 rounded');
         messagesDiv.textContent = 'Chat messages go here...';
 
-        const inputDiv = this.uiManager.createElement('div', 'flex gap-2 mt-2');
+        const inputDiv = this.uiManager.createElement('div', 'flex gap-2 mt-2 flex-shrink-0');
         const inputField = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black');
         const sendButton = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-black rounded');
         sendButton.textContent = 'Send';
@@ -62,11 +97,52 @@ export class LiveChatPage {
         const sendFriendBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-black rounded');
         sendFriendBtn.textContent = 'Send';
 
+        const errorMessageDiv = this.uiManager.createElement('div', 'hidden text-red-500 text-sm mt-2');
+        errorMessageDiv.textContent = 'Error: User not found or already a friend.';
+
         addFriendDiv.appendChild(friendInput);
         addFriendDiv.appendChild(sendFriendBtn);
 
         addFriendBtn.addEventListener('click', () => {
             addFriendDiv.classList.toggle('hidden');
+        });
+
+        sendFriendBtn.addEventListener('click', async () => {
+            const username = friendInput.value.trim();
+
+            if (!username) {
+                errorMessageDiv.textContent = 'Please enter a username';
+                errorMessageDiv.classList.remove('hidden');
+            }
+
+            if (user) {
+                try {
+                    const senderId = user.id;
+                    const receiverId = await this.getIdByUsername(username);
+
+                    if (!receiverId) {
+                        errorMessageDiv.textContent = "User id not found";
+                        errorMessageDiv.classList.remove('hidden');
+                    }
+
+                    if (this.generalSocket) {
+                        // console.log("With this.generalSocket");
+                        // this.generalSocket.addEventListener("add-friend", (event) => {
+                        //     const msg = JSON
+                        //     console.log("Live-chat says:", event.data);
+                        // });
+                        this.generalSocket.send(JSON.stringify({
+                            type: 'add-friend', 
+                            payload: { senderId, receiverId }
+                        }));
+                    }
+                    console.log("Friend request sent by websockets!");
+                } catch (error) {
+                    console.error("Error sending friend request:", error);
+                    errorMessageDiv.textContent = "Failed to send request. Please try again.";
+                    errorMessageDiv.classList.remove('hidden');
+                }
+            }
         });
 
         socialHeaderWrapper.appendChild(socialHeader);
@@ -103,12 +179,52 @@ export class LiveChatPage {
         mainGrid.appendChild(chatDiv);
         mainGrid.appendChild(socialDiv);
 
+        const backDiv = this.uiManager.createElement('div', 'flex justify-center items-center h-screen');
+
+        // Back button (optional)
+        const backButton = this.uiManager.createButton(
+          this.t('backToSettings'),
+          'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 mt-4',
+          () => {
+            console.log('Back to settings clicked');
+            this.onBack();
+          }
+        );
+
+        backDiv.appendChild(backButton);
         container.appendChild(mainGrid);
+        container.append(backDiv);
 
         this.uiManager.clear();
         this.uiManager.container.appendChild(container);
     }
 
+    private async getIdByUsername(username: string) {
+        try {
+            const res = await fetch(this.routerManager.getUrl('/auth/id-username'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            if (!res.ok) {
+                console.error('Error fetching user data');
+                return ;
+            }
+
+            const data = await res.json();
+
+            if (!data.success) {
+                console.error('Couldn\'t find username');
+                return ;
+            } else {
+                const userId = data.data.user.user_id;
+                console.log('User ID found for friend request: ', userId);
+                return userId;
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    }
 
 
 }
