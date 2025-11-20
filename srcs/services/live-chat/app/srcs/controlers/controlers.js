@@ -5,13 +5,14 @@ import jwt from 'jsonwebtoken';
 
 
 export async function friend_request_route(request, reply) {
-    const token = request.cookies.token;
+    const token = request.cookies.token || request.body.token;
     if (!token)
         return reply.code(401).send({ success: false, message: "Not authenticated" });
     let payload;
     try {
         payload = jwt.verify(token, process.env.JWT_SECRET);
-    } catch {
+    } catch (err) {
+        console.log("payload live-chat error:", err);
         return reply.code(401).send({ success: false, message: "Invalid or expired token" });
     }
     const{ receiverId } = request.body;

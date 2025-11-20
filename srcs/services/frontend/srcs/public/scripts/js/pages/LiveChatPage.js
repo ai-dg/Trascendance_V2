@@ -80,19 +80,20 @@ export class LiveChatPage {
                     if (!receiverId) {
                         errorMessageDiv.textContent = "User id not found";
                         errorMessageDiv.classList.remove('hidden');
+                        return;
                     }
                     if (this.generalSocket) {
-                        // console.log("With this.generalSocket");
-                        // this.generalSocket.addEventListener("add-friend", (event) => {
-                        //     const msg = JSON
-                        //     console.log("Live-chat says:", event.data);
-                        // });
-                        this.generalSocket.send(JSON.stringify({
-                            type: 'add-friend',
-                            payload: { senderId, receiverId }
-                        }));
+                        // Listen for backend confirmations
+                        this.generalSocket.on("friend-request-status", (msg) => {
+                            console.log("Live-chat says:", msg);
+                        });
+                        // Send request
+                        this.generalSocket.emit("add-friend", {
+                            senderId,
+                            receiverId
+                        });
                     }
-                    console.log("Friend request sent by websockets!");
+                    console.log("Friend request sent via socket.io!");
                 }
                 catch (error) {
                     console.error("Error sending friend request:", error);

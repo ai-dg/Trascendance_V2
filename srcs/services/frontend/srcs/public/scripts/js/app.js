@@ -124,18 +124,38 @@ export class App {
             this.routerManager.navigateTo('auth');
         }
     }
-    async initSocket(endpoint, handle = (data) => { console.log(data); }) {
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const sock = new WebSocket(wsProtocol + '//' + window.location.host + endpoint, []);
-        sock.onerror = function (error) {
-            console.error('Erreur WebSocket:', error);
-        };
-        sock.onopen = () => console.log("✅ Connected on websocket", endpoint, " !!!!");
-        sock.onmessage = (msg) => {
-            let data = JSON.parse(msg.data);
-            handle(data);
-        };
-        return sock;
+    // async initSocket(endpoint: string, handle: (data:any) => void = (data) => {console.log(data)}) {
+    // 	const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    // 	const sock = new WebSocket(wsProtocol + '//' + window.location.host + endpoint, []);
+    // 	sock.onerror = function (error) {
+    // 		console.error('Erreur WebSocket:', error);
+    // 	};
+    // 	sock.onopen = () => console.log("✅ Connected on websocket", endpoint, " !!!!");
+    // 	sock.onmessage = (msg) => {
+    // 		let data = JSON.parse(msg.data);
+    // 		handle(data);
+    // 	};
+    // 	return sock;
+    // }
+    async initSocket(endpoint, handle = console.log) {
+        // const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        // // socket.io automatically handles http/ws
+        // const socket = io(`${protocol}://${window.location.host}${endpoint}`, {
+        //     transports: ['websocket'], // optional, force WS only
+        // });
+        const socket = io({ path: "/socket.io/", transports: ['websocket', 'polling'] });
+        socket.on("connect", () => {
+            console.log("✅ Connected to socket.io", endpoint);
+        });
+        socket.on("connect_error", (err) => {
+            console.error("❌ socket.io connection error", err);
+        });
+        // generic message handler (if server uses socket.emit('message', ...))
+        socket.on("message", (msg) => {
+            console.log("📩 Raw message received:", msg);
+            handle(msg);
+        });
+        return socket;
     }
     async render() {
         this.uiManager.clear();

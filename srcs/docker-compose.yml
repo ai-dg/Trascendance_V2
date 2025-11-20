@@ -152,6 +152,13 @@ services:
       context: ./services/live-chat/app
     expose:
       - 3002
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
     volumes:
       - ./services/live-chat/app:/data
       - /data/node_modules

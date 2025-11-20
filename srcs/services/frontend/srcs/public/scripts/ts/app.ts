@@ -14,7 +14,9 @@ import { CheckManager } from './modules/CheckManager.js';
 import { UpdateProfilePage } from './pages/UpdateProfilePage.js';
 import { LanguageManager } from './modules/LangManager.js';
 import { LiveChatPage } from './pages/LiveChatPage.js';
+import type { Socket } from "socket.io-client";
 
+declare const io: any;
 
 export class App {
   private container: HTMLElement;
@@ -23,9 +25,9 @@ export class App {
   private uiManager: UIManager;
   private currentUser: User | null = null;
   private currentPage: Page = 'auth';
-  generalSocket: WebSocket | null =  null;
-  gameSocket: WebSocket | null =  null;
-  TournamentSocket: WebSocket | null =  null;
+  generalSocket: Socket | null =  null;
+  gameSocket: Socket | null =  null;
+  TournamentSocket: Socket | null =  null;
 
   // Page instances
   private authPage: AuthPage;
@@ -159,19 +161,50 @@ export class App {
     }
   }
 
-	async initSocket(endpoint: string, handle: (data:any) => void = (data) => {console.log(data)}) {
-		const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-		const sock = new WebSocket(wsProtocol + '//' + window.location.host + endpoint, []);
-		sock.onerror = function (error) {
-			console.error('Erreur WebSocket:', error);
-		};
-		sock.onopen = () => console.log("✅ Connected on websocket", endpoint, " !!!!");
-		sock.onmessage = (msg) => {
-			let data = JSON.parse(msg.data);
-			handle(data);
-		};
-		return sock;
-	}
+	// async initSocket(endpoint: string, handle: (data:any) => void = (data) => {console.log(data)}) {
+	// 	const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+	// 	const sock = new WebSocket(wsProtocol + '//' + window.location.host + endpoint, []);
+	// 	sock.onerror = function (error) {
+	// 		console.error('Erreur WebSocket:', error);
+	// 	};
+	// 	sock.onopen = () => console.log("✅ Connected on websocket", endpoint, " !!!!");
+	// 	sock.onmessage = (msg) => {
+	// 		let data = JSON.parse(msg.data);
+	// 		handle(data);
+	// 	};
+	// 	return sock;
+	// }
+
+  
+
+  private async initSocket(endpoint: string, handle: (data:any) => void = console.log) {
+
+      // const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+
+      // // socket.io automatically handles http/ws
+      // const socket = io(`${protocol}://${window.location.host}${endpoint}`, {
+      //     transports: ['websocket'], // optional, force WS only
+      // });
+
+      const socket = io( { path: "/socket.io/", transports: ['websocket', 'polling'] });
+
+      socket.on("connect", () => {
+          console.log("✅ Connected to socket.io", endpoint);
+      });
+
+      socket.on("connect_error", (err: any) => {
+          console.error("❌ socket.io connection error", err);
+      });
+
+      // generic message handler (if server uses socket.emit('message', ...))
+      socket.on("message", (msg: any) => {
+          console.log("📩 Raw message received:", msg);
+          handle(msg);
+      });
+
+      return socket;
+  }
+
 
 
 
