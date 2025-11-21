@@ -157,67 +157,6 @@ export class App {
     this.render();
   }
 
-  private updateCurrentPage(): void {
-    if (this.currentUser) {
-      this.routerManager.navigateTo('menu');
-    } else {
-      this.routerManager.navigateTo('auth');
-    }
-  }
-
-	// async initSocket(endpoint: string, handle: (data:any) => void = (data) => {console.log(data)}) {
-	// 	const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-<<<<<<< Updated upstream
-	// 	const sock = new WebSocket(wsProtocol + '//' + window.location.host + endpoint, []);
-	// 	sock.onerror = function (error) {
-	// 		console.error('Erreur WebSocket:', error);
-	// 	};
-	// 	sock.onopen = () => console.log("✅ Connected on websocket", endpoint, " !!!!");
-	// 	sock.onmessage = (msg) => {
-	// 		let data = JSON.parse(msg.data);
-	// 		handle(data);
-	// 	};
-	// 	return sock;
-	// }
-
-  
-
-  private async initSocket(endpoint: string, handle: (data:any) => void = console.log) {
-
-      // const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-
-      // // socket.io automatically handles http/ws
-      // const socket = io(`${protocol}://${window.location.host}${endpoint}`, {
-      //     transports: ['websocket'], // optional, force WS only
-      // });
-
-      const socket = io( { path: "/socket.io/", transports: ['websocket', 'polling'] });
-
-      socket.on("connect", () => {
-          console.log("✅ Connected to socket.io", endpoint);
-      });
-
-      socket.on("connect_error", (err: any) => {
-          console.error("❌ socket.io connection error", err);
-      });
-
-      // generic message handler (if server uses socket.emit('message', ...))
-      socket.on("message", (msg: any) => {
-          console.log("📩 Raw message received:", msg);
-          handle(msg);
-      });
-
-      return socket;
-  }
-
-=======
-	// 	const sock = io(wsProtocol + '//' + window.location.host + endpoint);
-	// 	sock.on('welcome', (data) => {
-	// 	console.log('Message reçu:', data);
-	// 	});
-	// 	return sock;
-	// }
->>>>>>> Stashed changes
 
 async initSocket(path: string, namespace: string) {
   const sock = io(`${window.location.origin}${namespace}`, {
@@ -231,6 +170,24 @@ async initSocket(path: string, namespace: string) {
   return sock;
 }
   
+
+  private updateCurrentPage(): void {
+    if (this.currentUser) {
+      this.routerManager.navigateTo('menu');
+    } else {
+      this.routerManager.navigateTo('auth');
+    }
+  }
+
+	// async initSocket(endpoint: string, handle: (data:any) => void = (data) => {console.log(data)}) {
+	// 	const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+	// 	const sock = io(wsProtocol + '//' + window.location.host + endpoint);
+	// 	sock.on('welcome', (data) => {
+	// 	console.log('Message reçu:', data);
+	// 	});
+	// 	return sock;
+	// }
+
 
 
   private async render(): Promise<void> {
