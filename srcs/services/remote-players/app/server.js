@@ -4,10 +4,13 @@ import jwt from 'jsonwebtoken';
 import { createClient } from 'redis';
 import cors from '@fastify/cors';
 import { Server } from 'socket.io';
+import crypto from 'crypto';
 
 export const app = Fastify({trustProxy: true});
 const is_prod = process.env.NODE_ENV === "PROD";
 export const base_url = is_prod ? "www.transcendance.com" : "localhost";
+
+let socketio = null;
 
 export const redis = createClient({
     socket: {
@@ -30,23 +33,11 @@ app.get('/', async () => {
     return { status: 'ok', service: 'remote-players' };
 });
 
-// Create Socket.IO server
-const io = new Server(app.server, {
-    cors: {
-        origin: `https://${base_url}`,
-        credentials: true
-    },
-    path: '/socket.io/',
-    transports: ['websocket', 'polling']
-});
-
-console.log("✅ Socket.IO server created");
-
 
 function setupSocketIO(){
 	const io = socketio;
-	io.of('/general2').use(socketAuthMiddleware)
-	io.of('/general2').on('connection',  (socket) => setupGeneralGameSocket(socket));
+	io.of('/general').use(socketAuthMiddleware)
+	io.of('/general').on('connection',  (socket) => setupGeneralGameSocket(socket));
 }
 
 function setupGeneralGameSocket(socket){
@@ -54,6 +45,24 @@ function setupGeneralGameSocket(socket){
 	socket.emit("welcome", {message : "welcome !", userId: socket.userId, user: socket.user})
 	socket.broadcast.emit("user-joined", {userId: socket.id});
 	socket.on("new-game", (data) => newGameSocket(socket, data))
+	socket.on("game-request", (data) => requestGameUID(socket, data))
+}
+
+function requestGameUID(socket, data){
+	/////////// attention valable uniquement pour jeu local pour le moment... a transformer pour ia, remote et tournois...
+	//// data.type = "local", "ia", "remote"
+	let uuid = crypto.randomUUID()
+	if (data.type === "local")
+	{
+		console.log(uuid)	
+		socket.on(uuid, (data) => gameHandler(socket, data))
+		socket.emit("new-game", {UUID:uuid, type:data.type})
+	}
+}
+
+
+function gameHandler(socket, data){
+	console.log(data)
 }
 
 function newGameSocket(socket, data){

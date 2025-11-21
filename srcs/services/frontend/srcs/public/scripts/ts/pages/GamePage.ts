@@ -161,9 +161,18 @@ export class GamePageLocal {
     
     // Initialize game manager
     if (this.canvas) {
-      this.gameManager = new GameManager(this.canvas);
-      this.setupGameListeners();
+		GameManager.requestGameID("local")
+     
     }
+  }
+
+  public setupGame(data:any){
+	console.log("should work here in setupGame")
+	this.setupGameListeners()
+	if (!this.canvas)
+		throw new Error("canvas is not initialised");
+	this.gameManager = new GameManager(this.canvas, data.UUID);
+	console.log(data.UUID, this.gameManager)
   }
 
   private setupGameListeners(): void {

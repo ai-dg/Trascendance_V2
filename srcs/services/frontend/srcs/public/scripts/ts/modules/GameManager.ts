@@ -1,4 +1,13 @@
+import { App, gameSocket } from "../app.js";
 import type { GameState, BallState, GameSettings, PaddleState } from "./TypesManager.js";
+
+export let customGameSettings = null
+
+export const defaultGameSettings: GameSettings = {
+	ballSpeed: 6,
+	paddleSpeed: 8,
+	winningScore: 10
+}
 
 export class GameManager {
   private canvas: HTMLCanvasElement;
@@ -11,49 +20,62 @@ export class GameManager {
   private keys: { [key: string]: boolean } = {};
   private animationId: number | null = null;
   private listeners: ((state: GameState) => void)[] = [];
+  private gameUID: string | null = null;
 
   private readonly CANVAS_WIDTH = 800;
   private readonly CANVAS_HEIGHT = 400;
   private readonly PADDLE_WIDTH = 10;
   private readonly PADDLE_HEIGHT = 80;
 
-  constructor(canvas: HTMLCanvasElement, settings: GameSettings = {
-    ballSpeed: 6,
-    paddleSpeed: 8,
-    winningScore: 10
+  
+  constructor(canvas: HTMLCanvasElement, UUID: string, settings: GameSettings = {
+	  ballSpeed: 6,
+	  paddleSpeed: 8,
+	  winningScore: 10
   }) {
+	this.gameUID = UUID
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
     this.settings = settings;
     
     this.gameState = {
-      player1Score: 0,
-      player2Score: 0,
-      gameRunning: false,
-      winner: null
+		player1Score: 0,
+		player2Score: 0,
+		gameRunning: false,
+		winner: null
     };
-
+	
     this.initializeGameObjects();
     this.setupEventListeners();
-  }
+	if (!gameSocket)
+		throw Error("gameSocket is not ready")
+	gameSocket.on(this.gameUID, ()=>{console.log("handle this...", this.gameUID)})
+	gameSocket.emit(this.gameUID, {message: "player ready"})
+}
+static requestGameID(type: "local" | "ai" | "remote" = "local"){
+	
+	if (!gameSocket)
+		throw Error("gameSocket is not ready")
+	gameSocket.emit("game-request", { type })
+}
 
-  private initializeGameObjects(): void {
-    this.paddle1 = {
-      x: 20,
-      y: this.CANVAS_HEIGHT / 2 - this.PADDLE_HEIGHT / 2,
-      width: this.PADDLE_WIDTH,
+private initializeGameObjects(): void {
+	this.paddle1 = {
+		x: 20,
+		y: this.CANVAS_HEIGHT / 2 - this.PADDLE_HEIGHT / 2,
+		width: this.PADDLE_WIDTH,
       height: this.PADDLE_HEIGHT,
       speed: this.settings.paddleSpeed
     };
-
+	
     this.paddle2 = {
-      x: this.CANVAS_WIDTH - 30,
-      y: this.CANVAS_HEIGHT / 2 - this.PADDLE_HEIGHT / 2,
-      width: this.PADDLE_WIDTH,
-      height: this.PADDLE_HEIGHT,
-      speed: this.settings.paddleSpeed
+		x: this.CANVAS_WIDTH - 30,
+		y: this.CANVAS_HEIGHT / 2 - this.PADDLE_HEIGHT / 2,
+		width: this.PADDLE_WIDTH,
+		height: this.PADDLE_HEIGHT,
+		speed: this.settings.paddleSpeed
     };
-
+	
     this.resetBall();
   }
 

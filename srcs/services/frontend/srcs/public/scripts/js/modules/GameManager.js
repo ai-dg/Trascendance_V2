@@ -1,5 +1,12 @@
+import { gameSocket } from "../app.js";
+export let customGameSettings = null;
+export const defaultGameSettings = {
+    ballSpeed: 6,
+    paddleSpeed: 8,
+    winningScore: 10
+};
 export class GameManager {
-    constructor(canvas, settings = {
+    constructor(canvas, UUID, settings = {
         ballSpeed: 6,
         paddleSpeed: 8,
         winningScore: 10
@@ -7,10 +14,12 @@ export class GameManager {
         this.keys = {};
         this.animationId = null;
         this.listeners = [];
+        this.gameUID = null;
         this.CANVAS_WIDTH = 800;
         this.CANVAS_HEIGHT = 400;
         this.PADDLE_WIDTH = 10;
         this.PADDLE_HEIGHT = 80;
+        this.gameUID = UUID;
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.settings = settings;
@@ -22,6 +31,15 @@ export class GameManager {
         };
         this.initializeGameObjects();
         this.setupEventListeners();
+        if (!gameSocket)
+            throw Error("gameSocket is not ready");
+        gameSocket.on(this.gameUID, () => { console.log("handle this...", this.gameUID); });
+        gameSocket.emit(this.gameUID, { message: "player ready" });
+    }
+    static requestGameID(type = "local") {
+        if (!gameSocket)
+            throw Error("gameSocket is not ready");
+        gameSocket.emit("game-request", { type });
     }
     initializeGameObjects() {
         this.paddle1 = {

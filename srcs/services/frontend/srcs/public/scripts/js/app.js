@@ -12,12 +12,12 @@ import { CheckManager } from './modules/CheckManager.js';
 import { UpdateProfilePage } from './pages/UpdateProfilePage.js';
 import { LanguageManager } from './modules/LangManager.js';
 import { LiveChatPage } from './pages/LiveChatPage.js';
+export let gameSocket = null;
 export class App {
     constructor(container) {
         this.currentUser = null;
         this.currentPage = 'auth';
         this.generalSocket = null;
-        this.gameSocket = null;
         this.TournamentSocket = null;
         this.container = container;
         this.authManager = new AuthManager(this.handleBackToCheckOtp.bind(this));
@@ -111,8 +111,8 @@ export class App {
             this.currentPage = 'menu';
             this.generalSocket = await this.initSocket('/live-chat/general');
             console.log(this.generalSocket);
-            this.gameSocket = await this.initSocket('/remote-players/game');
-            console.log(this.gameSocket);
+            gameSocket = await this.initSocketAlt('/remote-players', '/general');
+            console.log(gameSocket);
         }
         this.render();
     }
@@ -124,19 +124,20 @@ export class App {
             this.routerManager.navigateTo('auth');
         }
     }
-    // async initSocket(endpoint: string, handle: (data:any) => void = (data) => {console.log(data)}) {
-    // 	const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // 	const sock = new WebSocket(wsProtocol + '//' + window.location.host + endpoint, []);
-    // 	sock.onerror = function (error) {
-    // 		console.error('Erreur WebSocket:', error);
-    // 	};
-    // 	sock.onopen = () => console.log("✅ Connected on websocket", endpoint, " !!!!");
-    // 	sock.onmessage = (msg) => {
-    // 		let data = JSON.parse(msg.data);
-    // 		handle(data);
-    // 	};
-    // 	return sock;
-    // }
+    async initSocketAlt(path, namespace) {
+        const endpoint = `${path}${namespace}`;
+        const sock = io(`${window.location.origin}${namespace}`, {
+            path: `${path}/socket.io/`, transports: ['polling']
+        });
+        sock.on('connect', () => console.log("✅ Connected to socket.io", endpoint));
+        sock.on('connect_error', (err) => console.error('❌ Erreur:', err));
+        sock.on('welcome', (data) => console.log(data));
+        sock.on('new-game', (data) => {
+            console.log(data);
+            this.gamePageLocal.setupGame(data);
+        });
+        return sock;
+    }
     async initSocket(endpoint, handle = console.log) {
         // const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
         // // socket.io automatically handles http/ws
