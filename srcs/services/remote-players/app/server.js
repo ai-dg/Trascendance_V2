@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import websocket from '@fastify/websocket';
+import { Server } from 'socket.io'
 import cookie from '@fastify/cookie';
 import jwt from 'jsonwebtoken';
 import { createClient } from 'redis';
@@ -10,6 +11,7 @@ export const app = Fastify({trustProxy: true});
 const is_prod = process.env.NODE_ENV === "PROD"
 export const base_url = is_prod ? "www.transcendance.com" : "localhost"
 
+
 export const redis = createClient({
 	socket: {
 	host: process.env.REDIS_HOST,
@@ -19,6 +21,8 @@ export const redis = createClient({
 });
 
 await redis.connect();
+
+export let socketio = null;
 
 
 // await app.register(cors, {
@@ -163,6 +167,7 @@ async function gameSocketRoute(socket, req){
 }
 
 
+
 await app.register(async function (fastify) {
 	console.log("🔧 Enregistrement du contexte WebSocket");
     fastify.get('/general', { websocket: true , preHandler: isConnectedWSSHook, logLevel: 'debug'}, async (socket, req) => generalSocketRoute(socket, req));
@@ -171,11 +176,32 @@ await app.register(async function (fastify) {
 });
 
 
+function setupSocketIO(){
+	const io = socketio;
+	io.of('/general2').on('connection',  (socket) => setupGeneralGameSocket(socket));
+	
+
+}
+
+function setupGeneralGameSocket(socket){
+	socket.userId = "Je t'aime papa, tu me manque";
+	socket.emit("welcome", {message : "welcome !"})
+	socket.broadcast.emit("user-joined", {userId: socket.id});
+	socket.on("new-game", (data) => newGameSocket(socket, data))
+}
+
+function newGameSocket(socket, data){
+	console.log("data : ", data);
+}
+
+
 
 const start = async () => {
 	try {
 		console.log(app.printRoutes());
 		 await app.listen({ port: 3003, host: '0.0.0.0' });
+		socketio = new Server(app.server)
+		setupSocketIO();
 		console.log('Remote-player service running');
 	} catch (err) {
 		console.error(err);

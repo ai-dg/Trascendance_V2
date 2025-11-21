@@ -35,7 +35,8 @@ RUN npm install --package-lock \
 	@grpc/grpc-js \
 	@grpc/proto-loader \
 	amqplib \
-	@fastify/websocket
+	@fastify/websocket \
+	socket.io
 	# sqlite3 \
 	# sqlite
 	
