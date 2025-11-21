@@ -133,6 +133,13 @@ services:
       context: ./services/language-manager
     expose:
       - 3001
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
     volumes:
       - ./services/language-manager:/data
       - /data/node_modules
@@ -145,10 +152,21 @@ services:
       context: ./services/live-chat/app
     expose:
       - 3002
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
     volumes:
-      - ./volumes/live-chat:/data
+      - ./services/live-chat/app:/data
+      - /data/node_modules
     networks:
       - internal
+    depends_on:  
+      redis:
+        condition: service_started
 
   remote-players_app:
     container_name: remote-players_app

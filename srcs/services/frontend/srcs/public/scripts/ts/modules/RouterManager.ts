@@ -1,7 +1,7 @@
 import { AuthManager } from "./AuthManager";
 import type { User } from "./TypesManager";
 
-export type Page = 'auth' | 'guest' | 'menu' | 'game-ai' | 'game-local' | 'game-online' | 'leaderboard' | 'settings' | 'check-otp' | 'update-profile';
+export type Page = 'auth' | 'guest' | 'menu' | 'game-ai' | 'game-local' | 'game-online' | 'leaderboard' | 'settings' | 'check-otp' | 'update-profile' | 'live-chat';
 
 export interface RouteData {
   [key: string]: any;

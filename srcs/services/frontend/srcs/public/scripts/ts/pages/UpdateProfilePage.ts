@@ -361,6 +361,7 @@ export class UpdateProfilePage {
             this.onBack();
           }
         );
+        
         card.appendChild(deleteButton);
         card.appendChild(backButton);
         container.appendChild(card);    

@@ -39,6 +39,9 @@ dev:
 build:
 	docker compose -f $(COMPOSE) build
 
+no-cache:
+	docker compose -f $(COMPOSE) build --no-cache
+
 re:
 	@$(MAKE) down
 	@docker images -q > IMAGES

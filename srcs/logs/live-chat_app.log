@@ -1,1 +1,11 @@
-live-chat service running
+Connected to Redis
+Live-chat db ready
+FastifyError [Error]: fastify-plugin: @fastify/cookie - expected '5.x' fastify version, '4.29.1' is installed
+    at Object.checkVersion (/data/node_modules/fastify/lib/pluginUtils.js:125:11)
+    at Object.registerPlugin (/data/node_modules/fastify/lib/pluginUtils.js:148:16)
+    at Boot.override (/data/node_modules/fastify/lib/pluginOverride.js:28:57)
+    at Boot._loadPlugin (/data/node_modules/avvio/boot.js:425:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+  code: 'FST_ERR_PLUGIN_VERSION_MISMATCH',
+  statusCode: 500
+}

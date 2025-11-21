@@ -11,6 +11,7 @@ import { SettingsPage } from './pages/SettingsPage.js';
 import { CheckManager } from './modules/CheckManager.js';
 import { UpdateProfilePage } from './pages/UpdateProfilePage.js';
 import { LanguageManager } from './modules/LangManager.js';
+import { LiveChatPage } from './pages/LiveChatPage.js';
 export class App {
     constructor(container) {
         this.currentUser = null;
@@ -39,6 +40,7 @@ export class App {
         this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.handleSettings.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser);
         if (this.currentUser)
             this.settingsPage = new SettingsPage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.authPage, this.handleBackToMenu.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser ?? null, this.currentUser?.isGuest ?? true);
+        this.liveChatPage = new LiveChatPage(this.uiManager, this.routerManager, this.languageManager, this.generalSocket, this.handleBackToMenu.bind(this));
         this.setupEventListeners();
         this.initialize();
     }
@@ -122,18 +124,38 @@ export class App {
             this.routerManager.navigateTo('auth');
         }
     }
-    async initSocket(endpoint, handle = (data) => { console.log(data); }) {
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const sock = new WebSocket(wsProtocol + '//' + window.location.host + endpoint, []);
-        sock.onerror = function (error) {
-            console.error('Erreur WebSocket:', error);
-        };
-        sock.onopen = () => console.log("✅ Connected on websocket", endpoint, " !!!!");
-        sock.onmessage = (msg) => {
-            let data = JSON.parse(msg.data);
-            handle(data);
-        };
-        return sock;
+    // async initSocket(endpoint: string, handle: (data:any) => void = (data) => {console.log(data)}) {
+    // 	const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    // 	const sock = new WebSocket(wsProtocol + '//' + window.location.host + endpoint, []);
+    // 	sock.onerror = function (error) {
+    // 		console.error('Erreur WebSocket:', error);
+    // 	};
+    // 	sock.onopen = () => console.log("✅ Connected on websocket", endpoint, " !!!!");
+    // 	sock.onmessage = (msg) => {
+    // 		let data = JSON.parse(msg.data);
+    // 		handle(data);
+    // 	};
+    // 	return sock;
+    // }
+    async initSocket(endpoint, handle = console.log) {
+        // const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        // // socket.io automatically handles http/ws
+        // const socket = io(`${protocol}://${window.location.host}${endpoint}`, {
+        //     transports: ['websocket'], // optional, force WS only
+        // });
+        const socket = io({ path: "/socket.io/", transports: ['websocket', 'polling'] });
+        socket.on("connect", () => {
+            console.log("✅ Connected to socket.io", endpoint);
+        });
+        socket.on("connect_error", (err) => {
+            console.error("❌ socket.io connection error", err);
+        });
+        // generic message handler (if server uses socket.emit('message', ...))
+        socket.on("message", (msg) => {
+            console.log("📩 Raw message received:", msg);
+            handle(msg);
+        });
+        return socket;
     }
     async render() {
         this.uiManager.clear();
@@ -177,6 +199,10 @@ export class App {
             case 'update-profile':
                 this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.handleSettings.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser);
                 this.updateProfilePage.render();
+                break;
+            case 'live-chat':
+                this.liveChatPage = new LiveChatPage(this.uiManager, this.routerManager, this.languageManager, this.generalSocket, this.handleBackToMenu.bind(this));
+                this.liveChatPage.render(this.currentUser);
                 break;
         }
     }
@@ -308,6 +334,10 @@ export class App {
     handleChatWithFriends() {
         // TODO: Implement chat functionality
         console.log('Chat with friends functionality not yet implemented');
+        if (this.currentUser && this.currentUser.isGuest == false)
+            this.routerManager.navigateTo('live-chat');
+        else
+            console.log('Connect to chat wih friends');
     }
     handleBackToMenu() {
         this.routerManager.navigateTo('menu');
