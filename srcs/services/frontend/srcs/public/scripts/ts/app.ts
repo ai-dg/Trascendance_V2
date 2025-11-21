@@ -13,14 +13,9 @@ import { SettingsPage } from './pages/SettingsPage.js';
 import { CheckManager } from './modules/CheckManager.js';
 import { UpdateProfilePage } from './pages/UpdateProfilePage.js';
 import { LanguageManager } from './modules/LangManager.js';
-<<<<<<< Updated upstream
-import { LiveChatPage } from './pages/LiveChatPage.js';
-import type { Socket } from "socket.io-client";
-=======
 import { io, Socket } from "socket.io-client"
->>>>>>> Stashed changes
 
-declare const io: any;
+
 
 export class App {
   private container: HTMLElement;
