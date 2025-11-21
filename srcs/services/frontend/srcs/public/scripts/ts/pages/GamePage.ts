@@ -168,10 +168,10 @@ export class GamePageLocal {
 
   public setupGame(data:any){
 	console.log("should work here in setupGame")
-	this.setupGameListeners()
 	if (!this.canvas)
 		throw new Error("canvas is not initialised");
 	this.gameManager = new GameManager(this.canvas, data.UUID);
+	this.setupGameListeners()
 	console.log(data.UUID, this.gameManager)
   }
 
@@ -242,6 +242,7 @@ export class GamePageLocal {
     console.log('startGame() called');
     if (this.gameManager) {
       console.log('GameManager exists, calling startGame()');
+	  
       this.gameManager.startGame();
     } else {
       console.log('GameManager is null!');
