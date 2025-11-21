@@ -98,6 +98,9 @@ private initializeGameObjects(): void {
     window.addEventListener('keyup', (e) => {
       this.keys[e.key.toLowerCase()] = false;
     });
+
+
+	
   }
 
   public startGame(): void {
@@ -127,7 +130,7 @@ private initializeGameObjects(): void {
     };
     this.initializeGameObjects();
     this.draw();
-    this.notifyListeners();
+    // this.notifyListeners();
   }
 
   private gameLoop(): void {
@@ -140,20 +143,30 @@ private initializeGameObjects(): void {
   }
 
   private update(): void {
-    // Update paddles
-    if (this.keys['w'] && this.paddle1.y > 0) {
-      this.paddle1.y -= this.paddle1.speed;
-    }
-    if (this.keys['s'] && this.paddle1.y < this.CANVAS_HEIGHT - this.paddle1.height) {
-      this.paddle1.y += this.paddle1.speed;
-    }
-    if (this.keys['arrowup'] && this.paddle2.y > 0) {
-      this.paddle2.y -= this.paddle2.speed;
-    }
-    if (this.keys['arrowdown'] && this.paddle2.y < this.CANVAS_HEIGHT - this.paddle2.height) {
-      this.paddle2.y += this.paddle2.speed;
-    }
+	if (!this.gameUID || ! gameSocket)
+		throw Error("Error with game socket !")
+	let paddle1: number = 0;
+	let paddle2: number = 0;
 
+    // Update paddles
+    if (this.keys['s']) 
+		paddle1 = 1
+	else if (this.keys['w'])
+		paddle1 = -1
+	else
+		paddle1 = 0
+    if (this.keys['arrowup']) 
+		paddle2 = -1
+    else if (this.keys['arrowdown'])
+		paddle2 = 1
+	else 
+		paddle2 = 0
+	const state = {
+			paddle1,
+			paddle2
+	}
+	
+	gameSocket.emit(this.gameUID, {state})
     // Update ball
     this.ball.x += this.ball.velocityX;
     this.ball.y += this.ball.velocityY;
