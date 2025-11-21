@@ -109,7 +109,7 @@ export class App {
         await this.languageManager.init();
         if (this.currentUser) {
             this.currentPage = 'menu';
-            this.generalSocket = await this.initSocket('/remote-players/general');
+            this.generalSocket = await this.initSocket('/live-chat/general');
             console.log(this.generalSocket);
             this.gameSocket = await this.initSocket('/remote-players/game');
             console.log(this.gameSocket);

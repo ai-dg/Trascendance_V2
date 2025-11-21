@@ -34,3 +34,47 @@ export async function friend_request_route(request, reply) {
     }
     
 }
+
+
+export async function friend_request_response_route(request, reply) {
+    let token = request.cookies.token || request.body.token;
+    
+    if (!token) {
+        return reply.code(401).send({ success: false, message: "Not authenticated" });
+    }
+    
+    let payload;
+    try {
+        payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+        return reply.code(401).send({ success: false, message: "Invalid or expired token" });
+    }
+    
+    const { senderId, action } = request.body;
+    const userId = payload.user_id;
+    
+    try {
+        if (action === 'accept') {
+            // Update status to 'accepted'
+            await app.db.run(`
+                UPDATE friendships 
+                SET status = 'accepted' 
+                WHERE user_id = ? AND friend_id = ?
+            `, [senderId, userId]);
+        } else {
+            // Delete the request if rejected
+            await app.db.run(`
+                DELETE FROM friendships 
+                WHERE user_id = ? AND friend_id = ?
+            `, [senderId, userId]);
+        }
+        
+        return reply.send({ 
+            success: true, 
+            message: action === 'accept' ? "Friend request accepted" : "Friend request rejected"
+        });
+    } catch (dbErr) {
+        console.error('DB error:', dbErr);
+        return reply.code(500).send({ success: false, message: "Database error" });
+    }
+}
