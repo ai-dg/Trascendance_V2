@@ -67,6 +67,43 @@ export class LiveChatPage {
         addFriendBtn.addEventListener('click', () => {
             addFriendDiv.classList.toggle('hidden');
         });
+        console.log("Before this.generalSocket");
+        if (this.generalSocket) {
+            console.log("With this.generalSocket");
+            this.generalSocket.on('friend-request', (data) => {
+                console.log("Receveid friend request:", data);
+                const { senderId, message } = data;
+                this.showFriendRequestNotif(senderId, message);
+            });
+            // Listen for backend confirmations
+            this.generalSocket.on("friend-request-status", (msg) => {
+                console.log("Live-chat says:", msg);
+                if (msg.success) {
+                    errorMessageDiv.textContent = msg.message || "Friend request sent!";
+                    errorMessageDiv.classList.remove('hidden', 'text-red-500');
+                    errorMessageDiv.classList.add('text-green-500');
+                    setTimeout(() => {
+                        errorMessageDiv.classList.add('hidden');
+                        friendInput.value = '';
+                    }, 3000);
+                }
+                else {
+                    errorMessageDiv.textContent = msg.message || "Failed to send request";
+                    errorMessageDiv.classList.remove('hidden', 'text-green-500');
+                    errorMessageDiv.classList.add('text-red-500');
+                }
+            });
+            this.generalSocket.on('friend-request-result', (data) => {
+                console.log("Friend request result:", data);
+                const { action, message } = data;
+                errorMessageDiv.textContent = message;
+                errorMessageDiv.classList.remove('hidden', 'text-red-500');
+                errorMessageDiv.classList.add(action === 'accept' ? 'text-green-500' : 'text-yellow-500');
+                setTimeout(() => {
+                    errorMessageDiv.classList.add('hidden');
+                }, 5000);
+            });
+        }
         sendFriendBtn.addEventListener('click', async () => {
             const username = friendInput.value.trim();
             if (!username) {
@@ -83,11 +120,6 @@ export class LiveChatPage {
                         return;
                     }
                     if (this.generalSocket) {
-                        // Listen for backend confirmations
-                        this.generalSocket.on("friend-request-status", (msg) => {
-                            console.log("Live-chat says:", msg);
-                        });
-                        // Send request
                         this.generalSocket.emit("add-friend", {
                             senderId,
                             receiverId
@@ -119,8 +151,24 @@ export class LiveChatPage {
         notifTitle.textContent = 'Notifications';
         const notifContent = this.uiManager.createElement('div', 'text-[#00ffff] opacity-80');
         notifContent.textContent = 'Notifications list goes here...';
+        const friendRequestNotifDiv = this.uiManager.createElement('div', 'hidden mt-4 p-3 bg-black/80 border border-[#ff1493] rounded');
+        friendRequestNotifDiv.id = 'friend-request-notification';
+        const notifMessage = this.uiManager.createElement('p', 'text-[#00ffff] mb-3');
+        notifMessage.className = 'notification-message';
+        const notifButtons = this.uiManager.createElement('div', 'flex gap-2');
+        const acceptBtn = this.uiManager.createElement('button', 'px-3 py-1 bg-green-500 text-black rounded hover:bg-green-400');
+        acceptBtn.textContent = 'Accept';
+        acceptBtn.className += ' accept-btn';
+        const rejectBtn = this.uiManager.createElement('button', 'px-3 py-1 bg-red-500 text-black rounded hover:bg-red-400');
+        rejectBtn.textContent = 'Reject';
+        rejectBtn.className += ' reject-btn';
+        notifButtons.appendChild(acceptBtn);
+        notifButtons.appendChild(rejectBtn);
+        friendRequestNotifDiv.appendChild(notifMessage);
+        friendRequestNotifDiv.appendChild(notifButtons);
         notifList.appendChild(notifTitle);
         notifList.appendChild(notifContent);
+        notifList.appendChild(friendRequestNotifDiv);
         socialDiv.appendChild(notifList);
         // Main Grid
         const mainGrid = this.uiManager.createElement('div', 'flex justify-center gap-2 w-full');
@@ -165,6 +213,41 @@ export class LiveChatPage {
         }
         catch (error) {
             console.error("Error:", error);
+        }
+    }
+    showFriendRequestNotif(senderId, message) {
+        console.log("showFriendRequestNotif called");
+        const notifDiv = document.getElementById('friend-request-notification');
+        if (!notifDiv) {
+            console.log("No notifDiv");
+            return;
+        }
+        const messageEl = notifDiv.querySelector('.notification-message');
+        if (messageEl) {
+            messageEl.textContent = message;
+        }
+        notifDiv.classList.remove('hidden');
+        const acceptBtn = notifDiv.querySelector('.accept-btn');
+        const rejectBtn = notifDiv.querySelector('.reject-btn');
+        if (acceptBtn) {
+            acceptBtn.addEventListener('click', async () => {
+                this.handleFriendRequestResponse(senderId, 'accept');
+                notifDiv.classList.add('hidden');
+            });
+        }
+        if (rejectBtn) {
+            rejectBtn.addEventListener('click', async () => {
+                this.handleFriendRequestResponse(senderId, 'reject');
+                notifDiv.classList.add('hidden');
+            });
+        }
+    }
+    handleFriendRequestResponse(senderId, action) {
+        if (this.generalSocket) {
+            this.generalSocket.emit('friend-request-response', {
+                senderId,
+                action
+            });
         }
     }
 }
