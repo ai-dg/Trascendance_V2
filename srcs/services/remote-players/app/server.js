@@ -349,6 +349,7 @@ const io = new Server(app.server, {
 
 console.log("✅ Socket.IO server created");
 
+<<<<<<< Updated upstream
 // Socket.IO authentication middleware
 io.use(async (socket, next) => {
     try {
@@ -402,7 +403,74 @@ io.on('connection', async (socket) => {
     
     socket.on('add-friend', async (data) => {
         const { senderId, receiverId } = data;
+=======
+function setupSocketIO(){
+	const io = socketio;
+	io.of('/general2').use(socketAuthMiddleware)
+	io.of('/general2').on('connection',  (socket) => setupGeneralGameSocket(socket));
+}
 
+function setupGeneralGameSocket(socket){
+	console.log('✅ Utilisateur authentifié:', socket.userId);
+	socket.emit("welcome", {message : "welcome !", userId: socket.userId, user: socket.user})
+	socket.broadcast.emit("user-joined", {userId: socket.id});
+	socket.on("new-game", (data) => newGameSocket(socket, data))
+}
+
+function newGameSocket(socket, data){
+	console.log("data : ", data);
+}
+>>>>>>> Stashed changes
+
+async function socketAuthMiddleware(socket, next) {
+  try {
+
+    const cookies = socket.handshake.headers.cookie;    
+    if (!cookies) {
+		   console.log("E")
+      return next(new Error('No cookies'));
+    }
+    const token = parseCookie(cookies, 'token');
+    
+    if (!token) {
+		   console.log("D")
+      return next(new Error('No token'));
+    }
+
+    const val = jwt.decode(token, process.env.JWT_SECRET);
+    
+    if (!val || !val.jti) {
+		   console.log("C")
+      return next(new Error('Invalid token'));
+    }
+    
+    const exists = await redis.get(`jwt:${val.jti}`);
+    
+    if (!exists || exists === "not valid") {
+	   console.log("B")
+      return next(new Error('Token not valid in Redis'));
+    }
+    
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    
+    socket.userId = payload.user_id;
+    socket.user = payload.pseudo;
+	console.log("payload : ", payload)
+    console.log("A")
+    next();
+    
+  } catch (err) {
+    console.error('Auth error:', err);
+    next(new Error('Authentication failed'));
+  }
+}
+
+
+function parseCookie(cookieString, name) {
+  const cookies = cookieString.split(';').map(c => c.trim());
+  const cookie = cookies.find(c => c.startsWith(`${name}=`));
+  return cookie ? cookie.split('=')[1] : null;
+}
 
         console.log(`User ${senderId} wants to add user ${receiverId} as a friend`);
         
@@ -461,6 +529,7 @@ io.on('connection', async (socket) => {
 });
 
 const start = async () => {
+<<<<<<< Updated upstream
     try {
         console.log(app.printRoutes());
         await app.listen({ port: 3003, host: '0.0.0.0' });
@@ -469,6 +538,24 @@ const start = async () => {
         console.error(err);
         process.exit(1);
     }
+=======
+	try {
+		console.log(app.printRoutes());
+		 await app.listen({ port: 3003, host: '0.0.0.0' });
+
+		socketio = new Server(app.server, {
+		path: '/socket.io/',
+		cors: { origin: true, credentials: true }
+		});
+
+console.log('Socket.IO path:', '/socket.io/');
+		setupSocketIO();
+		console.log('Remote-player service running');
+	} catch (err) {
+		console.error(err);
+		process.exit(1);
+	}
+>>>>>>> Stashed changes
 };
 
 start();
