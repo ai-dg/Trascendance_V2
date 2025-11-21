@@ -147,7 +147,7 @@ export class App {
       this.currentPage = 'menu';
 	  	this.generalSocket = await this.initSocket('/live-chat/general');
 		console.log(this.generalSocket)
-		this.gameSocket = await this.initSocket('/remote-players/game');
+		this.gameSocket = await this.initSocketAlt('/remote-players', '/game');
 		console.log(this.gameSocket)
     }
     this.render();
@@ -161,19 +161,17 @@ export class App {
     }
   }
 
-	// async initSocket(endpoint: string, handle: (data:any) => void = (data) => {console.log(data)}) {
-	// 	const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-	// 	const sock = new WebSocket(wsProtocol + '//' + window.location.host + endpoint, []);
-	// 	sock.onerror = function (error) {
-	// 		console.error('Erreur WebSocket:', error);
-	// 	};
-	// 	sock.onopen = () => console.log("✅ Connected on websocket", endpoint, " !!!!");
-	// 	sock.onmessage = (msg) => {
-	// 		let data = JSON.parse(msg.data);
-	// 		handle(data);
-	// 	};
-	// 	return sock;
-	// }
+private async initSocketAlt(path: string, namespace: string) {
+  const sock = io(`${window.location.origin}${namespace}`, {
+    path: `${path}/socket.io/`,transports: ['polling'] 
+  });
+
+  sock.on('connect', () => console.log('✅ Connecté !'));
+  sock.on('connect_error', (err: any) => console.error('❌ Erreur:', err));
+  sock.on('welcome', (data: any) => console.log(data))
+  
+  return sock;
+}
 
   
 
