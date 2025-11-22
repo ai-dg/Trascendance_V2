@@ -103,7 +103,19 @@ export class GameManager {
 }
 
 updatePlayerMove(data){
-	
+
+	if (data.paddle1 === -1 && this.paddle1.y > 0) {
+      this.paddle1.y -= this.paddle1.speed;
+    }
+    if (data.paddle1 === 1 && this.paddle1.y < this.CANVAS_HEIGHT - this.paddle1.height) {
+      this.paddle1.y += this.paddle1.speed;
+    }
+    if (data.paddle2 === -1 && this.paddle2.y > 0) {
+      this.paddle2.y -= this.paddle2.speed;
+    }
+    if (data.paddle2 === 1 && this.paddle2.y < this.CANVAS_HEIGHT - this.paddle2.height) {
+      this.paddle2.y += this.paddle2.speed;
+    }
 }
 
 update(gameState) {
