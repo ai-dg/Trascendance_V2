@@ -5,6 +5,7 @@ import { createClient } from 'redis';
 import cors from '@fastify/cors';
 import { Server } from 'socket.io';
 import crypto from 'crypto';
+import { GameManager } from './srcs/GameManager.js';
 
 export const app = Fastify({trustProxy: true});
 const is_prod = process.env.NODE_ENV === "PROD";
@@ -28,6 +29,7 @@ await app.register(cookie, {
 });
 
 const generalConnections = new Map();
+const runningGames = new Map();
 
 app.get('/', async () => {
     return { status: 'ok', service: 'remote-players' };
@@ -55,14 +57,20 @@ function requestGameUID(socket, data){
 	if (data.type === "local")
 	{
 		console.log(uuid)	
-		socket.on(uuid, (data) => gameHandler(socket, data))
+		socket.on(uuid, (data) => gameHandler(socket, data, uuid))
 		socket.emit("new-game", {UUID:uuid, type:data.type})
 	}
 }
 
 
-function gameHandler(socket, data){
-	console.log(data)
+function gameHandler(socket, data, uuid){
+	if (! runningGames[uuid])
+			runningGames[uuid] = new GameManager(socket, uuid);
+	const game = runningGames[uuid];
+	if (data.action === "move"){
+		game.updatePlayerMove(data)
+
+	}
 }
 
 function newGameSocket(socket, data){

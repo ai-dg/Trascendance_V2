@@ -1,15 +1,15 @@
 // GameManager.js
 
 
-CANVAS_WIDTH = 800;
-CANVAS_HEIGHT = 400;
-PADDLE_WIDTH = 10;
-PADDLE_HEIGHT = 80;
+const CANVAS_WIDTH = 800;
+const CANVAS_HEIGHT = 400;
+const PADDLE_WIDTH = 10;
+const PADDLE_HEIGHT = 80;
 
 
 
 export class GameManager {
-  constructor(canvas, settings = {
+  constructor(socket, uuid, settings = {
     ballSpeed: 6,
     paddleSpeed: 8,
     winningScore: 10
@@ -102,12 +102,18 @@ export class GameManager {
     this.animationId = requestAnimationFrame(() => this.gameLoop());
 }
 
+updatePlayerMove(data){
+	
+}
+
 update(gameState) {
     // Update paddles
 	this.gameState.paddle1.x = gameState.paddle1.x
     this.gameState.paddle1.y = gameState.paddle1.y
    	this.gameState.paddle2.x = gameState.paddle2.x
     this.gameState.paddle2.y = gameState.paddle2.y
+
+	socket.emit(uuid, {action :"game-update", data: moves})
 
     // Update ball
     this.ball.x += this.ball.velocityX;
@@ -117,6 +123,13 @@ update(gameState) {
     if (this.ball.y <= 0 || this.ball.y >= this.CANVAS_HEIGHT) {
       this.ball.velocityY = -this.ball.velocityY;
     }
+
+
+	const moves = {
+		paddle1: this.gameState.paddle1,
+		paddle2: this.gameState.paddle2,
+		ball: this.ball
+	}
 
     // Ball collision with paddles
     if (this.ballCollidesWithPaddle(this.gameState.paddle1) || this.ballCollidesWithPaddle(this.gameState.paddle2)) {
@@ -139,6 +152,7 @@ update(gameState) {
       this.resetBall();
       this.checkWinner();
     }
+
   }
 
   ballCollidesWithPaddle(paddle) {
