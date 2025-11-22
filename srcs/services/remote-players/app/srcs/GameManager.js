@@ -36,7 +36,6 @@ export class GameManager {
     };
 
     this.initializeGameObjects();
-    this.setupEventListeners();
   }
 
   initializeGameObjects() {

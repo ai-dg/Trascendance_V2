@@ -9,6 +9,22 @@ export const defaultGameSettings: GameSettings = {
 	winningScore: 10
 }
 
+// export const initialGameState: GameState =  {
+//       player1Score: 0,
+//       player2Score: 0,
+// 	  paddle1 : {
+//       x: 20,
+//       y: this.CANVAS_HEIGHT / 2 - this.PADDLE_HEIGHT / 2,
+//     },
+
+//      paddle2 : {
+//       x: this.CANVAS_WIDTH - 30,
+//       y: this.CANVAS_HEIGHT / 2 - this.PADDLE_HEIGHT / 2,
+//     },
+//       gameRunning: false,
+//       winner: null
+//     };
+
 export class GameManager {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
@@ -39,10 +55,19 @@ export class GameManager {
     this.settings = settings;
     
     this.gameState = {
-		player1Score: 0,
-		player2Score: 0,
-		gameRunning: false,
-		winner: null
+      player1Score: 0,
+      player2Score: 0,
+	  paddle1 : {
+      x: 20,
+      y: this.CANVAS_HEIGHT / 2 - this.PADDLE_HEIGHT / 2,
+    },
+
+     paddle2 : {
+      x: this.CANVAS_WIDTH - 30,
+      y: this.CANVAS_HEIGHT / 2 - this.PADDLE_HEIGHT / 2,
+    },
+      gameRunning: false,
+      winner: null
     };
 	
     this.initializeGameObjects();
@@ -122,12 +147,8 @@ private initializeGameObjects(): void {
   }
 
   public resetGame(): void {
-    this.gameState = {
-      player1Score: 0,
-      player2Score: 0,
-      gameRunning: false,
-      winner: null
-    };
+	
+
     this.initializeGameObjects();
     this.draw();
     // this.notifyListeners();
@@ -136,13 +157,18 @@ private initializeGameObjects(): void {
   private gameLoop(): void {
     if (!this.gameState.gameRunning) return;
 
-    this.update();
+    this.updatePlayers();
     this.draw();
     
     this.animationId = requestAnimationFrame(() => this.gameLoop());
   }
 
-  private update(): void {
+  updateGame(data){
+
+
+  }
+
+  private updatePlayers(): void {
 	if (!this.gameUID || ! gameSocket)
 		throw Error("Error with game socket !")
 	let paddle1: number = 0;
@@ -167,54 +193,6 @@ private initializeGameObjects(): void {
 	}
 	
 	gameSocket.emit(this.gameUID, {state})
-    // Update ball
-    this.ball.x += this.ball.velocityX;
-    this.ball.y += this.ball.velocityY;
-
-    // Ball collision with top and bottom walls
-    if (this.ball.y <= 0 || this.ball.y >= this.CANVAS_HEIGHT) {
-      this.ball.velocityY = -this.ball.velocityY;
-    }
-
-    // Ball collision with paddles
-    if (this.ballCollidesWithPaddle(this.paddle1) || this.ballCollidesWithPaddle(this.paddle2)) {
-      this.ball.velocityX = -this.ball.velocityX;
-      
-      // Add some randomness to the Y velocity
-      this.ball.velocityY += (Math.random() - 0.5) * 2;
-      
-      // Limit Y velocity
-      this.ball.velocityY = Math.max(-8, Math.min(8, this.ball.velocityY));
-    }
-
-    // Ball out of bounds (scoring)
-    if (this.ball.x < 0) {
-      this.gameState.player2Score++;
-      this.resetBall();
-      this.checkWinner();
-    } else if (this.ball.x > this.CANVAS_WIDTH) {
-      this.gameState.player1Score++;
-      this.resetBall();
-      this.checkWinner();
-    }
-  }
-
-  private ballCollidesWithPaddle(paddle: PaddleState): boolean {
-    return this.ball.x < paddle.x + paddle.width &&
-           this.ball.x + this.ball.size > paddle.x &&
-           this.ball.y < paddle.y + paddle.height &&
-           this.ball.y + this.ball.size > paddle.y;
-  }
-
-  private checkWinner(): void {
-    if (this.gameState.player1Score >= this.settings.winningScore) {
-      this.gameState.winner = 'Player 1';
-      this.gameState.gameRunning = false;
-    } else if (this.gameState.player2Score >= this.settings.winningScore) {
-      this.gameState.winner = 'Player 2';
-      this.gameState.gameRunning = false;
-    }
-    this.notifyListeners();
   }
 
   private draw(): void {
