@@ -73,7 +73,7 @@ export class GamePageLocal {
     const playAgainButton = this.uiManager.createButton(
       'PLAY AGAIN',
       'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',
-      () => this.resetGame()
+      () => this.requestNewGame()
     );
     gameOverContent.appendChild(gameOverTitle);
     gameOverContent.appendChild(gameOverWinner);
@@ -86,15 +86,22 @@ export class GamePageLocal {
     startOverlay.setAttribute('data-overlay', 'start-game');
     const startContent = this.uiManager.createElement('div', 'text-center retro-text');
     const startTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'READY TO PLAY?');
-    const startButton = this.uiManager.createButton(
-      'START GAME',
-      'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',
-      () => this.startGame()
-    );
+    // const startButton = this.uiManager.createButton(
+    //   'START GAME',
+    //   'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',
+    //   () => this.startGame()
+    // );
+	const startButton = this.uiManager.createButton(
+	'READY', // ← Change de "START GAME" à "READY"
+	'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',
+	() => this.setReady() // ← Change de startGame à readyUp
+	);
     startContent.appendChild(startTitle);
-    startContent.appendChild(startButton);
+    // startContent.appendChild(startButton);
+	startContent.appendChild(startButton);
     startOverlay.appendChild(startContent);
     canvasContainer.appendChild(startOverlay);
+
     
     // Controls
     const controls = this.uiManager.createElement('div', 'flex gap-12 retro-text text-sm opacity-60');
@@ -161,10 +168,32 @@ export class GamePageLocal {
     
     // Initialize game manager
     if (this.canvas) {
-		GameManager.requestGameID("local")
+		this.requestNewGame()
+
      
     }
   }
+
+  private requestNewGame(): void{
+	const gameOverOverlay = document.querySelector('[data-overlay="game-over"]') as HTMLElement;
+	const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
+    if (gameOverOverlay) {
+      gameOverOverlay.classList.add('hidden');
+	  startOverlay.classList.remove('hidden')
+	}
+	GameManager.requestGameID("local")
+  }
+
+
+  private setReady(): void {
+  if (this.gameManager) {
+    this.gameManager.setReady();
+	const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
+    if (startOverlay) {
+      startOverlay.classList.add('hidden');
+    }
+  }
+}
 
   public setupGame(data:any){
 	console.log("should work here in setupGame")
@@ -210,6 +239,9 @@ export class GamePageLocal {
     if (isGameOver && winner) {
       // Afficher l'overlay de fin de jeu
       if (gameOverOverlay) {
+		if (this.gameManager)
+			this.gameManager = null;
+
         gameOverOverlay.classList.remove('hidden');
         const winnerText = gameOverOverlay.querySelector('.text-2xl.mb-6.text-\\[\\#00ffff\\]') as HTMLElement;
         if (winnerText) {

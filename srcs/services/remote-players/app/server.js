@@ -51,28 +51,38 @@ function setupGeneralGameSocket(socket){
 }
 
 function requestGameUID(socket, data){
-	/////////// attention valable uniquement pour jeu local pour le moment... a transformer pour ia, remote et tournois...
-	//// data.type = "local", "ia", "remote"
 	let uuid = crypto.randomUUID()
 	if (data.type === "local")
 	{
-		console.log(uuid)	
-		socket.on(uuid, (data) => gameHandler(socket, data, uuid))
-		socket.emit("new-game", {UUID:uuid, type:data.type})
+		console.log("data: ", data, "uuid : ", uuid)
+		
+		runningGames[uuid] = new GameManager(socket, {
+			uuid: uuid,
+			type: data.type
+		});
+		
+		socket.on(uuid, (eventData) => gameHandler(uuid, eventData));
+		
+		socket.emit("new-game", {UUID: uuid, type: data.type});
 	}
 }
 
-
-function gameHandler(socket, data, uuid){
-	if (! runningGames[uuid])
-			runningGames[uuid] = new GameManager(socket, uuid);
+function gameHandler(uuid, data){
 	const game = runningGames[uuid];
-	if (data.action === "move"){
-		game.updatePlayerMove(data)
+	
+	if (!game) {
+		console.error(`Game ${uuid} not found!`);
+		return;
+	}
+	
+	if (data.action === "player-ready") {
+		game.setPlayerReady(data.player);
+	}
 
+	if (data.state) {
+		game.updatePlayerMove(data.state.paddle1, data.state.paddle2);
 	}
 }
-
 function newGameSocket(socket, data){
 	console.log("data : ", data);
 }

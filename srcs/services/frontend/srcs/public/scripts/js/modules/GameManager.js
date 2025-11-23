@@ -6,11 +6,7 @@ export const defaultGameSettings = {
     winningScore: 10
 };
 export class GameManager {
-    constructor(canvas, UUID, settings = {
-        ballSpeed: 6,
-        paddleSpeed: 8,
-        winningScore: 10
-    }) {
+    constructor(canvas, UUID, settings = defaultGameSettings) {
         this.keys = {};
         this.animationId = null;
         this.listeners = [];
@@ -19,6 +15,11 @@ export class GameManager {
         this.CANVAS_HEIGHT = 400;
         this.PADDLE_WIDTH = 10;
         this.PADDLE_HEIGHT = 80;
+        this.isReady = false;
+        this.playersReadyStatus = {
+            player1: false,
+            player2: false
+        };
         this.gameUID = UUID;
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
@@ -26,47 +27,59 @@ export class GameManager {
         this.gameState = {
             player1Score: 0,
             player2Score: 0,
+            paddle1: {
+                x: 20,
+                y: this.CANVAS_HEIGHT / 2 - this.PADDLE_HEIGHT / 2,
+            },
+            paddle2: {
+                x: this.CANVAS_WIDTH - 30,
+                y: this.CANVAS_HEIGHT / 2 - this.PADDLE_HEIGHT / 2,
+            },
             gameRunning: false,
             winner: null
         };
-        this.initializeGameObjects();
+        console.log("THIS.GAMEUID: ", this.gameUID);
         this.setupEventListeners();
-        if (!gameSocket)
-            throw Error("gameSocket is not ready");
-        gameSocket.on(this.gameUID, () => { console.log("handle this...", this.gameUID); });
-        gameSocket.emit(this.gameUID, { message: "player ready" });
+        this.setupSocketListeners();
     }
     static requestGameID(type = "local") {
         if (!gameSocket)
             throw Error("gameSocket is not ready");
         gameSocket.emit("game-request", { type });
     }
-    initializeGameObjects() {
-        this.paddle1 = {
-            x: 20,
-            y: this.CANVAS_HEIGHT / 2 - this.PADDLE_HEIGHT / 2,
-            width: this.PADDLE_WIDTH,
-            height: this.PADDLE_HEIGHT,
-            speed: this.settings.paddleSpeed
-        };
-        this.paddle2 = {
-            x: this.CANVAS_WIDTH - 30,
-            y: this.CANVAS_HEIGHT / 2 - this.PADDLE_HEIGHT / 2,
-            width: this.PADDLE_WIDTH,
-            height: this.PADDLE_HEIGHT,
-            speed: this.settings.paddleSpeed
-        };
-        this.resetBall();
+    setReady() {
+        if (this.isReady)
+            return;
+        this.isReady = true;
+        if (!gameSocket || !this.gameUID)
+            throw Error("gameSocket is not ready");
+        gameSocket.emit(this.gameUID, {
+            action: "player-ready",
+            player: 3 // Pour le mode local et IA, on simule les 2 joueurs prêts // plus tard, pour les jeux a deux, on implémentera le numero du joueur a envoyer en fonction de l'attribution du placement...
+        });
     }
-    resetBall() {
-        this.ball = {
-            x: this.CANVAS_WIDTH / 2,
-            y: this.CANVAS_HEIGHT / 2,
-            velocityX: Math.random() > 0.5 ? this.settings.ballSpeed : -this.settings.ballSpeed,
-            velocityY: Math.random() * 4 - 2,
-            size: 8,
-            speed: this.settings.ballSpeed
-        };
+    setupSocketListeners() {
+        if (!gameSocket || !this.gameUID)
+            throw Error("gameSocket is not ready");
+        gameSocket.on(this.gameUID, (data) => {
+            console.log("Received from backend:", data);
+            if (data.type === "ready-status") {
+                this.playersReadyStatus = {
+                    player1: data.player1Ready,
+                    player2: data.player2Ready
+                };
+                this.drawReadyScreen();
+            }
+            if (data.type === "countdown") {
+                this.drawCountdown(data.count);
+            }
+            if (data.type === "game-start") {
+                this.startGame();
+            }
+            if (data.type === "game-update") {
+                this.updateGame(data);
+            }
+        });
     }
     setupEventListeners() {
         window.addEventListener('keydown', (e) => {
@@ -75,6 +88,36 @@ export class GameManager {
         window.addEventListener('keyup', (e) => {
             this.keys[e.key.toLowerCase()] = false;
         });
+    }
+    drawReadyScreen() {
+        // Clear canvas
+        this.ctx.fillStyle = '#000000';
+        this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
+        // Titre
+        this.ctx.fillStyle = '#00ffff';
+        this.ctx.font = '48px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('Waiting for players...', this.CANVAS_WIDTH / 2, 150);
+        // Status Player 1
+        this.ctx.font = '24px Arial';
+        this.ctx.fillStyle = this.playersReadyStatus.player1 ? '#00ff00' : '#ff0000';
+        this.ctx.fillText(`Player 1: ${this.playersReadyStatus.player1 ? 'READY ✓' : 'NOT READY'}`, this.CANVAS_WIDTH / 2, 220);
+        // Status Player 2
+        this.ctx.fillStyle = this.playersReadyStatus.player2 ? '#00ff00' : '#ff0000';
+        this.ctx.fillText(`Player 2: ${this.playersReadyStatus.player2 ? 'READY ✓' : 'NOT READY'}`, this.CANVAS_WIDTH / 2, 260);
+    }
+    drawCountdown(count) {
+        // Clear canvas
+        this.ctx.fillStyle = '#000000';
+        this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
+        // Countdown number
+        this.ctx.fillStyle = '#ff1493';
+        this.ctx.font = 'bold 120px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.shadowColor = '#ff1493';
+        this.ctx.shadowBlur = 20;
+        this.ctx.fillText(count.toString(), this.CANVAS_WIDTH / 2, this.CANVAS_HEIGHT / 2 + 40);
+        this.ctx.shadowBlur = 0;
     }
     startGame() {
         console.log('GameManager.startGame() called');
@@ -93,89 +136,43 @@ export class GameManager {
         this.notifyListeners();
     }
     resetGame() {
-        this.gameState = {
-            player1Score: 0,
-            player2Score: 0,
-            gameRunning: false,
-            winner: null
-        };
-        this.initializeGameObjects();
         this.draw();
-        // this.notifyListeners();
     }
     gameLoop() {
         if (!this.gameState.gameRunning)
             return;
-        this.update();
+        this.updatePlayers();
         this.draw();
         this.animationId = requestAnimationFrame(() => this.gameLoop());
     }
-    update() {
+    updateGame(data) {
+        if (data.state) {
+            this.gameState = data.state;
+            this.draw();
+            this.notifyListeners();
+        }
+    }
+    updatePlayers() {
         if (!this.gameUID || !gameSocket)
-            throw Error("Error with game socket !");
+            throw Error("Error with game socket!");
         let paddle1 = 0;
         let paddle2 = 0;
         // Update paddles
         if (this.keys['s'])
-            paddle1 = 1;
-        else if (this.keys['w'])
             paddle1 = -1;
-        else
-            paddle1 = 0;
+        else if (this.keys['w'])
+            paddle1 = 1;
         if (this.keys['arrowup'])
             paddle2 = -1;
         else if (this.keys['arrowdown'])
             paddle2 = 1;
-        else
-            paddle2 = 0;
         const state = {
             paddle1,
             paddle2
         };
+        if (!gameSocket)
+            throw Error("Error with game socket!");
         gameSocket.emit(this.gameUID, { state });
-        // Update ball
-        this.ball.x += this.ball.velocityX;
-        this.ball.y += this.ball.velocityY;
-        // Ball collision with top and bottom walls
-        if (this.ball.y <= 0 || this.ball.y >= this.CANVAS_HEIGHT) {
-            this.ball.velocityY = -this.ball.velocityY;
-        }
-        // Ball collision with paddles
-        if (this.ballCollidesWithPaddle(this.paddle1) || this.ballCollidesWithPaddle(this.paddle2)) {
-            this.ball.velocityX = -this.ball.velocityX;
-            // Add some randomness to the Y velocity
-            this.ball.velocityY += (Math.random() - 0.5) * 2;
-            // Limit Y velocity
-            this.ball.velocityY = Math.max(-8, Math.min(8, this.ball.velocityY));
-        }
-        // Ball out of bounds (scoring)
-        if (this.ball.x < 0) {
-            this.gameState.player2Score++;
-            this.resetBall();
-            this.checkWinner();
-        }
-        else if (this.ball.x > this.CANVAS_WIDTH) {
-            this.gameState.player1Score++;
-            this.resetBall();
-            this.checkWinner();
-        }
-    }
-    ballCollidesWithPaddle(paddle) {
-        return this.ball.x < paddle.x + paddle.width &&
-            this.ball.x + this.ball.size > paddle.x &&
-            this.ball.y < paddle.y + paddle.height &&
-            this.ball.y + this.ball.size > paddle.y;
-    }
-    checkWinner() {
-        if (this.gameState.player1Score >= this.settings.winningScore) {
-            this.gameState.winner = 'Player 1';
-            this.gameState.gameRunning = false;
-        }
-        else if (this.gameState.player2Score >= this.settings.winningScore) {
-            this.gameState.winner = 'Player 2';
-            this.gameState.gameRunning = false;
-        }
-        this.notifyListeners();
     }
     draw() {
         // Clear canvas
@@ -194,15 +191,17 @@ export class GameManager {
         this.ctx.shadowColor = '#00ffff';
         this.ctx.shadowBlur = 10;
         this.ctx.fillStyle = '#00ffff';
-        this.ctx.fillRect(this.paddle1.x, this.paddle1.y, this.paddle1.width, this.paddle1.height);
-        this.ctx.fillRect(this.paddle2.x, this.paddle2.y, this.paddle2.width, this.paddle2.height);
+        this.ctx.fillRect(this.gameState.paddle1.x, this.gameState.paddle1.y, this.PADDLE_WIDTH, this.PADDLE_HEIGHT);
+        this.ctx.fillRect(this.gameState.paddle2.x, this.gameState.paddle2.y, this.PADDLE_WIDTH, this.PADDLE_HEIGHT);
         // Draw ball with glow effect
-        this.ctx.shadowColor = '#ff1493';
-        this.ctx.shadowBlur = 15;
-        this.ctx.fillStyle = '#ff1493';
-        this.ctx.beginPath();
-        this.ctx.arc(this.ball.x + this.ball.size / 2, this.ball.y + this.ball.size / 2, this.ball.size / 2, 0, Math.PI * 2);
-        this.ctx.fill();
+        if (this.gameState.ball) {
+            this.ctx.shadowColor = '#ff1493';
+            this.ctx.shadowBlur = 15;
+            this.ctx.fillStyle = '#ff1493';
+            this.ctx.beginPath();
+            this.ctx.arc(this.gameState.ball.x + this.gameState.ball.size / 2, this.gameState.ball.y + this.gameState.ball.size / 2, this.gameState.ball.size / 2, 0, Math.PI * 2);
+            this.ctx.fill();
+        }
         // Reset shadow
         this.ctx.shadowBlur = 0;
     }
@@ -211,9 +210,6 @@ export class GameManager {
     }
     updateSettings(newSettings) {
         this.settings = { ...this.settings, ...newSettings };
-        this.paddle1.speed = this.settings.paddleSpeed;
-        this.paddle2.speed = this.settings.paddleSpeed;
-        this.ball.speed = this.settings.ballSpeed;
     }
     addListener(callback) {
         this.listeners.push(callback);
