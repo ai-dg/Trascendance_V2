@@ -6,6 +6,7 @@ import cors from '@fastify/cors';
 import { Server } from 'socket.io';
 import crypto from 'crypto';
 import { GameManager } from './srcs/GameManager.js';
+import { randomTournamentResult } from './srcs/scores.js';
 
 export const app = Fastify({trustProxy: true});
 const is_prod = process.env.NODE_ENV === "PROD";
@@ -148,6 +149,7 @@ const start = async () => {
 		});
 
 		console.log('Socket.IO path:', '/socket.io/');
+		randomTournamentResult()
 		setupSocketIO();
 		console.log('✅ Remote-player service running on port 3003 with Socket.IO');
 	} catch (err) {
