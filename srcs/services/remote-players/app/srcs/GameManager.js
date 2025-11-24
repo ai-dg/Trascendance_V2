@@ -3,6 +3,7 @@ const CANVAS_HEIGHT = 400;
 const PADDLE_WIDTH = 10;
 const PADDLE_HEIGHT = 80;
 
+
 export class GameManager {
   constructor(socket, data, settings = {
     ballSpeed: 6,

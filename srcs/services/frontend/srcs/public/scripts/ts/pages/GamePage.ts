@@ -80,7 +80,7 @@ export class GamePageLocal {
     gameOverContent.appendChild(playAgainButton);
     gameOverOverlay.appendChild(gameOverContent);
     canvasContainer.appendChild(gameOverOverlay);
-    
+  
     // Start Game Overlay
     const startOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg');
     startOverlay.setAttribute('data-overlay', 'start-game');
