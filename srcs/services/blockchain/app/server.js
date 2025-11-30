@@ -13,12 +13,20 @@ import { randomTournamentResult } from './srcs/scores.js';
 
 const app = Fastify();
 
+const provider = new ethers.JsonRpcProvider(
+  'https://api.avax-test.network/ext/bc/C/rpc'
+);
+
+// Vérifier la connexion
+const blockNumber = await provider.getBlockNumber();
+console.log('Block actuel:', blockNumber);
+
 
 
 app.get("/", (request, reply) => {
 
 	reply.send({message: "ok", status : "up"})
-	
+
 })
 
 

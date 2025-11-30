@@ -215,6 +215,8 @@ services:
       - FORTYTWO_CLIENT_ID=${FORTYTWO_CLIENT_ID}
       - FORTYTWO_CLIENT_SECRET=${FORTYTWO_CLIENT_SECRET}
       - FORTYTWO_REDIRECT_URI=${FORTYTWO_REDIRECT_URI}
+      - BC_WALLET=${BC_WALLET}
+      - BC_PK=${BC_PK}
     networks:
       - internal
     volumes:
