@@ -17,6 +17,7 @@ import { LiveChatPage } from './pages/LiveChatPage.js';
 import type { Socket } from "socket.io-client";
 
 declare const io: any;
+export let gameSocket: Socket | null =  null;
 
 export class App {
   private container: HTMLElement;
@@ -26,7 +27,6 @@ export class App {
   private currentUser: User | null = null;
   private currentPage: Page = 'auth';
   generalSocket: Socket | null =  null;
-  gameSocket: Socket | null =  null;
   TournamentSocket: Socket | null =  null;
 
   // Page instances
@@ -147,8 +147,8 @@ export class App {
       this.currentPage = 'menu';
 	  	this.generalSocket = await this.initSocket('/live-chat/general');
 		console.log(this.generalSocket)
-		this.gameSocket = await this.initSocket('/remote-players/game');
-		console.log(this.gameSocket)
+		gameSocket = await this.initSocketAlt('/remote-players', '/general');
+		console.log(gameSocket)
     }
     this.render();
   }
@@ -161,19 +161,25 @@ export class App {
     }
   }
 
-	// async initSocket(endpoint: string, handle: (data:any) => void = (data) => {console.log(data)}) {
-	// 	const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-	// 	const sock = new WebSocket(wsProtocol + '//' + window.location.host + endpoint, []);
-	// 	sock.onerror = function (error) {
-	// 		console.error('Erreur WebSocket:', error);
-	// 	};
-	// 	sock.onopen = () => console.log("✅ Connected on websocket", endpoint, " !!!!");
-	// 	sock.onmessage = (msg) => {
-	// 		let data = JSON.parse(msg.data);
-	// 		handle(data);
-	// 	};
-	// 	return sock;
-	// }
+private async initSocketAlt(path: string, namespace: string) {
+	const endpoint = `${path}${namespace}`;
+  const sock = io(`${window.location.origin}${namespace}`, {
+    path: `${path}/socket.io/`,transports: ['polling'] 
+  });
+
+  sock.on('connect', () => console.log("✅ Connected to socket.io", endpoint));
+  sock.on('connect_error', (err: any) => console.error('❌ Erreur:', err));
+  sock.on('welcome', (data: any) => console.log(data))
+  sock.on('new-game', (data:any) => {console.log( data)
+		this.gamePageLocal.setupGame(data);
+
+  }
+
+
+);
+  
+  return sock;
+}
 
   
 

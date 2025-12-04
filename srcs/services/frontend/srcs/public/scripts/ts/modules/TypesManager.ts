@@ -88,6 +88,9 @@ export interface ColorTheme {
 export interface GameState {
   player1Score: number;
   player2Score: number;
+  paddle1: any,
+  paddle2: any,
+  ball?: any,
   gameRunning: boolean;
   winner: string | null;
 }

@@ -1,25 +1,25 @@
 FROM debian:bookworm
 
 RUN apt update && apt upgrade -y \
-	&& apt install -y curl gnupg \
+	&& apt install -y curl gnupg build-essential python3 make g++ \
 	&& curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 	&& apt install -y nodejs \
 	&& apt clean \
 	&& rm -rf /var/lib/apt/lists/*
+
 
 VOLUME ["/data"]
 
 WORKDIR /data
 
 COPY package.json ./
-COPY package-lock.json ./
+COPY package-lock.json .
 
 RUN npm install -g nodemon
 
 RUN npm install --package-lock \
 	dotenv \
 	mysql2 \
-	fastify@latest \
 	@fastify/formbody \
 	@fastify/helmet \
 	@fastify/rate-limit \
@@ -27,21 +27,18 @@ RUN npm install --package-lock \
 	bcryptjs \
 	jsonwebtoken \
 	@fastify/cookie \
-	@fastify/csrf-protection \
 	redis \
 	xss \
 	validator \
 	nodemailer \
 	@grpc/grpc-js \
 	@grpc/proto-loader \
-	amqplib \
-	@fastify/websocket \
-	socket.io
-	# sqlite3 \
-	# sqlite
-	
+	amqplib \ 
+	nodemon \
+	ethers
+
 COPY . .
 
-EXPOSE 3007
+EXPOSE 3300
 
 CMD ["nodemon", "--config", "nodemon.json"]
