@@ -35,7 +35,7 @@ export class GameManager {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
     this.settings = settings;
-    
+
     this.gameState = {
       player1Score: 0,
       player2Score: 0,
@@ -50,7 +50,7 @@ export class GameManager {
       gameRunning: false,
       winner: null
     };
-    
+
     console.log("THIS.GAMEUID: ", this.gameUID);
     this.setupEventListeners();
     this.setupSocketListeners();
@@ -64,13 +64,13 @@ export class GameManager {
 
   public setReady(): void {
     if (this.isReady) return;
-    
+
     this.isReady = true;
-    
+
     if (!gameSocket || !this.gameUID)
       throw Error("gameSocket is not ready");
-    
-    gameSocket.emit(this.gameUID, { 
+
+    gameSocket.emit(this.gameUID, {
       action: "player-ready",
       player: 3 // Pour le mode local et IA, on simule les 2 joueurs prêts // plus tard, pour les jeux a deux, on implémentera le numero du joueur a envoyer en fonction de l'attribution du placement...
     });
@@ -79,10 +79,10 @@ export class GameManager {
   private setupSocketListeners(): void {
     if (!gameSocket || !this.gameUID)
       throw Error("gameSocket is not ready");
-      
+
     gameSocket.on(this.gameUID, (data) => {
       console.log("Received from backend:", data);
-      
+
       if (data.type === "ready-status") {
         this.playersReadyStatus = {
           player1: data.player1Ready,
@@ -90,15 +90,15 @@ export class GameManager {
         };
         this.drawReadyScreen();
       }
-      
+
       if (data.type === "countdown") {
         this.drawCountdown(data.count);
       }
-      
+
       if (data.type === "game-start") {
         this.startGame();
       }
-      
+
       if (data.type === "game-update") {
         this.updateGame(data);
       }
@@ -119,27 +119,27 @@ export class GameManager {
     // Clear canvas
     this.ctx.fillStyle = '#000000';
     this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
-    
+
     // Titre
     this.ctx.fillStyle = '#00ffff';
     this.ctx.font = '48px Arial';
     this.ctx.textAlign = 'center';
     this.ctx.fillText('Waiting for players...', this.CANVAS_WIDTH / 2, 150);
-    
+
     // Status Player 1
     this.ctx.font = '24px Arial';
     this.ctx.fillStyle = this.playersReadyStatus.player1 ? '#00ff00' : '#ff0000';
     this.ctx.fillText(
-      `Player 1: ${this.playersReadyStatus.player1 ? 'READY ✓' : 'NOT READY'}`, 
-      this.CANVAS_WIDTH / 2, 
+      `Player 1: ${this.playersReadyStatus.player1 ? 'READY ✓' : 'NOT READY'}`,
+      this.CANVAS_WIDTH / 2,
       220
     );
-    
+
     // Status Player 2
     this.ctx.fillStyle = this.playersReadyStatus.player2 ? '#00ff00' : '#ff0000';
     this.ctx.fillText(
-      `Player 2: ${this.playersReadyStatus.player2 ? 'READY ✓' : 'NOT READY'}`, 
-      this.CANVAS_WIDTH / 2, 
+      `Player 2: ${this.playersReadyStatus.player2 ? 'READY ✓' : 'NOT READY'}`,
+      this.CANVAS_WIDTH / 2,
       260
     );
   }
@@ -148,7 +148,7 @@ export class GameManager {
     // Clear canvas
     this.ctx.fillStyle = '#000000';
     this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
-    
+
     // Countdown number
     this.ctx.fillStyle = '#ff1493';
     this.ctx.font = 'bold 120px Arial';
@@ -186,7 +186,7 @@ export class GameManager {
 
     this.updatePlayers();
     this.draw();
-    
+
     this.animationId = requestAnimationFrame(() => this.gameLoop());
   }
 
@@ -201,26 +201,26 @@ export class GameManager {
   private updatePlayers(): void {
     if (!this.gameUID || !gameSocket)
       throw Error("Error with game socket!");
-      
+
     let paddle1 = 0;
     let paddle2 = 0;
 
     // Update paddles
-    if (this.keys['s']) 
+    if (this.keys['w'])
       paddle1 = -1;
-    else if (this.keys['w'])
+    else if (this.keys['s'])
       paddle1 = 1;
-      
-    if (this.keys['arrowup']) 
+
+    if (this.keys['arrowup'])
       paddle2 = -1;
     else if (this.keys['arrowdown'])
       paddle2 = 1;
-    
+
     const state = {
       paddle1,
       paddle2
     };
-    
+
     if (!gameSocket)
       throw Error("Error with game socket!");
     gameSocket.emit(this.gameUID, { state });
@@ -245,17 +245,17 @@ export class GameManager {
     this.ctx.shadowColor = '#00ffff';
     this.ctx.shadowBlur = 10;
     this.ctx.fillStyle = '#00ffff';
-    
+
     this.ctx.fillRect(
-      this.gameState.paddle1.x, 
-      this.gameState.paddle1.y, 
-      this.PADDLE_WIDTH, 
+      this.gameState.paddle1.x,
+      this.gameState.paddle1.y,
+      this.PADDLE_WIDTH,
       this.PADDLE_HEIGHT
     );
     this.ctx.fillRect(
-      this.gameState.paddle2.x, 
-      this.gameState.paddle2.y, 
-      this.PADDLE_WIDTH, 
+      this.gameState.paddle2.x,
+      this.gameState.paddle2.y,
+      this.PADDLE_WIDTH,
       this.PADDLE_HEIGHT
     );
 
@@ -266,10 +266,10 @@ export class GameManager {
       this.ctx.fillStyle = '#ff1493';
       this.ctx.beginPath();
       this.ctx.arc(
-        this.gameState.ball.x + this.gameState.ball.size / 2, 
-        this.gameState.ball.y + this.gameState.ball.size / 2, 
-        this.gameState.ball.size / 2, 
-        0, 
+        this.gameState.ball.x + this.gameState.ball.size / 2,
+        this.gameState.ball.y + this.gameState.ball.size / 2,
+        this.gameState.ball.size / 2,
+        0,
         Math.PI * 2
       );
       this.ctx.fill();
