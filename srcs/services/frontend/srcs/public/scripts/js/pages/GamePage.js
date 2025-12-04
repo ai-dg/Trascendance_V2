@@ -93,7 +93,7 @@ export class GamePageLocal {
         // Game Controls
         const gameControls = this.uiManager.createElement('div', 'flex gap-4');
         const pauseButton = this.uiManager.createButton('PAUSE', 'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200', () => this.pauseGame());
-        const resumeButton = this.uiManager.createButton('RESUME', 'retro-button bg-transparent text-[#ff1493] px-6 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200', () => this.startGame());
+        const resumeButton = this.uiManager.createButton('RESUME', 'retro-button bg-transparent text-[#ff1493] px-6 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200', () => this.resumeGame());
         const resetButton = this.uiManager.createButton('RESET', 'retro-button bg-transparent text-[#00ffff] px-6 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200', () => this.resetGame());
         gameControls.appendChild(pauseButton);
         gameControls.appendChild(resumeButton);
@@ -217,6 +217,11 @@ export class GamePageLocal {
     pauseGame() {
         if (this.gameManager) {
             this.gameManager.pauseGame();
+        }
+    }
+    resumeGame() {
+        if (this.gameManager) {
+            this.gameManager.resumeGame();
         }
     }
     resetGame() {

@@ -20,7 +20,7 @@ export class GameManager {
       player1: false,
       player2: false
     };
-    
+
     this.gameState = {
       paddle1: {
         x: 20,
@@ -55,14 +55,14 @@ export class GameManager {
       this.playersReady.player1 = true;
       this.playersReady.player2 = true;
     }
-    
+
     // Notifie les clients du statut
     this.socket.emit(this.uuid, {
       type: "ready-status",
       player1Ready: this.playersReady.player1,
       player2Ready: this.playersReady.player2
     });
-    
+
     // Si tous sont prêts, lance le countdown
     if (this.playersReady.player1 && this.playersReady.player2) {
       this.startCountdown();
@@ -71,15 +71,15 @@ export class GameManager {
 
   startCountdown() {
     let count = 3;
-    
+
     const countdownInterval = setInterval(() => {
       this.socket.emit(this.uuid, {
         type: "countdown",
         count: count
       });
-      
+
       count--;
-      
+
       if (count < 0) {
         clearInterval(countdownInterval);
         this.startGame();
@@ -91,10 +91,10 @@ export class GameManager {
     console.log('GameManager.startGame() called');
     this.gameState.gameRunning = true;
     this.gameState.winner = null;
-    
+
     // Prévenir le frontend
     this.socket.emit(this.uuid, { type: "game-start" });
-    
+
     this.gameLoop();
   }
 
@@ -116,6 +116,17 @@ export class GameManager {
     }
   }
 
+  resumeGame() {
+    if (this.gameState.gameRunning) return;
+
+    this.gameState.gameRunning = true;
+
+    // Notify frontend
+    this.socket.emit(this.uuid, { type: "game-start" });
+
+    this.gameLoop();
+  }
+
   resetGame() {
     this.gameState.player1Score = 0;
     this.gameState.player2Score = 0;
@@ -130,7 +141,7 @@ export class GameManager {
     if (this.gameLoopInterval) {
       clearInterval(this.gameLoopInterval);
     }
-    
+
     // 60 FPS = ~16.67ms par frame
     this.gameLoopInterval = setInterval(() => {
       if (!this.gameState.gameRunning) {
@@ -138,14 +149,14 @@ export class GameManager {
         this.gameLoopInterval = null;
         return;
       }
-      
+
       this.update();
     }, 1000 / 60); // 60 FPS
   }
 
   updatePlayerMove(paddle1Dir, paddle2Dir) {
     const speed = this.settings.paddleSpeed;
-    
+
     // Paddle 1
     if (paddle1Dir === -1 && this.gameState.paddle1.y > 0) {
       this.gameState.paddle1.y -= speed;
@@ -153,7 +164,7 @@ export class GameManager {
     if (paddle1Dir === 1 && this.gameState.paddle1.y < CANVAS_HEIGHT - PADDLE_HEIGHT) {
       this.gameState.paddle1.y += speed;
     }
-    
+
     // Paddle 2
     if (paddle2Dir === -1 && this.gameState.paddle2.y > 0) {
       this.gameState.paddle2.y -= speed;
@@ -167,20 +178,20 @@ export class GameManager {
     // Update ball position
     this.gameState.ball.x += this.gameState.ball.velocityX;
     this.gameState.ball.y += this.gameState.ball.velocityY;
-    
+
     // Ball collision with top and bottom walls
     if (this.gameState.ball.y <= 0 || this.gameState.ball.y >= CANVAS_HEIGHT) {
       this.gameState.ball.velocityY = -this.gameState.ball.velocityY;
     }
-    
+
     // Ball collision with paddles
-    if (this.ballCollidesWithPaddle(this.gameState.paddle1) || 
+    if (this.ballCollidesWithPaddle(this.gameState.paddle1) ||
         this.ballCollidesWithPaddle(this.gameState.paddle2)) {
       this.gameState.ball.velocityX = -this.gameState.ball.velocityX;
-      
+
       // Add some randomness to the Y velocity
       this.gameState.ball.velocityY += (Math.random() - 0.5) * 2;
-      
+
       // Limit Y velocity
       this.gameState.ball.velocityY = Math.max(-8, Math.min(8, this.gameState.ball.velocityY));
     }
@@ -195,7 +206,7 @@ export class GameManager {
       this.resetBall();
       this.checkWinner();
     }
-    
+
     // Send state to frontend
     this.socket.emit(this.uuid, {
       type: "game-update",

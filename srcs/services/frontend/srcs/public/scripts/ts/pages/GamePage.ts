@@ -14,14 +14,14 @@ export class GamePageLocal {
 
   public render(): void {
     const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
-    
+
     const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-6xl');
-    
+
     // Header
     const header = this.uiManager.createElement('div', 'text-center mb-8');
     const title = this.uiManager.createElement('h1', 'retro-title text-3xl mb-4', 'PONG');
     const subtitle = this.uiManager.createElement('p', 'retro-subtitle', 'CLASSIC ARCADE EXPERIENCE');
-    
+
     // Back to Menu Button
     const backButton = this.uiManager.createButton(
       'BACK TO MENU',
@@ -30,40 +30,40 @@ export class GamePageLocal {
     );
     const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
     backButton.appendChild(backIcon);
-    
+
     header.appendChild(title);
     header.appendChild(subtitle);
     header.appendChild(backButton);
-    
+
     // Game Container
     const gameContainer = this.uiManager.createElement('div', 'flex flex-col items-center gap-6');
-    
+
     // Score Display
     const scoreDisplay = this.uiManager.createElement('div', 'flex gap-16 items-center retro-text');
-    
+
     const player1Score = this.uiManager.createElement('div', 'text-center');
     const player1Label = this.uiManager.createElement('div', 'text-lg opacity-60', 'PLAYER 1');
     const player1Value = this.uiManager.createElement('div', 'text-4xl tracking-wider', '00');
     player1Score.appendChild(player1Label);
     player1Score.appendChild(player1Value);
-    
+
     const vsLabel = this.uiManager.createElement('div', 'text-2xl opacity-40', 'VS');
-    
+
     const player2Score = this.uiManager.createElement('div', 'text-center');
     const player2Label = this.uiManager.createElement('div', 'text-lg opacity-60', 'PLAYER 2');
     const player2Value = this.uiManager.createElement('div', 'text-4xl tracking-wider', '00');
     player2Score.appendChild(player2Label);
     player2Score.appendChild(player2Value);
-    
+
     scoreDisplay.appendChild(player1Score);
     scoreDisplay.appendChild(vsLabel);
     scoreDisplay.appendChild(player2Score);
-    
+
     // Game Canvas Container
     const canvasContainer = this.uiManager.createElement('div', 'relative');
     this.canvas = this.uiManager.createCanvas(800, 400, 'border-2 border-[#ff1493] rounded-lg bg-black shadow-[0_0_20px_#ff1493] retro-canvas');
     canvasContainer.appendChild(this.canvas);
-    
+
     // Game Over Overlay
     const gameOverOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg hidden');
     gameOverOverlay.setAttribute('data-overlay', 'game-over');
@@ -80,7 +80,7 @@ export class GamePageLocal {
     gameOverContent.appendChild(playAgainButton);
     gameOverOverlay.appendChild(gameOverContent);
     canvasContainer.appendChild(gameOverOverlay);
-  
+
     // Start Game Overlay
     const startOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg');
     startOverlay.setAttribute('data-overlay', 'start-game');
@@ -102,10 +102,10 @@ export class GamePageLocal {
     startOverlay.appendChild(startContent);
     canvasContainer.appendChild(startOverlay);
 
-    
+
     // Controls
     const controls = this.uiManager.createElement('div', 'flex gap-12 retro-text text-sm opacity-60');
-    
+
     const player1Controls = this.uiManager.createElement('div', 'text-center');
     const player1Title = this.uiManager.createElement('div', 'mb-2', 'PLAYER 1');
     const player1Up = this.uiManager.createElement('div', '', 'W - UP');
@@ -113,7 +113,7 @@ export class GamePageLocal {
     player1Controls.appendChild(player1Title);
     player1Controls.appendChild(player1Up);
     player1Controls.appendChild(player1Down);
-    
+
     const player2Controls = this.uiManager.createElement('div', 'text-center');
     const player2Title = this.uiManager.createElement('div', 'mb-2', 'PLAYER 2');
     const player2Up = this.uiManager.createElement('div', '', '↑ - UP');
@@ -121,10 +121,10 @@ export class GamePageLocal {
     player2Controls.appendChild(player2Title);
     player2Controls.appendChild(player2Up);
     player2Controls.appendChild(player2Down);
-    
+
     controls.appendChild(player1Controls);
     controls.appendChild(player2Controls);
-    
+
     // Game Controls
     const gameControls = this.uiManager.createElement('div', 'flex gap-4');
     const pauseButton = this.uiManager.createButton(
@@ -135,42 +135,42 @@ export class GamePageLocal {
     const resumeButton = this.uiManager.createButton(
       'RESUME',
       'retro-button bg-transparent text-[#ff1493] px-6 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200',
-      () => this.startGame()
+      () => this.resumeGame()
     );
     const resetButton = this.uiManager.createButton(
       'RESET',
       'retro-button bg-transparent text-[#00ffff] px-6 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200',
       () => this.resetGame()
     );
-    
+
     gameControls.appendChild(pauseButton);
     gameControls.appendChild(resumeButton);
     gameControls.appendChild(resetButton);
-    
+
     gameContainer.appendChild(scoreDisplay);
     gameContainer.appendChild(canvasContainer);
     gameContainer.appendChild(controls);
     gameContainer.appendChild(gameControls);
-    
+
     // Footer
     const footer = this.uiManager.createElement('div', 'text-center mt-8 retro-text text-sm opacity-40');
     const footerText = this.uiManager.createElement('p', '', 'FIRST TO 10 POINTS WINS • USE KEYBOARD CONTROLS');
     footer.appendChild(footerText);
-    
+
     content.appendChild(header);
     content.appendChild(gameContainer);
     content.appendChild(footer);
-    
+
     container.appendChild(content);
-    
+
     this.uiManager.clear();
     this.uiManager.container.appendChild(container);
-    
+
     // Initialize game manager
     if (this.canvas) {
 		this.requestNewGame()
 
-     
+
     }
   }
 
@@ -216,7 +216,7 @@ export class GamePageLocal {
   private updateScore(player1Score: number, player2Score: number): void {
     const player1Element = document.querySelector('.text-4xl.tracking-wider') as HTMLElement;
     const player2Element = document.querySelectorAll('.text-4xl.tracking-wider')[1] as HTMLElement;
-    
+
     if (player1Element) {
       player1Element.textContent = player1Score.toString().padStart(2, '0');
     }
@@ -231,11 +231,11 @@ export class GamePageLocal {
     const gameOverOverlay = document.querySelector('[data-overlay="game-over"]') as HTMLElement;
     const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
     console.log('Found overlays:', { gameOverOverlay, startOverlay });
-    
+
     // Vérifier si le jeu est terminé
     const isGameOver = gameState.player1Score >= 10 || gameState.player2Score >= 10;
     const winner = isGameOver ? (gameState.player1Score >= 10 ? 'Player 1' : 'Player 2') : null;
-    
+
     if (isGameOver && winner) {
       // Afficher l'overlay de fin de jeu
       if (gameOverOverlay) {
@@ -274,7 +274,7 @@ export class GamePageLocal {
     console.log('startGame() called');
     if (this.gameManager) {
       console.log('GameManager exists, calling startGame()');
-	  
+
       this.gameManager.startGame();
     } else {
       console.log('GameManager is null!');
@@ -284,6 +284,12 @@ export class GamePageLocal {
   private pauseGame(): void {
     if (this.gameManager) {
       this.gameManager.pauseGame();
+    }
+  }
+
+  private resumeGame(): void {
+    if (this.gameManager) {
+      this.gameManager.resumeGame();
     }
   }
 
@@ -305,27 +311,27 @@ export class GamePageAI {
 
   public render(): void {
     const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
-    
+
     const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-4xl text-center');
-    
+
     // Header
     const header = this.uiManager.createElement('div', 'mb-8');
     const title = this.uiManager.createElement('h1', 'retro-title text-4xl mb-4', 'PONG VS AI');
     const subtitle = this.uiManager.createElement('p', 'retro-subtitle text-xl', 'ARTIFICIAL INTELLIGENCE MODE');
-    
+
     // Construction Message
     const constructionContainer = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-12 mb-8');
     const constructionIcon = this.uiManager.createElement('div', 'flex justify-center mb-6');
     const icon = this.uiManager.createIcon('zap', 'w-16 h-16 text-[#ff1493]');
     constructionIcon.appendChild(icon);
-    
+
     const constructionTitle = this.uiManager.createElement('h2', 'retro-text text-2xl mb-4 text-[#ff1493]', 'UNDER CONSTRUCTION');
     const constructionText = this.uiManager.createElement('p', 'retro-text text-lg opacity-80 mb-6', 'AI opponent is being developed. This feature will be available soon!');
-    
+
     constructionContainer.appendChild(constructionIcon);
     constructionContainer.appendChild(constructionTitle);
     constructionContainer.appendChild(constructionText);
-    
+
     // Back Button
     const backButton = this.uiManager.createButton(
       'BACK TO MENU',
@@ -334,15 +340,15 @@ export class GamePageAI {
     );
     const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
     backButton.appendChild(backIcon);
-    
+
     header.appendChild(title);
     header.appendChild(subtitle);
     content.appendChild(header);
     content.appendChild(constructionContainer);
     content.appendChild(backButton);
-    
+
     container.appendChild(content);
-    
+
     this.uiManager.clear();
     this.uiManager.container.appendChild(container);
   }
@@ -359,27 +365,27 @@ export class GamePageOnline {
 
   public render(): void {
     const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
-    
+
     const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-4xl text-center');
-    
+
     // Header
     const header = this.uiManager.createElement('div', 'mb-8');
     const title = this.uiManager.createElement('h1', 'retro-title text-4xl mb-4', 'PONG ONLINE');
     const subtitle = this.uiManager.createElement('p', 'retro-subtitle text-xl', 'MULTIPLAYER MODE');
-    
+
     // Construction Message
     const constructionContainer = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-12 mb-8');
     const constructionIcon = this.uiManager.createElement('div', 'flex justify-center mb-6');
     const icon = this.uiManager.createIcon('users', 'w-16 h-16 text-[#00ffff]');
     constructionIcon.appendChild(icon);
-    
+
     const constructionTitle = this.uiManager.createElement('h2', 'retro-text text-2xl mb-4 text-[#00ffff]', 'UNDER CONSTRUCTION');
     const constructionText = this.uiManager.createElement('p', 'retro-text text-lg opacity-80 mb-6', 'Online multiplayer is being developed. This feature will be available soon!');
-    
+
     constructionContainer.appendChild(constructionIcon);
     constructionContainer.appendChild(constructionTitle);
     constructionContainer.appendChild(constructionText);
-    
+
     // Back Button
     const backButton = this.uiManager.createButton(
       'BACK TO MENU',
@@ -388,15 +394,15 @@ export class GamePageOnline {
     );
     const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
     backButton.appendChild(backIcon);
-    
+
     header.appendChild(title);
     header.appendChild(subtitle);
     content.appendChild(header);
     content.appendChild(constructionContainer);
     content.appendChild(backButton);
-    
+
     container.appendChild(content);
-    
+
     this.uiManager.clear();
     this.uiManager.container.appendChild(container);
   }

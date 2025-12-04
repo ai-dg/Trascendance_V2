@@ -56,28 +56,36 @@ function requestGameUID(socket, data){
 	if (data.type === "local")
 	{
 		console.log("data: ", data, "uuid : ", uuid)
-		
+
 		runningGames[uuid] = new GameManager(socket, {
 			uuid: uuid,
 			type: data.type
 		});
-		
+
 		socket.on(uuid, (eventData) => gameHandler(uuid, eventData));
-		
+
 		socket.emit("new-game", {UUID: uuid, type: data.type});
 	}
 }
 
 function gameHandler(uuid, data){
 	const game = runningGames[uuid];
-	
+
 	if (!game) {
 		console.error(`Game ${uuid} not found!`);
 		return;
 	}
-	
+
 	if (data.action === "player-ready") {
 		game.setPlayerReady(data.player);
+	}
+
+	if (data.action === "pause") {
+		game.pauseGame();
+	}
+
+	if (data.action === "resume") {
+		game.resumeGame();
 	}
 
 	if (data.state) {
@@ -92,40 +100,40 @@ function newGameSocket(socket, data){
 async function socketAuthMiddleware(socket, next) {
   try {
 
-    const cookies = socket.handshake.headers.cookie;    
+    const cookies = socket.handshake.headers.cookie;
     if (!cookies) {
 		   console.log("E")
       return next(new Error('No cookies'));
     }
     const token = parseCookie(cookies, 'token');
-    
+
     if (!token) {
 		   console.log("D")
       return next(new Error('No token'));
     }
 
     const val = jwt.decode(token, process.env.JWT_SECRET);
-    
+
     if (!val || !val.jti) {
 		   console.log("C")
       return next(new Error('Invalid token'));
     }
-    
+
     const exists = await redis.get(`jwt:${val.jti}`);
-    
+
     if (!exists || exists === "not valid") {
 	   console.log("B")
       return next(new Error('Token not valid in Redis'));
     }
-    
+
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     socket.userId = payload.user_id;
     socket.user = payload.pseudo;
 	console.log("payload : ", payload)
     console.log("A")
     next();
-    
+
   } catch (err) {
     console.error('Auth error:', err);
     next(new Error('Authentication failed'));

@@ -169,12 +169,39 @@ export class GameManager {
   }
 
   public pauseGame(): void {
+    if (!gameSocket || !this.gameUID) {
+      console.error("Cannot pause: gameSocket or gameUID not available");
+      return;
+    }
+
     this.gameState.gameRunning = false;
     if (this.animationId) {
       cancelAnimationFrame(this.animationId);
       this.animationId = null;
     }
+
+    // Send pause action to backend
+    gameSocket.emit(this.gameUID, {
+      action: "pause"
+    });
+
     this.notifyListeners();
+  }
+
+  public resumeGame(): void {
+    if (!gameSocket || !this.gameUID) {
+      console.error("Cannot resume: gameSocket or gameUID not available");
+      return;
+    }
+
+    // Send resume action to backend
+    gameSocket.emit(this.gameUID, {
+      action: "resume"
+    });
+
+    this.gameState.gameRunning = true;
+    this.notifyListeners();
+    this.gameLoop();
   }
 
   public resetGame(): void {
