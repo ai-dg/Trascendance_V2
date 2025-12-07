@@ -1,3 +1,18 @@
+/**
+ * ============================================
+ * SERVICE REMOTE-PLAYERS
+ * ============================================
+ * 
+ * Ce service gère la logique des parties de Pong côté serveur.
+ * Architecture : Fastify (HTTP) + Socket.IO (WebSocket en temps réel)
+ * 
+ * Fonctionnalités :
+ * - Authentification JWT via cookies
+ * - Création et gestion de parties multiples simultanées
+ * - Calcul de la physique du jeu à 60 FPS
+ * - Synchronisation en temps réel avec les clients
+ */
+
 import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import jwt from 'jsonwebtoken';
@@ -7,13 +22,24 @@ import { Server } from 'socket.io';
 import crypto from 'crypto';
 import { GameManager } from './srcs/GameManager.js';
 
+// ============================================
+// CONFIGURATION DU SERVEUR
+// ============================================
 
+// Serveur Fastify avec proxy de confiance (pour nginx/traefik)
 export const app = Fastify({trustProxy: true});
+
+// Détection de l'environnement (PROD ou DEV)
 const is_prod = process.env.NODE_ENV === "PROD";
 export const base_url = is_prod ? "www.transcendance.com" : "localhost";
 
+// Instance Socket.IO (initialisée après le démarrage de Fastify)
 let socketio = null;
 
+// ============================================
+// CONNEXION REDIS
+// ============================================
+// Redis sert à valider les JWT (stockage des JTI)
 export const redis = createClient({
     socket: {
         host: process.env.REDIS_HOST,
@@ -22,32 +48,71 @@ export const redis = createClient({
     password: process.env.REDIS_PASSWORD
 });
 
+// Connexion à Redis
 await redis.connect();
 
+// ============================================
+// PLUGINS FASTIFY
+// ============================================
+// Plugin pour gérer les cookies (nécessaire pour l'auth JWT)
 await app.register(cookie, {
     secret: process.env.COOKIE_SECRET,
     parseOptions: {}
 });
 
+// ============================================
+// STOCKAGE EN MÉMOIRE
+// ============================================
+// Map des connexions actives (userId -> socket)
 const generalConnections = new Map();
+
+// Map des parties en cours (UUID -> GameManager)
+// Chaque partie a son propre GameManager qui gère sa logique
 const runningGames = new Map();
 
+// ============================================
+// ROUTES HTTP
+// ============================================
+// Route de santé pour vérifier que le service est en ligne
 app.get('/', async () => {
     return { status: 'ok', service: 'remote-players' };
 });
 
+// ============================================
+// CONFIGURATION SOCKET.IO
+// ============================================
 
+/**
+ * Configure Socket.IO avec authentification
+ * Namespace /general pour les parties générales (local, AI, etc.)
+ */
 function setupSocketIO(){
 	const io = socketio;
+	
+	// Applique le middleware d'authentification JWT
 	io.of('/general').use(socketAuthMiddleware)
+	
+	// Écoute les nouvelles connexions sur le namespace /general
 	io.of('/general').on('connection',  (socket) => setupGeneralGameSocket(socket));
 }
 
+/**
+ * Configure les événements pour une connexion Socket.IO authentifiée
+ * @param {Socket} socket - Socket du client connecté
+ */
 function setupGeneralGameSocket(socket){
 	console.log('✅ Utilisateur authentifié:', socket.userId);
+	
+	// Envoie un message de bienvenue au client
 	socket.emit("welcome", {message : "welcome !", userId: socket.userId, user: socket.user})
+	
+	// Informe les autres utilisateurs qu'un nouveau joueur s'est connecté
 	socket.broadcast.emit("user-joined", {userId: socket.id});
+	
+	// Écoute la demande de nouvelle partie (ancienne méthode, peut être obsolète)
 	socket.on("new-game", (data) => newGameSocket(socket, data))
+	
+	// Écoute la demande de création de partie (méthode actuelle)
 	socket.on("game-request", (data) => requestGameUID(socket, data))
 }
 

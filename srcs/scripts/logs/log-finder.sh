@@ -13,6 +13,7 @@ SERVICES=(
   language-manager_app
   live-chat_app
   remote-players_app
+  canvas-ai_app
   match-maker_app
   gt_mailpit
   mail

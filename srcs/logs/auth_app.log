@@ -4,3 +4,9 @@
 [33m[nodemon] watching extensions: js,json[39m
 [32m[nodemon] starting `node server.js`[39m
 Auth service running on port 3000
+[2025-12-04T20:46:53.593Z] GET /me
+[2025-12-04T20:46:53.607Z] GET /me
+[2025-12-04T20:46:54.514Z] GET /me
+[2025-12-04T20:46:54.524Z] GET /me
+[2025-12-04T21:04:27.872Z] GET /me
+[2025-12-04T21:04:27.966Z] GET /me

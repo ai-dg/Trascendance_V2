@@ -3,12 +3,22 @@
 [33m[nodemon] watching path(s): *.*[39m
 [33m[nodemon] watching extensions: js,json[39m
 [32m[nodemon] starting `node server.js`[39m
-✅ WebSocket plugin enregistré
-🔧 Enregistrement du contexte WebSocket
-✅ Route /general enregistrée
 └── / (GET, HEAD)
-    └── g
-        ├── eneral (GET, HEAD)
-        └── ame (GET, HEAD)
 
-Remote-player service running
+Socket.IO path: /socket.io/
+✅ Remote-player service running on port 3003 with Socket.IO
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node server.js`[39m
+└── / (GET, HEAD)
+
+Socket.IO path: /socket.io/
+✅ Remote-player service running on port 3003 with Socket.IO
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node server.js`[39m
+└── / (GET, HEAD)
+
+Socket.IO path: /socket.io/
+✅ Remote-player service running on port 3003 with Socket.IO
+E
+E
+E
