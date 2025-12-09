@@ -3,12 +3,6 @@ export class SettingsPage {
     t(key) {
         return this.languageManager.t(key);
     }
-    // private colorThemes: ColorTheme[] = [
-    //   { id: 'synthwave', name: 'SYNTHWAVE', colors: ['#ff1493', '#00ffff', '#9d4edd'] },
-    //   { id: 'classic', name: 'CLASSIC', colors: ['#00ff00', '#ffff00', '#ff0000'] },
-    //   { id: 'cyberpunk', name: 'CYBERPUNK', colors: ['#ff00ff', '#00ff00', '#0080ff'] },
-    //   { id: 'neon', name: 'NEON', colors: ['#ff6600', '#ff0080', '#8000ff'] }
-    // ];
     constructor(uiManager, routerManager, authManager, languageManager, authPage, onBack, onUpdateProfile, user, isGuest = false) {
         this.user = user;
         this.isGuest = isGuest;
@@ -250,39 +244,6 @@ export class SettingsPage {
         wrapper.appendChild(flag);
         return wrapper;
     }
-    // private createColorThemeCard(): HTMLElement {
-    //   const card = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff6600] rounded-lg p-6');
-    //   const header = this.uiManager.createElement('div', 'flex items-center gap-3 mb-6');
-    //   const icon = this.uiManager.createIcon('palette', 'w-6 h-6 text-[#ff6600]');
-    //   const title = this.uiManager.createElement('h3', 'retro-text text-lg text-[#ff6600]', 'COLOR THEME');
-    //   header.appendChild(icon);
-    //   header.appendChild(title);
-    //   const themesGrid = this.uiManager.createElement('div', 'grid grid-cols-2 gap-3');
-    //   this.colorThemes.forEach(theme => {
-    //     const themeCard = this.uiManager.createElement('div', 'p-4 rounded-lg border-2 cursor-pointer transition-all duration-200');
-    //     themeCard.style.borderColor = this.settings.colorTheme === theme.id ? '#ff6600' : 'rgba(255, 255, 255, 0.2)';
-    //     themeCard.style.backgroundColor = this.settings.colorTheme === theme.id ? 'rgba(255, 102, 0, 0.2)' : 'transparent';
-    //     const themeContent = this.uiManager.createElement('div', 'text-center');
-    //     const themeName = this.uiManager.createElement('div', 'retro-text text-sm mb-2', theme.name);
-    //     const colorsContainer = this.uiManager.createElement('div', 'flex justify-center gap-2');
-    //     theme.colors.forEach(color => {
-    //       const colorDot = this.uiManager.createElement('div', 'w-4 h-4 rounded-full border border-white/20');
-    //       colorDot.style.backgroundColor = color;
-    //       colorsContainer.appendChild(colorDot);
-    //     });
-    //     themeContent.appendChild(themeName);
-    //     themeContent.appendChild(colorsContainer);
-    //     themeCard.appendChild(themeContent);
-    //     themeCard.addEventListener('click', () => {
-    //       this.settings.colorTheme = theme.id;
-    //       this.render(); // Re-render to update selection
-    //     });
-    //     themesGrid.appendChild(themeCard);
-    //   });
-    //   card.appendChild(header);
-    //   card.appendChild(themesGrid);
-    //   return card;
-    // }
     resetToDefaults() {
         this.settings = {
             soundEnabled: true,

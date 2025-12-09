@@ -14,45 +14,40 @@ export class MenuPage {
   private menuItems = [
     {
       icon: 'zap',
-      label: 'PLAY PONG WITH AI',
+      label: 'PLAY WITH AI',
       action: () => this.onPlayGameAI(),
       color: '#ff1493',
-      description: 'Start a new game with AI'
     },
     {
-      icon: 'gamepad',
-      label: 'PLAY PONG WITH LOCAL GAMER',
+      icon: 'monitor',
+      label: 'PLAY LOCAL',
       action: () => this.onPlayGameLocal(),
       color: '#ff1493',
-      description: 'Start a new game with a local gamer'
     },
     {
-      icon: 'users',  
-      label: 'PLAY PONG WITH ONLINE GAMER',
+      icon: 'monitor',  
+      label: 'PLAY ONLINE',
       action: () => this.onPlayGameOnline(),
       color: '#ff1493',
-      description: 'Start a new game with a online gamer'
     },
     {
-      icon: 'trophy',
-      label: 'LEADERBOARD',
+      icon: 'zap',
+      label: 'TOURNAMENT',
       action: () => this.onViewLeaderboard(),
-      color: '#00ffff',
-      description: 'View high scores'
+      color: '#f566b2ff',
+      description: 'Minimum 4 players'
     },
     {
       icon: 'chat',
-      label: 'CHAT WITH FRIENDS',
+      label: 'LIVE CHAT',
       action: () => this.onChatWithFriends(),
       color: '#00ffff',
-      description: 'Chat with friends'
     },
     {
       icon: 'settings',
       label: 'SETTINGS',
       action: () => this.onSettings(),
       color: '#9d4edd',
-      description: 'Customize your experience'
     }
   ];
 
@@ -85,8 +80,8 @@ export class MenuPage {
     
     // Header
     const header = this.uiManager.createElement('div', 'text-center mb-12');
-    const title = this.uiManager.createElement('h1', 'retro-title mb-4', 'NEON ARCADE');
-    const subtitle = this.uiManager.createElement('p', 'retro-subtitle text-lg', 'WELCOME TO THE SYNTHWAVE DIMENSION');
+    const title = this.uiManager.createElement('h1', 'retro-title mb-4', 'TRANSCENDANCE');
+    const subtitle = this.uiManager.createElement('p', 'retro-subtitle text-lg', 'WELCOME TO THE RETRO PONG');
     
     header.appendChild(title);
     header.appendChild(subtitle);
@@ -94,7 +89,6 @@ export class MenuPage {
     // User Welcome
     if (user) {
       const userWelcome = this.uiManager.createElement('div', 'mt-6 flex items-center justify-center gap-3 retro-text');
-      const userIcon = this.uiManager.createIcon('user', 'w-5 h-5 text-[#00ffff]');
       const userText = this.uiManager.createElement('span', 'text-[#00ffff]', `PLAYER: ${user.username.toUpperCase()}`);
       
       // Avatar
@@ -108,7 +102,6 @@ export class MenuPage {
       }
       avatarImg.alt = 'User Avatar';
       
-      userWelcome.appendChild(userIcon);
       userWelcome.appendChild(avatarImg);
       userWelcome.appendChild(userText);
       header.appendChild(userWelcome);
@@ -160,9 +153,9 @@ export class MenuPage {
 
 
     // div lateral social
-    const socialDiv = this.uiManager.createElement('div', 'w-80 bg-black/60 backdrop-blur-md border-l-2 border-[#00ffff] flex flex-col py-6 px-4 mb-12');
-    socialDiv.style.minHeight = '700px';
-    socialDiv.style.border = '2px solid red';
+    const socialDiv = this.uiManager.createElement('div', 'w-80 bg-black/40 backdrop-blur-sm rounded-lg flex flex-col py-6 px-4 mb-12');
+    socialDiv.style.minHeight = '440px';
+    socialDiv.style.boxShadow = '0 0 30px rgba(0, 255, 255, 0.3)';
 
     // Social header
     const socialHeaderWrapper = this.uiManager.createElement('div', 'flex items-center justify-between mb-4');
@@ -233,34 +226,34 @@ export class MenuPage {
     mainGrid.appendChild(socialDivWrapper);
     
     // Stats Panel
-    const statsPanel = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-6 mb-8');
+    // const statsPanel = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-6 mb-8');
     
-    const statsHeader = this.uiManager.createElement('div', 'flex items-center justify-center gap-2 mb-4');
-    const statsIcon = this.uiManager.createIcon('zap', 'w-5 h-5 text-[#ff1493]');
-    const statsTitle = this.uiManager.createElement('h3', 'retro-text text-lg text-[#ff1493]', 'ARCADE STATS');
-    statsHeader.appendChild(statsIcon);
-    statsHeader.appendChild(statsTitle);
+    // const statsHeader = this.uiManager.createElement('div', 'flex items-center justify-center gap-2 mb-4');
+    // const statsIcon = this.uiManager.createIcon('zap', 'w-5 h-5 text-[#ff1493]');
+    // const statsTitle = this.uiManager.createElement('h3', 'retro-text text-lg text-[#ff1493]', 'ARCADE STATS');
+    // statsHeader.appendChild(statsIcon);
+    // statsHeader.appendChild(statsTitle);
     
-    const statsGrid = this.uiManager.createElement('div', 'grid grid-cols-3 gap-6 text-center');
+    // const statsGrid = this.uiManager.createElement('div', 'grid grid-cols-3 gap-6 text-center');
     
-    const stats = [
-      { value: '0', label: 'GAMES PLAYED', color: '#00ffff' },
-      { value: '0', label: 'WINS', color: '#ff1493' },
-      { value: '0', label: 'HIGH SCORE', color: '#9d4edd' }
-    ];
+    // const stats = [
+    //   { value: '0', label: 'GAMES PLAYED', color: '#00ffff' },
+    //   { value: '0', label: 'WINS', color: '#ff1493' },
+    //   { value: '0', label: 'HIGH SCORE', color: '#9d4edd' }
+    // ];
     
-    stats.forEach(stat => {
-      const statItem = this.uiManager.createElement('div');
-      const statValue = this.uiManager.createElement('div', 'retro-text text-2xl mb-1', stat.value);
-      statValue.style.color = stat.color;
-      const statLabel = this.uiManager.createElement('div', 'retro-text text-xs opacity-60', stat.label);
-      statItem.appendChild(statValue);
-      statItem.appendChild(statLabel);
-      statsGrid.appendChild(statItem);
-    });
+    // stats.forEach(stat => {
+    //   const statItem = this.uiManager.createElement('div');
+    //   const statValue = this.uiManager.createElement('div', 'retro-text text-2xl mb-1', stat.value);
+    //   statValue.style.color = stat.color;
+    //   const statLabel = this.uiManager.createElement('div', 'retro-text text-xs opacity-60', stat.label);
+    //   statItem.appendChild(statValue);
+    //   statItem.appendChild(statLabel);
+    //   statsGrid.appendChild(statItem);
+    // });
     
-    statsPanel.appendChild(statsHeader);
-    statsPanel.appendChild(statsGrid);
+    // statsPanel.appendChild(statsHeader);
+    // statsPanel.appendChild(statsGrid);
     
     // Footer
     const footer = this.uiManager.createElement('div', 'flex justify-center gap-6');
@@ -275,12 +268,12 @@ export class MenuPage {
     
     // Version Info
     const versionInfo = this.uiManager.createElement('div', 'text-center mt-8 retro-text text-xs opacity-40');
-    const versionText = this.uiManager.createElement('p', '', 'NEON ARCADE v1.0 • POWERED BY SYNTHWAVE TECHNOLOGY');
+    const versionText = this.uiManager.createElement('p', '', 'MADE BY DIEGO, CHRISTOPHE, NATHALIA, MARI AND RALPH');
     versionInfo.appendChild(versionText);
     
     content.appendChild(header);
     content.appendChild(mainGrid);
-    content.appendChild(statsPanel);
+    //content.appendChild(statsPanel);
     content.appendChild(footer);
     content.appendChild(versionInfo);
     
