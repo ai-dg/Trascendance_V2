@@ -1,11 +1,12 @@
 import { UIManager } from '../modules/UIManager.js';
 import { GameManager } from '../modules/GameManager.js';
 
-export class LeaderboardPage {
+export class TournamentPage {
   private uiManager: UIManager;
   private onBack: () => void;
   private gameManager: GameManager | null = null;
   private canvas: HTMLCanvasElement | null = null;
+  private readyPending: boolean = false;
 
   constructor(uiManager: UIManager, onBack: () => void) {
     this.uiManager = uiManager;
@@ -91,14 +92,14 @@ export class LeaderboardPage {
     //   'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',
     //   () => this.startGame()
     // );
-  const startButton = this.uiManager.createButton(
-  'READY', // ← Change de "START GAME" à "READY"
-  'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',
-  () => this.setReady() // ← Change de startGame à readyUp
-  );
+    const startButton = this.uiManager.createButton(
+    'READY', // ← Change de "START GAME" à "READY"
+    'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',
+    () => this.setReady() // ← Change de startGame à readyUp
+    );
     startContent.appendChild(startTitle);
     // startContent.appendChild(startButton);
-  startContent.appendChild(startButton);
+    startContent.appendChild(startButton);
     startOverlay.appendChild(startContent);
     canvasContainer.appendChild(startOverlay);
 
@@ -168,40 +169,54 @@ export class LeaderboardPage {
     
     // Initialize game manager
     if (this.canvas) {
-    this.requestNewGame()
+        this.requestNewGame()
 
      
     }
   }
 
   private requestNewGame(): void{
-  const gameOverOverlay = document.querySelector('[data-overlay="game-over"]') as HTMLElement;
-  const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
+    const gameOverOverlay = document.querySelector('[data-overlay="game-over"]') as HTMLElement;
+    const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
     if (gameOverOverlay) {
       gameOverOverlay.classList.add('hidden');
-    startOverlay.classList.remove('hidden')
-  }
-  GameManager.requestGameID("local")
+    }
+    if (startOverlay) {
+      startOverlay.classList.remove('hidden');
+    }
+    this.readyPending = false; // Reset le flag ready
+    GameManager.requestGameID("local")
   }
 
 
   private setReady(): void {
-  if (this.gameManager) {
-    this.gameManager.setReady();
-  const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
+    const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
     if (startOverlay) {
       startOverlay.classList.add('hidden');
     }
+    
+    if (this.gameManager) {
+      this.gameManager.setReady();
+      this.readyPending = false;
+    } else {
+      // Si le gameManager n'existe pas encore, on marque qu'on veut être ready
+      this.readyPending = true;
+    }
   }
-}
 
   public setupGame(data:any){
-  console.log("should work here in setupGame")
-  if (!this.canvas)
-    throw new Error("canvas is not initialised");
-  this.gameManager = new GameManager(this.canvas, data.UUID);
-  this.setupGameListeners()
-  console.log(data.UUID, this.gameManager)
+    console.log("should work here in setupGame")
+    if (!this.canvas)
+        throw new Error("canvas is not initialised");
+    this.gameManager = new GameManager(this.canvas, data.UUID);
+    this.setupGameListeners()
+    console.log(data.UUID, this.gameManager)
+    
+    // Si l'utilisateur a déjà cliqué sur READY avant que le gameManager soit créé
+    if (this.readyPending && this.gameManager) {
+      this.gameManager.setReady();
+      this.readyPending = false;
+    }
   }
 
   private setupGameListeners(): void {
@@ -239,8 +254,8 @@ export class LeaderboardPage {
     if (isGameOver && winner) {
       // Afficher l'overlay de fin de jeu
       if (gameOverOverlay) {
-    if (this.gameManager)
-      this.gameManager = null;
+        if (this.gameManager)
+            this.gameManager = null;
 
         gameOverOverlay.classList.remove('hidden');
         const winnerText = gameOverOverlay.querySelector('.text-2xl.mb-6.text-\\[\\#00ffff\\]') as HTMLElement;
@@ -274,7 +289,7 @@ export class LeaderboardPage {
     console.log('startGame() called');
     if (this.gameManager) {
       console.log('GameManager exists, calling startGame()');
-    
+      
       this.gameManager.startGame();
     } else {
       console.log('GameManager is null!');

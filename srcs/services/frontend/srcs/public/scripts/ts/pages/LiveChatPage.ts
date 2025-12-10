@@ -2,7 +2,7 @@ import { UIManager } from '../modules/UIManager.js';
 import type { User } from '../modules/TypesManager.js';
 import type { LanguageManager } from '../modules/LangManager.js';
 import type { RouterManager } from '../modules/RouterManager.js';
-import { Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 
 
 export class LiveChatPage {
@@ -122,14 +122,14 @@ export class LiveChatPage {
 
             console.log("With this.generalSocket");
 
-            this.generalSocket.on('friend-request', (data) => {
+            this.generalSocket.on('friend-request', (data: any) => {
                 console.log("Receveid friend request:", data);
                 const { senderId, message } = data;
                 this.showFriendRequestNotif(senderId, message);
             });
         
             // Listen for backend confirmations
-            this.generalSocket.on("friend-request-status", (msg) => {
+            this.generalSocket.on("friend-request-status", (msg: any) => {
                 console.log("Live-chat says:", msg);
 
                 if (msg.success) {
@@ -148,7 +148,7 @@ export class LiveChatPage {
                 }
             });
 
-            this.generalSocket.on('friend-request-result', (data) => {
+            this.generalSocket.on('friend-request-result', (data: any) => {
                 console.log("Friend request result:", data);
                 const { action, message } = data;
 

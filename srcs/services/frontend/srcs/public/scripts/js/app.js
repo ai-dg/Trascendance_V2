@@ -6,12 +6,12 @@ import { GuestPage } from './pages/GuestPage.js';
 import { MenuPage } from './pages/MenuPage.js';
 import { GamePageAI, GamePageLocal, GamePageOnline } from './pages/GamePage.js';
 import { CheckOtp } from './pages/CheckOtp.js';
-import { LeaderboardPage } from './pages/LeaderboardPage.js';
 import { SettingsPage } from './pages/SettingsPage.js';
 import { CheckManager } from './modules/CheckManager.js';
 import { UpdateProfilePage } from './pages/UpdateProfilePage.js';
 import { LanguageManager } from './modules/LangManager.js';
 import { LiveChatPage } from './pages/LiveChatPage.js';
+import { TournamentPage } from './pages/TournamentPage.js';
 export let gameSocket = null;
 export class App {
     constructor(container) {
@@ -31,12 +31,12 @@ export class App {
         // Initialize pages
         this.authPage = new AuthPage(this.uiManager, this.authManager, this.checkManager, this.languageManager, this.handleLogin.bind(this), this.handleRegister.bind(this), this.appHandleForgotPassword.bind(this), this.handleChangePassword.bind(this), this.handleShowGuestPage.bind(this), this.handleError.bind(this));
         this.guestPage = new GuestPage(this.uiManager, this.handleBackToAuth.bind(this), this.handlePlayAsGuest.bind(this));
-        this.menuPage = new MenuPage(this.uiManager, this.handlePlayGameAI.bind(this), this.handlePlayGameLocal.bind(this), this.handlePlayGameOnline.bind(this), this.handleViewLeaderboard.bind(this), this.handleChatWithFriends.bind(this), this.handleSettings.bind(this), this.handleLogout.bind(this));
+        this.menuPage = new MenuPage(this.uiManager, this.handlePlayGameAI.bind(this), this.handlePlayGameLocal.bind(this), this.handlePlayGameOnline.bind(this), this.handleViewTournament.bind(this), this.handleChatWithFriends.bind(this), this.handleSettings.bind(this), this.handleLogout.bind(this));
         this.gamePageAI = new GamePageAI(this.uiManager, this.handleBackToMenu.bind(this));
         this.gamePageLocal = new GamePageLocal(this.uiManager, this.handleBackToMenu.bind(this));
+        this.tournamentPage = new TournamentPage(this.uiManager, this.handleBackToMenu.bind(this));
         this.gamePageOnline = new GamePageOnline(this.uiManager, this.handleBackToMenu.bind(this));
         this.checkOtpPage = new CheckOtp(this.uiManager, this.languageManager, this.handleOtpVerificationComplete.bind(this), this.handleNewChangePassword.bind(this), this.handleBackToUpdateProfile.bind(this), this.handleBackToAuth.bind(this));
-        this.leaderboardPage = new LeaderboardPage(this.uiManager, this.handleBackToMenu.bind(this));
         this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.handleSettings.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser);
         if (this.currentUser)
             this.settingsPage = new SettingsPage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.authPage, this.handleBackToMenu.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser ?? null, this.currentUser?.isGuest ?? true);
@@ -133,8 +133,16 @@ export class App {
         sock.on('connect_error', (err) => console.error('❌ Erreur:', err));
         sock.on('welcome', (data) => console.log(data));
         sock.on('new-game', (data) => {
-            console.log(data);
-            this.gamePageLocal.setupGame(data);
+            console.log('new-game received:', data);
+            if (this.currentPage === 'tournament') {
+                this.tournamentPage.setupGame(data);
+            }
+            else if (this.currentPage === 'game-local') {
+                this.gamePageLocal.setupGame(data);
+            }
+            else {
+                this.gamePageLocal.setupGame(data);
+            }
         });
         return sock;
     }
@@ -190,9 +198,6 @@ export class App {
                 console.log("Using OTP params:", this.authManager.otpData);
                 this.checkOtpPage.render(text, this.authManager.otpData);
                 break;
-            case 'leaderboard':
-                this.leaderboardPage.render();
-                break;
             case 'settings':
                 this.settingsPage = new SettingsPage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.authPage, this.handleBackToMenu.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser ?? null, this.currentUser?.isGuest ?? true);
                 this.settingsPage.render();
@@ -204,6 +209,9 @@ export class App {
             case 'live-chat':
                 this.liveChatPage = new LiveChatPage(this.uiManager, this.routerManager, this.languageManager, this.generalSocket, this.handleBackToMenu.bind(this));
                 this.liveChatPage.render(this.currentUser);
+                break;
+            case 'tournament':
+                this.tournamentPage.render();
                 break;
         }
     }
@@ -308,8 +316,8 @@ export class App {
         console.log('Starting online multiplayer game...');
         this.routerManager.navigateTo('game-online');
     }
-    handleViewLeaderboard() {
-        this.routerManager.navigateTo('leaderboard');
+    handleViewTournament() {
+        this.routerManager.navigateTo('tournament');
     }
     handleSettings() {
         this.routerManager.navigateTo('settings');
