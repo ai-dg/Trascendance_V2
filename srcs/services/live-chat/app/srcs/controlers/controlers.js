@@ -78,3 +78,39 @@ export async function friend_request_response_route(request, reply) {
         return reply.code(500).send({ success: false, message: "Database error" });
     }
 }
+
+
+export async function get_friends_route(request, reply) {
+    const token = request.cookies.token || request.body.token;
+    if (!token) {
+        return { success: false, message: "Not authenticated" };
+    }
+    
+    let payload;
+    try {
+        payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+        return { success: false, message: "Invalid or expired token" };
+    }
+    
+    const userId = payload.user_id;
+    
+    try {
+        const friends = await app.db.all(`
+            SELECT 
+                CASE 
+                    WHEN user_id = ? THEN friend_id 
+                    ELSE user_id 
+                END as friend_id
+            FROM friendships 
+            WHERE (user_id = ? OR friend_id = ?) 
+              AND status = 'accepted'
+        `, [userId, userId, userId]);
+        
+        return { success: true, friends };
+    } catch (err) {
+        console.error("DB error:", err);
+        return { success: false, message: "Database error" };
+    }
+}
+

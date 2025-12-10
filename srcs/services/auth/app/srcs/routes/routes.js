@@ -12,7 +12,8 @@ import {
 		verify_otp_email_route,
 		validate_otp_route,
 		auth_me_route,
-		get_id_by_username_route
+		get_id_by_username_route,
+		get_username_by_id_route
 
 } from "../controlers/controlers.js";
 import {
@@ -67,6 +68,7 @@ export function routes(app, options)
 	// get auth data
 	app.get('/me', async (request, reply) => auth_me_route(request, reply));
 	app.post('/id-username', async (request, reply) => get_id_by_username_route(request, reply));
+	app.post('/username-id', async (request, reply) => get_username_by_id_route(request, reply));
 	
 	// update profile
 	app.get('/verify-username', async (request, reply) => verify_update_email_route(request, reply));

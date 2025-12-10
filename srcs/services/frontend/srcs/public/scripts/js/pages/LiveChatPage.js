@@ -72,7 +72,7 @@ export class LiveChatPage {
         addFriendBtn.addEventListener('click', () => {
             addFriendDiv.classList.toggle('hidden');
         });
-        // Setup socket listeners
+        // Setup socket listeners immediately
         this.setupSocketListeners(errorMessageDiv, friendInput);
         sendFriendBtn.addEventListener('click', async () => {
             const username = friendInput.value.trim();
@@ -114,10 +114,11 @@ export class LiveChatPage {
         socialDiv.appendChild(addFriendDiv);
         // Online list
         const onlineList = this.uiManager.createElement('div', 'w-full mb-6');
+        onlineList.id = 'friends-container';
         const onlineTitle = this.uiManager.createElement('h4', 'retro-text text-lg text-[#00ffff] mb-2');
-        onlineTitle.textContent = 'Online';
+        onlineTitle.textContent = 'Friends';
         const onlineContent = this.uiManager.createElement('div', 'text-[#00ffff] opacity-80');
-        onlineContent.textContent = 'List of online users goes here...';
+        onlineContent.textContent = 'List of friends goes here...';
         onlineList.appendChild(onlineTitle);
         onlineList.appendChild(onlineContent);
         socialDiv.appendChild(onlineList);
@@ -148,6 +149,10 @@ export class LiveChatPage {
         container.append(backDiv);
         this.uiManager.clear();
         this.uiManager.container.appendChild(container);
+        if (user) {
+            this.loadFriendsList(user.id);
+            this.loadPendingFriendRequests(user.id);
+        }
     }
     async getIdByUsername(username) {
         try {
@@ -180,17 +185,14 @@ export class LiveChatPage {
             console.log("No generalSocket available");
             return;
         }
-        // Remove old listeners to prevent duplicates
         this.generalSocket.off('friend-request');
         this.generalSocket.off('friend-request-status');
         this.generalSocket.off('friend-request-result');
-        // Listen for incoming friend requests
         this.generalSocket.on('friend-request', (data) => {
             console.log("Received friend request:", data);
             const { senderId, message } = data;
             this.addFriendRequestNotification(senderId, message);
         });
-        // Listen for status of sent requests
         this.generalSocket.on("friend-request-status", (msg) => {
             console.log("Friend request status:", msg);
             if (msg.success) {
@@ -208,7 +210,6 @@ export class LiveChatPage {
                 errorMessageDiv.classList.add('text-red-500');
             }
         });
-        // Listen for response results
         this.generalSocket.on('friend-request-result', (data) => {
             console.log("Friend request result:", data);
             const { action, message } = data;
@@ -220,9 +221,7 @@ export class LiveChatPage {
             }, 5000);
         });
     }
-    // Add a friend request notification to the list
     addFriendRequestNotification(senderId, message) {
-        // Don't add duplicate notifications
         if (this.friendRequests.has(senderId)) {
             console.log("Notification already exists for sender:", senderId);
             return;
@@ -232,7 +231,6 @@ export class LiveChatPage {
             console.error("Notifications container not found");
             return;
         }
-        // Create notification card
         const notifCard = this.uiManager.createElement('div', 'p-3 bg-black/80 border border-[#ff1493] rounded');
         const notifMessage = this.uiManager.createElement('p', 'text-[#00ffff] text-sm mb-2');
         notifMessage.textContent = message;
@@ -241,7 +239,6 @@ export class LiveChatPage {
         acceptBtn.textContent = 'Accept';
         const rejectBtn = this.uiManager.createElement('button', 'px-3 py-1 text-xs bg-red-500 text-black rounded hover:bg-red-400');
         rejectBtn.textContent = 'Reject';
-        // Handle accept
         acceptBtn.addEventListener('click', () => {
             if (this.generalSocket) {
                 this.generalSocket.emit('friend-request-response', {
@@ -251,7 +248,6 @@ export class LiveChatPage {
             }
             this.removeFriendRequestNotification(senderId);
         });
-        // Handle reject
         rejectBtn.addEventListener('click', () => {
             if (this.generalSocket) {
                 this.generalSocket.emit('friend-request-response', {
@@ -265,23 +261,95 @@ export class LiveChatPage {
         notifButtons.appendChild(rejectBtn);
         notifCard.appendChild(notifMessage);
         notifCard.appendChild(notifButtons);
-        // Add to container
         container.appendChild(notifCard);
-        // Store reference
         this.friendRequests.set(senderId, { senderId, message, element: notifCard });
         console.log(`Added notification for sender ${senderId}. Total notifications: ${this.friendRequests.size}`);
     }
-    // Remove a friend request notification
     removeFriendRequestNotification(senderId) {
         const notification = this.friendRequests.get(senderId);
         if (!notification) {
             console.log("No notification found for sender:", senderId);
             return;
         }
-        // Remove from DOM
         notification.element.remove();
-        // Remove from map
         this.friendRequests.delete(senderId);
         console.log(`Removed notification for sender ${senderId}. Remaining: ${this.friendRequests.size}`);
+    }
+    async loadPendingFriendRequests(userId) {
+        try {
+            console.log("Loading pending friend requests for user:", userId);
+            const res = await fetch(this.routerManager.getUrl('/live-chat/pending-requests'), {
+                method: 'GET',
+                credentials: 'include'
+            });
+            if (!res.ok) {
+                console.error('Failed to load pending requests:', res.status);
+                return;
+            }
+            const data = await res.json();
+            console.log("Pending requests response:", data);
+            if (data.success && data.requests && data.requests.length > 0) {
+                data.requests.forEach((request) => {
+                    this.addFriendRequestNotification(request.senderId, request.message || `User ${request.senderId} wants to be your friend!`);
+                });
+                console.log(`Loaded ${data.requests.length} pending friend requests`);
+            }
+            else {
+                console.log("No pending friend requests found");
+            }
+        }
+        catch (error) {
+            console.error("Error loading pending friend requests:", error);
+        }
+    }
+    async loadFriendsList(userId) {
+        try {
+            console.log("Loading friends list for user:", userId);
+            const res = await fetch(this.routerManager.getUrl('/live-chat/get-friends'), {
+                method: 'GET',
+                credentials: 'include'
+            });
+            if (!res.ok) {
+                console.error('Failed to load friends:', res.status);
+                return;
+            }
+            const data = await res.json();
+            console.log("Friends list response:", data);
+            if (data.success && data.friends && data.friends.length > 0) {
+                this.displayFriends(data.friends);
+                console.log(`Loaded ${data.friends.length} friends`);
+            }
+            else {
+                console.log("No friends found");
+                this.displayNoFriends();
+            }
+        }
+        catch (error) {
+            console.error("Error loading friends:", error);
+        }
+    }
+    displayFriends(friends) {
+        const container = document.getElementById('friends-container');
+        if (!container) {
+            console.error("Friends container not found");
+            return;
+        }
+        container.innerHTML = '';
+        friends.forEach((friend) => {
+            const friendItem = this.uiManager.createElement('div', 'p-2 bg-black/40 border border-[#00ffff]/30 rounded hover:bg-black/60 cursor-pointer transition-colors');
+            const friendName = this.uiManager.createElement('p', 'text-[#00ffff] text-sm');
+            friendName.textContent = friend.username || `User ${friend.friend_id}`;
+            friendItem.appendChild(friendName);
+            container.appendChild(friendItem);
+        });
+    }
+    displayNoFriends() {
+        const container = document.getElementById('friends-container');
+        if (!container)
+            return;
+        container.innerHTML = '';
+        const emptyMessage = this.uiManager.createElement('p', 'text-[#00ffff]/50 text-sm italic');
+        emptyMessage.textContent = 'No friends yet. Add some!';
+        container.appendChild(emptyMessage);
     }
 }

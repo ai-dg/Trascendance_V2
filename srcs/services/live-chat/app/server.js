@@ -41,6 +41,7 @@ async function setupLiveChatdb() {
 			CREATE TABLE IF NOT EXISTS friendships (
 			    user_id INTEGER NOT NULL,
 			    friend_id INTEGER NOT NULL,
+				requester_id INTEGER NOT NULL,
 			    status TEXT DEFAULT 'pending',
 			    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			    UNIQUE(user_id, friend_id)
@@ -136,7 +137,6 @@ io.use(async (socket, next) => {
 		}
 	});
 
-	// Socket.IO connection handler
 	io.on('connection', async (socket) => {
 		console.log("🎯 Socket.IO client connected");
 
@@ -153,16 +153,40 @@ io.use(async (socket, next) => {
 		await redis.set(`online:${userId}`, 'true');
 
 		socket.emit('welcome', { message: 'Bienvenue sur le canal global' });
+		
+		try {
+        	const pendingRequests = await app.db.all(`
+        	    SELECT 
+        	        CASE 
+        	            WHEN user_id = ? THEN friend_id 
+        	            ELSE user_id 
+        	        END as senderId,
+        	        requester_id
+        	    FROM friendships 
+        	    WHERE (user_id = ? OR friend_id = ?) 
+        	      AND status = 'pending'
+        	      AND requester_id != ?
+        	`, [userId, userId, userId, userId]);
+        
+        	console.log(`📬 Found ${pendingRequests.length} pending friend requests for user ${userId}`);
+    		for (const request of pendingRequests) {
+        	    socket.emit('friend-request', {
+        	        senderId: request.senderId,
+        	        message: `User ${request.senderId} wants to be your friend!`
+        	    });
+        	}
+		} catch (error) {
+        console.error("Error loading pending friend requests on connection:", error);
+    	}
 
-    	const keys = await redis.keys(`friend-request:${userId}:*`);
 
-		for (const key of keys) {
-		    const senderId = key.split(":")[2];
-		    socket.emit("friend-request", {
-		        senderId,
-		        message: `${senderId} sent you a friend request`
-		    });
-		}
+		const oldKeys = await redis.keys(`friend-request:${userId}:*`);
+        if (oldKeys.length > 0) {
+            console.log(`🧹 Cleaning up ${oldKeys.length} old Redis keys for user ${userId}`);
+            for (const key of oldKeys) {
+                await redis.del(key);
+            }
+        }
 
 
 		socket.on('add-friend', async (data) => {
@@ -264,12 +288,12 @@ io.use(async (socket, next) => {
 			}
 		});
 	
-	socket.on('disconnect', () => {
-		generalConnections.delete(userId);
-		redis.del(`online:${userId}`);
-		console.log('Socket.IO client disconnected');
+		socket.on('disconnect', () => {
+			generalConnections.delete(userId);
+			redis.del(`online:${userId}`);
+			console.log('Socket.IO client disconnected');
+		});
 	});
-});
 
 
 
