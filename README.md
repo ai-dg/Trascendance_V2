@@ -73,7 +73,8 @@ This section details the distribution of modules and tasks among team members.
 
 **TOTAL MAJOR MODULES** = 11 = 22 points    
 **TOTAL MINOR MODULES** = 9 = 9 points  
-**TOTAL POINTS** = 31 points    
+**TOTAL POINTS** = 31 points
+**BONUS?** = 17 points
 
 
 ## ▌Project Overview
