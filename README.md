@@ -65,7 +65,7 @@ This section details the distribution of modules and tasks among team members.
 
 **A confirmer et a voir (pas inclus dans la somme)**
 - Minor: Progressive Web App (PWA) with offline support and installability.
--  Minor: Custom-made design system with reusable components, including a proper color palette, typography, and icons (minimum: 10 reusable components).
+- Minor: Custom-made design system with reusable components, including a proper color palette, typography, and icons (minimum: 10 reusable components).
 - Minor: Support for additional browsers.
 - Minor: Game statistics and match history (requires a game module).
 - Minor: Use a frontend framework (React, Vue, Angular, Svelte, etc.).
