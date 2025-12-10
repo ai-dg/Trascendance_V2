@@ -198,3 +198,16 @@ data:  { type: 'local' } uuid :  346d1dc4-1207-4cb9-8927-faef2e30a709
 data:  { type: 'local' } uuid :  a0d3827b-e8e9-4e6e-b0ab-f94355de7aea
 GameManager.startGame() called
 GameManager.startGame() called
+payload :  {
+  user_id: 27,
+  jti: 'c947167e6de47fa8d9beeee74d887317',
+  iat: 1765363319,
+  exp: 1765366919
+}
+A
+✅ Utilisateur authentifié: 27
+data:  { type: 'local' } uuid :  24a94cb1-63c4-4d88-9ab3-1a7e2d017c6f
+data:  { type: 'local' } uuid :  3e841274-7e46-4425-8547-76d5270c8d22
+GameManager.startGame() called
+data:  { type: 'local' } uuid :  90cac499-798e-41eb-a6e9-8966625396aa
+data:  { type: 'local' } uuid :  2fd24270-9cbc-4b20-9d20-1773087138fd
