@@ -180,6 +180,32 @@ export class LiveChatPage {
             console.error("Error:", error);
         }
     }
+    async getUsernameById(id) {
+        try {
+            const res = await fetch(this.routerManager.getUrl('/auth/username-id'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            if (!res.ok) {
+                console.error('Error fetching user data');
+                return;
+            }
+            const data = await res.json();
+            if (!data.success) {
+                console.error('Couldn\'t find username');
+                return;
+            }
+            else {
+                const userId = data.data.user.user_id;
+                console.log('User ID found for friend request: ', userId);
+                return userId;
+            }
+        }
+        catch (error) {
+            console.error("Error:", error);
+        }
+    }
     setupSocketListeners(errorMessageDiv, friendInput) {
         if (!this.generalSocket) {
             console.log("No generalSocket available");
@@ -284,13 +310,15 @@ export class LiveChatPage {
             });
             if (!res.ok) {
                 console.error('Failed to load pending requests:', res.status);
+                const resData = await res.json();
+                console.error('Response data:', resData);
                 return;
             }
             const data = await res.json();
             console.log("Pending requests response:", data);
             if (data.success && data.requests && data.requests.length > 0) {
                 data.requests.forEach((request) => {
-                    this.addFriendRequestNotification(request.senderId, request.message || `User ${request.senderId} wants to be your friend!`);
+                    this.addFriendRequestNotification(request.senderId, request.message);
                 });
                 console.log(`Loaded ${data.requests.length} pending friend requests`);
             }
@@ -328,20 +356,37 @@ export class LiveChatPage {
             console.error("Error loading friends:", error);
         }
     }
-    displayFriends(friends) {
+    // private async displayFriends(friends: any[]): Promise<void> {
+    //     const container = document.getElementById('friends-container');
+    //     if (!container) {
+    //         console.error("Friends container not found");
+    //         return;
+    //     }
+    //     container.innerHTML = '';
+    //     friends.forEach((friend: any) => {
+    //         const username = await this.getUsernameById(friend.friend_id);
+    //         const friendItem = this.uiManager.createElement('div', 'p-2 bg-black/40 border border-[#00ffff]/30 rounded hover:bg-black/60 cursor-pointer transition-colors');
+    //         const friendName = this.uiManager.createElement('p', 'text-[#00ffff] text-sm');
+    //         friendName.textContent = username || `User ${username}`;
+    //         friendItem.appendChild(friendName);
+    //         container.appendChild(friendItem);
+    //     });
+    // }
+    async displayFriends(friends) {
         const container = document.getElementById('friends-container');
         if (!container) {
             console.error("Friends container not found");
             return;
         }
         container.innerHTML = '';
-        friends.forEach((friend) => {
+        for (const friend of friends) {
+            const username = await this.getUsernameById(friend.friend_id);
             const friendItem = this.uiManager.createElement('div', 'p-2 bg-black/40 border border-[#00ffff]/30 rounded hover:bg-black/60 cursor-pointer transition-colors');
             const friendName = this.uiManager.createElement('p', 'text-[#00ffff] text-sm');
-            friendName.textContent = friend.username || `User ${friend.friend_id}`;
+            friendName.textContent = username || `User ${username}`;
             friendItem.appendChild(friendName);
             container.appendChild(friendItem);
-        });
+        }
     }
     displayNoFriends() {
         const container = document.getElementById('friends-container');

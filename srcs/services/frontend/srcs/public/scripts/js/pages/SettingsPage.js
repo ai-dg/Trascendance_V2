@@ -181,7 +181,7 @@ export class SettingsPage {
         // Google Sign In Button
         const googleBtn = this.uiManager.createButton(this.t("sign_in_with_google"), "w-full retro-button bg-white text-black hover:bg-gray-100 border-2 border-white py-3 flex items-center justify-center gap-3", () => this.authPage.handleGoogleSignIn());
         // 42Auth Button
-        const auth42Btn = this.uiManager.createButton(this.t("sign_in_with_42"), "w-full retro-button bg-[#00babc] text-white hover:bg-[#00a0a2] border-2 border-[#00babc] py-3 flex items-center justify-center gap-3", () => this.authPage.handle42SignIn());
+        const auth42Btn = this.uiManager.createButton("this", "w-full retro-button bg-[#00babc] text-white hover:bg-[#00a0a2] border-2 border-[#00babc] py-3 flex items-center justify-center gap-3", () => this.authPage.handle42SignIn());
         buttonsContainer.appendChild(signInBtn);
         buttonsContainer.appendChild(signUpBtn);
         buttonsContainer.appendChild(divider);

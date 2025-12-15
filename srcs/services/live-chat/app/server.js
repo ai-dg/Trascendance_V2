@@ -149,7 +149,14 @@ io.use(async (socket, next) => {
 			return;
 		}
 
-		generalConnections.set(userId, socket);
+		if (!generalConnections.has(userId)) {
+			generalConnections.set(userId, new Set());
+		}
+		generalConnections.get(userId).add(socket);
+
+		console.log(`🌐 User ${userId} connected. Total connections for this user: ${generalConnections.get(userId).size}`);
+
+		// generalConnections.set(userId, socket);
 		await redis.set(`online:${userId}`, 'true');
 
 		socket.emit('welcome', { message: 'Bienvenue sur le canal global' });
@@ -217,12 +224,15 @@ io.use(async (socket, next) => {
 				console.log('🎯 Looking for receiver socket:', receiverId);
 				console.log('🎯 Available connections:', Array.from(generalConnections.keys()));
 
-				if (receiverSocket) {
+				if (receiverSocket && receiverSocket.size > 0) {
 				    console.log('✅ Receiver is online, sending notification');
-				    receiverSocket.emit('friend-request', {
-				        senderId,
-				        message: `User ${senderId} wants to be your friend!`
-				    });
+					receiverSocket.forEach(receiverSocket => {
+
+						receiverSocket.emit('friend-request', {
+							senderId,
+							message: `User ${senderId} wants to be your friend!`
+						});
+					});
 				} else {
 				    console.log('❌ Receiver offline, saving to Redis');
 				    await redis.set(`friend-request:${receiverId}:${senderId}`, 'pending');
@@ -271,11 +281,14 @@ io.use(async (socket, next) => {
 
 				// Notify the sender
 				const senderSocket = generalConnections.get(senderId);
-				if (senderSocket) {
-					senderSocket.emit('friend-request-result', {
-						userId,
-						action,
-						message: `User ${userId} ${action}ed your friend request`
+				if (senderSocket && senderSocket.size > 0) {
+					console.log('✅ Notifying sender ${senderId} across ${senderSocket.size} about the response');
+					senderSocket.forEach(senderSocket => {
+						senderSocket.emit('friend-request-result', {
+							userId,
+							action,
+							message: `User ${userId} ${action}ed your friend request`
+						});
 					});
 				}
 
@@ -289,9 +302,17 @@ io.use(async (socket, next) => {
 		});
 	
 		socket.on('disconnect', () => {
-			generalConnections.delete(userId);
-			redis.del(`online:${userId}`);
-			console.log('Socket.IO client disconnected');
+			const userSockets = generalConnections.get(userId);
+			if (userSockets) {
+				userSockets.delete(socket);
+				console.log(`🌐 User ${userId} disconnected. Remaining connections: ${userSockets.size}`);
+				
+				if (userSockets.size === 0) {
+					generalConnections.delete(userId);
+					redis.del(`online:${userId}`);
+					console.log('Socket.IO client disconnected');
+				}
+			}
 		});
 	});
 

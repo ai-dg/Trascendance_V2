@@ -811,7 +811,12 @@ export async function get_id_by_username_route(request, reply) {
 
 export async function get_username_by_id_route(request, reply) {
   try {
-    const token = request.cookies.token;
+    // const token = request.cookies.token;
+
+	const authHeader = request.headers.authorization;
+	const token =
+	  request.cookies.token ||
+	  authHeader?.replace('Bearer ', '');
     if (!token) return reply.code(401).send({ success: false, message: "Not authenticated" });
 
     let payload;

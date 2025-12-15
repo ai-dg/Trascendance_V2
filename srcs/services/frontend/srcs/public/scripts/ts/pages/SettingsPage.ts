@@ -292,7 +292,7 @@ export class SettingsPage {
 
   // 42Auth Button
   const auth42Btn = this.uiManager.createButton(
-    this.t("sign_in_with_42"),
+    "this",
     "w-full retro-button bg-[#00babc] text-white hover:bg-[#00a0a2] border-2 border-[#00babc] py-3 flex items-center justify-center gap-3",
     () => this.authPage.handle42SignIn() 
   );

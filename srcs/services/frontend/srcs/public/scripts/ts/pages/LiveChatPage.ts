@@ -763,6 +763,8 @@ export class LiveChatPage {
 
             if (!res.ok) {
                 console.error('Failed to load pending requests:', res.status);
+                const resData = await res.json();
+                console.error('Response data:', resData);
                 return;
             }
 
@@ -771,10 +773,9 @@ export class LiveChatPage {
 
             if (data.success && data.requests && data.requests.length > 0) {
                 data.requests.forEach((request: any) => {
-                    const username = this.getUsernameById(request.senderId);
                     this.addFriendRequestNotification(
                         request.senderId,
-                        request.message || `User ${username} wants to be your friend!`
+                        request.message
                     );
                 });
                 console.log(`Loaded ${data.requests.length} pending friend requests`);
@@ -815,26 +816,53 @@ export class LiveChatPage {
         }
     }
 
-    private displayFriends(friends: any[]): void {
+    // private async displayFriends(friends: any[]): Promise<void> {
+    //     const container = document.getElementById('friends-container');
+    //     if (!container) {
+    //         console.error("Friends container not found");
+    //         return;
+    //     }
+
+    //     container.innerHTML = '';
+
+    //     friends.forEach((friend: any) => {
+    //         const username = await this.getUsernameById(friend.friend_id);
+    //         const friendItem = this.uiManager.createElement('div', 'p-2 bg-black/40 border border-[#00ffff]/30 rounded hover:bg-black/60 cursor-pointer transition-colors');
+            
+    //         const friendName = this.uiManager.createElement('p', 'text-[#00ffff] text-sm');
+
+    //         friendName.textContent = username || `User ${username}`;
+            
+    //         friendItem.appendChild(friendName);
+    //         container.appendChild(friendItem);
+    //     });
+    // }
+
+    private async displayFriends(friends: any[]): Promise<void> {
         const container = document.getElementById('friends-container');
         if (!container) {
             console.error("Friends container not found");
             return;
         }
-
+    
         container.innerHTML = '';
-
-        friends.forEach((friend: any) => {
-            const username = this.getUsernameById(friend.friend_id);
-            const friendItem = this.uiManager.createElement('div', 'p-2 bg-black/40 border border-[#00ffff]/30 rounded hover:bg-black/60 cursor-pointer transition-colors');
-            
+    
+        for (const friend of friends) {
+            const username = await this.getUsernameById(friend.friend_id);
+        
+            const friendItem = this.uiManager.createElement(
+                'div',
+                'p-2 bg-black/40 border border-[#00ffff]/30 rounded hover:bg-black/60 cursor-pointer transition-colors'
+            );
+        
             const friendName = this.uiManager.createElement('p', 'text-[#00ffff] text-sm');
             friendName.textContent = username || `User ${username}`;
-            
+        
             friendItem.appendChild(friendName);
             container.appendChild(friendItem);
-        });
+        }
     }
+
 
     private displayNoFriends(): void {
         const container = document.getElementById('friends-container');
