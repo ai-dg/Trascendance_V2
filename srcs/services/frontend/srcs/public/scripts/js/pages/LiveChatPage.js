@@ -21,12 +21,10 @@ export class LiveChatPage {
         // Header
         const header = this.uiManager.createElement('div', 'text-center mb-12');
         const title = this.uiManager.createElement('h1', 'retro-title mb-4', 'LIVE CHAT');
-        const subtitle = this.uiManager.createElement('p', 'retro-subtitle text-lg', 'CHAT WITH FRIENDS');
         header.appendChild(title);
-        header.appendChild(subtitle);
         container.appendChild(header);
         // Profile Column
-        const profileDiv = this.uiManager.createElement('div', 'bg-black/60 p-4 min-h-[700px] flex-shrink-0 w-60');
+        const profileDiv = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 min-h-[100px] flex-shrink-0 w-60');
         const avatarSection = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
         const avatarImg = this.uiManager.createElement('img', 'w-12 h-12 rounded-full border-2 border-[#ff1493] cursor-pointer');
         if (!user || !user.avatar)
@@ -41,25 +39,34 @@ export class LiveChatPage {
         avatarSection.appendChild(username);
         profileDiv.appendChild(avatarSection);
         // Chat Column
-        const chatDiv = this.uiManager.createElement('div', 'flex flex-col flex-grow bg-black/60 p-4 min-h-[700px]');
-        const messagesDiv = this.uiManager.createElement('div', 'flex-1 overflow-y-auto mb-2 p-2 border border-gray-700 rounded');
-        messagesDiv.textContent = 'Chat messages go here...';
+        const chatDiv = this.uiManager.createElement('div', 'flex flex-col flex-grow bg-black/40 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 min-h-[700px] justify-between');
+        chatDiv.style.minWidth = '600px';
+        // Main container of chat
+        const messagesDiv = this.uiManager.createElement('div', 'flex-1 flex flex-col mb-2');
+        // Title
+        const messagesTitle = this.uiManager.createElement('div', 'text-[#00ffff] text-sm mb-2 opacity-60');
+        messagesTitle.textContent = 'Messages';
+        // Field of messages
+        const messagesContainer = this.uiManager.createElement('div', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 overflow-y-auto');
+        messagesContainer.style.minHeight = '500px';
+        messagesDiv.appendChild(messagesTitle);
+        messagesDiv.appendChild(messagesContainer);
         const inputDiv = this.uiManager.createElement('div', 'flex gap-2 mt-2 flex-shrink-0');
         const inputField = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black');
         const sendButton = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-black rounded');
-        sendButton.textContent = 'Send';
+        sendButton.textContent = 'SEND';
         inputDiv.appendChild(inputField);
         inputDiv.appendChild(sendButton);
         chatDiv.appendChild(messagesDiv);
         chatDiv.appendChild(inputDiv);
         // Social Div
-        const socialDiv = this.uiManager.createElement('div', 'w-80 bg-black/60 backdrop-blur-md border-l-2 border-[#00ffff] flex flex-col py-6 px-4 min-h-[700px]');
+        const socialDiv = this.uiManager.createElement('div', 'w-80 bg-black/40 backdrop-blur-sm border-2 border-[#9d4edd] rounded-lg flex flex-col py-6 px-4 min-h-[700px]');
         // Social Header
         const socialHeaderWrapper = this.uiManager.createElement('div', 'flex items-center justify-between mb-4');
         const socialHeader = this.uiManager.createElement('h3', 'retro-text text-xl text-[#00ffff]');
         socialHeader.textContent = 'SOCIAL';
         const addFriendBtn = this.uiManager.createElement('button', 'px-2 py-1 text-sm bg-black text-red-500 border border-red-500 rounded');
-        addFriendBtn.innerHTML = '+';
+        addFriendBtn.innerHTML = 'ADD +';
         const addFriendDiv = this.uiManager.createElement('div', 'flex flex-col gap-2 mt-2 hidden');
         const friendInput = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black');
         friendInput.placeholder = 'Username';
@@ -134,8 +141,7 @@ export class LiveChatPage {
         socialDiv.appendChild(notifList);
         // Main Grid
         const mainGrid = this.uiManager.createElement('div', 'flex justify-center gap-2 w-full');
-        mainGrid.style.alignItems = 'stretch';
-        mainGrid.style.minHeight = '700px';
+        mainGrid.style.alignItems = 'start';
         mainGrid.appendChild(profileDiv);
         mainGrid.appendChild(chatDiv);
         mainGrid.appendChild(socialDiv);

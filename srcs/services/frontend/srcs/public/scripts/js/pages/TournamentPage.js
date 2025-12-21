@@ -1,8 +1,9 @@
 import { GameManager } from '../modules/GameManager.js';
-export class GamePageLocal {
+export class TournamentPage {
     constructor(uiManager, onBack) {
         this.gameManager = null;
         this.canvas = null;
+        this.readyPending = false;
         this.uiManager = uiManager;
         this.onBack = onBack;
     }
@@ -122,17 +123,25 @@ export class GamePageLocal {
         const startOverlay = document.querySelector('[data-overlay="start-game"]');
         if (gameOverOverlay) {
             gameOverOverlay.classList.add('hidden');
+        }
+        if (startOverlay) {
             startOverlay.classList.remove('hidden');
         }
+        this.readyPending = false; // Reset le flag ready
         GameManager.requestGameID("local");
     }
     setReady() {
+        const startOverlay = document.querySelector('[data-overlay="start-game"]');
+        if (startOverlay) {
+            startOverlay.classList.add('hidden');
+        }
         if (this.gameManager) {
             this.gameManager.setReady();
-            const startOverlay = document.querySelector('[data-overlay="start-game"]');
-            if (startOverlay) {
-                startOverlay.classList.add('hidden');
-            }
+            this.readyPending = false;
+        }
+        else {
+            // Si le gameManager n'existe pas encore, on marque qu'on veut être ready
+            this.readyPending = true;
         }
     }
     setupGame(data) {
@@ -142,6 +151,11 @@ export class GamePageLocal {
         this.gameManager = new GameManager(this.canvas, data.UUID);
         this.setupGameListeners();
         console.log(data.UUID, this.gameManager);
+        // Si l'utilisateur a déjà cliqué sur READY avant que le gameManager soit créé
+        if (this.readyPending && this.gameManager) {
+            this.gameManager.setReady();
+            this.readyPending = false;
+        }
     }
     setupGameListeners() {
         if (!this.gameManager)

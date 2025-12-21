@@ -37,7 +37,7 @@ services:
     - transcendence
     - internal
     expose:
-      - 8080:80
+      - 8080
     volumes:
       - ./services/gateway/nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./frontend:/usr/share/nginx/html
@@ -62,6 +62,7 @@ services:
 # MATCH_MAKING : 3004
 # SERVER-RENDERING : 3003
 # CANVAS-AI : 3007
+# BLOCKCHAIN : 4000
 
   server-rendering_app:
     container_name: server-rendering_app
@@ -99,7 +100,7 @@ services:
     build:
       context: ./services/auth/app
     expose:
-      - 3000:3000
+      - 3000
     environment:
       - NODE_ENV=${NODE_ENV}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
@@ -194,6 +195,36 @@ services:
       # - sqlite_data:/data/sqlite
       # - ./volume/redis_data:/data
       - ./services/remote-players/app:/data
+
+  blockchain:
+    container_name: blockchain
+    build:
+      context: ./services/blockchain/app
+    expose:
+      - 4000
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
+      - CSRF_SECRET=${CSRF_SECRET}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
+      - FORTYTWO_CLIENT_ID=${FORTYTWO_CLIENT_ID}
+      - FORTYTWO_CLIENT_SECRET=${FORTYTWO_CLIENT_SECRET}
+      - FORTYTWO_REDIRECT_URI=${FORTYTWO_REDIRECT_URI}
+      - BC_WALLET=${BC_WALLET}
+      - BC_PK=${BC_PK}
+    networks:
+      - internal
+    volumes:
+      - /data/node_modules
+      # - sqlite_data:/data/sqlite
+      # - ./volume/redis_data:/data
+      - ./services/blockchain/app:/data
+
 
 
   canvas-ai_app:
