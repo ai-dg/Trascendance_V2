@@ -96,7 +96,7 @@ export async function get_friends_route(request, reply) {
     const userId = payload.user_id;
     
     try {
-        const friends = await app.db.all(`
+        const friendships = await app.db.all(`
             SELECT 
                 CASE 
                     WHEN user_id = ? THEN friend_id 
@@ -106,6 +106,43 @@ export async function get_friends_route(request, reply) {
             WHERE (user_id = ? OR friend_id = ?) 
               AND status = 'accepted'
         `, [userId, userId, userId]);
+
+        if (!friendships || friendships.length === 0) {
+            return { success: true, friends: [] };
+        }
+
+        const friends = await Promise.all(
+            friendships.map(async (friendship) => {
+                try {
+                    const res = await fetch(`http://auth_app:3000/username-id`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({ id: friendship.friend_id }),
+                    });
+                    if (!res.ok) {
+                        console.log(`Failed to fetch username for user ${friendship.friend_id}:`, res.status);
+                    }
+                    if (res.ok) {
+                        const userData = await res.json();
+                        console.log(`Username found for user ${friendship.friend_id}:`, userData);
+                        const username = userData.data?.user?.pseudo || `User ${friendship.friend_id}`;
+                        return {
+                            id: friendship.friend_id,
+                            username: username
+                        };
+                    }
+                } catch (error) {
+                    console.error(`Error fetching user ${friendship.friend_id}:`, error);
+                }
+                return {
+                    id: friendship.friend_id,
+                    username: `User ${friendship.friend_id}`
+                };
+            })
+        );
         
         return { success: true, friends };
     } catch (err) {
@@ -134,7 +171,6 @@ export async function get_pending_requests_route(request, reply) {
     console.log('🔍 Loading pending requests for user:', userId);
     
     try {
-        // Find all pending requests where this user is the RECEIVER
         const pendingRequests = await app.db.all(`
             SELECT 
                 CASE 
@@ -154,7 +190,6 @@ export async function get_pending_requests_route(request, reply) {
             return reply.send({ success: true, requests: [] });
         }
         
-        // Fetch usernames for each sender
         const requests = await Promise.all(
             pendingRequests.map(async (req) => {
                 try {

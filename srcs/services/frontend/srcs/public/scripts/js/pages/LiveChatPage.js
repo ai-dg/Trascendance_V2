@@ -380,7 +380,7 @@ export class LiveChatPage {
         }
         container.innerHTML = '';
         for (const friend of friends) {
-            const username = await this.getUsernameById(friend.friend_id);
+            const username = friend.username;
             const friendItem = this.uiManager.createElement('div', 'p-2 bg-black/40 border border-[#00ffff]/30 rounded hover:bg-black/60 cursor-pointer transition-colors');
             const friendName = this.uiManager.createElement('p', 'text-[#00ffff] text-sm');
             friendName.textContent = username || `User ${username}`;

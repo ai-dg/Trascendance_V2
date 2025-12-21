@@ -848,7 +848,7 @@ export class LiveChatPage {
         container.innerHTML = '';
     
         for (const friend of friends) {
-            const username = await this.getUsernameById(friend.friend_id);
+            const username = friend.username;
         
             const friendItem = this.uiManager.createElement(
                 'div',
