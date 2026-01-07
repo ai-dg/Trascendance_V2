@@ -836,7 +836,7 @@ export async function get_username_by_id_route(request, reply) {
 	const { id } = request.body;
 
     const user = await app.db.get(
-      "SELECT pseudo FROM users WHERE user_id = ?",
+      "SELECT pseudo, avatar FROM users WHERE user_id = ?",
       [id]
     );
     if (!user) return reply.code(404).send({ success: false, message: "User not found" });

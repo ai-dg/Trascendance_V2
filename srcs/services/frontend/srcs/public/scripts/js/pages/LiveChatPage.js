@@ -1,8 +1,3 @@
-// import { UIManager } from '../modules/UIManager.js';
-// import type { User } from '../modules/TypesManager.js';
-// import type { LanguageManager } from '../modules/LangManager.js';
-// import type { RouterManager } from '../modules/RouterManager.js';
-// import { Socket } from "socket.io-client";
 export class LiveChatPage {
     constructor(uiManager, routerManager, languageManager, generalSocket, onBack) {
         this.friendRequests = new Map();
@@ -24,7 +19,9 @@ export class LiveChatPage {
         header.appendChild(title);
         container.appendChild(header);
         // Profile Column
-        const profileDiv = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 min-h-[100px] flex-shrink-0 w-60');
+        const profileDiv = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 min-h-[700px] flex-shrink-0 w-60');
+        profileDiv.style.minHeight = '600px';
+        profileDiv.id = 'profile-div';
         const avatarSection = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
         const avatarImg = this.uiManager.createElement('img', 'w-12 h-12 rounded-full border-2 border-[#ff1493] cursor-pointer');
         if (!user || !user.avatar)
@@ -35,8 +32,18 @@ export class LiveChatPage {
             avatarImg.src = `public/avatars/${user.avatar}.png`;
         const username = this.uiManager.createElement('p', 'retro-subtitle text-lg text-[#00ffff] font-bold');
         username.textContent = user ? user.username : 'USERNAME';
+        const btnDiv = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
+        const deleteBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-red rounded');
+        deleteBtn.textContent = "DELETE FRIEND";
+        deleteBtn.className += ' hidden';
+        const blockBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-red rounded');
+        blockBtn.textContent = "BLOCK FRIEND";
+        blockBtn.className += ' hidden';
+        btnDiv.appendChild(deleteBtn);
+        btnDiv.appendChild(blockBtn);
         avatarSection.appendChild(avatarImg);
         avatarSection.appendChild(username);
+        avatarSection.appendChild(btnDiv);
         profileDiv.appendChild(avatarSection);
         // Chat Column
         const chatDiv = this.uiManager.createElement('div', 'flex flex-col flex-grow bg-black/40 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 min-h-[700px] justify-between');
@@ -362,26 +369,15 @@ export class LiveChatPage {
             console.error("Error loading friends:", error);
         }
     }
-    // private async displayFriends(friends: any[]): Promise<void> {
-    //     const container = document.getElementById('friends-container');
-    //     if (!container) {
-    //         console.error("Friends container not found");
-    //         return;
-    //     }
-    //     container.innerHTML = '';
-    //     friends.forEach((friend: any) => {
-    //         const username = await this.getUsernameById(friend.friend_id);
-    //         const friendItem = this.uiManager.createElement('div', 'p-2 bg-black/40 border border-[#00ffff]/30 rounded hover:bg-black/60 cursor-pointer transition-colors');
-    //         const friendName = this.uiManager.createElement('p', 'text-[#00ffff] text-sm');
-    //         friendName.textContent = username || `User ${username}`;
-    //         friendItem.appendChild(friendName);
-    //         container.appendChild(friendItem);
-    //     });
-    // }
     async displayFriends(friends) {
         const container = document.getElementById('friends-container');
         if (!container) {
             console.error("Friends container not found");
+            return;
+        }
+        const profileDiv = document.getElementById('profile-div');
+        if (!profileDiv) {
+            console.error("Profile Div not found");
             return;
         }
         container.innerHTML = '';
@@ -390,6 +386,19 @@ export class LiveChatPage {
             const friendItem = this.uiManager.createElement('div', 'p-2 bg-black/40 border border-[#00ffff]/30 rounded hover:bg-black/60 cursor-pointer transition-colors');
             const friendName = this.uiManager.createElement('p', 'text-[#00ffff] text-sm');
             friendName.textContent = username || `User ${username}`;
+            friendItem.addEventListener('click', async () => {
+                const friendImg = profileDiv.querySelector('img');
+                const friendPseudo = profileDiv.querySelector('p');
+                if (friendImg && friendPseudo) {
+                    if (!friend.avatar)
+                        friendImg.src = 'public/avatars/default.png';
+                    else if (friend.avatar.startsWith('http'))
+                        friendImg.src = friend.avatar;
+                    else
+                        friendImg.src = `public/avatars/${friend.avatar}.png`;
+                    friendPseudo.textContent = friend.username;
+                }
+            });
             friendItem.appendChild(friendName);
             container.appendChild(friendItem);
         }

@@ -131,7 +131,8 @@ export async function get_friends_route(request, reply) {
                         const username = userData.data?.user?.pseudo || `User ${friendship.friend_id}`;
                         return {
                             id: friendship.friend_id,
-                            username: username
+                            username: username,
+                            avatar: avatar
                         };
                     }
                 } catch (error) {
@@ -139,7 +140,8 @@ export async function get_friends_route(request, reply) {
                 }
                 return {
                     id: friendship.friend_id,
-                    username: `User ${friendship.friend_id}`
+                    username: `User ${friendship.friend_id}`,
+                    avatar: `User ${friendship.friend_id}`
                 };
             })
         );
