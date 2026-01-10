@@ -6,8 +6,10 @@ import 'dotenv/config';
 import cookie from '@fastify/cookie';
 import { createClient } from 'redis';
 import cors from '@fastify/cors';
+import jwt from 'jsonwebtoken';
 import { Server } from 'socket.io';
 import { routes } from './srcs/routes/routes.js';
+import { createFriendRequest, responseFriendRequest } from './srcs/js/friendships.js';
 
 export const app = Fastify({trustProxy: true});
 const is_prod = process.env.NODE_ENV === "PROD"
@@ -39,6 +41,7 @@ async function setupLiveChatdb() {
 			CREATE TABLE IF NOT EXISTS friendships (
 			    user_id INTEGER NOT NULL,
 			    friend_id INTEGER NOT NULL,
+				requester_id INTEGER NOT NULL,
 			    status TEXT DEFAULT 'pending',
 			    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			    UNIQUE(user_id, friend_id)
@@ -101,13 +104,13 @@ io.use(async (socket, next) => {
 		const cookies = socket.handshake.headers.cookie;
 		if (!cookies) {
 			console.log("No cookies found");
-			return next(new Error('No cookies'));
+			throw new Error('No cookies');
 		}
 		
 		const tokenMatch = cookies.match(/token=([^;]+)/);
 		if (!tokenMatch) {
 			console.log("No token found");
-			return next(new Error('No token'));
+			throw new Error('No token');
 		}
 		
 		const token = tokenMatch[1];
@@ -115,13 +118,13 @@ io.use(async (socket, next) => {
 		
 		if (!val || !val.jti) {
 			console.log("Invalid token structure");
-			return next(new Error('Invalid token'));
+			throw new Error('Invalid token');
 		}
 		
 		const exists = await redis.get(`jwt:${val.jti}`);
 		if (!exists || exists === "not valid") {
 			console.log("Token not valid in Redis");
-			return next(new Error('Token not valid'));
+			throw new Error('Token not valid');
 		}
 		
 		const payload = jwt.verify(token, process.env.JWT_SECRET);
@@ -130,21 +133,68 @@ io.use(async (socket, next) => {
 		next();
 		} catch (err) {
 			console.error('Auth error:', err);
-			next(new Error('Unauthorized'));
+			throw new Error('Unauthorized');
 		}
 	});
 
-	// Socket.IO connection handler
 	io.on('connection', async (socket) => {
 		console.log("🎯 Socket.IO client connected");
 
-		const userId = socket.user.id || socket.user.sub || socket.user.jti;
+		const userId = socket.user.user_id || socket.user.id || socket.user.sub;
 		console.log("User ID:", userId);
 
-		generalConnections.set(userId, socket);
+		if (!userId) {
+			console.error("❌ No user ID found in token!");
+			socket.disconnect();
+			return;
+		}
+
+		if (!generalConnections.has(userId)) {
+			generalConnections.set(userId, new Set());
+		}
+		generalConnections.get(userId).add(socket);
+
+		console.log(`🌐 User ${userId} connected. Total connections for this user: ${generalConnections.get(userId).size}`);
+
+		// generalConnections.set(userId, socket);
 		await redis.set(`online:${userId}`, 'true');
 
 		socket.emit('welcome', { message: 'Bienvenue sur le canal global' });
+		
+		try {
+        	const pendingRequests = await app.db.all(`
+        	    SELECT 
+        	        CASE 
+        	            WHEN user_id = ? THEN friend_id 
+        	            ELSE user_id 
+        	        END as senderId,
+        	        requester_id
+        	    FROM friendships 
+        	    WHERE (user_id = ? OR friend_id = ?) 
+        	      AND status = 'pending'
+        	      AND requester_id != ?
+        	`, [userId, userId, userId, userId]);
+        
+        	console.log(`📬 Found ${pendingRequests.length} pending friend requests for user ${userId}`);
+    		for (const request of pendingRequests) {
+        	    socket.emit('friend-request', {
+        	        senderId: request.senderId,
+        	        message: `User ${request.senderId} wants to be your friend!`
+        	    });
+        	}
+		} catch (error) {
+        console.error("Error loading pending friend requests on connection:", error);
+    	}
+
+
+		const oldKeys = await redis.keys(`friend-request:${userId}:*`);
+        if (oldKeys.length > 0) {
+            console.log(`🧹 Cleaning up ${oldKeys.length} old Redis keys for user ${userId}`);
+            for (const key of oldKeys) {
+                await redis.del(key);
+            }
+        }
+
 
 		socket.on('add-friend', async (data) => {
 			const { senderId, receiverId } = data;
@@ -158,16 +208,10 @@ io.use(async (socket, next) => {
 				const tokenMatch = cookies.match(/token=([^;]+)/);
 				const token = tokenMatch ? tokenMatch[1] : null;
 
-				// don't need to fetch
-				// const resDB = await fetch('http://live-chat_app:3002/friend-request', {
-				// 	method: 'POST',
-				// 	headers: { 'Content-Type': 'application/json' },
-				// 	body: JSON.stringify({ receiverId, token })
-				// });
-			
-				const resData = await resDB.json();
+				
+				const resData = await createFriendRequest(token, receiverId);
 
-				if (!resDB.ok) {
+				if (!resData.success) {
 					console.error('Failed to request friend in DB:', resData);
 					socket.emit('friend-request-status', { 
 						success: false, 
@@ -177,14 +221,22 @@ io.use(async (socket, next) => {
 				}
 
 				const receiverSocket = generalConnections.get(receiverId);
-				if (receiverSocket) {
-					receiverSocket.emit('friend-request', {
-						senderId,
-						message: `${senderId} wants to be your friend!`
+				console.log('🎯 Looking for receiver socket:', receiverId);
+				console.log('🎯 Available connections:', Array.from(generalConnections.keys()));
+
+				if (receiverSocket && receiverSocket.size > 0) {
+				    console.log('✅ Receiver is online, sending notification');
+					receiverSocket.forEach(receiverSocket => {
+
+						receiverSocket.emit('friend-request', {
+							senderId,
+							message: `User ${senderId} wants to be your friend!`
+						});
 					});
 				} else {
-					await redis.set(`friend-request:${receiverId}:${senderId}`, 'pending');
-					console.log(`Friend request from ${senderId} saved in Redis for ${receiverId}`);
+				    console.log('❌ Receiver offline, saving to Redis');
+				    await redis.set(`friend-request:${receiverId}:${senderId}`, 'pending');
+				    console.log(`Friend request from ${senderId} saved in Redis for ${receiverId}`);
 				}
 
 				socket.emit('friend-request-status', { 
@@ -202,62 +254,67 @@ io.use(async (socket, next) => {
 
 		socket.on('friend-request-response', async (data) => {
 			const { senderId, action } = data;
-		const userId = socket.user.id || socket.user.sub || socket.user.jti;
-		
-		console.log(`User ${userId} ${action}ed friend request from ${senderId}`);
-		
-		try {
-			// Get token
-			const cookies = socket.handshake.headers.cookie;
-			const tokenMatch = cookies?.match(/token=([^;]+)/);
-			const token = tokenMatch ? tokenMatch[1] : null;
+			const userId = socket.user.user_id || socket.user.id || socket.user.sub;
+			console.log("User ID:", userId);
+
+			if (!userId) {
+				console.error("❌ No user ID found in token!");
+				socket.disconnect();
+				return;
+			}
+
+			console.log(`User ${userId} ${action}ed friend request from ${senderId}`);
 			
-			// Update in database -- don't need to fetch juste call the function
-			// const resDB = await fetch('http://live-chat_app:3002/friend-request-response/', {
-			// 	method: 'POST',
-			// 	headers: { 
-			// 		'Content-Type': 'application/json'
-			// 	},
-			// 	body: JSON.stringify({ 
-			// 		senderId,
-			// 		action,  // 'accept' or 'reject'
-			// 		token
-			// 	})
-			// });
-			
-			const responseData = await resDB.json();
-			
-			// Notify both users
-			socket.emit('friend-request-response-status', { 
-				success: responseData.success, 
-				message: responseData.message 
-			});
-			
-			// Notify the sender
-			const senderSocket = generalConnections.get(senderId);
-			if (senderSocket) {
-				senderSocket.emit('friend-request-result', {
-					userId,
-					action,
-					message: `User ${userId} ${action}ed your friend request`
+			try {
+				// Get token
+				const cookies = socket.handshake.headers.cookie;
+				const tokenMatch = cookies?.match(/token=([^;]+)/);
+				const token = tokenMatch ? tokenMatch[1] : null;
+
+				const responseData = await responseFriendRequest(token, senderId, action);
+
+				// Notify both users
+				socket.emit('friend-request-response-status', { 
+					success: responseData.success, 
+					message: responseData.message 
+				});
+
+				// Notify the sender
+				const senderSocket = generalConnections.get(senderId);
+				if (senderSocket && senderSocket.size > 0) {
+					console.log('✅ Notifying sender ${senderId} across ${senderSocket.size} about the response');
+					senderSocket.forEach(senderSocket => {
+						senderSocket.emit('friend-request-result', {
+							userId,
+							action,
+							message: `User ${userId} ${action}ed your friend request`
+						});
+					});
+				}
+
+			} catch (error) {
+				console.error("Error handling friend request response:", error);
+				socket.emit('friend-request-response-status', { 
+					success: false, 
+					message: 'Error occurred' 
 				});
 			}
-			
-		} catch (error) {
-			console.error("Error handling friend request response:", error);
-			socket.emit('friend-request-response-status', { 
-				success: false, 
-				message: 'Error occurred' 
-			});
-		}
-	});
+		});
 	
-	socket.on('disconnect', () => {
-		generalConnections.delete(userId);
-		redis.del(`online:${userId}`);
-		console.log('Socket.IO client disconnected');
+		socket.on('disconnect', () => {
+			const userSockets = generalConnections.get(userId);
+			if (userSockets) {
+				userSockets.delete(socket);
+				console.log(`🌐 User ${userId} disconnected. Remaining connections: ${userSockets.size}`);
+				
+				if (userSockets.size === 0) {
+					generalConnections.delete(userId);
+					redis.del(`online:${userId}`);
+					console.log('Socket.IO client disconnected');
+				}
+			}
+		});
 	});
-});
 
 
 

@@ -78,3 +78,159 @@ export async function friend_request_response_route(request, reply) {
         return reply.code(500).send({ success: false, message: "Database error" });
     }
 }
+
+
+export async function get_friends_route(request, reply) {
+    const token = request.cookies.token || request.body.token;
+    if (!token) {
+        return { success: false, message: "Not authenticated" };
+    }
+    
+    let payload;
+    try {
+        payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+        return { success: false, message: "Invalid or expired token" };
+    }
+    
+    const userId = payload.user_id;
+    
+    try {
+        const friendships = await app.db.all(`
+            SELECT 
+                CASE 
+                    WHEN user_id = ? THEN friend_id 
+                    ELSE user_id 
+                END as friend_id
+            FROM friendships 
+            WHERE (user_id = ? OR friend_id = ?) 
+              AND status = 'accepted'
+        `, [userId, userId, userId]);
+
+        if (!friendships || friendships.length === 0) {
+            return { success: true, friends: [] };
+        }
+
+        const friends = await Promise.all(
+            friendships.map(async (friendship) => {
+                try {
+                    const res = await fetch(`http://auth_app:3000/username-id`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({ id: friendship.friend_id }),
+                    });
+                    if (!res.ok) {
+                        console.log(`Failed to fetch username for user ${friendship.friend_id}:`, res.status);
+                    }
+                    if (res.ok) {
+                        const userData = await res.json();
+                        console.log(`Username found for user ${friendship.friend_id}:`, userData);
+                        const username = userData.data?.user?.pseudo || `User ${friendship.friend_id}`;
+                        return {
+                            id: friendship.friend_id,
+                            username: username,
+                            avatar: avatar
+                        };
+                    }
+                } catch (error) {
+                    console.error(`Error fetching user ${friendship.friend_id}:`, error);
+                }
+                return {
+                    id: friendship.friend_id,
+                    username: `User ${friendship.friend_id}`,
+                    avatar: `User ${friendship.friend_id}`
+                };
+            })
+        );
+        
+        return { success: true, friends };
+    } catch (err) {
+        console.error("DB error:", err);
+        return { success: false, message: "Database error" };
+    }
+}
+
+
+export async function get_pending_requests_route(request, reply) {
+    console.log('🔍 Fetching pending requests');
+    
+    const token = request.cookies.token;
+    if (!token) {
+        return reply.code(401).send({ success: false, message: "Not authenticated" });
+    }
+    
+    let payload;
+    try {
+        payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+        return reply.code(401).send({ success: false, message: "Invalid token" });
+    }
+    
+    const userId = payload.user_id;
+    console.log('🔍 Loading pending requests for user:', userId);
+    
+    try {
+        const pendingRequests = await app.db.all(`
+            SELECT 
+                CASE 
+                    WHEN user_id = ? THEN friend_id 
+                    ELSE user_id 
+                END as senderId,
+                requester_id
+            FROM friendships 
+            WHERE (user_id = ? OR friend_id = ?) 
+              AND status = 'pending'
+              AND requester_id != ?
+        `, [userId, userId, userId, userId]);
+        
+        console.log('🔍 Found pending requests from DB:', pendingRequests);
+        
+        if (!pendingRequests || pendingRequests.length === 0) {
+            return reply.send({ success: true, requests: [] });
+        }
+        
+        const requests = await Promise.all(
+            pendingRequests.map(async (req) => {
+                try {
+                    const res = await fetch(`http://auth_app:3000/username-id`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({ id: req.senderId }),
+                    });
+                    if (!res.ok) {
+                        console.log(`Failed to fetch username for user ${req.senderId}:`, res.status);
+                    }
+                    if (res.ok) {
+                        const userData = await res.json();
+                        console.log(`Username found for user ${req.senderId}:`, userData.user);
+                        const username = userData.data?.user?.pseudo || `User ${req.senderId}`;
+                        return {
+                            senderId: req.senderId,
+                            message: `${username} wants to be your friend!`
+                        };
+                    }
+                } catch (error) {
+                    console.error(`Error fetching user ${req.senderId}:`, error);
+                }
+                return {
+                    senderId: req.senderId,
+                    message: `User ${req.senderId} wants to be your friend!`
+                };
+            })
+        );
+        
+        console.log('🔍 Returning pending requests:', requests);
+        return reply.send({ success: true, requests });
+        
+    } catch (error) {
+        console.error('Error fetching pending requests:', error);
+        return reply.code(500).send({ success: false, message: "Server error" });
+    }
+}
+
