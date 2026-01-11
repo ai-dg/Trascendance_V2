@@ -10,6 +10,7 @@ import jwt from 'jsonwebtoken';
 import { Server } from 'socket.io';
 import { routes } from './srcs/routes/routes.js';
 import { createFriendRequest, responseFriendRequest } from './srcs/js/friendships.js';
+import { block_friend, remove_friend } from './srcs/controlers/controlers.js';
 
 export const app = Fastify({trustProxy: true});
 const is_prod = process.env.NODE_ENV === "PROD"
@@ -314,7 +315,79 @@ io.use(async (socket, next) => {
 				}
 			}
 		});
+
+		socket.on('block-friend', async (data) => {
+		    const { friendId } = data;
+		    const userId = socket.user.user_id || socket.user.id || socket.user.sub;
+		    console.log(`User ${userId} wants to block user ${friendId}`);
+		
+		    try {
+		        const cookies = socket.handshake.headers.cookie;
+		        const tokenMatch = cookies.match(/token=([^;]+)/);
+		        const token = tokenMatch ? tokenMatch[1] : null;
+		
+		        const resData = await block_friend(token, friendId);
+		
+				console.log(`Backend: block_friend result:`, resData);
+		        if (!resData.success) {
+		            console.error('Failed to block friend in DB:', resData);
+		            socket.emit('block-friend-status', { 
+		                success: false, 
+		                message: 'Failed to block friend' 
+		            });
+		            return;
+		        }
+				console.log(`✅ Backend: Friend blocked successfully`);
+		        socket.emit('block-friend-status', { 
+		            success: true, 
+		            message: 'Friend blocked successfully' 
+		        });
+		    } catch (error) {
+		        console.error("Error blocking friend:", error);
+		        socket.emit('block-friend-status', { 
+		            success: false, 
+		            message: 'Error occurred' 
+		        });
+		    }
+
 	});
+
+	socket.on('remove-friend', async (data) => {
+		    const { friendId } = data;
+		    const userId = socket.user.user_id || socket.user.id || socket.user.sub;
+		    console.log(`User ${userId} wants to remove user ${friendId}`);
+		
+		    try {
+		        const cookies = socket.handshake.headers.cookie;
+		        const tokenMatch = cookies.match(/token=([^;]+)/);
+		        const token = tokenMatch ? tokenMatch[1] : null;
+		
+		        const resData = await remove_friend(token, friendId);
+				console.log(`Backend: remove_friend result:`, resData);
+		        if (!resData.success) {
+		            console.error('Failed to remove friend in DB:', resData);
+		            socket.emit('remove-friend-status', { 
+		                success: false, 
+		                message: 'Failed to remove friend' 
+		            });
+		            return;
+		        }
+				console.log(`✅ Backend: Friend removed successfully`);
+		        socket.emit('remove-friend-status', { 
+		            success: true, 
+		            message: 'Friend removed successfully' 
+		        });
+		    } catch (error) {
+		        console.error("Error removing friend:", error);
+		        socket.emit('remove-friend-status', { 
+		            success: false, 
+		            message: 'Error occurred removing friend' 
+		        });
+		    }
+
+	});
+});
+
 
 
 

@@ -169,7 +169,8 @@ export class App {
       this.routerManager, 
       this.languageManager, 
       this.generalSocket, 
-      this.handleBackToMenu.bind(this)
+      this.handleBackToMenu.bind(this),
+      this.currentUser ?? null
     );
     this.setupEventListeners();
     this.initialize();
@@ -389,7 +390,7 @@ export class App {
         this.updateProfilePage.render();
         break;
       case 'live-chat':
-        this.liveChatPage = new LiveChatPage(this.uiManager, this.routerManager, this.languageManager, this.generalSocket, this.handleBackToMenu.bind(this));
+        this.liveChatPage = new LiveChatPage(this.uiManager, this.routerManager, this.languageManager, this.generalSocket, this.handleBackToMenu.bind(this), this.currentUser);
         this.liveChatPage.render(this.currentUser);
         break;
     }

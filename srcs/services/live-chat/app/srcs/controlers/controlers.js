@@ -50,7 +50,7 @@ export async function friend_request_response_route(request, reply) {
         return reply.code(401).send({ success: false, message: "Invalid or expired token" });
     }
     
-    const { senderId, action } = request.body;
+    const { Id, action } = request.body;
     const userId = payload.user_id;
     
     try {
@@ -129,6 +129,7 @@ export async function get_friends_route(request, reply) {
                         const userData = await res.json();
                         console.log(`Username found for user ${friendship.friend_id}:`, userData);
                         const username = userData.data?.user?.pseudo || `User ${friendship.friend_id}`;
+                        const avatar = userData.data?.user?.avatar || null;
                         return {
                             id: friendship.friend_id,
                             username: username,
@@ -231,6 +232,82 @@ export async function get_pending_requests_route(request, reply) {
     } catch (error) {
         console.error('Error fetching pending requests:', error);
         return reply.code(500).send({ success: false, message: "Server error" });
+    }
+}
+
+
+
+export async function block_friend(token, friendId) {
+    if (!token) {
+        return { success: false, message: "Not authenticated" };
+    }
+
+    let payload;
+    try {
+        payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+        return { success: false, message: "Invalid or expired token" };
+    }
+    
+    const userId = payload.user_id;
+    
+    try {
+        
+            const friendship = await app.db.run(`
+                UPDATE friendships 
+                SET status = 'blocked', requester_id = ?
+                WHERE (user_id = ? AND friend_id = ?)
+                OR (user_id = ? AND friend_id = ?)
+            `, [userId, userId, friendId, friendId, userId]);
+        
+            
+            if (!friendship) {
+                return { success: false, message: "No active friendship to block" };
+            }
+            
+        return { 
+            success: true, 
+            message: "Friend blocked"
+        };
+    } catch (dbErr) {
+        console.error('DB error:', dbErr);
+        return { success: false, message: "Database error" };
+    }
+}
+
+export async function remove_friend(token, friendId) {
+    if (!token) {
+        return { success: false, message: "Not authenticated" };
+    }
+
+    let payload;
+    try {
+        payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+        return { success: false, message: "Invalid or expired token" };
+    }
+    
+    const userId = payload.user_id;
+    
+    try {
+            
+            const friendship = await app.db.run(`
+                DELETE FROM friendships
+                WHERE (user_id = ? AND friend_id = ?)
+                    OR (user_id = ? AND friend_id = ?)
+            `, [userId, friendId, friendId, userId]);
+
+            if (!friendship) {
+                return { success: false, message: "No active friendship to remove" };
+            }
+
+        return { 
+            success: true, 
+            message: "Friend removed"
+        };
+    } catch (dbErr) {
+        console.error('DB error:', dbErr);
+        return { success: false, message: "Database error" };
     }
 }
 
