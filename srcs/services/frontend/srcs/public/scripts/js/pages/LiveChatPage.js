@@ -1,11 +1,14 @@
 export class LiveChatPage {
-    constructor(uiManager, routerManager, languageManager, generalSocket, onBack) {
+    constructor(uiManager, routerManager, languageManager, generalSocket, onBack, currentUser) {
         this.friendRequests = new Map();
+        this.currentUser = null;
+        this.currentSelectedFriendId = null;
         this.uiManager = uiManager;
         this.routerManager = routerManager;
         this.languageManager = languageManager;
         this.generalSocket = generalSocket;
         this.onBack = onBack;
+        this.currentUser = currentUser;
     }
     t(key) {
         return this.languageManager.t(key);
@@ -34,9 +37,11 @@ export class LiveChatPage {
         username.textContent = user ? user.username : 'USERNAME';
         const btnDiv = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
         const deleteBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-red rounded');
+        deleteBtn.id = 'delete-friend-btn';
         deleteBtn.textContent = "DELETE FRIEND";
         deleteBtn.className += ' hidden';
         const blockBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-red rounded');
+        blockBtn.id = 'block-friend-btn';
         blockBtn.textContent = "BLOCK FRIEND";
         blockBtn.className += ' hidden';
         btnDiv.appendChild(deleteBtn);
@@ -227,6 +232,8 @@ export class LiveChatPage {
         this.generalSocket.off('friend-request');
         this.generalSocket.off('friend-request-status');
         this.generalSocket.off('friend-request-result');
+        this.generalSocket.off('block-friend-status');
+        this.generalSocket.off('remove-friend-status');
         this.generalSocket.on('friend-request', (data) => {
             console.log("Received friend request:", data);
             const { senderId, message } = data;
@@ -258,6 +265,24 @@ export class LiveChatPage {
             setTimeout(() => {
                 errorMessageDiv.classList.add('hidden');
             }, 5000);
+        });
+        this.generalSocket.on('block-friend-status', (data) => {
+            console.log("Block friend status:", data);
+            if (data.success && this.currentUser) {
+                this.loadFriendsList(this.currentUser?.id);
+            }
+            else {
+                console.error("Failed to block friend:", data.message);
+            }
+        });
+        this.generalSocket.on('remove-friend-status', (data) => {
+            console.log("Remove friend status:", data);
+            if (data.success && this.currentUser) {
+                this.loadFriendsList(this.currentUser?.id);
+            }
+            else {
+                console.error("Failed to remove friend:", data.message);
+            }
         });
     }
     addFriendRequestNotification(senderId, message) {
@@ -397,12 +422,40 @@ export class LiveChatPage {
                     else
                         friendImg.src = `public/avatars/${friend.avatar}.png`;
                     friendPseudo.textContent = friend.username;
+                    profileDiv.querySelectorAll('button').forEach(btn => {
+                        btn.classList.remove('hidden');
+                    });
+                    const blockBtn = document.getElementById('block-friend-btn');
+                    const deleteBtn = document.getElementById('delete-friend-btn');
+                    if (blockBtn) {
+                        blockBtn.onclick = () => {
+                            console.log("Blocking friend:", friend.id);
+                            if (this.generalSocket) {
+                                this.generalSocket.emit('block-friend', {
+                                    friendId: friend.id,
+                                });
+                            }
+                        };
+                    }
+                    if (deleteBtn) {
+                        deleteBtn.onclick = () => {
+                            console.log("Deleting friend:", friend.id);
+                            if (this.generalSocket) {
+                                this.generalSocket.emit('remove-friend', {
+                                    friendId: friend.id,
+                                });
+                            }
+                        };
+                    }
                 }
+                ;
             });
             friendItem.appendChild(friendName);
             container.appendChild(friendItem);
         }
+        ;
     }
+    ;
     displayNoFriends() {
         const container = document.getElementById('friends-container');
         if (!container)

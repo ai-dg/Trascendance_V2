@@ -2,6 +2,8 @@ import { friend_request_route,
          friend_request_response_route,
          get_friends_route,
          get_pending_requests_route
+        //  block_friend_route,
+        //  remove_friend_route
  } from "../controlers/controlers.js";
 
 export function routes(app, options)
@@ -10,4 +12,7 @@ export function routes(app, options)
     app.post('/friend-request-response', async (request, reply) => friend_request_response_route(request, reply));
     app.get('/get-friends', async (request, reply) => get_friends_route(request, reply));
     app.get('/pending-requests', async (request, reply) => get_pending_requests_route(request, reply));
+
+    // app.post('/block-friend', async (request, reply) => block_friend_route(request, reply));
+    // app.post('/remove-friend', async (request, reply) => remove_friend_route(request, reply));
 }
