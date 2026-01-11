@@ -13,6 +13,7 @@ import { GuestPage } from './pages/GuestPage.js';
 import { MenuPage } from './pages/MenuPage.js';
 import { GamePageAI, GamePageLocal, GamePageOnline } from './pages/GamePage.js';
 import { TournamentPage } from './pages/TournamentPage.js';
+import { MultiplayerPage } from './pages/MultiplayerPage.js';
 import { CheckOtp } from './pages/CheckOtp.js';
 import { SettingsPage } from './pages/SettingsPage.js';
 import { UpdateProfilePage } from './pages/UpdateProfilePage.js';
@@ -49,6 +50,7 @@ export class App {
         this.gamePageAI = new GamePageAI(this.uiManager, this.handleBackToMenu.bind(this));
         this.gamePageLocal = new GamePageLocal(this.uiManager, this.handleBackToMenu.bind(this));
         this.tournamentPage = new TournamentPage(this.uiManager, this.handleBackToMenu.bind(this));
+        this.multiplayerPage = new MultiplayerPage(this.uiManager, this.handleBackToMenu.bind(this));
         this.gamePageOnline = new GamePageOnline(this.uiManager, this.handleBackToMenu.bind(this));
         this.checkOtpPage = new CheckOtp(this.uiManager, this.languageManager, this.handleOtpVerificationComplete.bind(this), this.handleNewChangePassword.bind(this), this.handleBackToUpdateProfile.bind(this), this.handleBackToAuth.bind(this));
         this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.handleSettings.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser);
@@ -195,6 +197,9 @@ export class App {
             if (this.currentPage === 'tournament') {
                 this.tournamentPage.setupGame(data);
             }
+            else if (this.currentPage === 'game-online') {
+                this.multiplayerPage.setupGame(data);
+            }
             else if (this.currentPage === 'game-local') {
                 this.gamePageLocal.setupGame(data);
             }
@@ -233,10 +238,13 @@ export class App {
                 this.gamePageLocal.render();
                 break;
             case 'game-online':
-                this.gamePageOnline.render();
+                this.multiplayerPage.render();
                 break;
             case 'tournament':
                 this.tournamentPage.render();
+                break;
+            case 'multiplayer':
+                this.multiplayerPage.render();
                 break;
             case 'check-otp':
                 // TODO: Get translations from languageManager

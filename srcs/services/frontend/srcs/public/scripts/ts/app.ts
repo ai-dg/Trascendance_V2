@@ -20,6 +20,7 @@ import { GuestPage } from './pages/GuestPage.js';
 import { MenuPage } from './pages/MenuPage.js';
 import { GamePageAI, GamePageLocal, GamePageOnline } from './pages/GamePage.js';
 import { TournamentPage } from './pages/TournamentPage.js';
+import { MultiplayerPage } from './pages/MultiplayerPage.js';
 import { CheckOtp } from './pages/CheckOtp.js';
 import { SettingsPage } from './pages/SettingsPage.js';
 import { UpdateProfilePage } from './pages/UpdateProfilePage.js';
@@ -62,6 +63,7 @@ export class App {
   private gamePageLocal: GamePageLocal;
   private gamePageOnline: GamePageOnline;
   private tournamentPage: TournamentPage;
+  private multiplayerPage: MultiplayerPage;
   private checkOtpPage: CheckOtp;
   private settingsPage!: SettingsPage;
   private updateProfilePage: UpdateProfilePage;
@@ -125,6 +127,10 @@ export class App {
     );
     this.tournamentPage = new TournamentPage(
       this.uiManager, 
+      this.handleBackToMenu.bind(this)
+    );
+    this.multiplayerPage = new MultiplayerPage(
+      this.uiManager,
       this.handleBackToMenu.bind(this)
     );
     this.gamePageOnline = new GamePageOnline(
@@ -313,6 +319,8 @@ export class App {
       console.log('new-game received:', data);
       if (this.currentPage === 'tournament') {
         this.tournamentPage.setupGame(data);
+      } else if (this.currentPage === 'game-online') {
+        this.multiplayerPage.setupGame(data);
       } else if (this.currentPage === 'game-local') {
         this.gamePageLocal.setupGame(data);
       } else {
@@ -357,10 +365,13 @@ export class App {
         this.gamePageLocal.render();
         break;
       case 'game-online':
-        this.gamePageOnline.render();
+        this.multiplayerPage.render();
         break;
       case 'tournament':
         this.tournamentPage.render();
+        break;
+      case 'multiplayer':
+        this.multiplayerPage.render();
         break;
       case 'check-otp':
         // TODO: Get translations from languageManager
