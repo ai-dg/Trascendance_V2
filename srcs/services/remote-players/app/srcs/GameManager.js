@@ -190,12 +190,13 @@ export class GameManager {
       this.gameState.player2Score++;
       this.resetBall();
       this.checkWinner();
-    } else if (this.gameState.ball.x > CANVAS_WIDTH) {
+    } else if (this.gameState.ball.x > CANVAS_WIDTH)
+    {
       this.gameState.player1Score++;
       this.resetBall();
       this.checkWinner();
     }
-    
+
     // Send state to frontend
     this.socket.emit(this.uuid, {
       type: "game-update",
