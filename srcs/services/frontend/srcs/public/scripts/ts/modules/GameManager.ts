@@ -81,6 +81,8 @@ export class GameManager {
       throw Error("gameSocket is not ready");
 
     gameSocket.on(this.gameUID, (data) => {
+
+    gameSocket.on(this.gameUID, (data: any) => {
       console.log("Received from backend:", data);
 
       if (data.type === "ready-status") {
@@ -233,15 +235,18 @@ export class GameManager {
     let paddle2 = 0;
 
     // Update paddles
-    if (this.keys['w'])
-      paddle1 = -1;
-    else if (this.keys['s'])
+    if (this.keys['s'])
       paddle1 = 1;
+    else if (this.keys['w'])
+      paddle1 = -1;
 
-    if (this.keys['arrowup'])
+    if (this.keys['arrowdown'])
+      paddle2 = 1;
+    else if (this.keys['arrowup'])
       paddle2 = -1;
     else if (this.keys['arrowdown'])
       paddle2 = 1;
+
 
     const state = {
       paddle1,

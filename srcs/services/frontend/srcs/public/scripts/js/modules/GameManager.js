@@ -179,14 +179,14 @@ export class GameManager {
         let paddle1 = 0;
         let paddle2 = 0;
         // Update paddles
-        if (this.keys['w'])
-            paddle1 = -1;
-        else if (this.keys['s'])
+        if (this.keys['s'])
             paddle1 = 1;
-        if (this.keys['arrowup'])
-            paddle2 = -1;
-        else if (this.keys['arrowdown'])
+        else if (this.keys['w'])
+            paddle1 = -1;
+        if (this.keys['arrowdown'])
             paddle2 = 1;
+        else if (this.keys['arrowup'])
+            paddle2 = -1;
         const state = {
             paddle1,
             paddle2

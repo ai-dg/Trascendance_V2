@@ -45,7 +45,7 @@ function setupSocketIO(){
 
 function setupGeneralGameSocket(socket){
 	console.log('✅ Utilisateur authentifié:', socket.userId);
-	socket.emit("welcome", {message : "welcome !", userId: socket.userId, user: socket.user})
+	socket.emit("welcome", {message : "welcome in the game !", userId: socket.userId, user: socket.user})
 	socket.broadcast.emit("user-joined", {userId: socket.id});
 	socket.on("new-game", (data) => newGameSocket(socket, data))
 	socket.on("game-request", (data) => requestGameUID(socket, data))

@@ -8,7 +8,7 @@ export class OTPManagers {
     }
     async signupSuccessHandler() {
         // TODO: remplacer l'alerte par un vrai message !
-        alert("sign up success !!!!!!! Have to display front message");
+        // alert("sign up success !!!!!!! Have to display front message")
         window.location.href = "/";
     }
     // public async changePasswordSuccessHandler(){
