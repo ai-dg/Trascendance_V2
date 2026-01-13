@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { routes } from './routes.js';
 import amqp from 'amqplib'
+import path from 'path';
 
 export const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
@@ -39,7 +40,22 @@ async function connect_message_queue(){
 } 
 
 
-export const app = fastify();
+// HTTPS options
+let httpsOptions = {};
+try {
+	const certPath = path.join('/certs', 'cert.pem');
+	const keyPath = path.join('/certs', 'key.pem');
+	if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+		httpsOptions = {
+			key: fs.readFileSync(keyPath),
+			cert: fs.readFileSync(certPath)
+		};
+	}
+} catch (err) {
+	console.log('HTTPS certs not found, running on HTTP');
+}
+
+export const app = fastify({https: httpsOptions});
 
 app.register(fastifyStatic, {
   root: join(__dirname, '../../public'),

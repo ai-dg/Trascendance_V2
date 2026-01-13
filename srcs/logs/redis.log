@@ -1,12 +1,13 @@
-1:C 10 Dec 2025 13:08:36.304 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
-1:C 10 Dec 2025 13:08:36.306 * Redis version=7.4.7, bits=64, commit=00000000, modified=0, pid=1, just started
-1:C 10 Dec 2025 13:08:36.306 * Configuration loaded
-1:M 10 Dec 2025 13:08:36.309 * monotonic clock: POSIX clock_gettime
-1:M 10 Dec 2025 13:08:36.396 * Running mode=standalone, port=6379.
-1:M 10 Dec 2025 13:08:36.413 * Server initialized
-1:M 10 Dec 2025 13:08:36.459 * Loading RDB produced by version 7.4.7
-1:M 10 Dec 2025 13:08:36.459 * RDB age 424864 seconds
-1:M 10 Dec 2025 13:08:36.459 * RDB memory usage when created 0.98 Mb
-1:M 10 Dec 2025 13:08:36.459 * Done loading RDB, keys loaded: 0, keys expired: 0.
-1:M 10 Dec 2025 13:08:36.459 * DB loaded from disk: 0.043 seconds
-1:M 10 Dec 2025 13:08:36.459 * Ready to accept connections tcp
+1:C 13 Jan 2026 16:31:23.473 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+1:C 13 Jan 2026 16:31:23.473 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+1:C 13 Jan 2026 16:31:23.473 * Redis version=7.4.7, bits=64, commit=00000000, modified=0, pid=1, just started
+1:C 13 Jan 2026 16:31:23.473 * Configuration loaded
+1:M 13 Jan 2026 16:31:23.474 * monotonic clock: POSIX clock_gettime
+1:M 13 Jan 2026 16:31:23.474 * Running mode=standalone, port=6379.
+1:M 13 Jan 2026 16:31:23.475 * Server initialized
+1:M 13 Jan 2026 16:31:23.475 * Loading RDB produced by version 7.4.7
+1:M 13 Jan 2026 16:31:23.475 * RDB age 395 seconds
+1:M 13 Jan 2026 16:31:23.475 * RDB memory usage when created 1.02 Mb
+1:M 13 Jan 2026 16:31:23.475 * Done loading RDB, keys loaded: 2, keys expired: 0.
+1:M 13 Jan 2026 16:31:23.475 * DB loaded from disk: 0.000 seconds
+1:M 13 Jan 2026 16:31:23.475 * Ready to accept connections tcp

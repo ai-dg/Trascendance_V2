@@ -8,10 +8,27 @@ import { createClient } from 'redis';
 import validator from 'validator';
 import { ethers } from 'ethers';
 import { randomTournamentResult } from './srcs/scores.js';
+import fs from 'fs';
+import path from 'path';
 
 
 
-const app = Fastify();
+// HTTPS options
+let httpsOptions = {};
+try {
+	const certPath = path.join('/certs', 'cert.pem');
+	const keyPath = path.join('/certs', 'key.pem');
+	if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+		httpsOptions = {
+			key: fs.readFileSync(keyPath),
+			cert: fs.readFileSync(certPath)
+		};
+	}
+} catch (err) {
+	console.log('HTTPS certs not found, running on HTTP');
+}
+
+const app = Fastify({https: httpsOptions});
 
 const provider = new ethers.JsonRpcProvider(
   'https://api.avax-test.network/ext/bc/C/rpc'
