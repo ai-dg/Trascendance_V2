@@ -126,6 +126,7 @@ export interface User {
   id?: string;
   avatar?: string;
   isGuest?: boolean;
+  nbrId?: number;
 }
 
 export interface LoginCredentials {

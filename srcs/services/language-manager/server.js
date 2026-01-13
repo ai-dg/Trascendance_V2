@@ -3,10 +3,28 @@ import cookie from '@fastify/cookie';
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 import { routes } from './srcs/routes/routes.js';
+import fs from 'fs';
+import path from 'path';
 
-export const app = Fastify({trustProxy: true});
+// HTTPS options
+let httpsOptions = {};
+try {
+	const certPath = path.join('/certs', 'cert.pem');
+	const keyPath = path.join('/certs', 'key.pem');
+	if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+		httpsOptions = {
+			key: fs.readFileSync(keyPath),
+			cert: fs.readFileSync(certPath)
+		};
+	}
+} catch (err) {
+	console.log('HTTPS certs not found, running on HTTP');
+}
+
 const is_prod = process.env.NODE_ENV === "PROD"
 export const base_url = is_prod ? "www.transcendance.com" : "localhost"
+
+export const app = Fastify({trustProxy: true, https: httpsOptions});
 
 export async function setupLanguagedb() {
 	try {

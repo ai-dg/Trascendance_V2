@@ -6,11 +6,29 @@ import cors from '@fastify/cors';
 import { Server } from 'socket.io';
 import crypto from 'crypto';
 import { GameManager } from './srcs/GameManager.js';
+import fs from 'fs';
+import path from 'path';
 
 
-export const app = Fastify({trustProxy: true});
 const is_prod = process.env.NODE_ENV === "PROD";
 export const base_url = is_prod ? "www.transcendance.com" : "localhost";
+
+// HTTPS options
+let httpsOptions = {};
+try {
+	const certPath = path.join('/certs', 'cert.pem');
+	const keyPath = path.join('/certs', 'key.pem');
+	if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+		httpsOptions = {
+			key: fs.readFileSync(keyPath),
+			cert: fs.readFileSync(certPath)
+		};
+	}
+} catch (err) {
+	console.log('HTTPS certs not found, running on HTTP');
+}
+
+export const app = Fastify({trustProxy: true, https: httpsOptions});
 
 let socketio = null;
 
@@ -33,7 +51,7 @@ const generalConnections = new Map();
 const runningGames = new Map();
 
 app.get('/', async () => {
-    return { status: 'ok', service: 'remote-players' };
+    return { status: 'ok', service: 'realtime-sockets' };
 });
 
 

@@ -142,11 +142,11 @@ The project is organized into independent microservices:
 | **Frontend** | User interface | TypeScript, Tailwind CSS, EJS |
 | **Gateway** | Entry point and routing | Nginx |
 | **Auth** | Authentication and user management | Node.js, SQLite |
-| **Remote Players** | Remote player management | Node.js |
-| **Match Maker** | Matchmaking system | Node.js |
+| **Realtime Sockets** | Realtime socket management | Node.js |
+| **Backend AI** | AI backend system | Node.js |
 | **Live Chat** | Real-time chat | Node.js, SQLite |
 | **Blockchain** | Score storage | Solidity, Avalanche |
-| **Canvas AI** | Artificial intelligence | Node.js |
+| **Game Engine** | Game engine | Node.js |
 | **Language Manager** | Language management | Node.js, SQLite |
 | **Mail** | Email sending | Node.js |
 | **Server Rendering** | Server-side rendering | Node.js |
@@ -174,8 +174,8 @@ Services communicate via:
 ### ■ Game Flow
 
 1. **Authentication** : User logs in via OAuth 2.0 (42)
-2. **Matchmaking** : Match Maker service finds an opponent
-3. **Connection** : Players connect via Remote Players
+2. **Matchmaking** : Backend AI service finds an opponent
+3. **Connection** : Players connect via Realtime Sockets
 4. **Game** : Pong game takes place in real-time
 5. **Score** : Results are stored in the blockchain
 6. **Chat** : Players can communicate via Live Chat
@@ -318,14 +318,14 @@ Trascendance_V2/
 │   ├── services/               # Microservices
 │   │   ├── auth/               # Authentication service
 │   │   ├── blockchain/         # Blockchain service
-│   │   ├── canvas-ai/          # AI service
+│   │   ├── game-engine/        # Game engine
 │   │   ├── frontend/           # User interface
 │   │   ├── gateway/            # Entry point
 │   │   ├── language-manager/   # Language management
 │   │   ├── live-chat/          # Live chat
 │   │   ├── mail/               # Email service
-│   │   ├── match-maker/        # Matchmaking system
-│   │   ├── remote-players/     # Remote player management
+│   │   ├── backend-ai/         # Backend AI system
+│   │   ├── realtime-sockets/   # Realtime socket management
 │   │   ├── security/           # WAF and security
 │   │   └── server-rendering/   # Server-side rendering
 │   ├── scripts/                # Utility scripts

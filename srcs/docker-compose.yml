@@ -47,7 +47,7 @@ services:
     depends_on:
       - auth_app
       - live-chat_app
-      - remote-players_app
+      - realtime-sockets_app
       - frontend_app  
 
 
@@ -61,7 +61,7 @@ services:
 # REMOTE_PLAYER_SERVICE : 3003
 # MATCH_MAKING : 3004
 # SERVER-RENDERING : 3003
-# CANVAS-AI : 3007
+# game-engine : 3007
 # BLOCKCHAIN : 4000
 
   server-rendering_app:
@@ -76,6 +76,7 @@ services:
       # - ./services/server-rendering/app:/data
       # - sqlite_data:/data
       # - ./volume/redis_data:/data
+      - ./certs:/certs:ro
     networks:
       - internal
     environment:
@@ -119,6 +120,7 @@ services:
       # - sqlite_data:/data/sqlite
       # - ./volume/redis_data:/data
       - ./services/auth/app:/data
+      - ./certs:/certs:ro
     networks:
       - internal
     depends_on:
@@ -144,6 +146,7 @@ services:
     volumes:
       - ./services/language-manager:/data
       - /data/node_modules
+      - ./certs:/certs:ro
     networks:
       - internal
 
@@ -163,16 +166,17 @@ services:
     volumes:
       - ./services/live-chat/app:/data
       - /data/node_modules
+      - ./certs:/certs:ro
     networks:
       - internal
-    depends_on:  
+    depends_on:
       redis:
         condition: service_started
 
-  remote-players_app:
-    container_name: remote-players_app
+  realtime-sockets_app:
+    container_name: realtime-sockets_app
     build:
-      context: ./services/remote-players/app
+      context: ./services/realtime-sockets/app
     expose:
       - 3003
     environment:
@@ -194,7 +198,8 @@ services:
       - /data/node_modules
       # - sqlite_data:/data/sqlite
       # - ./volume/redis_data:/data
-      - ./services/remote-players/app:/data
+      - ./services/realtime-sockets/app:/data
+      - ./certs:/certs:ro
 
   blockchain:
     container_name: blockchain
@@ -224,13 +229,14 @@ services:
       # - sqlite_data:/data/sqlite
       # - ./volume/redis_data:/data
       - ./services/blockchain/app:/data
+      - ./certs:/certs:ro
 
 
 
-  canvas-ai_app:
-    container_name: canvas-ai_app
+  game-engine_app:
+    container_name: game-engine_app
     build:
-      context: ./services/canvas-ai/app
+      context: ./services/game-engine/app
     expose:
       - 3007
     environment:
@@ -252,12 +258,13 @@ services:
       - /data/node_modules
       # - sqlite_data:/data/sqlite
       # - ./volume/redis_data:/data
-      - ./services/canvas-ai/app:/data
+      - ./services/game-engine/app:/data
+      - ./certs:/certs:ro
 
-  match-maker_app:
-    container_name: match-maker_app
+  backend-ai_app:
+    container_name: backend-ai_app
     build:
-      context: ./services/match-maker/app
+      context: ./services/backend-ai/app
     expose:
       - 3004
     environment:
@@ -277,7 +284,8 @@ services:
       - /data/node_modules
       # - sqlite_data:/data/sqlite
       # - ./volume/redis_data:/data
-      - ./services/match-maker/app:/data
+      - ./services/backend-ai/app:/data
+      - ./certs:/certs:ro
     networks:
       - internal
 
@@ -310,6 +318,7 @@ services:
     volumes:
       - ./services/mail/app:/data
       - /data/node_modules
+      - ./certs:/certs:ro
     networks:
       - internal
     depends_on:
