@@ -80,7 +80,7 @@ export class GameManager {
     if (!gameSocket || !this.gameUID)
       throw Error("gameSocket is not ready");
       
-    gameSocket.on(this.gameUID, (data) => {
+    gameSocket.on(this.gameUID, (data: any) => {
       console.log("Received from backend:", data);
       
       if (data.type === "ready-status") {

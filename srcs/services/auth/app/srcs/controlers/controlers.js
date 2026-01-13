@@ -809,4 +809,45 @@ export async function get_id_by_username_route(request, reply) {
 }
 
 
+export async function get_username_by_id_route(request, reply) {
+  try {
+    // const token = request.cookies.token;
+
+	const authHeader = request.headers.authorization;
+	const token =
+	  request.cookies.token ||
+	  authHeader?.replace('Bearer ', '');
+    if (!token) return reply.code(401).send({ success: false, message: "Not authenticated" });
+
+    let payload;
+    try {
+      payload = verify(token, process.env.JWT_SECRET);
+    } catch {
+      return reply.code(401).send({ success: false, message: "Invalid or expired token" });
+    }
+	const isProduction = process.env.NODE_ENV === 'PROD';
+    if (isProduction && payload.jti) {
+      const isRevoked = await redis.get(`jwt:${payload.jti}`);
+      if (isRevoked) {
+        return reply.code(401).send({ success: false, message: "Token revoked" });
+      }
+    }
+
+	const { id } = request.body;
+
+    const user = await app.db.get(
+      "SELECT pseudo, avatar FROM users WHERE user_id = ?",
+      [id]
+    );
+    if (!user) return reply.code(404).send({ success: false, message: "User not found" });
+
+    return reply.send({ success: true, data: { user } });
+
+  } catch (err) {
+    console.error("auth/me error:", err);
+    return reply.code(500).send({ success: false, message: "Internal app error" });
+  }
+}
+
+
 
