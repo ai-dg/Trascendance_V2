@@ -1,42 +1,25 @@
 import { GameManager } from '../modules/GameManager.js';
-export class MultiplayerPage {
-    constructor(uiManager, onBack, user) {
+export class AIPage {
+    constructor(uiManager, onBack) {
         this.gameManager = null;
         this.canvas = null;
-        this.user = null;
         this.uiManager = uiManager;
         this.onBack = onBack;
-        this.user = user ?? null;
     }
-    // DESIGN OF THE PAGE
-    render(user) {
-        if (user !== undefined) {
-            this.user = user;
-        }
-        // Avatar printing
-        const profileDiv = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 min-h-[700px] flex-shrink-0 w-60');
-        profileDiv.style.minHeight = '10px';
-        profileDiv.id = 'profile-div';
-        const avatarSection = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
-        const avatarImg = this.uiManager.createElement('img', 'w-12 h-12 rounded-full border-2 border-[#ff1493] cursor-pointer');
-        if (!this.user || !this.user.avatar)
-            avatarImg.src = 'public/avatars/default.png';
-        else if (this.user.avatar.startsWith('http'))
-            avatarImg.src = this.user.avatar;
-        else
-            avatarImg.src = `public/avatars/${this.user.avatar}.png`;
-        const username = this.uiManager.createElement('p', 'retro-subtitle text-lg text-[#00ffff] font-bold');
-        username.textContent = this.user ? this.user.username : 'USERNAME';
-        avatarSection.appendChild(avatarImg);
-        avatarSection.appendChild(username);
-        profileDiv.appendChild(avatarSection);
-        // Back Button
-        const backButtonContainer = this.uiManager.createElement('div', 'text-center mb-8');
+    render() {
+        const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
+        const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-6xl');
+        // Header
+        const header = this.uiManager.createElement('div', 'text-center mb-8');
+        const title = this.uiManager.createElement('h1', 'retro-title text-3xl mb-4', 'PONG');
+        const subtitle = this.uiManager.createElement('p', 'retro-subtitle', 'CLASSIC ARCADE EXPERIENCE');
         // Back to Menu Button
         const backButton = this.uiManager.createButton('BACK TO MENU', 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mx-auto mt-4', this.onBack);
         const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
         backButton.appendChild(backIcon);
-        backButtonContainer.appendChild(backButton);
+        header.appendChild(title);
+        header.appendChild(subtitle);
+        header.appendChild(backButton);
         // Game Container
         const gameContainer = this.uiManager.createElement('div', 'flex flex-col items-center gap-6');
         // Score Display
@@ -92,18 +75,28 @@ export class MultiplayerPage {
         // Controls
         const controls = this.uiManager.createElement('div', 'flex gap-12 retro-text text-sm opacity-60');
         const player1Controls = this.uiManager.createElement('div', 'text-center');
-        const player1Title = this.uiManager.createElement('div', 'mb-2', 'COMMANDS');
+        const player1Title = this.uiManager.createElement('div', 'mb-2', 'PLAYER 1');
         const player1Up = this.uiManager.createElement('div', '', 'W - UP');
         const player1Down = this.uiManager.createElement('div', '', 'S - DOWN');
         player1Controls.appendChild(player1Title);
         player1Controls.appendChild(player1Up);
         player1Controls.appendChild(player1Down);
+        const player2Controls = this.uiManager.createElement('div', 'text-center');
+        const player2Title = this.uiManager.createElement('div', 'mb-2', 'PLAYER 2');
+        const player2Up = this.uiManager.createElement('div', '', '↑ - UP');
+        const player2Down = this.uiManager.createElement('div', '', '↓ - DOWN');
+        player2Controls.appendChild(player2Title);
+        player2Controls.appendChild(player2Up);
+        player2Controls.appendChild(player2Down);
         controls.appendChild(player1Controls);
+        controls.appendChild(player2Controls);
         // Game Controls
         const gameControls = this.uiManager.createElement('div', 'flex gap-4');
         const pauseButton = this.uiManager.createButton('PAUSE', 'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200', () => this.pauseGame());
+        const resumeButton = this.uiManager.createButton('RESUME', 'retro-button bg-transparent text-[#ff1493] px-6 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200', () => this.startGame());
         const resetButton = this.uiManager.createButton('RESET', 'retro-button bg-transparent text-[#00ffff] px-6 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200', () => this.resetGame());
         gameControls.appendChild(pauseButton);
+        gameControls.appendChild(resumeButton);
         gameControls.appendChild(resetButton);
         gameContainer.appendChild(scoreDisplay);
         gameContainer.appendChild(canvasContainer);
@@ -113,19 +106,16 @@ export class MultiplayerPage {
         const footer = this.uiManager.createElement('div', 'text-center mt-8 retro-text text-sm opacity-40');
         const footerText = this.uiManager.createElement('p', '', 'FIRST TO 10 POINTS WINS • USE KEYBOARD CONTROLS');
         footer.appendChild(footerText);
-        // Main Bloc 
-        const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-6xl');
-        content.appendChild(profileDiv);
+        content.appendChild(header);
         content.appendChild(gameContainer);
-        content.appendChild(backButtonContainer);
         content.appendChild(footer);
-        const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
         container.appendChild(content);
         this.uiManager.clear();
         this.uiManager.container.appendChild(container);
         // Initialize game manager
-        if (this.canvas)
+        if (this.canvas) {
             this.requestNewGame();
+        }
     }
     requestNewGame() {
         const gameOverOverlay = document.querySelector('[data-overlay="game-over"]');
@@ -233,55 +223,5 @@ export class MultiplayerPage {
         if (this.gameManager) {
             this.gameManager.resetGame();
         }
-    }
-}
-export class GamePageAI {
-    constructor(uiManager, onBack) {
-        this.uiManager = uiManager;
-        this.onBack = onBack;
-    }
-    render() {
-        const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
-        const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-4xl text-center');
-        // Header
-        const header = this.uiManager.createElement('div', 'mb-8');
-        const title = this.uiManager.createElement('h1', 'retro-title text-4xl mb-4', 'PONG VS AI');
-        const subtitle = this.uiManager.createElement('p', 'retro-subtitle text-xl', 'ARTIFICIAL INTELLIGENCE MODE');
-        // Back Button
-        const backButton = this.uiManager.createButton('BACK TO MENU', 'retro-button bg-transparent text-[#00ffff] px-6 py-3 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mx-auto', this.onBack);
-        const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
-        backButton.appendChild(backIcon);
-        header.appendChild(title);
-        header.appendChild(subtitle);
-        content.appendChild(header);
-        content.appendChild(backButton);
-        container.appendChild(content);
-        this.uiManager.clear();
-        this.uiManager.container.appendChild(container);
-    }
-}
-export class GamePageOnline {
-    constructor(uiManager, onBack) {
-        this.uiManager = uiManager;
-        this.onBack = onBack;
-    }
-    render() {
-        const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
-        const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-4xl text-center');
-        // Header
-        const header = this.uiManager.createElement('div', 'mb-8');
-        const title = this.uiManager.createElement('h1', 'retro-title text-4xl mb-4', 'PONG ONLINE');
-        const subtitle = this.uiManager.createElement('p', 'retro-subtitle text-xl', 'MULTIPLAYER MODE');
-        // Back Button
-        const backButton = this.uiManager.createButton('BACK TO MENU', 'retro-button bg-transparent text-[#00ffff] px-6 py-3 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mx-auto', this.onBack);
-        const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
-        backButton.appendChild(backIcon);
-        header.appendChild(title);
-        header.appendChild(subtitle);
-        //content.appendChild(header);
-        content.appendChild(backButton);
-        container.appendChild(content);
-        this.uiManager.clear();
-        this.uiManager.container.appendChild(container);
     }
 }

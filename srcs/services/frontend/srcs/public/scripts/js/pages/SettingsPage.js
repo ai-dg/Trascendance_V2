@@ -32,9 +32,9 @@ export class SettingsPage {
         // Header
         const header = this.uiManager.createElement('div', 'text-center mb-8');
         const title = this.uiManager.createElement('h1', 'retro-title text-3xl mb-4', this.t('options'));
-        const subtitle = this.uiManager.createElement('p', 'retro-subtitle', this.t('optionsMessage'));
+        //const subtitle = this.uiManager.createElement('p', 'retro-subtitle', this.t('optionsMessage'));
         header.appendChild(title);
-        header.appendChild(subtitle);
+        //header.appendChild(subtitle);
         // Back Button
         const backButton = this.uiManager.createButton(this.t('backtoMenu'), 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mb-8', this.onBack);
         const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
@@ -158,30 +158,26 @@ export class SettingsPage {
     guestSettings() {
         const card = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 rounded-lg p-6');
         card.style.borderColor = '#ff1493';
-        const header = this.uiManager.createElement("h2", "retro-title text-[#ff1493] text-2xl mb-2", this.t("welcomeGuest"));
+        // const header = this.uiManager.createElement(
+        //   "h2",
+        //   "retro-title text-[#ff1493] text-2xl mb-2",
+        //   this.t("welcomeGuest")
+        // );
         const subtitle = this.uiManager.createElement("p", "retro-text text-center text-sm opacity-70", this.t("guestMessage"));
         const buttonsContainer = this.uiManager.createElement("div", "w-full flex flex-col gap-4 mt-4");
         // Sign In Button
         const signInBtn = this.uiManager.createButton(this.t("signin"), "w-full retro-button bg-[#00ffff] text-black hover:bg-[#00ffff]/80 border-2 border-[#00ffff] py-3", () => console.log("to handle signin"));
         // Sign Up Button
         const signUpBtn = this.uiManager.createButton(this.t("signup"), "w-full retro-button bg-transparent text-[#ff1493] border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black py-3", () => console.log("to handle signup"));
-        // Divider
-        const divider = this.uiManager.createElement("div", "flex items-center my-2");
-        const line = this.uiManager.createElement("div", "flex-1 h-px bg-gradient-to-r from-transparent via-[#ff1493] to-transparent");
-        const orText = this.uiManager.createElement("span", "px-4 retro-text text-sm text-[#ff1493]", this.t("or"));
-        divider.appendChild(line);
-        divider.appendChild(orText);
-        divider.appendChild(line.cloneNode(true));
         // Google Sign In Button
         const googleBtn = this.uiManager.createButton(this.t("sign_in_with_google"), "w-full retro-button bg-white text-black hover:bg-gray-100 border-2 border-white py-3 flex items-center justify-center gap-3", () => this.authPage.handleGoogleSignIn());
         // 42Auth Button
         const auth42Btn = this.uiManager.createButton("this", "w-full retro-button bg-[#00babc] text-white hover:bg-[#00a0a2] border-2 border-[#00babc] py-3 flex items-center justify-center gap-3", () => this.authPage.handle42SignIn());
         buttonsContainer.appendChild(signInBtn);
         buttonsContainer.appendChild(signUpBtn);
-        buttonsContainer.appendChild(divider);
         buttonsContainer.appendChild(googleBtn);
         buttonsContainer.appendChild(auth42Btn);
-        card.appendChild(header);
+        //card.appendChild(header);
         card.appendChild(subtitle);
         card.appendChild(buttonsContainer);
         card.appendChild(this.createLanguageSelector(false));

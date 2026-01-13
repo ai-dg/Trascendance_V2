@@ -8,7 +8,7 @@ export class MultiplayerPage {
         this.onBack = onBack;
         this.user = user ?? null;
     }
-    // DESIGN OF THE PAGE
+    ///////////// DESIGN & RENDERING /////////////
     render(user) {
         if (user !== undefined) {
             this.user = user;
@@ -127,6 +127,7 @@ export class MultiplayerPage {
         if (this.canvas)
             this.requestNewGame();
     }
+    //////////// GAME LOGIC //////////---
     requestNewGame() {
         const gameOverOverlay = document.querySelector('[data-overlay="game-over"]');
         const startOverlay = document.querySelector('[data-overlay="start-game"]');
@@ -233,55 +234,5 @@ export class MultiplayerPage {
         if (this.gameManager) {
             this.gameManager.resetGame();
         }
-    }
-}
-export class GamePageAI {
-    constructor(uiManager, onBack) {
-        this.uiManager = uiManager;
-        this.onBack = onBack;
-    }
-    render() {
-        const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
-        const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-4xl text-center');
-        // Header
-        const header = this.uiManager.createElement('div', 'mb-8');
-        const title = this.uiManager.createElement('h1', 'retro-title text-4xl mb-4', 'PONG VS AI');
-        const subtitle = this.uiManager.createElement('p', 'retro-subtitle text-xl', 'ARTIFICIAL INTELLIGENCE MODE');
-        // Back Button
-        const backButton = this.uiManager.createButton('BACK TO MENU', 'retro-button bg-transparent text-[#00ffff] px-6 py-3 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mx-auto', this.onBack);
-        const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
-        backButton.appendChild(backIcon);
-        header.appendChild(title);
-        header.appendChild(subtitle);
-        content.appendChild(header);
-        content.appendChild(backButton);
-        container.appendChild(content);
-        this.uiManager.clear();
-        this.uiManager.container.appendChild(container);
-    }
-}
-export class GamePageOnline {
-    constructor(uiManager, onBack) {
-        this.uiManager = uiManager;
-        this.onBack = onBack;
-    }
-    render() {
-        const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
-        const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-4xl text-center');
-        // Header
-        const header = this.uiManager.createElement('div', 'mb-8');
-        const title = this.uiManager.createElement('h1', 'retro-title text-4xl mb-4', 'PONG ONLINE');
-        const subtitle = this.uiManager.createElement('p', 'retro-subtitle text-xl', 'MULTIPLAYER MODE');
-        // Back Button
-        const backButton = this.uiManager.createButton('BACK TO MENU', 'retro-button bg-transparent text-[#00ffff] px-6 py-3 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mx-auto', this.onBack);
-        const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
-        backButton.appendChild(backIcon);
-        header.appendChild(title);
-        header.appendChild(subtitle);
-        //content.appendChild(header);
-        content.appendChild(backButton);
-        container.appendChild(content);
-        this.uiManager.clear();
-        this.uiManager.container.appendChild(container);
     }
 }
