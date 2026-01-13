@@ -187,6 +187,8 @@ export class GameManager {
             paddle2 = 1;
         else if (this.keys['arrowup'])
             paddle2 = -1;
+        else if (this.keys['arrowdown'])
+            paddle2 = 1;
         const state = {
             paddle1,
             paddle2
