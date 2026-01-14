@@ -1,7 +1,7 @@
 import type { AuthManager } from '../modules/AuthManager.js';
 import { LanguageManager } from '../modules/LangManager.js';
 import type { RouterManager } from '../modules/RouterManager.js';
-import { User, Settings, ColorTheme  } from '../modules/TypesManager.js';
+import type { User, Settings, ColorTheme } from '../modules/TypesManager.js';
 import { UIManager } from '../modules/UIManager.js';
 import type { AuthPage } from './AuthPage.js';
 import { UpdateProfilePage } from './UpdateProfilePage.js';
