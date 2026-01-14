@@ -109,7 +109,8 @@ export class App {
       this.handleLogout.bind(this));
     this.gamePageAI = new AIPage(
       this.uiManager, 
-      this.handleBackToMenu.bind(this)
+      this.handleBackToMenu.bind(this),
+      this.currentUser
     );
     this.gamePageLocal = new GamePageLocal(
       this.uiManager, 
@@ -560,6 +561,9 @@ export class App {
   private handlePlayGameAI(): void {
     // TODO: Implement AI game logic
     console.log('Starting AI game...');
+    if (this.gamePageAI) {
+      this.gamePageAI.render(this.currentUser);
+    }
     this.routerManager.navigateTo('game-ai');
   }
 

@@ -19,13 +19,6 @@ export class MenuPage {
                 action: () => this.onPlayGameOnline(),
                 color: '#ff1493',
             },
-            // {
-            //   icon: 'zap',
-            //   label: 'TOURNAMENT',
-            //   action: () => this.onViewLeaderboard(),
-            //   color: '#f566b2ff',
-            //   description: 'Minimum 4 players'
-            // },
             {
                 icon: 'chat',
                 label: 'LIVE CHAT',

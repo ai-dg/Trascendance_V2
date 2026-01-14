@@ -1,3 +1,8 @@
-time="2026/01/13 16:41:40" level=info msg="[smtpd] starting on [::]:1025 (no encryption)"
-time="2026/01/13 16:41:40" level=info msg="[http] starting on [::]:8025"
-time="2026/01/13 16:41:40" level=info msg="[http] accessible via http://localhost:8025/"
+time="2026/01/13 21:41:44" level=info msg="[smtpd] starting on [::]:1025 (no encryption)"
+time="2026/01/13 21:41:44" level=info msg="[http] starting on [::]:8025"
+time="2026/01/13 21:41:44" level=info msg="[http] accessible via http://localhost:8025/"
+[db] got terminated signal, shutting down
+time="2026/01/13 21:44:27" level=info msg="[smtpd] starting on [::]:1025 (no encryption)"
+time="2026/01/13 21:44:27" level=info msg="[http] starting on [::]:8025"
+time="2026/01/13 21:44:27" level=info msg="[http] accessible via http://localhost:8025/"
+[db] got terminated signal, shutting down

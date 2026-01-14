@@ -45,7 +45,7 @@ export class App {
         // Initialize pages
         this.authPage = new AuthPage(this.uiManager, this.authManager, this.checkManager, this.languageManager, this.handleLogin.bind(this), this.handleRegister.bind(this), this.appHandleForgotPassword.bind(this), this.handleChangePassword.bind(this), this.handleShowGuestPage.bind(this), this.handleError.bind(this));
         this.menuPage = new MenuPage(this.uiManager, this.handlePlayGameAI.bind(this), this.handlePlayGameLocal.bind(this), this.handlePlayGameOnline.bind(this), this.handleChatWithFriends.bind(this), this.handleSettings.bind(this), this.handleLogout.bind(this));
-        this.gamePageAI = new AIPage(this.uiManager, this.handleBackToMenu.bind(this));
+        this.gamePageAI = new AIPage(this.uiManager, this.handleBackToMenu.bind(this), this.currentUser);
         this.gamePageLocal = new GamePageLocal(this.uiManager, this.handleBackToMenu.bind(this));
         this.gamePageOnline = new MultiplayerPage(this.uiManager, this.handleBackToMenu.bind(this), this.currentUser);
         this.checkOtpPage = new CheckOtp(this.uiManager, this.languageManager, this.handleOtpVerificationComplete.bind(this), this.handleNewChangePassword.bind(this), this.handleBackToUpdateProfile.bind(this), this.handleBackToAuth.bind(this));
@@ -84,13 +84,9 @@ export class App {
         await this.languageManager.init();
         if (this.currentUser) {
             this.currentPage = 'menu';
-<<<<<<< HEAD
-            gameSocket = await this.initSocketAlt('/remote-players', '/general');
-=======
             this.generalSocket = await this.initSocket('/live-chat/general');
             console.log(this.generalSocket);
             gameSocket = await this.initSocketAlt('/realtime-sockets', '/general');
->>>>>>> main
             console.log(gameSocket);
             if (!this.currentUser.isGuest) {
                 this.generalSocket = await this.initSocket('/live-chat/general');
@@ -438,6 +434,9 @@ export class App {
     handlePlayGameAI() {
         // TODO: Implement AI game logic
         console.log('Starting AI game...');
+        if (this.gamePageAI) {
+            this.gamePageAI.render(this.currentUser);
+        }
         this.routerManager.navigateTo('game-ai');
     }
     /**

@@ -7,3 +7,11 @@
 
 Socket.IO path: /socket.io/
 ✅ Remote-player service running on port 3003 with Socket.IO
+payload :  {
+  user_id: 29,
+  jti: '0e1f234f45bd750e81a2fbae1df44a8b',
+  iat: 1768340543,
+  exp: 1768344143
+}
+A
+✅ Utilisateur authentifié: 29
