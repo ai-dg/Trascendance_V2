@@ -83,10 +83,20 @@ export class GameManager {
     }
     setupEventListeners() {
         window.addEventListener('keydown', (e) => {
-            this.keys[e.key.toLowerCase()] = true;
+            const key = e.key.toLowerCase();
+            // Prevent default browser behavior for game control keys
+            if (key === 'w' || key === 's' || key === 'arrowup' || key === 'arrowdown') {
+                e.preventDefault();
+            }
+            this.keys[key] = true;
         });
         window.addEventListener('keyup', (e) => {
-            this.keys[e.key.toLowerCase()] = false;
+            const key = e.key.toLowerCase();
+            // Prevent default browser behavior for game control keys
+            if (key === 'w' || key === 's' || key === 'arrowup' || key === 'arrowdown') {
+                e.preventDefault();
+            }
+            this.keys[key] = false;
         });
     }
     drawReadyScreen() {

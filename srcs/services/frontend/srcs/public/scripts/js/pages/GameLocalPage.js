@@ -98,7 +98,7 @@ export class GamePageLocal {
         gameContainer.appendChild(canvasContainer);
         gameContainer.appendChild(controls);
         gameContainer.appendChild(gameControls);
-        // Main Bloc 
+        // Main Bloc
         const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-6xl');
         content.appendChild(gameContainer);
         content.appendChild(backButtonContainer);
@@ -210,6 +210,11 @@ export class GamePageLocal {
     pauseGame() {
         if (this.gameManager) {
             this.gameManager.pauseGame();
+        }
+    }
+    resumeGame() {
+        if (this.gameManager) {
+            this.gameManager.resumeGame();
         }
     }
     resetGame() {

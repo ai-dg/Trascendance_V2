@@ -6,18 +6,18 @@ import type { User } from '../modules/TypesManager.js';
 
 export class GamePageLocal {
   private uiManager: UIManager;
-    private onBack: () => void;
-    private gameManager: GameManager | null = null;
-    private canvas: HTMLCanvasElement | null = null;
+  private onBack: () => void;
+  private gameManager: GameManager | null = null;
+  private canvas: HTMLCanvasElement | null = null;
 
-    constructor(uiManager: UIManager, onBack: () => void, user?: User | null) {
+  constructor(uiManager: UIManager, onBack: () => void, user?: User | null) {
     this.uiManager = uiManager;
     this.onBack = onBack;
-    }
+  }
 
-    ///////////// DESIGN & RENDERING /////////////
+  ///////////// DESIGN & RENDERING /////////////
 
-    public render(): void {
+  public render(): void {
 
     // Avatars
     const avatarPlayer1Section = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
@@ -92,12 +92,12 @@ export class GamePageLocal {
     gameOverContent.appendChild(playAgainButton);
     gameOverOverlay.appendChild(gameOverContent);
     canvasContainer.appendChild(gameOverOverlay);
-<<<<<<< HEAD:srcs/services/frontend/srcs/public/scripts/ts/pages/GamePage.ts
-
-    // Start Game Overlay
-    const startOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg');
 
 
+    // Controls
+    const controls = this.uiManager.createElement('div', 'flex gap-12 retro-text text-sm opacity-60');
+
+    const player1Controls = this.uiManager.createElement('div', 'text-center');
     const player1Title = this.uiManager.createElement('div', 'mb-2', 'PLAYER 1');
     const player1Up = this.uiManager.createElement('div', '', 'W - UP');
     const player1Down = this.uiManager.createElement('div', '', 'S - DOWN');
@@ -115,62 +115,19 @@ export class GamePageLocal {
 
     controls.appendChild(player1Controls);
     controls.appendChild(player2Controls);
-<<<<<<< HEAD:srcs/services/frontend/srcs/public/scripts/ts/pages/GamePage.ts
-
-    // Game Controls
-=======
 
     // Buttons Pause & Reset
->>>>>>> main:srcs/services/frontend/srcs/public/scripts/ts/pages/GameLocalPage.ts
     const gameControls = this.uiManager.createElement('div', 'flex gap-4');
     const pauseButton = this.uiManager.createButton(
       'PAUSE',
       'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200',
       () => this.pauseGame()
     );
-<<<<<<< HEAD:srcs/services/frontend/srcs/public/scripts/ts/pages/GamePage.ts
-    const resumeButton = this.uiManager.createButton(
-      'RESUME',
-      'retro-button bg-transparent text-[#ff1493] px-6 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200',
-      () => this.resumeGame()
-    );
-=======
->>>>>>> main:srcs/services/frontend/srcs/public/scripts/ts/pages/GameLocalPage.ts
     const resetButton = this.uiManager.createButton(
       'RESTART',
       'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200',
       () => this.resetGame()
     );
-<<<<<<< HEAD:srcs/services/frontend/srcs/public/scripts/ts/pages/GamePage.ts
-
-=======
-
-
-    // Buttons Pause & Reset
-    const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
-    backButton.appendChild(backIcon);
-    backButtonContainer.appendChild(backButton);
-
->>>>>>> main:srcs/services/frontend/srcs/public/scripts/ts/pages/GameLocalPage.ts
-    gameControls.appendChild(pauseButton);
-    gameControls.appendChild(resetButton);
-<<<<<<< HEAD:srcs/services/frontend/srcs/public/scripts/ts/pages/GamePage.ts
-
-=======
-
-
-    // Footer
-    const footer = this.uiManager.createElement('div', 'text-center mt-8 retro-text text-sm opacity-40');
-    const footerText = this.uiManager.createElement('p', '', 'FIRST TO 10 POINTS WINS • USE KEYBOARD CONTROLS');
-    footer.appendChild(footerText);
-
-    content.appendChild(header);
-    content.appendChild(gameContainer);
-    content.appendChild(footer);
-
-    container.appendChild(content);
-
-=======
 
     // Back to Menu Button
     const backButtonContainer = this.uiManager.createElement('div', 'text-center mb-8');
@@ -183,19 +140,15 @@ export class GamePageLocal {
     backButton.appendChild(backIcon);
     backButtonContainer.appendChild(backButton);
 
-    if (this.canvas) {
-		this.requestNewGame()
-
-
-=======
-    if (this.canvas)
+    gameControls.appendChild(pauseButton);
+    gameControls.appendChild(resetButton);
 
     // Game Container
-    const gameContainer = this.uiManager.createElement('div', 'flex flex-col items-center gap-6');MLElement;
-    if (gameOverOverlay) {
-      gameOverOverlay.classList.add('hidden');
-	  startOverlay.classList.remove('hidden')
-	}
+    const gameContainer = this.uiManager.createElement('div', 'flex flex-col items-center gap-6');
+    gameContainer.appendChild(scoreDisplay);
+    gameContainer.appendChild(canvasContainer);
+    gameContainer.appendChild(controls);
+    gameContainer.appendChild(gameControls);
 
 
 
@@ -206,6 +159,46 @@ export class GamePageLocal {
 
     const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
     container.appendChild(content);
+    this.uiManager.clear();
+    this.uiManager.container.appendChild(container);
+
+    // Initialize game manager
+    if (this.canvas)
+      this.requestNewGame()
+  }
+
+  private requestNewGame(): void {
+    const gameOverOverlay = document.querySelector('[data-overlay="game-over"]') as HTMLElement;
+    const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
+    if (gameOverOverlay) {
+      gameOverOverlay.classList.add('hidden');
+      startOverlay.classList.remove('hidden')
+    }
+    GameManager.requestGameID("local")
+  }
+
+
+  private setReady(): void {
+    if (this.gameManager) {
+      this.gameManager.setReady();
+      const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
+      if (startOverlay) {
+        startOverlay.classList.add('hidden');
+      }
+    }
+  }
+
+  public setupGame(data: any) {
+    console.log("should work here in setupGame")
+    if (!this.canvas)
+      throw new Error("canvas is not initialised");
+    this.gameManager = new GameManager(this.canvas, data.UUID);
+    this.setupGameListeners()
+    console.log(data.UUID, this.gameManager)
+  }
+
+  private setupGameListeners(): void {
+    if (!this.gameManager) return;
 
     this.gameManager.addListener((gameState) => {
       this.updateScore(gameState.player1Score, gameState.player2Score);
@@ -225,15 +218,22 @@ export class GamePageLocal {
     }
   }
 
-    if (this.canvas)
-      this.requestNewGame()10;
+  private updateGameState(gameState: any): void {
+    console.log('updateGameState called with:', gameState);
+    // Utilisons des sélecteurs plus spécifiques pour éviter les conflits
+    const gameOverOverlay = document.querySelector('[data-overlay="game-over"]') as HTMLElement;
+    const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
+    console.log('Found overlays:', { gameOverOverlay, startOverlay });
+
+    // Vérifier si le jeu est terminé
+    const isGameOver = gameState.player1Score >= 10 || gameState.player2Score >= 10;
     const winner = isGameOver ? (gameState.player1Score >= 10 ? 'Player 1' : 'Player 2') : null;
 
     if (isGameOver && winner) {
       // Afficher l'overlay de fin de jeu
       if (gameOverOverlay) {
-		if (this.gameManager)
-			this.gameManager = null;
+        if (this.gameManager)
+          this.gameManager = null;
 
         gameOverOverlay.classList.remove('hidden');
         const winnerText = gameOverOverlay.querySelector('.text-2xl.mb-6.text-\\[\\#00ffff\\]') as HTMLElement;
@@ -292,71 +292,4 @@ export class GamePageLocal {
     }
   }
 }
-<<<<<<< HEAD:srcs/services/frontend/srcs/public/scripts/ts/pages/GamePage.ts
-
-export class GamePageAI {
-  private uiManager: UIManager;
-  private onBack: () => void;
-
-  constructor(uiManager: UIManager, onBack: () => void) {
-    this.uiManager = uiManager;
-    this.onBack = onBack;
-  }
-
-  public render(): void {
-    const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
-
-    const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-4xl text-center');
-
-    // Header
-    const header = this.uiManager.createElement('div', 'mb-8');
-    const title = this.uiManager.createElement('h1', 'retro-title text-4xl mb-4', 'PONG VS AI');
-    const subtitle = this.uiManager.createElement('p', 'retro-subtitle text-xl', 'ARTIFICIAL INTELLIGENCE MODE');
-
-    // Construction Message
-    const constructionContainer = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-12 mb-8');
-    const constructionIcon = this.uiManager.createElement('div', 'flex justify-center mb-6');
-    const icon = this.uiManager.createIcon('zap', 'w-16 h-16 text-[#ff1493]');
-    constructionIcon.appendChild(icon);
-
-    const constructionTitle = this.uiManager.createElement('h2', 'retro-text text-2xl mb-4 text-[#ff1493]', 'UNDER CONSTRUCTION');
-    const constructionText = this.uiManager.createElement('p', 'retro-text text-lg opacity-80 mb-6', 'AI opponent is being developed. This feature will be available soon!');
-
-    constructionContainer.appendChild(constructionIcon);
-    constructionContainer.appendChild(constructionTitle);
-    constructionContainer.appendChild(constructionText);
-
-    // Back Button
-    const backButton = this.uiManager.createButton(
-      'BACK TO MENU',
-      'retro-button bg-transparent text-[#00ffff] px-6 py-3 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mx-auto',
-      this.onBack
-    );
-    const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
-    backButton.appendChild(backIcon);
-
-    header.appendChild(title);
-    header.appendChild(subtitle);
-    content.appendChild(header);
-    content.appendChild(constructionContainer);
-    content.appendChild(backButton);
-
-    container.appendChild(content);
-
-    this.uiManager.clear();
-    this.uiManager.container.appendChild(container);
-  }
-}
-
-export class GamePageOnline {
-  private uiManager: UIManager;
-  private onBack: () => void;
-
-  constructor(uiManager: UIManager, onBack: () => void) {
-    this.uiManager = uiManager;
-    this.onBack = onBack;
-  }
-
-  public render(): void {
-    const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
 
