@@ -90,7 +90,7 @@ export class App {
             this.currentPage = 'menu';
             this.generalSocket = await this.initSocket('/live-chat/general');
             console.log(this.generalSocket);
-            gameSocket = await this.initSocketAlt('/remote-players', '/general');
+            gameSocket = await this.initSocketAlt('/realtime-sockets', '/general');
             console.log(gameSocket);
         }
         this.render();

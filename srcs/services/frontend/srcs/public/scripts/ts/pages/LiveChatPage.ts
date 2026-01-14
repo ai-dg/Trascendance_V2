@@ -12,7 +12,7 @@ export class LiveChatPage {
     private onBack: () => void;
     private friendRequests: Map<number, {senderId: number, message: string, element: HTMLElement}> = new Map();
     private currentUser: User | null = null;
-    private currentSelectedFriendId: number | null = null;
+    private currentSelectedFriend: User | null = null;
 
 
     constructor(
@@ -38,6 +38,8 @@ export class LiveChatPage {
 
     public render(user: User | null): void {
         console.log("live-chat for:", user);
+        if (this.currentSelectedFriend == null && user != null)
+            this.currentSelectedFriend = user;
 
         const container = this.uiManager.createElement('div', 'retro-container size-full p-8');
 
@@ -53,15 +55,15 @@ export class LiveChatPage {
         profileDiv.id = 'profile-div';
         const avatarSection = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
         const avatarImg = this.uiManager.createElement('img', 'w-12 h-12 rounded-full border-2 border-[#ff1493] cursor-pointer') as HTMLImageElement;
-        if (!user || !user.avatar)
+        if (!this.currentSelectedFriend || !this.currentSelectedFriend.avatar)
             avatarImg.src = 'public/avatars/default.png';
-        else if (user.avatar.startsWith('http'))
-            avatarImg.src = user.avatar;
+        else if (this.currentSelectedFriend.avatar.startsWith('http'))
+            avatarImg.src = this.currentSelectedFriend.avatar;
         else
-            avatarImg.src = `public/avatars/${user.avatar}.png`;
+            avatarImg.src = `public/avatars/${this.currentSelectedFriend.avatar}.png`;
 
         const username = this.uiManager.createElement('p', 'retro-subtitle text-lg text-[#00ffff] font-bold');
-        username.textContent = user ? user.username : 'USERNAME';
+        username.textContent = this.currentSelectedFriend ? this.currentSelectedFriend.username : 'USERNAME';
 
         const btnDiv = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
         const deleteBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-red rounded');
@@ -87,7 +89,6 @@ export class LiveChatPage {
 
         // Main container of chat
         const messagesDiv = this.uiManager.createElement('div', 'flex-1 flex flex-col mb-2');
-        
         // Title
         const messagesTitle = this.uiManager.createElement('div', 'text-[#00ffff] text-sm mb-2 opacity-60');
         messagesTitle.textContent = 'Messages';
@@ -95,6 +96,9 @@ export class LiveChatPage {
         // Field of messages
         const messagesContainer = this.uiManager.createElement('div', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 overflow-y-auto');
         messagesContainer.style.minHeight = '500px';
+        messagesContainer.id = 'messages-div';
+
+        
         
         messagesDiv.appendChild(messagesTitle);
         messagesDiv.appendChild(messagesContainer);
@@ -103,6 +107,13 @@ export class LiveChatPage {
         const inputField = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black');
         const sendButton = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-black rounded');
         sendButton.textContent = 'SEND';
+
+        sendButton.addEventListener('click', () => {
+            const message = (inputField as HTMLInputElement).value.trim();
+            if (message === '') return;
+
+            this.addMessage(message, true);
+        });
 
         inputDiv.appendChild(inputField);
         inputDiv.appendChild(sendButton);
@@ -522,54 +533,107 @@ export class LiveChatPage {
             friendName.textContent = username || `User ${username}`;
 
             friendItem.addEventListener('click', async () => {
-                const friendImg = profileDiv.querySelector('img');
-                const friendPseudo = profileDiv.querySelector('p');
-
-                if (friendImg && friendPseudo) {
-
-                    if (!friend.avatar)
-                        friendImg.src = 'public/avatars/default.png';
-                    else if (friend.avatar.startsWith('http'))
-                        friendImg.src = friend.avatar;
-                    else
-                        friendImg.src = `public/avatars/${friend.avatar}.png`;
-                    
-                    friendPseudo.textContent = friend.username;
-
-                    profileDiv.querySelectorAll('button').forEach(btn => {
-                        btn.classList.remove('hidden');
-                    });
-
-                    const blockBtn = document.getElementById('block-friend-btn');
-                    const deleteBtn = document.getElementById('delete-friend-btn'); 
-                    if (blockBtn) {
-                        blockBtn.onclick = () => {
-                            console.log("Blocking friend:", friend.id);
-                            if (this.generalSocket) {
-                                this.generalSocket.emit('block-friend', {
-                                    friendId: friend.id,
-                                });
-                            }
-                        };
-                    }
-                    if (deleteBtn) {
-                        deleteBtn.onclick = () => {
-                            console.log("Deleting friend:", friend.id);
-                            if (this.generalSocket) {
-                                this.generalSocket.emit('remove-friend', {
-                                    friendId: friend.id,
-                                });
-                            }
-                        };
-                    }
-                    };
-
-                    });
-                    
-                    friendItem.appendChild(friendName);
-                    container.appendChild(friendItem);
+                this.currentSelectedFriend = {
+                    username: friend.username,
+                    id: friend.id,
+                    avatar: friend.avatar,
+                    isGuest: false,
+                    nbrId: friend.id
                 };
+                console.log("Selected friend:", friend);
+                this.updateProfileView();
+
+                profileDiv.querySelectorAll('button').forEach(btn => {
+                    btn.classList.remove('hidden');
+                });
+
+            });
+                    
+            friendItem.appendChild(friendName);
+            container.appendChild(friendItem);
+            };
+
+            this.setupFriendActionButtons();
         };
+
+    private updateProfileView(): void {
+        const profileDiv = document.getElementById('profile-div');
+        if (!profileDiv) return;
+            
+        const friendImg = profileDiv.querySelector('img') as HTMLImageElement;
+        const friendPseudo = profileDiv.querySelector('p');
+        console.log("Updating profile view for friend:", this.currentSelectedFriend);
+        let friend = this.currentSelectedFriend;
+        if (!friend) {
+            friend = this.currentUser;
+            this.currentSelectedFriend = this.currentUser;
+        }
+        console.log("Using friend for profile view:", this.currentSelectedFriend);
+
+        if (friend && friendImg) {
+            if (!friend.avatar)
+                friendImg.src = 'public/avatars/default.png';
+            else if (friend.avatar.startsWith('http'))
+                friendImg.src = friend.avatar;
+            else
+                friendImg.src = `public/avatars/${friend.avatar}.png`;
+        }
+
+        if (friend && friendPseudo) {
+            friendPseudo.textContent = friend.username;
+        }
+
+        const deleteBtn = document.getElementById('delete-friend-btn');
+        const blockBtn = document.getElementById('block-friend-btn');
+
+        if (this.currentSelectedFriend && this.currentUser && this.currentSelectedFriend.id === this.currentUser.id) {
+            if (deleteBtn) deleteBtn.classList.add('hidden');
+            if (blockBtn) blockBtn.classList.add('hidden');
+        }
+    }
+
+    private setupFriendActionButtons(): void {
+        const blockBtn = document.getElementById('block-friend-btn');
+        const deleteBtn = document.getElementById('delete-friend-btn');
+
+        if (blockBtn) {
+            const newBlockBtn = blockBtn.cloneNode(true) as HTMLElement;
+            blockBtn.replaceWith(newBlockBtn);
+
+            newBlockBtn.addEventListener('click', () => {
+                if (!this.currentSelectedFriend) return;
+
+                console.log("Blocking friend:", this.currentSelectedFriend.id);
+
+                if (this.generalSocket) {
+                    this.generalSocket.emit('block-friend', {
+                        friendId: this.currentSelectedFriend.id
+                    });
+                }
+                this.currentSelectedFriend = null;
+                this.updateProfileView();
+            });
+        }
+
+        if (deleteBtn) {
+            const newDeleteBtn = deleteBtn.cloneNode(true) as HTMLElement;
+            deleteBtn.replaceWith(newDeleteBtn);
+
+            newDeleteBtn.addEventListener('click', () => {
+                if (!this.currentSelectedFriend) return;
+
+                console.log("Removing friend:", this.currentSelectedFriend.id);
+
+                if (this.generalSocket) {
+                    this.generalSocket.emit('remove-friend', {
+                        friendId: this.currentSelectedFriend.id
+                    });
+                }
+                this.currentSelectedFriend = null;
+                this.updateProfileView();
+            });
+        }
+    }
     
 
     private displayNoFriends(): void {
@@ -581,4 +645,40 @@ export class LiveChatPage {
         emptyMessage.textContent = 'No friends yet. Add some!';
         container.appendChild(emptyMessage);
     }
+    
+    
+    
+    
+    /**********************************************************************************************/
+    /**************************************** LIVE-CHAT **************************************/
+    /**********************************************************************************************/
+    
+    private addMessage(
+        text: string,
+        isMine: boolean
+    ): void {
+        const messagesContainer = document.getElementById('messages-div');
+        if (!messagesContainer) return;
+
+        const wrapper = this.uiManager.createElement(
+            'div',
+            `flex mb-2 ${isMine ? 'justify-end' : 'justify-start'}`
+        );
+        
+        const bubble = this.uiManager.createElement(
+            'div',
+            isMine
+            ? 'bg-[#ffffff] text-white px-3 py-2 rounded-lg max-w-[70%]'
+            : 'bg-white/70 text-[#ffffff] border border-[#00ffff]/40 px-3 py-2 rounded-lg max-w-[70%]'
+        );
+        
+        bubble.textContent = text;
+        wrapper.appendChild(bubble);
+        messagesContainer.appendChild(wrapper);
+        
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    
+    
 }

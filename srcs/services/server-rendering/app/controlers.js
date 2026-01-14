@@ -22,7 +22,7 @@ import { loadTranslations } from './server.js';
 export async function reset_password_route (request, reply){
   const { email, uuid } = request.params;
   try {
-	const res = await fetch(`http://gt_auth:3000/reset-password/${email}/${uuid}`);
+	const res = await fetch(`https://auth_app:3000/reset-password/${email}/${uuid}`);
 	const data = await res.json();
 	console.log(data);
 
