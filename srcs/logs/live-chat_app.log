@@ -2,3 +2,8 @@ Connected to Redis
 ✅ Socket.IO server created
 Live-chat db ready
 live-chat service running on port 3002
+Uncaught Exception: SocketClosedUnexpectedlyError: Socket closed unexpectedly
+    at Socket.<anonymous> (/data/node_modules/@redis/client/dist/lib/client/socket.js:222:33)
+    at Object.onceWrapper (node:events:639:26)
+    at Socket.emit (node:events:524:28)
+    at TCP.<anonymous> (node:net:343:12)

@@ -6,7 +6,6 @@ export class MenuPage {
   private onPlayGameAI: () => void;
   private onPlayGameLocal: () => void;
   private onPlayGameOnline: () => void;
-  private onViewLeaderboard: () => void;
   private onChatWithFriends: () => void;
   private onSettings: () => void;
   private onLogout: () => void;
@@ -31,13 +30,6 @@ export class MenuPage {
       color: '#ff1493',
     },
     {
-      icon: 'zap',
-      label: 'TOURNAMENT',
-      action: () => this.onViewLeaderboard(),
-      color: '#f566b2ff',
-      description: 'Minimum 4 players'
-    },
-    {
       icon: 'chat',
       label: 'LIVE CHAT',
       action: () => this.onChatWithFriends(),
@@ -56,7 +48,6 @@ export class MenuPage {
     onPlayGameAI: () => void,
     onPlayGameLocal: () => void,
     onPlayGameOnline: () => void,
-    onViewLeaderboard: () => void,
     onChatWithFriends: () => void,
     onSettings: () => void,
     onLogout: () => void
@@ -65,7 +56,6 @@ export class MenuPage {
     this.onPlayGameAI = onPlayGameAI;
     this.onPlayGameLocal = onPlayGameLocal;
     this.onPlayGameOnline = onPlayGameOnline;
-    this.onViewLeaderboard = onViewLeaderboard;
     this.onChatWithFriends = onChatWithFriends;
     this.onSettings = onSettings;
     this.onLogout = onLogout;
@@ -132,11 +122,11 @@ export class MenuPage {
       label.style.color = item.color;
 
       // Description
-      const description = this.uiManager.createElement('p', 'text-sm opacity-60 retro-text', item.description);
+      // const description = this.uiManager.createElement('p', 'text-sm opacity-60 retro-text', item.description);
 
       content.appendChild(iconContainer);
       content.appendChild(label);
-      content.appendChild(description);
+      //content.appendChild(description);
 
       // Scan line effect
       const scanLine = this.uiManager.createElement('div', 'absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300');
@@ -151,7 +141,9 @@ export class MenuPage {
       menuGrid.appendChild(menuItem);
     });
 
-
+    const playModesContent = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 min-h-[700px] flex-shrink-0 w-60');
+    playModesContent.style.minHeight = '10px';
+    playModesContent.id = 'playModesContent-div';
     // div lateral social
     const socialDiv = this.uiManager.createElement('div', 'w-80 bg-black/40 backdrop-blur-sm rounded-lg flex flex-col py-6 px-4 mb-12');
     socialDiv.style.minHeight = '440px';

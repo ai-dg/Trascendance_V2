@@ -9,11 +9,10 @@ import { CheckManager } from './modules/CheckManager.js';
 import { LanguageManager } from './modules/LangManager.js';
 // Pages
 import { AuthPage } from './pages/AuthPage.js';
-import { GuestPage } from './pages/GuestPage.js';
 import { MenuPage } from './pages/MenuPage.js';
-import { GamePageAI, GamePageLocal, GamePageOnline } from './pages/GamePage.js';
-import { TournamentPage } from './pages/TournamentPage.js';
-import { MultiplayerPage } from './pages/MultiplayerPage.js';
+import { GamePageLocal } from './pages/GameLocalPage.js';
+import { MultiplayerPage } from './pages/GameMultiplayerPage.js';
+import { AIPage } from './pages/GameAiPage.js';
 import { CheckOtp } from './pages/CheckOtp.js';
 import { SettingsPage } from './pages/SettingsPage.js';
 import { UpdateProfilePage } from './pages/UpdateProfilePage.js';
@@ -27,13 +26,13 @@ export class App {
     /**************************************** CONSTRUCTOR ****************************************/
     /**********************************************************************************************/
     constructor(container) {
+        //this.container = container;
         // State
         this.currentUser = null;
         this.currentPage = 'auth';
         // Socket Connections
         this.generalSocket = null;
         this.TournamentSocket = null;
-        this.container = container;
         this.authManager = new AuthManager(this.handleBackToCheckOtp.bind(this));
         this.routerManager = new RouterManager((user) => {
             this.currentUser = user;
@@ -45,13 +44,10 @@ export class App {
         this.checkManager = new CheckManager(this.languageManager);
         // Initialize pages
         this.authPage = new AuthPage(this.uiManager, this.authManager, this.checkManager, this.languageManager, this.handleLogin.bind(this), this.handleRegister.bind(this), this.appHandleForgotPassword.bind(this), this.handleChangePassword.bind(this), this.handleShowGuestPage.bind(this), this.handleError.bind(this));
-        this.guestPage = new GuestPage(this.uiManager, this.handleBackToAuth.bind(this), this.handlePlayAsGuest.bind(this));
-        this.menuPage = new MenuPage(this.uiManager, this.handlePlayGameAI.bind(this), this.handlePlayGameLocal.bind(this), this.handlePlayGameOnline.bind(this), this.handleViewTournament.bind(this), this.handleChatWithFriends.bind(this), this.handleSettings.bind(this), this.handleLogout.bind(this));
-        this.gamePageAI = new GamePageAI(this.uiManager, this.handleBackToMenu.bind(this));
+        this.menuPage = new MenuPage(this.uiManager, this.handlePlayGameAI.bind(this), this.handlePlayGameLocal.bind(this), this.handlePlayGameOnline.bind(this), this.handleChatWithFriends.bind(this), this.handleSettings.bind(this), this.handleLogout.bind(this));
+        this.gamePageAI = new AIPage(this.uiManager, this.handleBackToMenu.bind(this), this.currentUser);
         this.gamePageLocal = new GamePageLocal(this.uiManager, this.handleBackToMenu.bind(this));
-        this.tournamentPage = new TournamentPage(this.uiManager, this.handleBackToMenu.bind(this));
-        this.multiplayerPage = new MultiplayerPage(this.uiManager, this.handleBackToMenu.bind(this));
-        this.gamePageOnline = new GamePageOnline(this.uiManager, this.handleBackToMenu.bind(this));
+        this.gamePageOnline = new MultiplayerPage(this.uiManager, this.handleBackToMenu.bind(this), this.currentUser);
         this.checkOtpPage = new CheckOtp(this.uiManager, this.languageManager, this.handleOtpVerificationComplete.bind(this), this.handleNewChangePassword.bind(this), this.handleBackToUpdateProfile.bind(this), this.handleBackToAuth.bind(this));
         this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.handleSettings.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser);
         if (this.currentUser)
@@ -92,6 +88,10 @@ export class App {
             console.log(this.generalSocket);
             gameSocket = await this.initSocketAlt('/realtime-sockets', '/general');
             console.log(gameSocket);
+            if (!this.currentUser.isGuest) {
+                this.generalSocket = await this.initSocket('/live-chat/general');
+                console.log(this.generalSocket);
+            }
         }
         this.render();
     }
@@ -194,17 +194,14 @@ export class App {
         sock.on('welcome', (data) => console.log(data));
         sock.on('new-game', (data) => {
             console.log('new-game received:', data);
-            if (this.currentPage === 'tournament') {
-                this.tournamentPage.setupGame(data);
-            }
-            else if (this.currentPage === 'game-online') {
-                this.multiplayerPage.setupGame(data);
+            if (this.currentPage === 'game-online') {
+                this.gamePageOnline.setupGame(data);
             }
             else if (this.currentPage === 'game-local') {
                 this.gamePageLocal.setupGame(data);
             }
-            else {
-                this.gamePageLocal.setupGame(data);
+            else if (this.currentPage === 'game-ai') {
+                this.gamePageAI.setupGame(data);
             }
         });
         return sock;
@@ -223,9 +220,6 @@ export class App {
             case 'auth':
                 this.authPage.render();
                 break;
-            case 'guest':
-                this.guestPage.render();
-                break;
             case 'menu':
                 requestAnimationFrame(() => {
                     this.menuPage.render(this.currentUser);
@@ -238,13 +232,7 @@ export class App {
                 this.gamePageLocal.render();
                 break;
             case 'game-online':
-                this.multiplayerPage.render();
-                break;
-            case 'tournament':
-                this.tournamentPage.render();
-                break;
-            case 'multiplayer':
-                this.multiplayerPage.render();
+                this.gamePageOnline.render(this.currentUser);
                 break;
             case 'check-otp':
                 // TODO: Get translations from languageManager
@@ -446,6 +434,9 @@ export class App {
     handlePlayGameAI() {
         // TODO: Implement AI game logic
         console.log('Starting AI game...');
+        if (this.gamePageAI) {
+            this.gamePageAI.render(this.currentUser);
+        }
         this.routerManager.navigateTo('game-ai');
     }
     /**
@@ -464,32 +455,9 @@ export class App {
         console.log('Starting online multiplayer game...');
         this.routerManager.navigateTo('game-online');
     }
-    /**
-     * Handle tournament view
-     */
-    handleViewTournament() {
-        this.routerManager.navigateTo('tournament');
-    }
     /**********************************************************************************************/
     /**************************************** USER HANDLERS **************************************/
     /**********************************************************************************************/
-    /**
-     * Handle guest user play
-     */
-    handlePlayAsGuest(nickname, avatar) {
-        // Create a guest user object
-        this.currentUser = {
-            id: 'guest_' + Date.now(),
-            username: nickname,
-            email: '',
-            avatar: avatar,
-            isGuest: true
-        };
-        localStorage.setItem("guestNickname", nickname);
-        localStorage.setItem("guestAvatar", avatar);
-        console.log('Playing as guest:', nickname, 'with avatar:', avatar);
-        this.routerManager.navigateTo('menu');
-    }
     /**
      * Handle chat with friends
      */
