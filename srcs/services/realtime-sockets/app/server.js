@@ -5,7 +5,7 @@ import { createClient } from 'redis';
 //import cors from '@fastify/cors';
 import { Server } from 'socket.io';
 import crypto from 'crypto';
-import { GameManager } from './srcs/GameManager.js';
+import { Game } from './srcs/Game.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -75,7 +75,7 @@ function requestGameUID(socket, data){
 	{
 		console.log("data: ", data, "uuid : ", uuid)
 		
-		runningGames[uuid] = new GameManager(socket, {
+		runningGames[uuid] = new Game(socket, {
 			uuid: uuid,
 			type: data.type
 		});

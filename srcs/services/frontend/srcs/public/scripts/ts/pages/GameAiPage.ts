@@ -20,7 +20,7 @@ export class AIPage {
 	public render(user?: User | null): void {
 	if (user !== undefined) {
 	  this.user = user;
-	}	
+	}
   
 	// Avatars
 	const avatarPlayer1Section = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
