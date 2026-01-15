@@ -1,13 +1,13 @@
 import { App, gameSocket } from "../app.js";
 import type { GameState, BallState, GameSettings, PaddleState } from "./TypesManager.js";
 
-export let customGameSettings = null;
+//export let customGameSettings = null;
 
-export const defaultGameSettings: GameSettings = {
-  ballSpeed: 6,
-  paddleSpeed: 8,
-  winningScore: 10
-};
+// export const defaultGameSettings: GameSettings = {
+//   ballSpeed: 6,
+//   paddleSpeed: 8,
+//   winningScore: 10
+// };
 
 export class GameManager {
   private canvas: HTMLCanvasElement;
@@ -30,7 +30,7 @@ export class GameManager {
     player2: false
   };
 
-  constructor(canvas: HTMLCanvasElement, UUID: string, settings: GameSettings = defaultGameSettings) {
+  constructor(canvas: HTMLCanvasElement, UUID: string, settings: GameSettings = null) {
     this.gameUID = UUID;
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
@@ -165,7 +165,8 @@ export class GameManager {
     this.gameState.winner = null;
     console.log('Game state after start:', this.gameState);
     this.notifyListeners();
-    this.gameLoop();
+    // Démarrer l'envoi continu des inputs au backend
+    this.startInputLoop();
   }
 
   public pauseGame(): void {
@@ -181,15 +182,16 @@ export class GameManager {
     this.draw();
   }
 
-  private gameLoop(): void {
+  // Boucle pour envoyer les inputs au backend (le backend gère la physique)
+  private startInputLoop(): void {
     if (!this.gameState.gameRunning) return;
 
-    this.updatePlayers();
-    this.draw();
+    this.sendPlayerInputs();
     
-    this.animationId = requestAnimationFrame(() => this.gameLoop());
+    this.animationId = requestAnimationFrame(() => this.startInputLoop());
   }
 
+  // Recevoir et afficher l'état du jeu depuis le backend
   updateGame(data: any): void {
     if (data.state) {
       this.gameState = data.state;
@@ -198,14 +200,15 @@ export class GameManager {
     }
   }
 
-  private updatePlayers(): void {
+  // Envoyer uniquement les inputs au backend
+  private sendPlayerInputs(): void {
     if (!this.gameUID || !gameSocket)
       throw Error("Error with game socket!");
       
     let paddle1 = 0;
     let paddle2 = 0;
 
-    // Update paddles
+    // Détecter les touches pressées
     if (this.keys['s']) 
       paddle1 = 1;
     else if (this.keys['w'])

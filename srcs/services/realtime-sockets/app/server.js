@@ -2,7 +2,7 @@ import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import jwt from 'jsonwebtoken';
 import { createClient } from 'redis';
-import cors from '@fastify/cors';
+//import cors from '@fastify/cors';
 import { Server } from 'socket.io';
 import crypto from 'crypto';
 import { GameManager } from './srcs/GameManager.js';

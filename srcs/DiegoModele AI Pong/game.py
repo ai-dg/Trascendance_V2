@@ -25,7 +25,6 @@ import secrets
     'right': 'diego', 
     'allowed_users': ['chris', 'diego']}
 
-
 class Game:
     def __init__(self, data=None):
         self.running = False
@@ -60,18 +59,17 @@ class Game:
 
 
     async def setup(self):
-        if self.data["player1_side"][1] :
+        if self.data["player1_side"][1]:
             self.p1name = self.data["player1_side"][1]
-        if self.data["player2_side"][1] :
+        if self.data["player2_side"][1]:
             self.p2name = self.data["player2_side"][1]
-        is_p1_ai = self.p1name == "ai"
-        is_p2_ai = self.p2name == "ai"
+        
         if self.data["player1_side"][0] == "left":
-            self.player = Paddle(self.data, self.p1name, self.ball, self.scene, is_ai=is_p1_ai, side="left")
-            self.player2 = Paddle(self.data, self.p2name, self.ball, self.scene, is_ai=is_p2_ai, side="right")
+            self.player = Paddle(self.data, self.p1name, self.ball, self.scene, side="left")
+            self.player2 = Paddle(self.data, self.p2name, self.ball, self.scene, side="right")
         else:
-            self.player = Paddle(self.data, self.p1name, self.ball, self.scene, is_ai=is_p1_ai, side="right")  
-            self.player2 = Paddle(self.data, self.p2name, self.ball, self.scene, is_ai=is_p2_ai, side="left")
+            self.player = Paddle(self.data, self.p1name, self.ball, self.scene, side="right")  
+            self.player2 = Paddle(self.data, self.p2name, self.ball, self.scene, side="left")
         self.score = Score(self.data)
         await self.set_pseudo()
         self.start_time = time.time()
@@ -156,13 +154,11 @@ class Game:
             else:
                 # Pendant la pause, les paddles peuvent encore bouger
                 self.player.move(self.scene.height)
-                self.player2.move_ai(self.ball)
                 self.player2.move(self.scene.height)
             return
 
         # Mouvements normaux
         self.player.move(self.scene.height)
-        self.player2.move_ai(self.ball)
         self.player2.move(self.scene.height)
 
         ball_out = self.ball.move(self.scene.width, self.scene.height, [self.player, self.player2])

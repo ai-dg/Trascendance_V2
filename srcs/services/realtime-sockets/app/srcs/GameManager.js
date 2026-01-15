@@ -6,7 +6,7 @@ const PADDLE_HEIGHT = 80;
 
 export class GameManager {
   constructor(socket, data, settings = {
-    ballSpeed: 6,
+    ballSpeed: 20,
     paddleSpeed: 8,
     winningScore: 10
   }) {
@@ -19,6 +19,12 @@ export class GameManager {
     this.playersReady = {
       player1: false,
       player2: false
+    };
+    
+    // Stocker les inputs des joueurs
+    this.playerInputs = {
+      paddle1Dir: 0,
+      paddle2Dir: 0
     };
     
     this.gameState = {
@@ -143,27 +149,36 @@ export class GameManager {
     }, 1000 / 60); // 60 FPS
   }
 
+  // Recevoir et stocker les inputs des joueurs
   updatePlayerMove(paddle1Dir, paddle2Dir) {
+    this.playerInputs.paddle1Dir = paddle1Dir;
+    this.playerInputs.paddle2Dir = paddle2Dir;
+  }
+
+  // Appliquer les mouvements des paddles basés sur les inputs stockés
+  applyPlayerMoves() {
     const speed = this.settings.paddleSpeed;
     
     // Paddle 1
-    if (paddle1Dir === -1 && this.gameState.paddle1.y > 0) {
+    if (this.playerInputs.paddle1Dir === -1 && this.gameState.paddle1.y > 0) {
       this.gameState.paddle1.y -= speed;
     }
-    if (paddle1Dir === 1 && this.gameState.paddle1.y < CANVAS_HEIGHT - PADDLE_HEIGHT) {
+    if (this.playerInputs.paddle1Dir === 1 && this.gameState.paddle1.y < CANVAS_HEIGHT - PADDLE_HEIGHT) {
       this.gameState.paddle1.y += speed;
     }
     
     // Paddle 2
-    if (paddle2Dir === -1 && this.gameState.paddle2.y > 0) {
+    if (this.playerInputs.paddle2Dir === -1 && this.gameState.paddle2.y > 0) {
       this.gameState.paddle2.y -= speed;
     }
-    if (paddle2Dir === 1 && this.gameState.paddle2.y < CANVAS_HEIGHT - PADDLE_HEIGHT) {
+    if (this.playerInputs.paddle2Dir === 1 && this.gameState.paddle2.y < CANVAS_HEIGHT - PADDLE_HEIGHT) {
       this.gameState.paddle2.y += speed;
     }
   }
 
   update() {
+    // Appliquer les mouvements des joueurs
+    this.applyPlayerMoves();
     // Update ball position
     this.gameState.ball.x += this.gameState.ball.velocityX;
     this.gameState.ball.y += this.gameState.ball.velocityY;

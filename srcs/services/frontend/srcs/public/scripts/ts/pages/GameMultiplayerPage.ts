@@ -24,7 +24,9 @@ export class MultiplayerPage {
 
 	// Avatars
 	const avatarPlayer1Section = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
-    const avatarPlayer1Img = this.uiManager.createElement('img', 'w-12 h-12 rounded-full') as HTMLImageElement;
+    const avatarPlayer1Img = this.uiManager.createElement('img', 'rounded-full') as HTMLImageElement;
+    avatarPlayer1Img.style.width = '110px';
+    avatarPlayer1Img.style.height = '110px';
     if (!this.user || !this.user.avatar)
         avatarPlayer1Img.src = 'public/avatars/default.png';
     else if (this.user.avatar.startsWith('http'))
@@ -34,7 +36,9 @@ export class MultiplayerPage {
 	avatarPlayer1Section.appendChild(avatarPlayer1Img);
 
 	const avatarPlayer2Section = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
-    const avatarPlayer2Img = this.uiManager.createElement('img', 'w-12 h-12 rounded-full') as HTMLImageElement;
+    const avatarPlayer2Img = this.uiManager.createElement('img', 'rounded-full') as HTMLImageElement;
+    avatarPlayer2Img.style.width = '110px';
+    avatarPlayer2Img.style.height = '110px';
     if (!this.user || !this.user.avatar)
         avatarPlayer2Img.src = 'public/avatars/default.png';
     else if (this.user.avatar.startsWith('http'))
@@ -161,7 +165,6 @@ export class MultiplayerPage {
 	gameContainer.appendChild(controls);
 	gameContainer.appendChild(gameControls);
 
-	
 
 	// Main Bloc 
 	const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-6xl');

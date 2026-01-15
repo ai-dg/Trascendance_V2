@@ -24,17 +24,21 @@ export class AIPage {
   
 	// Avatars
 	const avatarPlayer1Section = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
-	  const avatarPlayer1Img = this.uiManager.createElement('img', 'w-12 h-12 rounded-full') as HTMLImageElement;
-	  if (!this.user || !this.user.avatar)
-		  avatarPlayer1Img.src = 'public/avatars/default.png';
-	  else if (this.user.avatar.startsWith('http'))
-		  avatarPlayer1Img.src = this.user.avatar;
-	  else
-		  avatarPlayer1Img.src = `public/avatars/${this.user.avatar}.png`;
+	const avatarPlayer1Img = this.uiManager.createElement('img', 'rounded-full') as HTMLImageElement;
+	avatarPlayer1Img.style.width = '110px';
+    avatarPlayer1Img.style.height = '110px';
+	if (!this.user || !this.user.avatar)
+		avatarPlayer1Img.src = 'public/avatars/default.png';
+	else if (this.user.avatar.startsWith('http'))
+		avatarPlayer1Img.src = this.user.avatar;
+	else
+		avatarPlayer1Img.src = `public/avatars/${this.user.avatar}.png`;
 	avatarPlayer1Section.appendChild(avatarPlayer1Img);
   
 	const avatarPlayer2Section = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
-	const avatarPlayer2Img = this.uiManager.createElement('img', 'w-12 h-12 rounded-full') as HTMLImageElement;
+	const avatarPlayer2Img = this.uiManager.createElement('img', 'rounded-full') as HTMLImageElement;
+	avatarPlayer2Img.style.width = '110px';
+    avatarPlayer2Img.style.height = '110px';
 	avatarPlayer2Img.src = 'public/avatars/default.png';
 	avatarPlayer2Section.appendChild(avatarPlayer2Img);
   
