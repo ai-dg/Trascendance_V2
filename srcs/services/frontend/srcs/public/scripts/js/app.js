@@ -11,7 +11,7 @@ import { LanguageManager } from './modules/LangManager.js';
 import { AuthPage } from './pages/AuthPage.js';
 import { MenuPage } from './pages/MenuPage.js';
 import { GamePageLocal } from './pages/GameLocalPage.js';
-import { MultiplayerPage } from './pages/GameMultiplayerPage.js';
+import { RemotePage } from './pages/GameRemotePage.js';
 import { AIPage } from './pages/GameAiPage.js';
 import { CheckOtp } from './pages/CheckOtp.js';
 import { SettingsPage } from './pages/SettingsPage.js';
@@ -47,7 +47,7 @@ export class App {
         this.menuPage = new MenuPage(this.uiManager, this.handlePlayGameAI.bind(this), this.handlePlayGameLocal.bind(this), this.handlePlayGameOnline.bind(this), this.handleChatWithFriends.bind(this), this.handleSettings.bind(this), this.handleLogout.bind(this));
         this.gamePageAI = new AIPage(this.uiManager, this.handleBackToMenu.bind(this), this.currentUser);
         this.gamePageLocal = new GamePageLocal(this.uiManager, this.handleBackToMenu.bind(this));
-        this.gamePageOnline = new MultiplayerPage(this.uiManager, this.handleBackToMenu.bind(this), this.currentUser);
+        this.gamePageOnline = new RemotePage(this.uiManager, this.handleBackToMenu.bind(this), this.currentUser);
         this.checkOtpPage = new CheckOtp(this.uiManager, this.languageManager, this.handleOtpVerificationComplete.bind(this), this.handleNewChangePassword.bind(this), this.handleBackToUpdateProfile.bind(this), this.handleBackToAuth.bind(this));
         this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.handleSettings.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser);
         if (this.currentUser)

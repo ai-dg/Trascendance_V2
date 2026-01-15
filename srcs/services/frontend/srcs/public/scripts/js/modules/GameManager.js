@@ -42,7 +42,8 @@ export class GameManager {
         this.setupEventListeners();
         this.setupSocketListeners();
     }
-    static requestGameID(type = "local") {
+    static requestGameID(type) {
+        console.log(type);
         if (!gameSocket)
             throw Error("gameSocket is not ready");
         gameSocket.emit("game-request", { type });
@@ -125,7 +126,8 @@ export class GameManager {
         this.gameState.winner = null;
         console.log('Game state after start:', this.gameState);
         this.notifyListeners();
-        this.gameLoop();
+        // Démarrer l'envoi continu des inputs au backend
+        this.startInputLoop();
     }
     pauseGame() {
         this.gameState.gameRunning = false;
@@ -138,13 +140,14 @@ export class GameManager {
     resetGame() {
         this.draw();
     }
-    gameLoop() {
+    // Boucle pour envoyer les inputs au backend (le backend gère la physique)
+    startInputLoop() {
         if (!this.gameState.gameRunning)
             return;
-        this.updatePlayers();
-        this.draw();
-        this.animationId = requestAnimationFrame(() => this.gameLoop());
+        this.sendPlayerInputs();
+        this.animationId = requestAnimationFrame(() => this.startInputLoop());
     }
+    // Recevoir et afficher l'état du jeu depuis le backend
     updateGame(data) {
         if (data.state) {
             this.gameState = data.state;
@@ -152,12 +155,13 @@ export class GameManager {
             this.notifyListeners();
         }
     }
-    updatePlayers() {
+    // Envoyer uniquement les inputs au backend
+    sendPlayerInputs() {
         if (!this.gameUID || !gameSocket)
             throw Error("Error with game socket!");
         let paddle1 = 0;
         let paddle2 = 0;
-        // Update paddles
+        // Détecter les touches pressées
         if (this.keys['s'])
             paddle1 = 1;
         else if (this.keys['w'])

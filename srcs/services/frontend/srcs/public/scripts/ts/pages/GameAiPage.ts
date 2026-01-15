@@ -191,7 +191,7 @@ export class AIPage {
 	  gameOverOverlay.classList.add('hidden');
 	  startOverlay.classList.remove('hidden')
 	}
-	GameManager.requestGameID("local")
+	GameManager.requestGameID("ai")
   }
 
 

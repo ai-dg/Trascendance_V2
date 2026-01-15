@@ -9,22 +9,74 @@ Socket.IO path: /socket.io/
 ✅ Remote-player service running on port 3003 with Socket.IO
 payload :  {
   user_id: 29,
-  jti: 'bf7352b2e84cad746dc6ecc3a6e622d0',
-  iat: 1768484063,
-  exp: 1768487663
+  jti: 'e20cb194e5d999c3546ba29c12da29e4',
+  iat: 1768488579,
+  exp: 1768492179
 }
 A
 ✅ Utilisateur authentifié: 29
 payload :  {
   user_id: 29,
-  jti: 'bf7352b2e84cad746dc6ecc3a6e622d0',
-  iat: 1768484063,
-  exp: 1768487663
+  jti: 'e20cb194e5d999c3546ba29c12da29e4',
+  iat: 1768488579,
+  exp: 1768492179
 }
 A
 ✅ Utilisateur authentifié: 29
-data:  { type: 'local' } uuid :  5ce6df0d-13e5-4a77-94ff-c761f205d40b
-data:  { type: 'local' } uuid :  d88fd37e-2849-4215-a0c3-436d7ffbcf75
+Before type
+Local activated
+data:  { type: 'local' } uuid :  a2e4125d-8469-407e-a4ef-b8ffda25b943
 Game.startGame() called
-data:  { type: 'local' } uuid :  1780f3d3-9324-4a7c-b9e1-a0c6c99f4a30
-data:  { type: 'local' } uuid :  f5a95aae-75ce-4849-b20a-9aa9c4a2e3cb
+Before type
+AI Activated
+Before type
+AI Activated
+Before type
+Remote Activated
+Before type
+AI Activated
+Before type
+AI Activated
+Before type
+Remote Activated
+Before type
+Local activated
+data:  { type: 'local' } uuid :  8f3c4dbd-e209-46b1-9e34-341d53ba47bf
+payload :  {
+  user_id: 29,
+  jti: 'e20cb194e5d999c3546ba29c12da29e4',
+  iat: 1768488579,
+  exp: 1768492179
+}
+A
+✅ Utilisateur authentifié: 29
+Before type
+AI Activated
+Before type
+AI Activated
+payload :  {
+  user_id: 29,
+  jti: 'e20cb194e5d999c3546ba29c12da29e4',
+  iat: 1768488579,
+  exp: 1768492179
+}
+A
+✅ Utilisateur authentifié: 29
+Before type
+Local activated
+data:  { type: 'local' } uuid :  f43cb7fa-0ea4-486f-92dc-eba33c2d0573
+Before type
+Local activated
+data:  { type: 'local' } uuid :  03812e9c-0705-4202-9eba-469e45fea647
+Before type
+AI Activated
+Before type
+AI Activated
+payload :  {
+  user_id: 29,
+  jti: 'e20cb194e5d999c3546ba29c12da29e4',
+  iat: 1768488579,
+  exp: 1768492179
+}
+A
+✅ Utilisateur authentifié: 29

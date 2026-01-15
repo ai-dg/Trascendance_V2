@@ -2,7 +2,7 @@ import { UIManager } from '../modules/UIManager.js';
 import { GameManager } from '../modules/GameManager.js';
 import type { User } from '../modules/TypesManager.js';
 
-export class MultiplayerPage {
+export class RemotePage {
   private uiManager: UIManager;
   private onBack: () => void;
   private gameManager: GameManager | null = null;
@@ -190,7 +190,7 @@ export class MultiplayerPage {
 	  gameOverOverlay.classList.add('hidden');
 	  startOverlay.classList.remove('hidden')
 	}
-	GameManager.requestGameID("local")
+	GameManager.requestGameID("remote")
   }
 
   private setReady(): void {

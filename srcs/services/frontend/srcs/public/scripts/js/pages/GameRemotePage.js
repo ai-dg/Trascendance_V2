@@ -1,5 +1,5 @@
 import { GameManager } from '../modules/GameManager.js';
-export class AIPage {
+export class RemotePage {
     constructor(uiManager, onBack, user) {
         this.gameManager = null;
         this.canvas = null;
@@ -29,7 +29,12 @@ export class AIPage {
         const avatarPlayer2Img = this.uiManager.createElement('img', 'rounded-full');
         avatarPlayer2Img.style.width = '110px';
         avatarPlayer2Img.style.height = '110px';
-        avatarPlayer2Img.src = 'public/avatars/default.png';
+        if (!this.user || !this.user.avatar)
+            avatarPlayer2Img.src = 'public/avatars/default.png';
+        else if (this.user.avatar.startsWith('http'))
+            avatarPlayer2Img.src = this.user.avatar;
+        else
+            avatarPlayer2Img.src = `public/avatars/${this.user.avatar}.png`;
         avatarPlayer2Section.appendChild(avatarPlayer2Img);
         // Score Display
         const scoreDisplay = this.uiManager.createElement('div', 'flex gap-16 items-center retro-text');
@@ -41,7 +46,7 @@ export class AIPage {
         player1Score.appendChild(player1Value);
         const vsLabel = this.uiManager.createElement('div', 'text-2xl opacity-40', 'VS');
         const player2Score = this.uiManager.createElement('div', 'text-center');
-        const player2Label = this.uiManager.createElement('div', 'text-lg opacity-60', 'AI BOT');
+        const player2Label = this.uiManager.createElement('div', 'text-lg opacity-60', 'PLAYER 2');
         const player2Value = this.uiManager.createElement('div', 'text-4xl tracking-wider', '00');
         player2Score.appendChild(player2Label);
         player2Score.appendChild(player2Value);
@@ -58,16 +63,13 @@ export class AIPage {
         const startOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg');
         startOverlay.setAttribute('data-overlay', 'start-game');
         const startContent = this.uiManager.createElement('div', 'text-center retro-text');
-        const startTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'CHOOSE DIFFICULTY');
-        const startButtonEasy = this.uiManager.createButton('EASY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
-        const startButtonMedium = this.uiManager.createButton('MEDIUM', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
-        const startButtonHard = this.uiManager.createButton('HARD', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
+        const startTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'CHOOSE YOUR OPPONENT');
+        const startButtonRandom = this.uiManager.createButton('PLAY AGAINST RANDOM PLAYER', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
+        const startButtonFriend = this.uiManager.createButton('PLAY AGAINST A FRIEND', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200 mt-4', () => this.setReady());
         startContent.appendChild(startTitle);
-        startContent.appendChild(startButtonEasy);
+        startContent.appendChild(startButtonRandom);
         startContent.appendChild(this.uiManager.createElement('div', 'h-4'));
-        startContent.appendChild(startButtonMedium);
-        startContent.appendChild(this.uiManager.createElement('div', 'h-4'));
-        startContent.appendChild(startButtonHard);
+        startContent.appendChild(startButtonFriend);
         startOverlay.appendChild(startContent);
         canvasContainer.appendChild(startOverlay);
         // Game Over Overlay
@@ -122,6 +124,7 @@ export class AIPage {
         if (this.canvas)
             this.requestNewGame();
     }
+    //////////// GAME LOGIC //////////---
     requestNewGame() {
         const gameOverOverlay = document.querySelector('[data-overlay="game-over"]');
         const startOverlay = document.querySelector('[data-overlay="start-game"]');
@@ -129,7 +132,7 @@ export class AIPage {
             gameOverOverlay.classList.add('hidden');
             startOverlay.classList.remove('hidden');
         }
-        GameManager.requestGameID("ai");
+        GameManager.requestGameID("remote");
     }
     setReady() {
         if (this.gameManager) {

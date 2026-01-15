@@ -1,13 +1,13 @@
 import { App, gameSocket } from "../app.js";
 import type { GameState, BallState, GameSettings, PaddleState } from "./TypesManager.js";
 
-//export let customGameSettings = null;
+export let customGameSettings = null;
 
-// export const defaultGameSettings: GameSettings = {
-//   ballSpeed: 6,
-//   paddleSpeed: 8,
-//   winningScore: 10
-// };
+export const defaultGameSettings: GameSettings = {
+  ballSpeed: 6,
+  paddleSpeed: 8,
+  winningScore: 10
+};
 
 export class GameManager {
   private canvas: HTMLCanvasElement;
@@ -30,7 +30,7 @@ export class GameManager {
     player2: false
   };
 
-  constructor(canvas: HTMLCanvasElement, UUID: string, settings: GameSettings = null) {
+  constructor(canvas: HTMLCanvasElement, UUID: string, settings: GameSettings = defaultGameSettings) {
     this.gameUID = UUID;
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
@@ -56,7 +56,8 @@ export class GameManager {
     this.setupSocketListeners();
   }
 
-  static requestGameID(type: "local" | "ai" | "remote" = "local") {
+  static requestGameID(type: "local" | "ai" | "remote") {
+    console.log(type)
     if (!gameSocket)
       throw Error("gameSocket is not ready");
     gameSocket.emit("game-request", { type });
