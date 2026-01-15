@@ -177,6 +177,7 @@ services:
     container_name: realtime-sockets_app
     build:
       context: ./services/realtime-sockets/app
+    depends_on: [redis]
     expose:
       - 3003
     environment:

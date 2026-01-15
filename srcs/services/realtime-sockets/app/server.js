@@ -5,8 +5,8 @@ import { createClient } from 'redis';
 import cors from '@fastify/cors';
 import { Server } from 'socket.io';
 import crypto from 'crypto';
-import { GameManager } from './srcs/GameManager.js';
 import fs from 'fs';
+// import { GameManager } from '../../game-engine/app/srcs/js/GameManager.js';
 import path from 'path';
 
 
@@ -14,23 +14,32 @@ const is_prod = process.env.NODE_ENV === "PROD";
 export const base_url = is_prod ? "www.transcendance.com" : "localhost";
 
 // HTTPS options
-let httpsOptions = {};
+let httpsOptions = null;
 try {
-	const certPath = path.join('/certs', 'cert.pem');
-	const keyPath = path.join('/certs', 'key.pem');
-	if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
-		httpsOptions = {
-			key: fs.readFileSync(keyPath),
-			cert: fs.readFileSync(certPath)
-		};
-	}
+    const certPath = '/certs/cert.pem';
+    const keyPath = '/certs/key.pem';
+
+    // console.log('Cert exists:', fs.existsSync(certPath));
+    // console.log('Key exists:', fs.existsSync(keyPath));
+    
+    if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+        httpsOptions = {
+            key: fs.readFileSync(keyPath),
+            cert: fs.readFileSync(certPath)
+        };
+        console.log('HTTPS certs loaded');
+    } else {
+        console.log('HTTPS certs not found');
+    }
 } catch (err) {
-	console.log('HTTPS certs not found, running on HTTP');
+    console.error('Error loading HTTPS certs:', err);
 }
 
 export const app = Fastify({trustProxy: true, https: httpsOptions});
 
 let socketio = null;
+
+/* Redis Client Setup */
 
 export const redis = createClient({
     socket: {
@@ -40,19 +49,128 @@ export const redis = createClient({
     password: process.env.REDIS_PASSWORD
 });
 
+export const subscriber = redis.duplicate();
+
 await redis.connect();
+await subscriber.connect();
+
+/* End Redis Client Setup */
 
 await app.register(cookie, {
     secret: process.env.COOKIE_SECRET,
     parseOptions: {}
 });
 
-const generalConnections = new Map();
-const runningGames = new Map();
-
 app.get('/', async () => {
     return { status: 'ok', service: 'realtime-sockets' };
 });
+
+const generalConnections = new Map();
+const runningGames = new Map();
+
+
+// Create Socket.IO server
+const io = new Server(app.server, {
+	cors: {
+		origin: `https://${base_url}`,
+		credentials: true
+	},
+	path: '/realtime-sockets/socket.io/',
+	transports: ['websocket', 'polling']
+});
+
+console.log("✅ Socket.IO server created");
+
+
+await subscriber.subscribe('notifications', (message) => {
+    const { targetUserId, event, payload } = JSON.parse(message);
+    
+    const userSockets = generalConnections.get(targetUserId);
+    if (userSockets) {
+        console.log(`Relaying ${event} to user ${targetUserId}`);
+        userSockets.forEach(socket => socket.emit(event, payload));
+    }
+});
+
+
+// Socket.IO authentication middleware
+io.use(async (socket, next) => {
+	try {
+		const cookies = socket.handshake.headers.cookie;
+		if (!cookies) {
+			console.log("No cookies found");
+			throw new Error('No cookies');
+		}
+		
+		const tokenMatch = cookies.match(/token=([^;]+)/);
+		if (!tokenMatch) {
+			console.log("No token found");
+			throw new Error('No token');
+		}
+		
+		const token = tokenMatch[1];
+		const val = jwt.decode(token, process.env.JWT_SECRET);
+		
+		if (!val || !val.jti) {
+			console.log("Invalid token structure");
+			return next(new Error('Invalid token'));
+		}
+		
+		const exists = await redis.get(`jwt:${val.jti}`);
+		if (!exists || exists === "not valid") {
+			console.log("Token not valid in Redis");
+			return next(new Error('Token not valid'));
+		}
+		
+		const payload = jwt.verify(token, process.env.JWT_SECRET);
+		console.log("✅ User authenticated:", payload);
+		socket.user = payload;
+		next();
+		} catch (err) {
+			console.error('Auth error:', err);
+			next(new Error('Unauthorized'));
+		}
+});
+
+io.on('connection', async (socket) => {
+	console.log("🎯 Socket.IO client connected");
+	const userId = socket.user.user_id || socket.user.id || socket.user.sub;
+	console.log("User ID:", userId);
+	if (!userId) {
+		console.error("❌ No user ID found in token!");
+		socket.disconnect();
+		return;
+	}
+	if (!generalConnections.has(userId)) {
+		generalConnections.set(userId, new Set());
+	}
+	generalConnections.get(userId).add(socket);
+	console.log(`🌐 User ${userId} connected. Total connections for this user: ${generalConnections.get(userId).size}`);
+	// generalConnections.set(userId, socket);
+	await redis.set(`online:${userId}`, 'true');
+	socket.emit('welcome', { message: 'Bienvenue sur le canal global' });
+
+	socket.on('disconnect', () => {
+		const userSockets = generalConnections.get(userId);
+		if (userSockets) {
+			userSockets.delete(socket);
+			console.log(`🌐 User ${userId} disconnected. Remaining connections: ${userSockets.size}`);
+			
+			if (userSockets.size === 0) {
+				generalConnections.delete(userId);
+				redis.del(`online:${userId}`);
+				console.log('Socket.IO client disconnected');
+			}
+		}
+	});
+});
+
+const gameNamespace = io.of('/game');
+
+gameNamespace.use(socketAuthMiddleware);
+
+gameNamespace.on('connection',  (socket) => setupGeneralGameSocket(socket));
+
 
 
 function setupSocketIO(){
@@ -75,10 +193,10 @@ function requestGameUID(socket, data){
 	{
 		console.log("data: ", data, "uuid : ", uuid)
 		
-		runningGames[uuid] = new GameManager(socket, {
-			uuid: uuid,
-			type: data.type
-		});
+		// runningGames[uuid] = new GameManager(socket, {
+		// 	uuid: uuid,
+		// 	type: data.type
+		// });
 		
 		socket.on(uuid, (eventData) => gameHandler(uuid, eventData));
 		
@@ -162,13 +280,13 @@ const start = async () => {
 		console.log(app.printRoutes());
 		 await app.listen({ port: 3003, host: '0.0.0.0' });
 
-		socketio = new Server(app.server, {
-		path: '/socket.io/',
-		cors: { origin: true, credentials: true }
-		});
+		// socketio = new Server(app.server, {
+		// path: '/socket.io/',
+		// cors: { origin: true, credentials: true }
+		// });
 
-		console.log('Socket.IO path:', '/socket.io/');
-		setupSocketIO();
+		// console.log('Socket.IO path:', '/socket.io/');
+		// setupSocketIO();
 		console.log('✅ Remote-player service running on port 3003 with Socket.IO');
 	} catch (err) {
 		console.error(err);

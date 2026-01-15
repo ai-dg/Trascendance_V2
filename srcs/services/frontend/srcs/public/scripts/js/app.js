@@ -165,7 +165,7 @@ export class App {
         // const socket = io(`${protocol}://${window.location.host}${endpoint}`, {
         //     transports: ['websocket'], // optional, force WS only
         // });
-        const socket = io({ path: "/socket.io/", transports: ['websocket', 'polling'] });
+        const socket = io({ path: "/realtime-sockets/socket.io/", transports: ['websocket', 'polling'] });
         socket.on("connect", () => {
             console.log("✅ Connected to socket.io", endpoint);
         });
@@ -188,7 +188,7 @@ export class App {
             path: `${path}/socket.io/`, transports: ['polling']
         });
         sock.on('connect', () => console.log("✅ Connected to socket.io", endpoint));
-        sock.on('connect_error', (err) => console.error('❌ Erreur:', err));
+        // sock.on('connect_error', (err: any) => console.error('❌ Erreur:', err));
         sock.on('welcome', (data) => console.log(data));
         sock.on('new-game', (data) => {
             console.log('new-game received:', data);

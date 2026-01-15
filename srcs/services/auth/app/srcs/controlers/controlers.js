@@ -384,7 +384,7 @@ export async function login_otp_validation_route(request, reply)
 		let userLang = 'en';
 		console.log("USER_ID:", data.user_id);
 		try {
-			const langRes = await fetch(`http://language-manager:3001/get-lang?user_id=${data.user_id}`);
+			const langRes = await fetch(`https://language-manager:3001/get-lang?user_id=${data.user_id}`);
 			const langData = await langRes.json();
 			userLang = langData.lang || 'en';
 		} catch (err) {
