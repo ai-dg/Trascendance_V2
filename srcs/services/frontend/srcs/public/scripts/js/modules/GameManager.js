@@ -42,11 +42,11 @@ export class GameManager {
         this.setupEventListeners();
         this.setupSocketListeners();
     }
-    static requestGameID(type) {
-        console.log(type);
+    static requestGameID(type, options = {}) {
+        console.log(type, options);
         if (!gameSocket)
             throw Error("gameSocket is not ready");
-        gameSocket.emit("game-request", { type });
+        gameSocket.emit("game-request", { type, ...options });
     }
     setReady() {
         if (this.isReady)
