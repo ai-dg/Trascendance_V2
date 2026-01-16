@@ -90,6 +90,17 @@ function requestGameUID(socket, data){
 	else if (data.type === "ai")
 	{
 		console.log("AI Activated")
+		console.log("data: ", data, "uuid : ", uuid)
+
+		runningGames[uuid] = new Game(socket, {
+			uuid: uuid,
+			type: data.type,
+			difficulty: data.difficulty || 'medium'
+		});
+
+		socket.on(uuid, (eventData) => gameHandler(uuid, eventData));
+
+		socket.emit("new-game", {UUID: uuid, type: data.type});
 	}
 	else if (data.type === "remote")
 	{
