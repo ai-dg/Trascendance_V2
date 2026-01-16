@@ -2,3 +2,8 @@ redis_data/
 node_modules/
 .env
 notes.md
+srcs/logs/
+*.log
+*.sqlite
+srcs/volumes/
+
