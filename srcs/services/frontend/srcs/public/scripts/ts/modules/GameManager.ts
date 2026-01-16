@@ -56,7 +56,8 @@ export class GameManager {
     this.setupSocketListeners();
   }
 
-  static requestGameID(type: "local" | "ai" | "remote" = "local") {
+  static requestGameID(type: "local" | "ai" | "remote") {
+    console.log(type)
     if (!gameSocket)
       throw Error("gameSocket is not ready");
     gameSocket.emit("game-request", { type });
@@ -175,7 +176,8 @@ export class GameManager {
     this.gameState.winner = null;
     console.log('Game state after start:', this.gameState);
     this.notifyListeners();
-    this.gameLoop();
+    // Démarrer l'envoi continu des inputs au backend
+    this.startInputLoop();
   }
 
   public pauseGame(): void {
@@ -218,15 +220,18 @@ export class GameManager {
     this.draw();
   }
 
-  private gameLoop(): void {
+  // Boucle pour envoyer les inputs au backend (le backend gère la physique)
+  private startInputLoop(): void {
     if (!this.gameState.gameRunning) return;
 
-    this.updatePlayers();
-    this.draw();
 
     this.animationId = requestAnimationFrame(() => this.gameLoop());
+    this.sendPlayerInputs();
+
+    this.animationId = requestAnimationFrame(() => this.startInputLoop());
   }
 
+  // Recevoir et afficher l'état du jeu depuis le backend
   updateGame(data: any): void {
     if (data.state) {
       this.gameState = data.state;
@@ -235,7 +240,8 @@ export class GameManager {
     }
   }
 
-  private updatePlayers(): void {
+  // Envoyer uniquement les inputs au backend
+  private sendPlayerInputs(): void {
     if (!this.gameUID || !gameSocket)
       throw Error("Error with game socket!");
 
@@ -243,6 +249,8 @@ export class GameManager {
     let paddle2 = 0;
 
     // Update paddles
+    if (this.keys['s'])
+    // Détecter les touches pressées
     if (this.keys['s'])
       paddle1 = 1;
     else if (this.keys['w'])

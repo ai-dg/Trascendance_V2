@@ -1,31 +1,46 @@
 import { GameManager } from '../modules/GameManager.js';
-export class GamePageLocal {
+export class RemotePage {
     constructor(uiManager, onBack, user) {
         this.gameManager = null;
         this.canvas = null;
+        this.user = null;
         this.uiManager = uiManager;
         this.onBack = onBack;
+        this.user = user ?? null;
     }
     ///////////// DESIGN & RENDERING /////////////
-    render() {
+    render(user) {
+        if (user !== undefined) {
+            this.user = user;
+        }
         // Avatars
         const avatarPlayer1Section = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
-        const avatarPlayer1Img = this.uiManager.createElement('img', 'w-12 h-12 rounded-full');
+        const avatarPlayer1Img = this.uiManager.createElement('img', 'rounded-full');
         avatarPlayer1Img.style.width = '110px';
         avatarPlayer1Img.style.height = '110px';
-        avatarPlayer1Img.src = 'public/avatars/default.png';
+        if (!this.user || !this.user.avatar)
+            avatarPlayer1Img.src = 'public/avatars/default.png';
+        else if (this.user.avatar.startsWith('http'))
+            avatarPlayer1Img.src = this.user.avatar;
+        else
+            avatarPlayer1Img.src = `public/avatars/${this.user.avatar}.png`;
         avatarPlayer1Section.appendChild(avatarPlayer1Img);
         const avatarPlayer2Section = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
-        const avatarPlayer2Img = this.uiManager.createElement('img', 'w-12 h-12 rounded-full');
+        const avatarPlayer2Img = this.uiManager.createElement('img', 'rounded-full');
         avatarPlayer2Img.style.width = '110px';
         avatarPlayer2Img.style.height = '110px';
-        avatarPlayer2Img.src = 'public/avatars/default.png';
+        if (!this.user || !this.user.avatar)
+            avatarPlayer2Img.src = 'public/avatars/default.png';
+        else if (this.user.avatar.startsWith('http'))
+            avatarPlayer2Img.src = this.user.avatar;
+        else
+            avatarPlayer2Img.src = `public/avatars/${this.user.avatar}.png`;
         avatarPlayer2Section.appendChild(avatarPlayer2Img);
         // Score Display
         const scoreDisplay = this.uiManager.createElement('div', 'flex gap-16 items-center retro-text');
         const player1Score = this.uiManager.createElement('div', 'text-center');
         const player1Label = this.uiManager.createElement('div', 'text-lg opacity-60', 'PLAYER 1');
-        player1Label.textContent = 'PLAYER 1';
+        player1Label.textContent = this.user ? this.user.username : 'PLAYER 1';
         const player1Value = this.uiManager.createElement('div', 'text-4xl tracking-wider', '00');
         player1Score.appendChild(player1Label);
         player1Score.appendChild(player1Value);
@@ -48,10 +63,13 @@ export class GamePageLocal {
         const startOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg');
         startOverlay.setAttribute('data-overlay', 'start-game');
         const startContent = this.uiManager.createElement('div', 'text-center retro-text');
-        const startTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'READY TO PLAY?');
-        const startButton = this.uiManager.createButton('READY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
+        const startTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'CHOOSE YOUR OPPONENT');
+        const startButtonRandom = this.uiManager.createButton('PLAY AGAINST RANDOM PLAYER', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
+        const startButtonFriend = this.uiManager.createButton('PLAY AGAINST A FRIEND', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200 mt-4', () => this.setReady());
         startContent.appendChild(startTitle);
-        startContent.appendChild(startButton);
+        startContent.appendChild(startButtonRandom);
+        startContent.appendChild(this.uiManager.createElement('div', 'h-4'));
+        startContent.appendChild(startButtonFriend);
         startOverlay.appendChild(startContent);
         canvasContainer.appendChild(startOverlay);
         // Game Over Overlay
@@ -69,21 +87,13 @@ export class GamePageLocal {
         // Controls
         const controls = this.uiManager.createElement('div', 'flex gap-12 retro-text text-sm opacity-60');
         const player1Controls = this.uiManager.createElement('div', 'text-center');
-        const player1Title = this.uiManager.createElement('div', 'mb-2', 'PLAYER 1');
+        const player1Title = this.uiManager.createElement('div', 'mb-2', 'COMMANDS');
         const player1Up = this.uiManager.createElement('div', '', 'W - UP');
         const player1Down = this.uiManager.createElement('div', '', 'S - DOWN');
         player1Controls.appendChild(player1Title);
         player1Controls.appendChild(player1Up);
         player1Controls.appendChild(player1Down);
-        const player2Controls = this.uiManager.createElement('div', 'text-center');
-        const player2Title = this.uiManager.createElement('div', 'mb-2', 'PLAYER 2');
-        const player2Up = this.uiManager.createElement('div', '', '↑ - UP');
-        const player2Down = this.uiManager.createElement('div', '', '↓ - DOWN');
-        player2Controls.appendChild(player2Title);
-        player2Controls.appendChild(player2Up);
-        player2Controls.appendChild(player2Down);
         controls.appendChild(player1Controls);
-        controls.appendChild(player2Controls);
         // Buttons Pause & Reset
         const gameControls = this.uiManager.createElement('div', 'flex gap-4');
         const pauseButton = this.uiManager.createButton('PAUSE', 'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200', () => this.pauseGame());
@@ -102,7 +112,7 @@ export class GamePageLocal {
         gameContainer.appendChild(canvasContainer);
         gameContainer.appendChild(controls);
         gameContainer.appendChild(gameControls);
-        // Main Bloc
+        // Main Bloc 
         const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-6xl');
         content.appendChild(gameContainer);
         content.appendChild(backButtonContainer);
@@ -114,6 +124,7 @@ export class GamePageLocal {
         if (this.canvas)
             this.requestNewGame();
     }
+    //////////// GAME LOGIC //////////---
     requestNewGame() {
         const gameOverOverlay = document.querySelector('[data-overlay="game-over"]');
         const startOverlay = document.querySelector('[data-overlay="start-game"]');
@@ -121,7 +132,7 @@ export class GamePageLocal {
             gameOverOverlay.classList.add('hidden');
             startOverlay.classList.remove('hidden');
         }
-        GameManager.requestGameID("local");
+        GameManager.requestGameID("remote");
     }
     setReady() {
         if (this.gameManager) {
@@ -214,11 +225,6 @@ export class GamePageLocal {
     pauseGame() {
         if (this.gameManager) {
             this.gameManager.pauseGame();
-        }
-    }
-    resumeGame() {
-        if (this.gameManager) {
-            this.gameManager.resumeGame();
         }
     }
     resetGame() {

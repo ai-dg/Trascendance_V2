@@ -22,9 +22,10 @@ export class UpdateProfilePage {
         const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-start p-8');
         const card = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-8 shadow-[0_0_30px_#ff1493] w-full max-w-md flex flex-col items-center gap-8');
         // Avatar Section
-        const title = this.uiManager.createElement('h1', 'retro-title text-3xl mb-4', this.t('userSettingsTitle'));
         const avatarSection = this.uiManager.createElement('div', 'flex flex-col items-center gap-2');
-        const avatarImg = this.uiManager.createElement('img', 'w-16 h-16 rounded-full border-2 border-[#ff1493] cursor-pointer');
+        const avatarImg = this.uiManager.createElement('img', 'rounded-full border-2 border-[#ff1493] cursor-pointer');
+        avatarImg.style.width = '200px';
+        avatarImg.style.height = '200px';
         if (!this.user || !this.user.avatar) {
             avatarImg.src = 'public/avatars/default.png';
         }
@@ -41,7 +42,6 @@ export class UpdateProfilePage {
             this.renderAvatarSelector();
         });
         const avatarLabel = this.uiManager.createElement('p', 'retro-subtitle text-sm opacity-70', this.t('clickToChangeAvatar'));
-        card.appendChild(title);
         avatarSection.appendChild(avatarImg);
         avatarSection.appendChild(avatarLabel);
         const createField = (labelText, inputType, placeholder, changeHandler, withConfirm = false, currentValue) => {

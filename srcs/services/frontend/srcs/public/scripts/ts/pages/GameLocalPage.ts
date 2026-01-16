@@ -22,11 +22,15 @@ export class GamePageLocal {
     // Avatars
     const avatarPlayer1Section = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
     const avatarPlayer1Img = this.uiManager.createElement('img', 'w-12 h-12 rounded-full') as HTMLImageElement;
+    avatarPlayer1Img.style.width = '110px';
+    avatarPlayer1Img.style.height = '110px';
     avatarPlayer1Img.src = 'public/avatars/default.png';
     avatarPlayer1Section.appendChild(avatarPlayer1Img);
 
     const avatarPlayer2Section = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
     const avatarPlayer2Img = this.uiManager.createElement('img', 'w-12 h-12 rounded-full') as HTMLImageElement;
+    avatarPlayer2Img.style.width = '110px';
+    avatarPlayer2Img.style.height = '110px';
     avatarPlayer2Img.src = 'public/avatars/default.png';
     avatarPlayer2Section.appendChild(avatarPlayer2Img);
 
@@ -188,7 +192,7 @@ export class GamePageLocal {
     }
   }
 
-  public setupGame(data: any) {
+  public setupGame(data:any){
     console.log("should work here in setupGame")
     if (!this.canvas)
       throw new Error("canvas is not initialised");

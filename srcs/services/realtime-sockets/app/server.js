@@ -2,10 +2,10 @@ import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import jwt from 'jsonwebtoken';
 import { createClient } from 'redis';
-import cors from '@fastify/cors';
+//import cors from '@fastify/cors';
 import { Server } from 'socket.io';
 import crypto from 'crypto';
-import { GameManager } from './srcs/GameManager.js';
+import { Game } from './srcs/Game.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -71,11 +71,14 @@ function setupGeneralGameSocket(socket){
 
 function requestGameUID(socket, data){
 	let uuid = crypto.randomUUID()
+	console.log("Before type")
 	if (data.type === "local")
 	{
+		console.log("Local activated")
 		console.log("data: ", data, "uuid : ", uuid)
 
-		runningGames[uuid] = new GameManager(socket, {
+
+		runningGames[uuid] = new Game(socket, {
 			uuid: uuid,
 			type: data.type
 		});
@@ -83,6 +86,14 @@ function requestGameUID(socket, data){
 		socket.on(uuid, (eventData) => gameHandler(uuid, eventData));
 
 		socket.emit("new-game", {UUID: uuid, type: data.type});
+	}
+	else if (data.type === "ai")
+	{
+		console.log("AI Activated")
+	}
+	else if (data.type === "remote")
+	{
+		console.log("Remote Activated")
 	}
 }
 

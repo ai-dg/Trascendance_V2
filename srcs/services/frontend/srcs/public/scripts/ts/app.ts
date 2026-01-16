@@ -18,7 +18,7 @@ import { LanguageManager } from './modules/LangManager.js';
 import { AuthPage } from './pages/AuthPage.js';
 import { MenuPage } from './pages/MenuPage.js';
 import { GamePageLocal } from './pages/GameLocalPage.js';
-import { MultiplayerPage } from './pages/GameMultiplayerPage.js';
+import { RemotePage } from './pages/GameRemotePage.js';
 import { AIPage } from './pages/GameAiPage.js';
 import { CheckOtp } from './pages/CheckOtp.js';
 import { SettingsPage } from './pages/SettingsPage.js';
@@ -59,7 +59,7 @@ export class App {
   private menuPage: MenuPage;
   private gamePageLocal: GamePageLocal;
   private gamePageAI: AIPage;
-  private gamePageOnline: MultiplayerPage;
+  private gamePageOnline: RemotePage;
   private checkOtpPage: CheckOtp;
   private settingsPage!: SettingsPage;
   private updateProfilePage: UpdateProfilePage;
@@ -116,7 +116,7 @@ export class App {
       this.uiManager, 
       this.handleBackToMenu.bind(this)
     );
-    this.gamePageOnline = new MultiplayerPage(
+    this.gamePageOnline = new RemotePage(
       this.uiManager,
       this.handleBackToMenu.bind(this),
       this.currentUser

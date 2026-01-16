@@ -15,7 +15,9 @@ export class AIPage {
         }
         // Avatars
         const avatarPlayer1Section = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
-        const avatarPlayer1Img = this.uiManager.createElement('img', 'w-12 h-12 rounded-full');
+        const avatarPlayer1Img = this.uiManager.createElement('img', 'rounded-full');
+        avatarPlayer1Img.style.width = '110px';
+        avatarPlayer1Img.style.height = '110px';
         if (!this.user || !this.user.avatar)
             avatarPlayer1Img.src = 'public/avatars/default.png';
         else if (this.user.avatar.startsWith('http'))
@@ -24,7 +26,9 @@ export class AIPage {
             avatarPlayer1Img.src = `public/avatars/${this.user.avatar}.png`;
         avatarPlayer1Section.appendChild(avatarPlayer1Img);
         const avatarPlayer2Section = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
-        const avatarPlayer2Img = this.uiManager.createElement('img', 'w-12 h-12 rounded-full');
+        const avatarPlayer2Img = this.uiManager.createElement('img', 'rounded-full');
+        avatarPlayer2Img.style.width = '110px';
+        avatarPlayer2Img.style.height = '110px';
         avatarPlayer2Img.src = 'public/avatars/default.png';
         avatarPlayer2Section.appendChild(avatarPlayer2Img);
         // Score Display
@@ -125,7 +129,7 @@ export class AIPage {
             gameOverOverlay.classList.add('hidden');
             startOverlay.classList.remove('hidden');
         }
-        GameManager.requestGameID("local");
+        GameManager.requestGameID("ai");
     }
     setReady() {
         if (this.gameManager) {
