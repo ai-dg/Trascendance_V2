@@ -269,6 +269,7 @@ export class LiveChatPage {
             if (data.type === 'friend-request') {
                 this.addFriendRequestNotification(data.senderId, data.message);
             }
+            // if (data.type === 'friend-request-response') {
         });
     }
     async addFriendRequestNotification(senderId, message) {
@@ -304,6 +305,7 @@ export class LiveChatPage {
                 console.error("Error accepting friend request:", error);
             }
             this.removeFriendRequestNotification(senderId);
+            this.loadFriendsList(this.currentUser?.id);
         });
         rejectBtn.addEventListener('click', async () => {
             try {

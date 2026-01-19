@@ -354,6 +354,8 @@ export class LiveChatPage {
                 );
             }
 
+            // if (data.type === 'friend-request-response') {
+
 
         });
     }
@@ -396,6 +398,7 @@ export class LiveChatPage {
                 console.error("Error accepting friend request:", error);
             }
             this.removeFriendRequestNotification(senderId);
+            this.loadFriendsList(this.currentUser?.id);
         });
 
         rejectBtn.addEventListener('click', async () => {
