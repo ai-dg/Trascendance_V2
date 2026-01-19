@@ -10,7 +10,7 @@ export const defaultGameSettings: GameSettings = {
 };
 
 export class GameManager {
-  private canvas: HTMLCanvasElement;
+  //private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private gameState: GameState;
   private settings: GameSettings;
@@ -25,6 +25,7 @@ export class GameManager {
   private readonly PADDLE_HEIGHT = 80;
 
   private isReady: boolean = false;
+  private isPaused: boolean = false;
   private playersReadyStatus = {
     player1: false,
     player2: false
@@ -32,7 +33,7 @@ export class GameManager {
 
   constructor(canvas: HTMLCanvasElement, UUID: string, settings: GameSettings = defaultGameSettings) {
     this.gameUID = UUID;
-    this.canvas = canvas;
+    //this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
     this.settings = settings;
     
@@ -63,8 +64,10 @@ export class GameManager {
     gameSocket.emit("game-request", { type });
   }
 
-  public setReady(): void {
-    if (this.isReady) return;
+  public setReady(): void
+  { 
+    if (this.isReady) 
+      return;
     
     this.isReady = true;
     
@@ -92,17 +95,16 @@ export class GameManager {
         this.drawReadyScreen();
       }
       
-      if (data.type === "countdown") {
+      if (data.type === "countdown")
         this.drawCountdown(data.count);
-      }
-      
-      if (data.type === "game-start") {
+      if (data.type === "game-start")
         this.startGame();
-      }
-      
-      if (data.type === "game-update") {
+      if (data.type === "game-pause")
+        this.pauseGame();
+      if (data.type === "game-reset")
+        this.resetGame();
+      if (data.type === "game-update")
         this.updateGame(data);
-      }
     });
   }
 
@@ -164,22 +166,49 @@ export class GameManager {
     console.log('GameManager.startGame() called');
     this.gameState.gameRunning = true;
     this.gameState.winner = null;
+    this.isPaused = false;
     console.log('Game state after start:', this.gameState);
     this.notifyListeners();
-    // Démarrer l'envoi continu des inputs au backend
+    // Start sending inputs to the backend
     this.startInputLoop();
   }
 
-  public pauseGame(): void {
+  public pauseGame(): void
+  {
     this.gameState.gameRunning = false;
+    this.isPaused = true;
     if (this.animationId) {
       cancelAnimationFrame(this.animationId);
       this.animationId = null;
     }
+    let pause = true;
+    if (!gameSocket || !this.gameUID)
+      throw Error("gameSocket is not ready");
+    gameSocket.emit(this.gameUID, { 
+      action: "pause-game",
+      pause 
+    });
     this.notifyListeners();
   }
 
+  public resumeGame(): void
+  {
+    if (!gameSocket || !this.gameUID)
+      throw Error("gameSocket is not ready");
+    
+    gameSocket.emit(this.gameUID, { 
+      action: "resume-game"
+    });
+  }
+
   public resetGame(): void {
+    if (!this.gameUID || !gameSocket)
+      throw Error("Error with game socket!");
+    let reset = true;
+    gameSocket.emit(this.gameUID, { 
+      action: "reset-game",
+      reset 
+    });
     this.draw();
   }
 
@@ -209,7 +238,6 @@ export class GameManager {
     let paddle1 = 0;
     let paddle2 = 0;
 
-    // Détecter les touches pressées
     if (this.keys['s']) 
       paddle1 = 1;
     else if (this.keys['w'])
@@ -287,6 +315,10 @@ export class GameManager {
     return { ...this.gameState };
   }
 
+  public getIsPaused(): boolean {
+    return this.isPaused;
+  }
+
   public updateSettings(newSettings: Partial<GameSettings>): void {
     this.settings = { ...this.settings, ...newSettings };
   }
@@ -304,9 +336,8 @@ export class GameManager {
   }
 
   public destroy(): void {
-    if (this.animationId) {
+    if (this.animationId)
       cancelAnimationFrame(this.animationId);
-    }
     window.removeEventListener('keydown', this.setupEventListeners);
     window.removeEventListener('keyup', this.setupEventListeners);
   }

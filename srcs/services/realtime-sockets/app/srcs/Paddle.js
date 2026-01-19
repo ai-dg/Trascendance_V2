@@ -8,8 +8,6 @@ export class Paddle {
     this.height = initialState.height;
   }
 
-  // Déplace le paddle dans la direction spécifiée
-  // direction: -1 (haut), 0 (immobile), 1 (bas)
   move(direction, speed) {
     if (direction === -1 && this.y > 0) {
       this.y -= speed;
@@ -18,7 +16,6 @@ export class Paddle {
     }
   }
 
-  // Vérifie la collision avec la balle
   checkCollisionWithBall(ball) {
     return ball.x < this.x + this.width &&
            ball.x + ball.size > this.x &&
@@ -26,12 +23,10 @@ export class Paddle {
            ball.y + ball.size > this.y;
   }
 
-  // Réinitialise la position du paddle
   reset(initialY) {
     this.y = initialY;
   }
 
-  // Retourne l'état actuel du paddle
   getState() {
     return {
       x: this.x,

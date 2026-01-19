@@ -40,7 +40,6 @@ services:
       - 8080
     volumes:
       - ./services/gateway/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./frontend:/usr/share/nginx/html
     user: "0:0"
     restart: unless-stopped
     environment: {}

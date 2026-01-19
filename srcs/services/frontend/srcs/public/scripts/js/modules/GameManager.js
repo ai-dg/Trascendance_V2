@@ -16,12 +16,13 @@ export class GameManager {
         this.PADDLE_WIDTH = 10;
         this.PADDLE_HEIGHT = 80;
         this.isReady = false;
+        this.isPaused = false;
         this.playersReadyStatus = {
             player1: false,
             player2: false
         };
         this.gameUID = UUID;
-        this.canvas = canvas;
+        //this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.settings = settings;
         this.gameState = {
@@ -49,6 +50,11 @@ export class GameManager {
         gameSocket.emit("game-request", { type });
     }
     setReady() {
+        // // Si le jeu est en pause, on le reprend au lieu de recommencer
+        // if (this.isReady && !this.gameState.gameRunning) {
+        //   this.resumeGame();
+        //   return;
+        // }
         if (this.isReady)
             return;
         this.isReady = true;
@@ -71,15 +77,16 @@ export class GameManager {
                 };
                 this.drawReadyScreen();
             }
-            if (data.type === "countdown") {
+            if (data.type === "countdown")
                 this.drawCountdown(data.count);
-            }
-            if (data.type === "game-start") {
+            if (data.type === "game-start")
                 this.startGame();
-            }
-            if (data.type === "game-update") {
+            if (data.type === "game-pause")
+                this.pauseGame();
+            if (data.type === "game-reset")
+                this.resetGame();
+            if (data.type === "game-update")
                 this.updateGame(data);
-            }
         });
     }
     setupEventListeners() {
@@ -124,20 +131,43 @@ export class GameManager {
         console.log('GameManager.startGame() called');
         this.gameState.gameRunning = true;
         this.gameState.winner = null;
+        this.isPaused = false;
         console.log('Game state after start:', this.gameState);
         this.notifyListeners();
-        // Démarrer l'envoi continu des inputs au backend
+        // Start sending inputs to the backend
         this.startInputLoop();
     }
     pauseGame() {
         this.gameState.gameRunning = false;
+        this.isPaused = true;
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
             this.animationId = null;
         }
+        let pause = true;
+        if (!gameSocket || !this.gameUID)
+            throw Error("gameSocket is not ready");
+        gameSocket.emit(this.gameUID, {
+            action: "pause-game",
+            pause
+        });
         this.notifyListeners();
     }
+    resumeGame() {
+        if (!gameSocket || !this.gameUID)
+            throw Error("gameSocket is not ready");
+        gameSocket.emit(this.gameUID, {
+            action: "resume-game"
+        });
+    }
     resetGame() {
+        if (!this.gameUID || !gameSocket)
+            throw Error("Error with game socket!");
+        let reset = true;
+        gameSocket.emit(this.gameUID, {
+            action: "reset-game",
+            reset
+        });
         this.draw();
     }
     // Boucle pour envoyer les inputs au backend (le backend gère la physique)
@@ -161,7 +191,6 @@ export class GameManager {
             throw Error("Error with game socket!");
         let paddle1 = 0;
         let paddle2 = 0;
-        // Détecter les touches pressées
         if (this.keys['s'])
             paddle1 = 1;
         else if (this.keys['w'])
@@ -212,6 +241,9 @@ export class GameManager {
     getGameState() {
         return { ...this.gameState };
     }
+    getIsPaused() {
+        return this.isPaused;
+    }
     updateSettings(newSettings) {
         this.settings = { ...this.settings, ...newSettings };
     }
@@ -226,9 +258,8 @@ export class GameManager {
         this.listeners.forEach(callback => callback(this.getGameState()));
     }
     destroy() {
-        if (this.animationId) {
+        if (this.animationId)
             cancelAnimationFrame(this.animationId);
-        }
         window.removeEventListener('keydown', this.setupEventListeners);
         window.removeEventListener('keyup', this.setupEventListeners);
     }

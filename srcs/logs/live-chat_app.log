@@ -2,31 +2,3 @@ Connected to Redis
 ✅ Socket.IO server created
 Live-chat db ready
 live-chat service running on port 3002
-🔍 Fetching pending requests
-🔍 Loading pending requests for user: 29
-🔍 Found pending requests from DB: []
-Error fetching user 30: TypeError: fetch failed
-    at node:internal/deps/undici/undici:14902:13
-    at async file:///data/srcs/controlers/controlers.js:117:33
-    at async Promise.all (index 0)
-    at async get_friends_route (file:///data/srcs/controlers/controlers.js:114:25) {
-  [cause]: SocketError: other side closed
-      at Socket.<anonymous> (node:internal/deps/undici/undici:6408:28)
-      at Socket.emit (node:events:536:35)
-      at endReadableNT (node:internal/streams/readable:1698:12)
-      at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
-    code: 'UND_ERR_SOCKET',
-    socket: {
-      localAddress: '172.19.0.11',
-      localPort: 56632,
-      remoteAddress: '172.19.0.13',
-      remotePort: 3000,
-      remoteFamily: 'IPv4',
-      timeout: undefined,
-      bytesWritten: 464,
-      bytesRead: 0
-    },
-    [Symbol(undici.error.UND_ERR)]: true,
-    [Symbol(undici.error.UND_ERR_SOCKET)]: true
-  }
-}

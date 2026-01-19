@@ -2,23 +2,22 @@ import { UIManager } from '../modules/UIManager.js';
 import { GameManager } from '../modules/GameManager.js';
 import type { User } from '../modules/TypesManager.js';
 
-
-
 export class GamePageLocal {
   private uiManager: UIManager;
-    private onBack: () => void;
-    private gameManager: GameManager | null = null;
-    private canvas: HTMLCanvasElement | null = null;
+  private onBack: () => void;
+  private gameManager: GameManager | null = null;
+  private canvas: HTMLCanvasElement | null = null;
   
-    constructor(uiManager: UIManager, onBack: () => void, user?: User | null) {
+  constructor(uiManager: UIManager, onBack: () => void, user?: User | null) {
     this.uiManager = uiManager;
     this.onBack = onBack;
-    }
+  }
+
   
-    ///////////// DESIGN & RENDERING /////////////
+  ///////////// DESIGN & RENDERING /////////////
   
-    public render(): void {
-  
+  public render(): void
+  {
     // Avatars
     const avatarPlayer1Section = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
     const avatarPlayer1Img = this.uiManager.createElement('img', 'w-12 h-12 rounded-full') as HTMLImageElement;
@@ -80,6 +79,15 @@ export class GamePageLocal {
     
     canvasContainer.appendChild(startOverlay);
     
+    // Pause Game Overlay
+    const pauseOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg hidden');
+    pauseOverlay.setAttribute('data-overlay', 'pause-game');
+    const pauseContent = this.uiManager.createElement('div', 'text-center retro-text');
+    const pauseTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'PAUSED');
+    pauseContent.appendChild(pauseTitle);
+    pauseOverlay.appendChild(pauseContent);
+    canvasContainer.appendChild(pauseOverlay);
+    
     // Game Over Overlay
     const gameOverOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg hidden');
     gameOverOverlay.setAttribute('data-overlay', 'game-over');
@@ -123,7 +131,7 @@ export class GamePageLocal {
     // Buttons Pause & Reset
     const gameControls = this.uiManager.createElement('div', 'flex gap-4');
     const pauseButton = this.uiManager.createButton(
-      'PAUSE',
+      'PAUSE / RESUME',
       'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200',
       () => this.pauseGame()
     );
@@ -152,9 +160,7 @@ export class GamePageLocal {
     gameContainer.appendChild(scoreDisplay);
     gameContainer.appendChild(canvasContainer);
     gameContainer.appendChild(controls);
-    gameContainer.appendChild(gameControls);
-  
-    
+    gameContainer.appendChild(gameControls);    
   
     // Main Bloc 
     const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-6xl');
@@ -166,43 +172,35 @@ export class GamePageLocal {
     this.uiManager.clear();
     this.uiManager.container.appendChild(container);
     
-    // Initialize game manager
     if (this.canvas)
       this.requestNewGame()
-    }
+  }
 
-  private requestNewGame(): void{
-	const gameOverOverlay = document.querySelector('[data-overlay="game-over"]') as HTMLElement;
-	const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
-    if (gameOverOverlay) {
+  private requestNewGame(): void
+  {
+    const gameOverOverlay = document.querySelector('[data-overlay="game-over"]') as HTMLElement;
+    const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
+    if (gameOverOverlay)
+    {
       gameOverOverlay.classList.add('hidden');
-	  startOverlay.classList.remove('hidden')
-	}
-	GameManager.requestGameID("local")
+	    startOverlay.classList.remove('hidden')
+	  }
+	  GameManager.requestGameID("local")
   }
 
 
-  private setReady(): void {
-  if (this.gameManager) {
-    this.gameManager.setReady();
-	const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
-    if (startOverlay) {
-      startOverlay.classList.add('hidden');
-    }
-  }
-}
-
-  public setupGame(data:any){
-    console.log("should work here in setupGame")
+  public setupGame(data:any)
+  {
     if (!this.canvas)
       throw new Error("canvas is not initialised");
     this.gameManager = new GameManager(this.canvas, data.UUID);
     this.setupGameListeners()
-    console.log(data.UUID, this.gameManager)
   }
-
-  private setupGameListeners(): void {
-    if (!this.gameManager) return;
+  
+  private setupGameListeners(): void
+  {
+    if (!this.gameManager)
+      return;
 
     this.gameManager.addListener((gameState) => {
       this.updateScore(gameState.player1Score, gameState.player2Score);
@@ -210,83 +208,111 @@ export class GamePageLocal {
     });
   }
 
-  private updateScore(player1Score: number, player2Score: number): void {
+  private updateScore(player1Score: number, player2Score: number): void
+  {
     const player1Element = document.querySelector('.text-4xl.tracking-wider') as HTMLElement;
     const player2Element = document.querySelectorAll('.text-4xl.tracking-wider')[1] as HTMLElement;
     
-    if (player1Element) {
+    if (player1Element)
       player1Element.textContent = player1Score.toString().padStart(2, '0');
-    }
-    if (player2Element) {
+    if (player2Element)
       player2Element.textContent = player2Score.toString().padStart(2, '0');
-    }
   }
 
-  private updateGameState(gameState: any): void {
-    console.log('updateGameState called with:', gameState);
-    // Utilisons des sélecteurs plus spécifiques pour éviter les conflits
-    const gameOverOverlay = document.querySelector('[data-overlay="game-over"]') as HTMLElement;
-    const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
-    console.log('Found overlays:', { gameOverOverlay, startOverlay });
-    
-    // Vérifier si le jeu est terminé
+
+  private updateGameState(gameState: any): void
+  {
+    const startOverlay = document.querySelector<HTMLElement>('[data-overlay="start-game"]');
+    const pauseOverlay = document.querySelector<HTMLElement>('[data-overlay="pause-game"]');
+    const gameOverOverlay = document.querySelector<HTMLElement>('[data-overlay="game-over"]');
+  
     const isGameOver = gameState.player1Score >= 10 || gameState.player2Score >= 10;
     const winner = isGameOver ? (gameState.player1Score >= 10 ? 'Player 1' : 'Player 2') : null;
-    
-    if (isGameOver && winner) {
-      // Afficher l'overlay de fin de jeu
-      if (gameOverOverlay) {
-		if (this.gameManager)
-			this.gameManager = null;
-
+    const isPaused = this.gameManager ? this.gameManager.getIsPaused() : false;
+  
+    // Screen when the game is over
+    if (isGameOver && winner)
+    {
+      if (this.gameManager)
+        this.gameManager = null;
+      if (gameOverOverlay)
         gameOverOverlay.classList.remove('hidden');
-        const winnerText = gameOverOverlay.querySelector('.text-2xl.mb-6.text-\\[\\#00ffff\\]') as HTMLElement;
-        if (winnerText) {
-          winnerText.textContent = `${winner} WINS!`;
-        }
-      }
-      if (startOverlay) {
+      if (startOverlay)
         startOverlay.classList.add('hidden');
-      }
-    } else if (!gameState.gameRunning && !isGameOver) {
-      // Afficher l'overlay de démarrage seulement si pas de gagnant
-      if (startOverlay) {
-        startOverlay.classList.remove('hidden');
-      }
-      if (gameOverOverlay) {
-        gameOverOverlay.classList.add('hidden');
-      }
-    } else if (gameState.gameRunning) {
-      // Cacher tous les overlays pendant le jeu
-      if (startOverlay) {
+      if (pauseOverlay)
+        pauseOverlay.classList.add('hidden');
+      return;
+    }
+    
+    // Screen when the game is paused
+    if (isPaused)
+    {
+      if (pauseOverlay)
+        pauseOverlay.classList.remove('hidden');
+      if (startOverlay)
         startOverlay.classList.add('hidden');
-      }
-      if (gameOverOverlay) {
+      if (gameOverOverlay)
         gameOverOverlay.classList.add('hidden');
-      }
+      return;
+    }
+  
+    // Screen when the game is running
+    if (gameState.gameRunning)
+    {
+      if (startOverlay) 
+        startOverlay.classList.add('hidden');
+      if (pauseOverlay) 
+        pauseOverlay.classList.add('hidden');
+      if (gameOverOverlay) 
+        gameOverOverlay.classList.add('hidden');
+      return;
+    }
+  
+    // Screen at the start of the game
+    if (startOverlay)
+      startOverlay.classList.remove('hidden');
+    if (pauseOverlay)
+      pauseOverlay.classList.add('hidden');
+    if (gameOverOverlay)
+      gameOverOverlay.classList.add('hidden');
+  }
+
+  //////////////////////////////////////////
+  ///////////// GAME FUNCTIONS /////////////
+  //////////////////////////////////////////
+
+  private setReady(): void
+  {
+    if (!this.gameManager)
+      return;
+    const wasPaused = this.gameManager.getIsPaused();
+    this.gameManager.setReady();
+    if (!wasPaused)
+    {
+      const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
+      if (startOverlay)
+        startOverlay.classList.add('hidden');
     }
   }
 
-  private startGame(): void {
-    console.log('startGame() called');
-    if (this.gameManager) {
-      console.log('GameManager exists, calling startGame()');
-	  
-      this.gameManager.startGame();
-    } else {
-      console.log('GameManager is null!');
-    }
-  }
-
-  private pauseGame(): void {
-    if (this.gameManager) {
+  private pauseGame(): void
+  {
+    if (!this.gameManager)
+      return;
+    if (!this.gameManager.getIsPaused() && !this.gameManager.getGameState().gameRunning)
+      return;
+    if (this.gameManager.getIsPaused())
+      this.gameManager.resumeGame();
+    else
       this.gameManager.pauseGame();
-    }
   }
 
-  private resetGame(): void {
-    if (this.gameManager) {
-      this.gameManager.resetGame();
-    }
+  private resetGame(): void
+  {
+    if (!this.gameManager)
+      return;
+    if (!this.gameManager.getGameState().gameRunning)
+      return;
+    this.gameManager.resetGame();
   }
 }

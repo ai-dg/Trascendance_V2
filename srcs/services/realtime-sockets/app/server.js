@@ -47,13 +47,12 @@ await app.register(cookie, {
     parseOptions: {}
 });
 
-const generalConnections = new Map();
+//const generalConnections = new Map();
 const runningGames = new Map();
 
 app.get('/', async () => {
     return { status: 'ok', service: 'realtime-sockets' };
 });
-
 
 function setupSocketIO(){
 	const io = socketio;
@@ -87,31 +86,33 @@ function requestGameUID(socket, data){
 		socket.emit("new-game", {UUID: uuid, type: data.type});
 	}
 	else if (data.type === "ai")
-	{
 		console.log("AI Activated")
-	}
 	else if (data.type === "remote")
-	{
 		console.log("Remote Activated")
-	}
 }
 
 function gameHandler(uuid, data){
 	const game = runningGames[uuid];
-	
-	if (!game) {
+
+	if (!game) 
+	{
 		console.error(`Game ${uuid} not found!`);
 		return;
 	}
-	
-	if (data.action === "player-ready") {
-		game.setPlayerReady(data.player);
-	}
 
-	if (data.state) {
+	if (data.action === "player-ready")
+		game.setPlayerReady(data.player);
+	else if (data.action === "pause-game")
+		game.pauseGame();
+	else if (data.action === "resume-game")
+		game.resumeGame();
+	else if (data.action === "reset-game")
+		game.resetGame();
+	else if (data.state)
 		game.updatePlayerMove(data.state.paddle1, data.state.paddle2);
-	}
 }
+
+
 
 function newGameSocket(socket, data){
 	console.log("data : ", data);
