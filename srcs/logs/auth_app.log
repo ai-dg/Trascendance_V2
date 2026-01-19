@@ -4,24 +4,25 @@
 [33m[nodemon] watching extensions: js,json[39m
 [32m[nodemon] starting `node server.js`[39m
 Auth service running on port 3000
-[2026-01-17T10:42:08.989Z] GET /me
-[2026-01-17T10:42:09.562Z] GET /me
-[2026-01-17T10:42:11.263Z] GET /42/login
+[2026-01-19T14:36:56.134Z] GET /me
+[2026-01-19T14:36:56.824Z] GET /me
+[2026-01-19T14:36:57.956Z] GET /42/login
 u-s4t2ud-bc0232ba6c8a2176ef58b48b16be79307600ae1db3798b3c82a7b617d1759d23
 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
-[2026-01-17T10:42:11.407Z] GET /42/callback?code=c255a51b5d69455f7bb1566316ee57d33a1806138bc7b009d5681863fc84089b
-code: c255a51b5d69455f7bb1566316ee57d33a1806138bc7b009d5681863fc84089b
+[2026-01-19T14:36:58.088Z] GET /42/callback?code=6cfbed1890565b89004c8f7c33aa518bc0d42ff8ff3994e66e731e09988c9bab
+code: 6cfbed1890565b89004c8f7c33aa518bc0d42ff8ff3994e66e731e09988c9bab
 {
-  access_token: '82512e4746f48a8854adb04ab5437903e04654dfd398513418cdd6ab7b439f06',
+  access_token: 'f0fc3b38cc7a94eee45e8a56a909041438353d49cc66c9517be7d5595d63e286',
   token_type: 'bearer',
   expires_in: 7200,
-  refresh_token: '8f0aa5e1310b3650b5d49195cea563c1e9e41b1a79d83c1d3306dddf4b3552fb',
+  refresh_token: '200069f637dbff69c08eeda0c41ce3262c7551870aed78a6d9fb0cf0c481aab3',
   scope: 'public',
-  created_at: 1768646531,
+  created_at: 1768833418,
   secret_valid_until: 1770541209
 }
-[2026-01-17T10:42:12.734Z] GET /me
-[2026-01-17T10:42:12.827Z] GET /me
-[2026-01-17T10:42:14.332Z] GET /me
-[2026-01-17T10:42:23.226Z] GET /me
-[2026-01-17T10:42:24.005Z] GET /me
+[2026-01-19T14:36:59.159Z] GET /me
+[2026-01-19T14:36:59.310Z] GET /me
+[2026-01-19T14:37:00.207Z] GET /me
+[2026-01-19T14:37:11.401Z] GET /me
+[2026-01-19T14:43:43.809Z] GET /me
+[2026-01-19T14:44:08.097Z] GET /me

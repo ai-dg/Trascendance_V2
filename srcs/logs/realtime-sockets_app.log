@@ -9,17 +9,17 @@ Socket.IO path: /socket.io/
 ✅ Remote-player service running on port 3003 with Socket.IO
 payload :  {
   user_id: 29,
-  jti: 'c175047339d0a36c3a56a5b46fe06c27',
-  iat: 1768646532,
-  exp: 1768650132
+  jti: '7856cf7159238368f8fd3ff3542ceb40',
+  iat: 1768833419,
+  exp: 1768837019
 }
 A
 ✅ Utilisateur authentifié: 29
 Before type
 Local activated
-data:  { type: 'local' } uuid :  e6a7b0e8-d551-495e-95fc-c3ac92c4265e
+data:  { type: 'local' } uuid :  68be5d98-6ead-4cbc-bbfe-2ed0a867519b
 Game.startGame() called
 Before type
 Local activated
-data:  { type: 'local' } uuid :  5591b716-ef37-4add-953e-c858fa7b9957
+data:  { type: 'local' } uuid :  569d7a7f-fb36-49df-973d-0d339ce7f480
 Game.startGame() called

@@ -1,19 +1,9 @@
-import { App, gameSocket } from "../app.js";
-import type { GameState, BallState, GameSettings, PaddleState } from "./TypesManager.js";
-
-export let customGameSettings = null;
-
-export const defaultGameSettings: GameSettings = {
-  ballSpeed: 6,
-  paddleSpeed: 8,
-  winningScore: 10
-};
+import { gameSocket } from "../app.js";
+import type { GameState } from "./TypesManager.js";
 
 export class GameManager {
-  //private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private gameState: GameState;
-  private settings: GameSettings;
   private keys: { [key: string]: boolean } = {};
   private animationId: number | null = null;
   private listeners: ((state: GameState) => void)[] = [];
@@ -26,16 +16,13 @@ export class GameManager {
 
   private isReady: boolean = false;
   private isPaused: boolean = false;
-  private playersReadyStatus = {
-    player1: false,
-    player2: false
-  };
 
-  constructor(canvas: HTMLCanvasElement, UUID: string, settings: GameSettings = defaultGameSettings) {
+  private onKeyDown: ((e: KeyboardEvent) => void) | null = null;
+  private onKeyUp: ((e: KeyboardEvent) => void) | null = null;
+
+  constructor(canvas: HTMLCanvasElement, UUID: string) {
     this.gameUID = UUID;
-    //this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
-    this.settings = settings;
     
     this.gameState = {
       player1Score: 0,
@@ -52,7 +39,6 @@ export class GameManager {
       winner: null
     };
     
-    console.log("THIS.GAMEUID: ", this.gameUID);
     this.setupEventListeners();
     this.setupSocketListeners();
   }
@@ -64,6 +50,70 @@ export class GameManager {
     gameSocket.emit("game-request", { type });
   }
 
+  //////////////////////////////////////////
+  ///////////// GETTERS ////////////////////
+  /////////////////////////////////////////
+
+  public getGameState(): GameState {
+    return { ...this.gameState };
+  }
+
+  public getIsPaused(): boolean {
+    return this.isPaused;
+  }
+
+
+  //////////////////////////////////////////
+  //////// BEGGINING OF THE GAME  //////////
+  /////////////////////////////////////////
+
+  setPlayerReady() {
+    // if (playerNum === 1) this.playersReady.player1 = true;
+    // if (playerNum === 2) this.playersReady.player2 = true;
+    // if (playerNum === 3) {
+    //   this.playersReady.player1 = true;
+    //   this.playersReady.player2 = true;
+    // }
+
+    if (!gameSocket || !this.gameUID)
+      throw Error("gameSocket is not ready");
+    gameSocket.emit(this.gameUID, {
+      type: "ready-status",
+      // player1Ready: this.playersReady.player1,
+      // player2Ready: this.playersReady.player2
+    });
+
+    // Si tous sont prêts, lance le countdown
+    // if (this.playersReady.player1 && this.playersReady.player2) {
+    //this.startCountdown();
+    //}
+  }
+  
+  // startCountdown() {
+  //   let count = 3;
+
+  //   const countdownInterval = setInterval(() => {
+  //     if (!gameSocket || !this.gameUID)
+  //       throw Error("gameSocket is not ready");
+
+  //     gameSocket.emit(this.gameUID, {
+  //       type: "countdown",
+  //       count: count
+  //     });
+
+  //     count--;
+
+  //     if (count < 0) {
+  //       clearInterval(countdownInterval);
+  //       this.startGame();
+  //     }
+  //   }, 1000);
+  // }
+
+  //////////////////////////////////////////
+  ///// SEND ACTIONS TO THE BACKEND //////
+  /////////////////////////////////////////
+
   public setReady(): void
   { 
     if (this.isReady) 
@@ -74,10 +124,46 @@ export class GameManager {
     if (!gameSocket || !this.gameUID)
       throw Error("gameSocket is not ready");
     
+    this.printCountdownOverlay(false);
     gameSocket.emit(this.gameUID, { 
       action: "player-ready",
       player: 3 // Pour le mode local et IA, on simule les 2 joueurs prêts // plus tard, pour les jeux a deux, on implémentera le numero du joueur a envoyer en fonction de l'attribution du placement...
     });
+  }
+  
+  public pauseGame(): void {
+    if (!gameSocket || !this.gameUID)
+      throw Error("gameSocket is not ready");
+
+    this.printCountdownOverlay(false);
+    this.isPaused = true;
+    this.stopInputLoop();
+    this.notifyListeners();
+    
+    gameSocket.emit(this.gameUID, { action: "pause-game" });
+  }
+  
+  public resumeGame(): void {
+    if (!gameSocket || !this.gameUID)
+      throw Error("gameSocket is not ready");
+    this.printCountdownOverlay(false);
+    this.isPaused = false;
+    this.notifyListeners();
+
+    gameSocket.emit(this.gameUID, { action: "resume-game" });
+  }
+
+  public resetGame(): void {
+    if (!this.gameUID || !gameSocket)
+      throw Error("Error with game socket!");
+
+    this.printCountdownOverlay(true);
+    this.isReady = false;
+    this.isPaused = false;
+    this.stopInputLoop();
+    this.notifyListeners();
+
+    gameSocket.emit(this.gameUID, { action: "reset-game" });
   }
 
   private setupSocketListeners(): void {
@@ -85,146 +171,102 @@ export class GameManager {
       throw Error("gameSocket is not ready");
       
     gameSocket.on(this.gameUID, (data: any) => {
-      console.log("Received from backend:", data);
-      
-      if (data.type === "ready-status") {
-        this.playersReadyStatus = {
-          player1: data.player1Ready,
-          player2: data.player2Ready
-        };
-        this.drawReadyScreen();
-      }
-      
+      if (!data?.type)
+        return;
       if (data.type === "countdown")
-        this.drawCountdown(data.count);
-      if (data.type === "game-start")
-        this.startGame();
-      if (data.type === "game-pause")
-        this.pauseGame();
-      if (data.type === "game-reset")
-        this.resetGame();
-      if (data.type === "game-update")
+        this.handleServerCountdown(data.count);
+      else if (data.type === "game-start")
+        this.handleServerGameStart();
+      else if (data.type === "game-paused")
+        this.handleServerGamePaused(data);
+      else if (data.type === "game-reset")
+        this.handleServerGameReset(data);
+      else if (data.type === "game-update")
         this.updateGame(data);
     });
   }
 
   private setupEventListeners(): void {
-    window.addEventListener('keydown', (e) => {
+    this.onKeyDown = (e: KeyboardEvent) => {
       this.keys[e.key.toLowerCase()] = true;
-    });
-
-    window.addEventListener('keyup', (e) => {
+    };
+    this.onKeyUp = (e: KeyboardEvent) => {
       this.keys[e.key.toLowerCase()] = false;
-    });
+    };
+
+    window.addEventListener('keydown', this.onKeyDown);
+    window.addEventListener('keyup', this.onKeyUp);
+  }
+  
+  private handleServerGameStart(): void {
+    this.printCountdownOverlay(false);
+    this.startGame();
   }
 
-  private drawReadyScreen(): void {
-    // Clear canvas
-    this.ctx.fillStyle = '#000000';
-    this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
-    
-    // Titre
-    this.ctx.fillStyle = '#00ffff';
-    this.ctx.font = '48px Arial';
-    this.ctx.textAlign = 'center';
-    this.ctx.fillText('Waiting for players...', this.CANVAS_WIDTH / 2, 150);
-    
-    // Status Player 1
-    this.ctx.font = '24px Arial';
-    this.ctx.fillStyle = this.playersReadyStatus.player1 ? '#00ff00' : '#ff0000';
-    this.ctx.fillText(
-      `Player 1: ${this.playersReadyStatus.player1 ? 'READY ✓' : 'NOT READY'}`, 
-      this.CANVAS_WIDTH / 2, 
-      220
-    );
-    
-    // Status Player 2
-    this.ctx.fillStyle = this.playersReadyStatus.player2 ? '#00ff00' : '#ff0000';
-    this.ctx.fillText(
-      `Player 2: ${this.playersReadyStatus.player2 ? 'READY ✓' : 'NOT READY'}`, 
-      this.CANVAS_WIDTH / 2, 
-      260
-    );
-  }
-
-  private drawCountdown(count: number): void {
-    // Clear canvas
-    this.ctx.fillStyle = '#000000';
-    this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
-    
-    // Countdown number
-    this.ctx.fillStyle = '#ff1493';
-    this.ctx.font = 'bold 120px Arial';
-    this.ctx.textAlign = 'center';
-    this.ctx.shadowColor = '#ff1493';
-    this.ctx.shadowBlur = 20;
-    this.ctx.fillText(count.toString(), this.CANVAS_WIDTH / 2, this.CANVAS_HEIGHT / 2 + 40);
-    this.ctx.shadowBlur = 0;
-  }
+  //////////////////////////////////////////
+  ///////HANDLE SERVER EVENTS /////////////
+  /////////////////////////////////////////
 
   public startGame(): void {
-    console.log('GameManager.startGame() called');
     this.gameState.gameRunning = true;
-    this.gameState.winner = null;
     this.isPaused = false;
-    console.log('Game state after start:', this.gameState);
     this.notifyListeners();
-    // Start sending inputs to the backend
     this.startInputLoop();
   }
 
-  public pauseGame(): void
-  {
-    this.gameState.gameRunning = false;
+  private handleServerGamePaused(data: any): void {
+    //this.hideCountdownOverlay();
     this.isPaused = true;
+    this.stopInputLoop();
+    if (data?.state) {
+      this.gameState = data.state;
+      this.draw();
+    }
+    this.notifyListeners();
+  }
+
+  private handleServerGameReset(data: any): void {
+    //this.hideCountdownOverlay();
+    this.isReady = false;
+    this.isPaused = false;
+    this.stopInputLoop();
+
+    if (data?.state) {
+      this.gameState = data.state;
+      this.draw();
+    }
+    this.notifyListeners();
+  }
+
+  private handleServerCountdown(count: unknown): void {
+    const n = typeof count === "number" ? count : Number(count);
+    if (!Number.isFinite(n))
+      return;
+    this.showCountdownOverlay(n);
+  }
+
+
+  private stopInputLoop(): void {
     if (this.animationId) {
       cancelAnimationFrame(this.animationId);
       this.animationId = null;
     }
-    let pause = true;
-    if (!gameSocket || !this.gameUID)
-      throw Error("gameSocket is not ready");
-    gameSocket.emit(this.gameUID, { 
-      action: "pause-game",
-      pause 
-    });
-    this.notifyListeners();
-  }
-
-  public resumeGame(): void
-  {
-    if (!gameSocket || !this.gameUID)
-      throw Error("gameSocket is not ready");
-    
-    gameSocket.emit(this.gameUID, { 
-      action: "resume-game"
-    });
-  }
-
-  public resetGame(): void {
-    if (!this.gameUID || !gameSocket)
-      throw Error("Error with game socket!");
-    let reset = true;
-    gameSocket.emit(this.gameUID, { 
-      action: "reset-game",
-      reset 
-    });
-    this.draw();
   }
 
   // Boucle pour envoyer les inputs au backend (le backend gère la physique)
   private startInputLoop(): void {
-    if (!this.gameState.gameRunning) return;
-
+    if (!this.gameState.gameRunning)
+      return;
     this.sendPlayerInputs();
-    
     this.animationId = requestAnimationFrame(() => this.startInputLoop());
   }
 
   // Recevoir et afficher l'état du jeu depuis le backend
   updateGame(data: any): void {
-    if (data.state) {
+    if (data.state){
       this.gameState = data.state;
+      if (this.gameState.gameRunning)
+        this.isPaused = false;
       this.draw();
       this.notifyListeners();
     }
@@ -256,6 +298,22 @@ export class GameManager {
     if (!gameSocket)
       throw Error("Error with game socket!");
     gameSocket.emit(this.gameUID, { state });
+  }
+
+  //////////////////////////////////////////
+  /////////// GAME DESIGN /////////////////
+  /////////////////////////////////////////
+
+  /////////// HIDE OVERLAYS /////////////////
+  private printCountdownOverlay(print: boolean = false): void {
+    const overlay = document.querySelector<HTMLElement>('[data-overlay="countdown"]');
+    if (overlay)
+    {
+      if (print)
+        overlay.classList.remove('hidden');
+      else
+        overlay.classList.add('hidden');
+    }
   }
 
   private draw(): void {
@@ -311,17 +369,63 @@ export class GameManager {
     this.ctx.shadowBlur = 0;
   }
 
-  public getGameState(): GameState {
-    return { ...this.gameState };
-  }
+  // private drawReadyScreen(): void {
+  //   // Clear canvas
+  //   this.ctx.fillStyle = '#000000';
+  //   this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
 
-  public getIsPaused(): boolean {
-    return this.isPaused;
-  }
+  //   // Titre
+  //   this.ctx.fillStyle = '#00ffff';
+  //   this.ctx.font = '48px Arial';
+  //   this.ctx.textAlign = 'center';
+  //   this.ctx.fillText('Waiting for players...', this.CANVAS_WIDTH / 2, 150);
 
-  public updateSettings(newSettings: Partial<GameSettings>): void {
-    this.settings = { ...this.settings, ...newSettings };
+  //   // Status Player 1
+  //   this.ctx.font = '24px Arial';
+  //   this.ctx.fillStyle = this.playersReadyStatus.player1 ? '#00ff00' : '#ff0000';
+  //   this.ctx.fillText(
+  //     `Player 1: ${this.playersReadyStatus.player1 ? 'READY ✓' : 'NOT READY'}`,
+  //     this.CANVAS_WIDTH / 2,
+  //     220
+  //   );
+
+  //   // Status Player 2
+  //   this.ctx.fillStyle = this.playersReadyStatus.player2 ? '#00ff00' : '#ff0000';
+  //   this.ctx.fillText(
+  //     `Player 2: ${this.playersReadyStatus.player2 ? 'READY ✓' : 'NOT READY'}`,
+  //     this.CANVAS_WIDTH / 2,
+  //     260
+  //   );
+  // }
+
+  private showCountdownOverlay(count: number): void {
+    const overlay = document.querySelector<HTMLElement>('[data-overlay="countdown"]');
+    const text = overlay?.querySelector<HTMLElement>('[data-countdown="value"]');
+
+    if (overlay && text) {
+      text.textContent = String(count);
+      overlay.classList.remove('hidden');
+      return;
+    }
+
+    this.drawCountdown(count);
   }
+  
+  private drawCountdown(count: number): void {
+    // Clear canvas
+    this.ctx.fillStyle = '#000000';
+    this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
+
+    // Countdown number
+    this.ctx.fillStyle = '#ff1493';
+    this.ctx.font = 'bold 120px Arial';
+    this.ctx.textAlign = 'center';
+    this.ctx.shadowColor = '#ff1493';
+    this.ctx.shadowBlur = 20;
+    this.ctx.fillText(count.toString(), this.CANVAS_WIDTH / 2, this.CANVAS_HEIGHT / 2 + 40);
+    this.ctx.shadowBlur = 0;
+  }
+  
 
   public addListener(callback: (state: GameState) => void): () => void {
     this.listeners.push(callback);
@@ -331,14 +435,12 @@ export class GameManager {
   }
 
   private notifyListeners(): void {
-    console.log('notifyListeners called, listeners count:', this.listeners.length);
     this.listeners.forEach(callback => callback(this.getGameState()));
   }
 
   public destroy(): void {
-    if (this.animationId)
-      cancelAnimationFrame(this.animationId);
-    window.removeEventListener('keydown', this.setupEventListeners);
-    window.removeEventListener('keyup', this.setupEventListeners);
+    this.stopInputLoop();
+    if (this.onKeyDown) window.removeEventListener('keydown', this.onKeyDown);
+    if (this.onKeyUp) window.removeEventListener('keyup', this.onKeyUp);
   }
 }
