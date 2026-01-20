@@ -7,228 +7,38 @@
 
 Socket.IO path: /socket.io/
 ✅ Remote-player service running on port 3003 with Socket.IO
-payload :  {
-  user_id: 29,
-  jti: '0526d3a338213a2cfb9bddafc41ed15e',
-  iat: 1768903529,
-  exp: 1768907129
-}
-A
-✅ Utilisateur authentifié: 29
+✅ Utilisateur authentifié: guest:j8xksmFn0Fy4LhxwAAAB
 Before type
 Local activated
-data:  { type: 'local' } uuid :  5f2c0883-ff28-4e1f-b8cd-3f7f9b764efe
+data:  { type: 'local' } uuid :  05fd0ecb-2018-47d6-a0e8-ee11e9adfebe
+Before type
+Local activated
+data:  { type: 'local' } uuid :  5f069395-19a8-4a63-9849-9d06d655b609
 Game.startGame() called
-payload :  {
-  user_id: 29,
-  jti: '0526d3a338213a2cfb9bddafc41ed15e',
-  iat: 1768903529,
-  exp: 1768907129
-}
-A
-✅ Utilisateur authentifié: 29
+Before type
+AI Activated
+Before type
+AI Activated
 Before type
 Local activated
-data:  { type: 'local' } uuid :  799f7e83-b861-4741-b989-d80e38a87db8
-Game.startGame() called
-payload :  {
-  user_id: 29,
-  jti: '0526d3a338213a2cfb9bddafc41ed15e',
-  iat: 1768903529,
-  exp: 1768907129
-}
-A
-✅ Utilisateur authentifié: 29
-[32m[nodemon] restarting due to changes...[39m
-[32m[nodemon] starting `node server.js`[39m
-└── / (GET, HEAD)
-
-Socket.IO path: /socket.io/
-✅ Remote-player service running on port 3003 with Socket.IO
-payload :  {
-  user_id: 29,
-  jti: '0526d3a338213a2cfb9bddafc41ed15e',
-  iat: 1768903529,
-  exp: 1768907129
-}
-A
-✅ Utilisateur authentifié: 29
-[32m[nodemon] restarting due to changes...[39m
-[32m[nodemon] starting `node server.js`[39m
-file:///data/srcs/Data.js:39
-export function getRandomBallVelocity(ballSpeed) {
-       ^^^^^^^^
-
-SyntaxError: Unexpected token 'function'
-    at compileSourceTextModule (node:internal/modules/esm/utils:346:16)
-    at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:146:18)
-    at #translate (node:internal/modules/esm/loader:497:12)
-    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:544:27)
-
-Node.js v20.19.6
-[31m[nodemon] app crashed - waiting for file changes before starting...[39m
-[32m[nodemon] restarting due to changes...[39m
-[32m[nodemon] starting `node server.js`[39m
-└── / (GET, HEAD)
-
-Socket.IO path: /socket.io/
-✅ Remote-player service running on port 3003 with Socket.IO
-payload :  {
-  user_id: 29,
-  jti: '0526d3a338213a2cfb9bddafc41ed15e',
-  iat: 1768903529,
-  exp: 1768907129
-}
-A
-✅ Utilisateur authentifié: 29
-payload :  {
-  user_id: 29,
-  jti: '0526d3a338213a2cfb9bddafc41ed15e',
-  iat: 1768903529,
-  exp: 1768907129
-}
-A
-✅ Utilisateur authentifié: 29
-Before type
-Local activated
-data:  { type: 'local' } uuid :  54d980bf-8d35-4071-ad08-d04dedf6621a
-Game.startGame() called
-payload :  {
-  user_id: 29,
-  jti: '0526d3a338213a2cfb9bddafc41ed15e',
-  iat: 1768903529,
-  exp: 1768907129
-}
-A
-✅ Utilisateur authentifié: 29
-Before type
-Local activated
-data:  { type: 'local' } uuid :  e77ee5d0-854c-47e3-8c94-2e451d86b561
+data:  { type: 'local' } uuid :  8ead1153-84bb-474e-a06a-367dca68c5bf
 Game.startGame() called
 Before type
 Local activated
-data:  { type: 'local' } uuid :  5a82e2f6-e125-4674-8f98-a6a58b9dac35
-payload :  {
-  user_id: 29,
-  jti: '0526d3a338213a2cfb9bddafc41ed15e',
-  iat: 1768903529,
-  exp: 1768907129
-}
-A
-✅ Utilisateur authentifié: 29
+data:  { type: 'local' } uuid :  00ff0de3-e6b0-4bcf-966c-a8b1cefd82f7
+Game.startGame() called
 Before type
 Local activated
-data:  { type: 'local' } uuid :  3e656c4e-58be-4ee2-ae6c-d4df6cdd2f39
-Game.startGame() called
-payload :  {
-  user_id: 29,
-  jti: '0526d3a338213a2cfb9bddafc41ed15e',
-  iat: 1768903529,
-  exp: 1768907129
-}
-A
-✅ Utilisateur authentifié: 29
+data:  { type: 'local' } uuid :  a135507c-97e7-4228-9117-d2d1c2fb9fec
+✅ Utilisateur authentifié: guest:_wAOaUPVOox1EXe1AAAD
 Before type
 Local activated
-data:  { type: 'local' } uuid :  3fe2d6a4-1a9a-481a-9cc0-caf82e0a9227
+data:  { type: 'local' } uuid :  aa0dcfdf-0b60-47eb-b95a-1b6632eed2fe
 Game.startGame() called
-payload :  {
-  user_id: 29,
-  jti: '0526d3a338213a2cfb9bddafc41ed15e',
-  iat: 1768903529,
-  exp: 1768907129
-}
-A
-✅ Utilisateur authentifié: 29
 Before type
 Local activated
-data:  { type: 'local' } uuid :  57a3ee94-24d3-47a0-b8c9-b2f3a882b18e
+data:  { type: 'local' } uuid :  acb71714-34ef-4b13-bb4e-06bfd32e6e9d
 Game.startGame() called
-Game.startGame() called
-Game.startGame() called
-Game.startGame() called
-payload :  {
-  user_id: 29,
-  jti: '0526d3a338213a2cfb9bddafc41ed15e',
-  iat: 1768903529,
-  exp: 1768907129
-}
-A
-✅ Utilisateur authentifié: 29
 Before type
 Local activated
-data:  { type: 'local' } uuid :  1e395fc9-48ee-4722-84d1-e4589d473797
-Game.startGame() called
-Game.startGame() called
-payload :  {
-  user_id: 29,
-  jti: '5aea2111a62c75ec0f65c9a1cd91299c',
-  iat: 1768907525,
-  exp: 1768911125
-}
-A
-✅ Utilisateur authentifié: 29
-Before type
-Local activated
-data:  { type: 'local' } uuid :  e4da800d-b2e9-4cab-9ccc-161362f33096
-Game.startGame() called
-payload :  {
-  user_id: 29,
-  jti: '5aea2111a62c75ec0f65c9a1cd91299c',
-  iat: 1768907525,
-  exp: 1768911125
-}
-A
-✅ Utilisateur authentifié: 29
-Game.startGame() called
-payload :  {
-  user_id: 29,
-  jti: '5aea2111a62c75ec0f65c9a1cd91299c',
-  iat: 1768907525,
-  exp: 1768911125
-}
-A
-✅ Utilisateur authentifié: 29
-Before type
-Local activated
-data:  { type: 'local' } uuid :  fc4a919d-4e74-4a34-9dcc-df83a6794f37
-Game.startGame() called
-payload :  {
-  user_id: 29,
-  jti: '81cf51ec81f11f0c58d3aa17e3585be6',
-  iat: 1768913588,
-  exp: 1768917188
-}
-A
-✅ Utilisateur authentifié: 29
-Before type
-Local activated
-data:  { type: 'local' } uuid :  b509a659-2243-4e71-ba99-f266ff3e0984
-Game.startGame() called
-Game.startGame() called
-payload :  {
-  user_id: 29,
-  jti: '81cf51ec81f11f0c58d3aa17e3585be6',
-  iat: 1768913588,
-  exp: 1768917188
-}
-A
-✅ Utilisateur authentifié: 29
-Before type
-Local activated
-data:  { type: 'local' } uuid :  02d3f2c3-e816-4232-9359-512d530f3b1a
-Game.startGame() called
-payload :  {
-  user_id: 29,
-  jti: '81cf51ec81f11f0c58d3aa17e3585be6',
-  iat: 1768913588,
-  exp: 1768917188
-}
-A
-✅ Utilisateur authentifié: 29
-Before type
-Local activated
-data:  { type: 'local' } uuid :  92fd0633-a771-4c3e-a48d-5ac1cc87a97a
-Game.startGame() called
-Game.startGame() called
-Game.startGame() called
+data:  { type: 'local' } uuid :  c8fff449-b551-4515-89f8-7322f3779984

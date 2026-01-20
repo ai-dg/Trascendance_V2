@@ -120,17 +120,20 @@ function newGameSocket(socket, data){
 
 async function socketAuthMiddleware(socket, next) {
   try {
-
-    const cookies = socket.handshake.headers.cookie;    
+	const cookies = socket.handshake.headers.cookie;    
     if (!cookies) {
-		   console.log("E")
-      return next(new Error('No cookies'));
+      // Allow guests (no JWT) for game sockets
+      socket.userId = `guest:${socket.id}`;
+      socket.user = "Guest";
+      return next();
     }
     const token = parseCookie(cookies, 'token');
     
     if (!token) {
-		   console.log("D")
-      return next(new Error('No token'));
+      // Allow guests (no JWT) for game sockets
+      socket.userId = `guest:${socket.id}`;
+      socket.user = "Guest";
+      return next();
     }
 
     const val = jwt.decode(token, process.env.JWT_SECRET);

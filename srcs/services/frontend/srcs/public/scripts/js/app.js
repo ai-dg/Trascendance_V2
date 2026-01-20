@@ -397,7 +397,20 @@ export class App {
      * Navigate to guest page
      */
     handleShowGuestPage() {
-        this.routerManager.navigateTo('guest');
+        this.currentUser = {
+            id: 'guest_' + Date.now(),
+            username: 'Guest',
+            email: 'guest@guest.com',
+            avatar: 'default.png',
+            isGuest: true
+        };
+        // Init game socket for guests
+        if (!gameSocket) {
+            this.initSocketAlt('/realtime-sockets', '/general')
+                .then((sock) => { gameSocket = sock; })
+                .catch((err) => console.error("Guest game socket init failed:", err));
+        }
+        this.routerManager.navigateTo('menu');
     }
     /**
      * Navigate to settings page

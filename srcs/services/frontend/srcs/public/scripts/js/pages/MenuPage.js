@@ -67,7 +67,10 @@ export class MenuPage {
                 avatarImg.src = user.avatar;
             }
             else {
-                avatarImg.src = `public/avatars/${user.avatar}.png`;
+                // Accept both "avatar1" and "avatar1.png"
+                avatarImg.src = user.avatar.endsWith('.png')
+                    ? `public/avatars/${user.avatar}`
+                    : `public/avatars/${user.avatar}.png`;
             }
             avatarImg.alt = 'User Avatar';
             userWelcome.appendChild(avatarImg);
