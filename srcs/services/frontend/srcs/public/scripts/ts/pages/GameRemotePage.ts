@@ -99,21 +99,6 @@ export class RemotePage {
 	startOverlay.appendChild(startContent);
 	
 	canvasContainer.appendChild(startOverlay);
-
-	// Countdown Overlay (3..2..1..0) - affiché via GameManager quand il reçoit l'event "countdown"
-	const countdownOverlay = this.uiManager.createElement(
-		'div',
-		'absolute inset-0 bg-black/60 flex items-center justify-center rounded-lg hidden'
-	);
-	countdownOverlay.setAttribute('data-overlay', 'countdown');
-	const countdownValue = this.uiManager.createElement(
-		'div',
-		'text-7xl text-[#ff1493] retro-text drop-shadow-[0_0_20px_#ff1493]'
-	);
-	countdownValue.setAttribute('data-countdown', 'value');
-	countdownValue.textContent = '3';
-	countdownOverlay.appendChild(countdownValue);
-	canvasContainer.appendChild(countdownOverlay);
 	
 	// Game Over Overlay
 	const gameOverOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg hidden');

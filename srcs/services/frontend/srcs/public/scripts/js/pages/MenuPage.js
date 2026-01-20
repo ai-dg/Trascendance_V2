@@ -48,7 +48,7 @@ export class MenuPage {
         /////////// Header ////////////////
         ///////////////////////////////////
         const header = this.uiManager.createElement('div', 'text-center mb-12');
-        const title = this.uiManager.createElement('h1', 'retro-title mb-4', 'TRANSCENDANCE');
+        const title = this.uiManager.createElement('h1', 'retro-title mb-4', 'TRANSCENDENCE');
         const subtitle = this.uiManager.createElement('p', 'retro-subtitle text-lg', 'WELCOME TO THE RETRO PONG');
         header.appendChild(title);
         header.appendChild(subtitle);

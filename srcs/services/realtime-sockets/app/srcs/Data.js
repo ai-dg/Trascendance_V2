@@ -34,6 +34,11 @@ export const INITIAL_BALL_STATE = {
   size: BALL_SIZE
 };
 
+export const INITIAL_READY_STATE = {
+  player1: false,
+  player2: false
+};
+
 export function getRandomBallVelocity(ballSpeed) {
   return {
     velocityX: Math.random() > 0.5 ? ballSpeed : -ballSpeed,

@@ -6,20 +6,22 @@ export class GamePageLocal {
         this.uiManager = uiManager;
         this.onBack = onBack;
     }
+    //////////////////////////////////////////////
     ///////////// DESIGN & RENDERING /////////////
+    //////////////////////////////////////////////
     render() {
         // Avatars
         const avatarPlayer1Section = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
         const avatarPlayer1Img = this.uiManager.createElement('img', 'w-12 h-12 rounded-full');
         avatarPlayer1Img.style.width = '110px';
         avatarPlayer1Img.style.height = '110px';
-        avatarPlayer1Img.src = 'public/avatars/default.png';
+        avatarPlayer1Img.src = 'public/avatars/avatar1.png';
         avatarPlayer1Section.appendChild(avatarPlayer1Img);
         const avatarPlayer2Section = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
         const avatarPlayer2Img = this.uiManager.createElement('img', 'w-12 h-12 rounded-full');
         avatarPlayer2Img.style.width = '110px';
         avatarPlayer2Img.style.height = '110px';
-        avatarPlayer2Img.src = 'public/avatars/default.png';
+        avatarPlayer2Img.src = 'public/avatars/avatar2.png';
         avatarPlayer2Section.appendChild(avatarPlayer2Img);
         // Score Display
         const scoreDisplay = this.uiManager.createElement('div', 'flex gap-16 items-center retro-text');
@@ -62,14 +64,6 @@ export class GamePageLocal {
         pauseContent.appendChild(pauseTitle);
         pauseOverlay.appendChild(pauseContent);
         canvasContainer.appendChild(pauseOverlay);
-        // Countdown Overlay (3..2..1..0) - affiché via GameManager quand il reçoit l'event "countdown"
-        const countdownOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/60 flex items-center justify-center rounded-lg hidden');
-        countdownOverlay.setAttribute('data-overlay', 'countdown');
-        const countdownValue = this.uiManager.createElement('div', 'text-7xl text-[#ff1493] retro-text drop-shadow-[0_0_20px_#ff1493]');
-        countdownValue.setAttribute('data-countdown', 'value');
-        countdownValue.textContent = '3';
-        countdownOverlay.appendChild(countdownValue);
-        canvasContainer.appendChild(countdownOverlay);
         // Game Over Overlay
         const gameOverOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg hidden');
         gameOverOverlay.setAttribute('data-overlay', 'game-over');
@@ -152,6 +146,9 @@ export class GamePageLocal {
             this.updateGameState(gameState);
         });
     }
+    //////////////////////////////////////////
+    ///////////// UPDATES ////////////////////
+    //////////////////////////////////////////
     updateScore(player1Score, player2Score) {
         const player1Element = document.querySelector('.text-4xl.tracking-wider');
         const player2Element = document.querySelectorAll('.text-4xl.tracking-wider')[1];
@@ -167,8 +164,38 @@ export class GamePageLocal {
         const isGameOver = gameState.player1Score >= 10 || gameState.player2Score >= 10;
         const winner = isGameOver ? (gameState.player1Score >= 10 ? 'Player 1' : 'Player 2') : null;
         const isPaused = this.gameManager ? this.gameManager.getIsPaused() : false;
+        // Screen at the start of the game
+        if (!this.gameManager?.getHasStarted()) {
+            if (startOverlay)
+                startOverlay.classList.remove('hidden');
+            if (pauseOverlay)
+                pauseOverlay.classList.add('hidden');
+            if (gameOverOverlay)
+                gameOverOverlay.classList.add('hidden');
+            return;
+        }
+        // Screen when the game is running
+        else if (gameState.gameRunning) {
+            if (startOverlay)
+                startOverlay.classList.add('hidden');
+            if (pauseOverlay)
+                pauseOverlay.classList.add('hidden');
+            if (gameOverOverlay)
+                gameOverOverlay.classList.add('hidden');
+            return;
+        }
+        // Screen when the game is paused
+        else if (isPaused) {
+            if (pauseOverlay)
+                pauseOverlay.classList.remove('hidden');
+            if (startOverlay)
+                startOverlay.classList.add('hidden');
+            if (gameOverOverlay)
+                gameOverOverlay.classList.add('hidden');
+            return;
+        }
         // Screen when the game is over
-        if (isGameOver && winner) {
+        else if (isGameOver && winner) {
             if (this.gameManager)
                 this.gameManager = null;
             if (gameOverOverlay)
@@ -179,33 +206,6 @@ export class GamePageLocal {
                 pauseOverlay.classList.add('hidden');
             return;
         }
-        // Screen when the game is paused
-        if (isPaused) {
-            if (pauseOverlay)
-                pauseOverlay.classList.remove('hidden');
-            if (startOverlay)
-                startOverlay.classList.add('hidden');
-            if (gameOverOverlay)
-                gameOverOverlay.classList.add('hidden');
-            return;
-        }
-        // Screen when the game is running
-        if (gameState.gameRunning) {
-            if (startOverlay)
-                startOverlay.classList.add('hidden');
-            if (pauseOverlay)
-                pauseOverlay.classList.add('hidden');
-            if (gameOverOverlay)
-                gameOverOverlay.classList.add('hidden');
-            return;
-        }
-        // Screen at the start of the game
-        if (startOverlay)
-            startOverlay.classList.remove('hidden');
-        if (pauseOverlay)
-            pauseOverlay.classList.add('hidden');
-        if (gameOverOverlay)
-            gameOverOverlay.classList.add('hidden');
     }
     //////////////////////////////////////////
     ///////////// GAME FUNCTIONS /////////////

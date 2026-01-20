@@ -1,14 +1,29 @@
-1:C 19 Jan 2026 14:36:37.404 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
-1:C 19 Jan 2026 14:36:37.404 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
-1:C 19 Jan 2026 14:36:37.404 * Redis version=7.4.7, bits=64, commit=00000000, modified=0, pid=1, just started
-1:C 19 Jan 2026 14:36:37.404 * Configuration loaded
-1:M 19 Jan 2026 14:36:37.404 * Increased maximum number of open files to 10032 (it was originally set to 1024).
-1:M 19 Jan 2026 14:36:37.404 * monotonic clock: POSIX clock_gettime
-1:M 19 Jan 2026 14:36:37.409 * Running mode=standalone, port=6379.
-1:M 19 Jan 2026 14:36:37.409 * Server initialized
-1:M 19 Jan 2026 14:36:37.410 * Loading RDB produced by version 7.4.7
-1:M 19 Jan 2026 14:36:37.410 * RDB age 40456 seconds
-1:M 19 Jan 2026 14:36:37.410 * RDB memory usage when created 1.00 Mb
-1:M 19 Jan 2026 14:36:37.412 * Done loading RDB, keys loaded: 16, keys expired: 0.
-1:M 19 Jan 2026 14:36:37.412 * DB loaded from disk: 0.002 seconds
-1:M 19 Jan 2026 14:36:37.412 * Ready to accept connections tcp
+1:C 20 Jan 2026 10:01:06.281 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+1:C 20 Jan 2026 10:01:06.281 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+1:C 20 Jan 2026 10:01:06.281 * Redis version=7.4.7, bits=64, commit=00000000, modified=0, pid=1, just started
+1:C 20 Jan 2026 10:01:06.281 * Configuration loaded
+1:M 20 Jan 2026 10:01:06.281 * Increased maximum number of open files to 10032 (it was originally set to 1024).
+1:M 20 Jan 2026 10:01:06.281 * monotonic clock: POSIX clock_gettime
+1:M 20 Jan 2026 10:01:06.282 * Running mode=standalone, port=6379.
+1:M 20 Jan 2026 10:01:06.282 * Server initialized
+1:M 20 Jan 2026 10:01:06.283 * Loading RDB produced by version 7.4.7
+1:M 20 Jan 2026 10:01:06.283 * RDB age 68257 seconds
+1:M 20 Jan 2026 10:01:06.283 * RDB memory usage when created 1.00 Mb
+1:M 20 Jan 2026 10:01:06.283 * Done loading RDB, keys loaded: 16, keys expired: 2.
+1:M 20 Jan 2026 10:01:06.283 * DB loaded from disk: 0.000 seconds
+1:M 20 Jan 2026 10:01:06.283 * Ready to accept connections tcp
+1:M 20 Jan 2026 11:01:07.010 * 1 changes in 3600 seconds. Saving...
+1:M 20 Jan 2026 11:01:07.010 * Background saving started by pid 20
+20:C 20 Jan 2026 11:01:07.027 * DB saved on disk
+20:C 20 Jan 2026 11:01:07.027 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+1:M 20 Jan 2026 11:01:07.111 * Background saving terminated with success
+1:M 20 Jan 2026 12:01:08.064 * 1 changes in 3600 seconds. Saving...
+1:M 20 Jan 2026 12:01:08.064 * Background saving started by pid 21
+21:C 20 Jan 2026 12:01:08.088 * DB saved on disk
+21:C 20 Jan 2026 12:01:08.088 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+1:M 20 Jan 2026 12:01:08.165 * Background saving terminated with success
+1:M 20 Jan 2026 13:01:09.080 * 1 changes in 3600 seconds. Saving...
+1:M 20 Jan 2026 13:01:09.080 * Background saving started by pid 22
+22:C 20 Jan 2026 13:01:09.097 * DB saved on disk
+22:C 20 Jan 2026 13:01:09.097 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+1:M 20 Jan 2026 13:01:09.181 * Background saving terminated with success
