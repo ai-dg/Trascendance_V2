@@ -6,20 +6,22 @@ export class GamePageLocal {
         this.uiManager = uiManager;
         this.onBack = onBack;
     }
+    //////////////////////////////////////////////
     ///////////// DESIGN & RENDERING /////////////
+    //////////////////////////////////////////////
     render() {
         // Avatars
         const avatarPlayer1Section = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
         const avatarPlayer1Img = this.uiManager.createElement('img', 'w-12 h-12 rounded-full');
         avatarPlayer1Img.style.width = '110px';
         avatarPlayer1Img.style.height = '110px';
-        avatarPlayer1Img.src = 'public/avatars/default.png';
+        avatarPlayer1Img.src = 'public/avatars/avatar1.png';
         avatarPlayer1Section.appendChild(avatarPlayer1Img);
         const avatarPlayer2Section = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
         const avatarPlayer2Img = this.uiManager.createElement('img', 'w-12 h-12 rounded-full');
         avatarPlayer2Img.style.width = '110px';
         avatarPlayer2Img.style.height = '110px';
-        avatarPlayer2Img.src = 'public/avatars/default.png';
+        avatarPlayer2Img.src = 'public/avatars/avatar2.png';
         avatarPlayer2Section.appendChild(avatarPlayer2Img);
         // Score Display
         const scoreDisplay = this.uiManager.createElement('div', 'flex gap-16 items-center retro-text');
@@ -54,6 +56,14 @@ export class GamePageLocal {
         startContent.appendChild(startButton);
         startOverlay.appendChild(startContent);
         canvasContainer.appendChild(startOverlay);
+        // Pause Game Overlay
+        const pauseOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg hidden');
+        pauseOverlay.setAttribute('data-overlay', 'pause-game');
+        const pauseContent = this.uiManager.createElement('div', 'text-center retro-text');
+        const pauseTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'PAUSED');
+        pauseContent.appendChild(pauseTitle);
+        pauseOverlay.appendChild(pauseContent);
+        canvasContainer.appendChild(pauseOverlay);
         // Game Over Overlay
         const gameOverOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg hidden');
         gameOverOverlay.setAttribute('data-overlay', 'game-over');
@@ -86,11 +96,11 @@ export class GamePageLocal {
         controls.appendChild(player2Controls);
         // Buttons Pause & Reset
         const gameControls = this.uiManager.createElement('div', 'flex gap-4');
-        const pauseButton = this.uiManager.createButton('PAUSE', 'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200', () => this.pauseGame());
+        const pauseButton = this.uiManager.createButton('PAUSE / RESUME', 'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200', () => this.pauseGame());
         const resetButton = this.uiManager.createButton('RESTART', 'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200', () => this.resetGame());
         // Back to Menu Button
         const backButtonContainer = this.uiManager.createElement('div', 'text-center mb-8');
-        const backButton = this.uiManager.createButton('BACK TO MENU', 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mx-auto mt-4', this.onBack);
+        const backButton = this.uiManager.createButton('BACK TO MENU', 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mx-auto mt-4', () => this.backToMenu());
         const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
         backButton.appendChild(backIcon);
         backButtonContainer.appendChild(backButton);
@@ -110,7 +120,6 @@ export class GamePageLocal {
         container.appendChild(content);
         this.uiManager.clear();
         this.uiManager.container.appendChild(container);
-        // Initialize game manager
         if (this.canvas)
             this.requestNewGame();
     }
@@ -123,22 +132,11 @@ export class GamePageLocal {
         }
         GameManager.requestGameID("local");
     }
-    setReady() {
-        if (this.gameManager) {
-            this.gameManager.setReady();
-            const startOverlay = document.querySelector('[data-overlay="start-game"]');
-            if (startOverlay) {
-                startOverlay.classList.add('hidden');
-            }
-        }
-    }
     setupGame(data) {
-        console.log("should work here in setupGame");
         if (!this.canvas)
             throw new Error("canvas is not initialised");
         this.gameManager = new GameManager(this.canvas, data.UUID);
         this.setupGameListeners();
-        console.log(data.UUID, this.gameManager);
     }
     setupGameListeners() {
         if (!this.gameManager)
@@ -148,82 +146,102 @@ export class GamePageLocal {
             this.updateGameState(gameState);
         });
     }
+    //////////////////////////////////////////
+    ///////////// UPDATES ////////////////////
+    //////////////////////////////////////////
     updateScore(player1Score, player2Score) {
         const player1Element = document.querySelector('.text-4xl.tracking-wider');
         const player2Element = document.querySelectorAll('.text-4xl.tracking-wider')[1];
-        if (player1Element) {
+        if (player1Element)
             player1Element.textContent = player1Score.toString().padStart(2, '0');
-        }
-        if (player2Element) {
+        if (player2Element)
             player2Element.textContent = player2Score.toString().padStart(2, '0');
-        }
     }
     updateGameState(gameState) {
-        console.log('updateGameState called with:', gameState);
-        // Utilisons des sélecteurs plus spécifiques pour éviter les conflits
-        const gameOverOverlay = document.querySelector('[data-overlay="game-over"]');
         const startOverlay = document.querySelector('[data-overlay="start-game"]');
-        console.log('Found overlays:', { gameOverOverlay, startOverlay });
-        // Vérifier si le jeu est terminé
+        const pauseOverlay = document.querySelector('[data-overlay="pause-game"]');
+        const gameOverOverlay = document.querySelector('[data-overlay="game-over"]');
         const isGameOver = gameState.player1Score >= 10 || gameState.player2Score >= 10;
         const winner = isGameOver ? (gameState.player1Score >= 10 ? 'Player 1' : 'Player 2') : null;
-        if (isGameOver && winner) {
-            // Afficher l'overlay de fin de jeu
-            if (gameOverOverlay) {
-                if (this.gameManager)
-                    this.gameManager = null;
-                gameOverOverlay.classList.remove('hidden');
-                const winnerText = gameOverOverlay.querySelector('.text-2xl.mb-6.text-\\[\\#00ffff\\]');
-                if (winnerText) {
-                    winnerText.textContent = `${winner} WINS!`;
-                }
-            }
-            if (startOverlay) {
-                startOverlay.classList.add('hidden');
-            }
-        }
-        else if (!gameState.gameRunning && !isGameOver) {
-            // Afficher l'overlay de démarrage seulement si pas de gagnant
-            if (startOverlay) {
+        const isPaused = this.gameManager ? this.gameManager.getIsPaused() : false;
+        // Screen at the start of the game
+        if (!this.gameManager?.getHasStarted()) {
+            if (startOverlay)
                 startOverlay.classList.remove('hidden');
-            }
-            if (gameOverOverlay) {
+            if (pauseOverlay)
+                pauseOverlay.classList.add('hidden');
+            if (gameOverOverlay)
                 gameOverOverlay.classList.add('hidden');
-            }
+            return;
         }
+        // Screen when the game is running
         else if (gameState.gameRunning) {
-            // Cacher tous les overlays pendant le jeu
-            if (startOverlay) {
+            if (startOverlay)
                 startOverlay.classList.add('hidden');
-            }
-            if (gameOverOverlay) {
+            if (pauseOverlay)
+                pauseOverlay.classList.add('hidden');
+            if (gameOverOverlay)
                 gameOverOverlay.classList.add('hidden');
-            }
+            return;
+        }
+        // Screen when the game is paused
+        else if (isPaused) {
+            if (pauseOverlay)
+                pauseOverlay.classList.remove('hidden');
+            if (startOverlay)
+                startOverlay.classList.add('hidden');
+            if (gameOverOverlay)
+                gameOverOverlay.classList.add('hidden');
+            return;
+        }
+        // Screen when the game is over
+        else if (isGameOver && winner) {
+            if (this.gameManager)
+                this.gameManager = null;
+            if (gameOverOverlay)
+                gameOverOverlay.classList.remove('hidden');
+            if (startOverlay)
+                startOverlay.classList.add('hidden');
+            if (pauseOverlay)
+                pauseOverlay.classList.add('hidden');
+            return;
         }
     }
-    startGame() {
-        console.log('startGame() called');
-        if (this.gameManager) {
-            console.log('GameManager exists, calling startGame()');
-            this.gameManager.startGame();
-        }
-        else {
-            console.log('GameManager is null!');
+    //////////////////////////////////////////
+    ///////////// GAME FUNCTIONS /////////////
+    //////////////////////////////////////////
+    setReady() {
+        if (!this.gameManager)
+            return;
+        const wasPaused = this.gameManager.getIsPaused();
+        this.gameManager.setReady();
+        if (!wasPaused) {
+            const startOverlay = document.querySelector('[data-overlay="start-game"]');
+            if (startOverlay)
+                startOverlay.classList.add('hidden');
         }
     }
     pauseGame() {
-        if (this.gameManager) {
-            this.gameManager.pauseGame();
-        }
-    }
-    resumeGame() {
-        if (this.gameManager) {
+        if (!this.gameManager)
+            return;
+        if (!this.gameManager.getIsPaused() && !this.gameManager.getGameState().gameRunning)
+            return;
+        if (this.gameManager.getIsPaused())
             this.gameManager.resumeGame();
-        }
+        else
+            this.gameManager.pauseGame();
     }
-    resetGame() {
+    backToMenu() {
         if (this.gameManager) {
             this.gameManager.resetGame();
         }
+        this.onBack();
+    }
+    resetGame() {
+        if (!this.gameManager)
+            return;
+        if (!this.gameManager.getGameState().gameRunning)
+            return;
+        this.gameManager.resetGame();
     }
 }

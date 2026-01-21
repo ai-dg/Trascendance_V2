@@ -71,7 +71,7 @@ export class MenuPage {
     ///////////////////////////////////
 
     const header = this.uiManager.createElement('div', 'text-center mb-12');
-    const title = this.uiManager.createElement('h1', 'retro-title mb-4', 'TRANSCENDANCE');
+    const title = this.uiManager.createElement('h1', 'retro-title mb-4', 'TRANSCENDENCE');
     const subtitle = this.uiManager.createElement('p', 'retro-subtitle text-lg', 'WELCOME TO THE RETRO PONG');
 
     header.appendChild(title);
@@ -91,7 +91,10 @@ export class MenuPage {
       } else if (user.avatar.startsWith('http')) {
         avatarImg.src = user.avatar;
       } else {
-        avatarImg.src = `public/avatars/${user.avatar}.png`;
+        // Accept both "avatar1" and "avatar1.png"
+        avatarImg.src = user.avatar.endsWith('.png')
+          ? `public/avatars/${user.avatar}`
+          : `public/avatars/${user.avatar}.png`;
       }
       avatarImg.alt = 'User Avatar';
 

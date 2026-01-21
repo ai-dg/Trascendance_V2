@@ -262,9 +262,11 @@ export class AIPage {
 		startOverlay.classList.add('hidden');
 	  }
 	} else if (!gameState.gameRunning && !isGameOver) {
-	  // Afficher l'overlay de démarrage seulement si pas de gagnant
-	  if (startOverlay) {
+	  const isPaused = this.gameManager ? this.gameManager.getIsPaused() : false;
+	  if (startOverlay && !isPaused) {
 		startOverlay.classList.remove('hidden');
+	  } else if (startOverlay && isPaused) {
+		startOverlay.classList.add('hidden');
 	  }
 	  if (gameOverOverlay) {
 		gameOverOverlay.classList.add('hidden');

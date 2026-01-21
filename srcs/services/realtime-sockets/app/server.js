@@ -47,13 +47,12 @@ await app.register(cookie, {
     parseOptions: {}
 });
 
-const generalConnections = new Map();
+//const generalConnections = new Map();
 const runningGames = new Map();
 
 app.get('/', async () => {
     return { status: 'ok', service: 'realtime-sockets' };
 });
-
 
 function setupSocketIO(){
 	const io = socketio;
@@ -88,50 +87,33 @@ function requestGameUID(socket, data){
 		socket.emit("new-game", {UUID: uuid, type: data.type});
 	}
 	else if (data.type === "ai")
-	{
-		console.log("AI Activated")
-		console.log("data: ", data, "uuid : ", uuid)
-
-		runningGames[uuid] = new Game(socket, {
-			uuid: uuid,
-			type: data.type,
-			difficulty: data.difficulty || 'medium'
-		});
-
-		socket.on(uuid, (eventData) => gameHandler(uuid, eventData));
-
-		socket.emit("new-game", {UUID: uuid, type: data.type});
-	}
+		console.log("AI Activated - will be handled by backend-ai service")
 	else if (data.type === "remote")
-	{
 		console.log("Remote Activated")
-	}
 }
 
 function gameHandler(uuid, data){
 	const game = runningGames[uuid];
 
-	if (!game) {
+	if (!game)
+	{
 		console.error(`Game ${uuid} not found!`);
 		return;
 	}
 
-	if (data.action === "player-ready") {
+	if (data.action === "player-ready")
 		game.setPlayerReady(data.player);
-	}
-
-	if (data.action === "pause") {
+	else if (data.action === "pause-game")
 		game.pauseGame();
-	}
-
-	if (data.action === "resume") {
+	else if (data.action === "resume-game")
 		game.resumeGame();
-	}
-
-	if (data.state) {
+	else if (data.action === "reset-game")
+		game.resetGame();
+	else if (data.state)
 		game.updatePlayerMove(data.state.paddle1, data.state.paddle2);
-	}
 }
+
+
 
 function newGameSocket(socket, data){
 	console.log("data : ", data);
@@ -141,15 +123,35 @@ async function socketAuthMiddleware(socket, next) {
   try {
 
     const cookies = socket.handshake.headers.cookie;
+	// Pour nathalia : Avant que je change les cookies pour les guests, c'etait comme ca
+	// Tu me diras si c'est ok pour toi
+
+    // if (!cookies) {
+	// 	   console.log("E")
+    //   return next(new Error('No cookies'));
+    // }
+    // const token = parseCookie(cookies, 'token');
+
+    // if (!token) {
+	// 	   console.log("D")
+    //   return next(new Error('No token'));
+    // }
+
+	//GUEST
+
     if (!cookies) {
-		   console.log("E")
-      return next(new Error('No cookies'));
+      // Allow guests for game sockets
+      socket.userId = `guest:${socket.id}`;
+      socket.user = "Guest";
+      return next();
     }
     const token = parseCookie(cookies, 'token');
 
     if (!token) {
-		   console.log("D")
-      return next(new Error('No token'));
+      // Allow guests for game sockets
+      socket.userId = `guest:${socket.id}`;
+      socket.user = "Guest";
+      return next();
     }
 
     const val = jwt.decode(token, process.env.JWT_SECRET);
@@ -207,4 +209,3 @@ const start = async () => {
 };
 
 start();
-
