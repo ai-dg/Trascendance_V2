@@ -75,11 +75,6 @@ async function setupDatabase() {
 			pseudo TEXT NOT NULL UNIQUE,
 			user_password TEXT NOT NULL,		avatar TEXT,			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 			);`);
-			// CREATE TABLE IF NOT EXISTS auth (
-			// id INTEGER PRIMARY KEY AUTOINCREMENT,
-			// context TEXT NOT NULL,
-			// created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-			// )
 		return db;
 	}
 	catch(err){

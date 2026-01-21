@@ -16,6 +16,7 @@ import { LanguageManager } from './modules/LangManager.js';
 
 // Pages
 import { AuthPage } from './pages/AuthPage.js';
+import { WebsocketManager } from './modules/WebsocketManager.js';
 import { MenuPage } from './pages/MenuPage.js';
 import { GamePageLocal } from './pages/GameLocalPage.js';
 import { RemotePage } from './pages/GameRemotePage.js';
@@ -56,6 +57,7 @@ export class App {
 
   // Page Instances
   private authPage: AuthPage;
+  private websocketManager: WebsocketManager;
   private menuPage: MenuPage;
   private gamePageLocal: GamePageLocal;
   private gamePageAI: AIPage;
@@ -80,10 +82,13 @@ export class App {
       // this.updateCurrentPage();
     });
 
+    this.websocketManager = new WebsocketManager();
+
     // Managers
     this.uiManager = new UIManager(container);
     this.languageManager = new LanguageManager(this.routerManager);
     this.checkManager = new CheckManager(this.languageManager);
+
 
 
     // Initialize pages
@@ -152,7 +157,7 @@ export class App {
       this.uiManager, 
       this.routerManager, 
       this.languageManager, 
-      this.generalSocket, 
+      this.websocketManager, 
       this.handleBackToMenu.bind(this),
       this.currentUser ?? null
     );
@@ -184,25 +189,28 @@ export class App {
   /**
    * Initialize the application: check user session, setup sockets, and render
    */
-  private async initialize(): Promise<void> {
-    // Check if user is already logged in
-    this.currentUser = await this.getConnectedUser();
-    console.log("CURRENT USER: ", this.currentUser);
-    await this.languageManager.init();
-    if (this.currentUser) {
-      this.currentPage = 'menu';
-      this.generalSocket = await this.initSocket('/live-chat/general');
-      console.log(this.generalSocket)
-      gameSocket = await this.initSocketAlt('/realtime-sockets', '/general');
-      console.log(gameSocket)
-      
-      if (!this.currentUser.isGuest) {
-        this.generalSocket = await this.initSocket('/live-chat/general');
-        console.log(this.generalSocket)
-      }
+
+
+    private async initialize(): Promise<void> {
+        this.currentUser = await this.getConnectedUser();
+        await this.languageManager.init();
+
+        if (this.currentUser) {
+          this.currentPage = 'menu';
+        
+          const wsManager = WebsocketManager.getInstance();
+          wsManager.init(window.location.origin);
+          
+          if (this.currentUser && !this.currentUser.isGuest) {
+            // this.menuPage.setWebsocketManager(wsManager);
+            this.liveChatPage.setWebsocketManager(wsManager);
+          }
+
+          // this.gamePageOnline.setWebsocketManager(wsManager);
+        }
+        this.render();
     }
-    this.render();
-  }
+
 
   /**
    * Get the currently connected user from server or localStorage
@@ -269,55 +277,9 @@ export class App {
   /**************************************** SOCKET MANAGEMENT ***********************************/
   /**********************************************************************************************/
 
-  /**
-   * Initialize socket connection for general purposes (chat, etc.)
-   */
-  private async initSocket(endpoint: string, handle: (data:any) => void = console.log) {
-    // const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    // // socket.io automatically handles http/ws
-    // const socket = io(`${protocol}://${window.location.host}${endpoint}`, {
-    //     transports: ['websocket'], // optional, force WS only
-    // });
-    const socket = io( { path: "/socket.io/", transports: ['websocket', 'polling'] });
-    socket.on("connect", () => {
-      console.log("✅ Connected to socket.io", endpoint);
-    });
-    socket.on("connect_error", (err: any) => {
-      console.error("❌ socket.io connection error", err);
-    });
-    // generic message handler (if server uses socket.emit('message', ...))
-    socket.on("message", (msg: any) => {
-      console.log("📩 Raw message received:", msg);
-      handle(msg);
-    });
-    return socket;
-  }
 
-  /**
-   * Initialize socket connection for game-related events (remote players)
-   */
-  private async initSocketAlt(path: string, namespace: string) {
-    const endpoint = `${path}${namespace}`;
-    const sock = io(`${window.location.origin}${namespace}`, {
-      path: `${path}/socket.io/`,transports: ['polling'] 
-    });
 
-    sock.on('connect', () => console.log("✅ Connected to socket.io", endpoint));
-    sock.on('connect_error', (err: any) => console.error('❌ Erreur:', err));
-    sock.on('welcome', (data: any) => console.log(data))
-    sock.on('new-game', (data:any) => {
-      console.log('new-game received:', data);
-      if (this.currentPage === 'game-online') {
-        this.gamePageOnline.setupGame(data);
-      } else if (this.currentPage === 'game-local') {
-        this.gamePageLocal.setupGame(data);
-      } else if (this.currentPage === 'game-ai') {
-        this.gamePageAI.setupGame(data);
-      }
-    }
-    );
-    return sock;
-  }
+
 
   /**********************************************************************************************/
   /**************************************** RENDERING *******************************************/
@@ -365,7 +327,7 @@ export class App {
         this.updateProfilePage.render();
         break;
       case 'live-chat':
-        this.liveChatPage = new LiveChatPage(this.uiManager, this.routerManager, this.languageManager, this.generalSocket, this.handleBackToMenu.bind(this), this.currentUser);
+        this.liveChatPage = new LiveChatPage(this.uiManager, this.routerManager, this.languageManager, this.websocketManager, this.handleBackToMenu.bind(this), this.currentUser);
         this.liveChatPage.render(this.currentUser);
         break;
     }
@@ -529,11 +491,11 @@ export class App {
     // };
 
     // Init game socket for guests
-    if (!gameSocket) {
-      this.initSocketAlt('/realtime-sockets', '/general')
-        .then((sock) => { gameSocket = sock; })
-        .catch((err) => console.error("Guest game socket init failed:", err));
-    }
+    // if (!gameSocket) {
+    //   this.initSocketAlt('/realtime-sockets', '/general')
+    //     .then((sock) => { gameSocket = sock; })
+    //     .catch((err) => console.error("Guest game socket init failed:", err));
+    // }
     this.routerManager.navigateTo('menu');
   }
 

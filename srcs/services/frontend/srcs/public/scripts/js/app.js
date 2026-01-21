@@ -9,6 +9,8 @@ import { CheckManager } from './modules/CheckManager.js';
 import { LanguageManager } from './modules/LangManager.js';
 // Pages
 import { AuthPage } from './pages/AuthPage.js';
+import { GuestPage } from './pages/GuestPage.js';
+import { WebsocketManager } from './modules/WebsocketManager.js';
 import { MenuPage } from './pages/MenuPage.js';
 import { GamePageLocal } from './pages/GameLocalPage.js';
 import { RemotePage } from './pages/GameRemotePage.js';
@@ -38,6 +40,7 @@ export class App {
             this.currentUser = user;
             // this.updateCurrentPage();
         });
+        this.websocketManager = new WebsocketManager();
         // Managers
         this.uiManager = new UIManager(container);
         this.languageManager = new LanguageManager(this.routerManager);
@@ -52,7 +55,7 @@ export class App {
         this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.handleSettings.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser);
         if (this.currentUser)
             this.settingsPage = new SettingsPage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.authPage, this.handleBackToMenu.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser ?? null, this.currentUser?.isGuest ?? true);
-        this.liveChatPage = new LiveChatPage(this.uiManager, this.routerManager, this.languageManager, this.generalSocket, this.handleBackToMenu.bind(this), this.currentUser ?? null);
+        this.liveChatPage = new LiveChatPage(this.uiManager, this.routerManager, this.languageManager, this.websocketManager, this.handleBackToMenu.bind(this), this.currentUser ?? null);
         this.setupEventListeners();
         this.initialize();
     }
@@ -78,20 +81,29 @@ export class App {
      * Initialize the application: check user session, setup sockets, and render
      */
     async initialize() {
-        // Check if user is already logged in
         this.currentUser = await this.getConnectedUser();
-        console.log("CURRENT USER: ", this.currentUser);
         await this.languageManager.init();
         if (this.currentUser) {
             this.currentPage = 'menu';
-            this.generalSocket = await this.initSocket('/live-chat/general');
-            console.log(this.generalSocket);
-            gameSocket = await this.initSocketAlt('/realtime-sockets', '/general');
-            console.log(gameSocket);
-            if (!this.currentUser.isGuest) {
-                this.generalSocket = await this.initSocket('/live-chat/general');
-                console.log(this.generalSocket);
+            const wsManager = WebsocketManager.getInstance();
+            wsManager.init(window.location.origin);
+            if (this.currentUser && !this.currentUser.isGuest) {
+                this.liveChatPage.setWebsocketManager(wsManager);
             }
+            // Store game socket reference globally for compatibility
+            gameSocket = wsManager.gameSocket;
+
+            // Setup new-game listener
+            wsManager.onGame('new-game', (data) => {
+                console.log('new-game event received:', data);
+                if (this.currentPage === 'game-ai') {
+                    this.gamePageAI.setupGame(data);
+                } else if (this.currentPage === 'game-local') {
+                    this.gamePageLocal.setupGame(data);
+                } else if (this.currentPage === 'game-online') {
+                    this.gamePageOnline.setupGame(data);
+                }
+            });
         }
         this.render();
     }
@@ -158,54 +170,6 @@ export class App {
     /**********************************************************************************************/
     /**************************************** SOCKET MANAGEMENT ***********************************/
     /**********************************************************************************************/
-    /**
-     * Initialize socket connection for general purposes (chat, etc.)
-     */
-    async initSocket(endpoint, handle = console.log) {
-        // const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        // // socket.io automatically handles http/ws
-        // const socket = io(`${protocol}://${window.location.host}${endpoint}`, {
-        //     transports: ['websocket'], // optional, force WS only
-        // });
-        const socket = io({ path: "/socket.io/", transports: ['websocket', 'polling'] });
-        socket.on("connect", () => {
-            console.log("✅ Connected to socket.io", endpoint);
-        });
-        socket.on("connect_error", (err) => {
-            console.error("❌ socket.io connection error", err);
-        });
-        // generic message handler (if server uses socket.emit('message', ...))
-        socket.on("message", (msg) => {
-            console.log("📩 Raw message received:", msg);
-            handle(msg);
-        });
-        return socket;
-    }
-    /**
-     * Initialize socket connection for game-related events (remote players)
-     */
-    async initSocketAlt(path, namespace) {
-        const endpoint = `${path}${namespace}`;
-        const sock = io(`${window.location.origin}${namespace}`, {
-            path: `${path}/socket.io/`, transports: ['polling']
-        });
-        sock.on('connect', () => console.log("✅ Connected to socket.io", endpoint));
-        sock.on('connect_error', (err) => console.error('❌ Erreur:', err));
-        sock.on('welcome', (data) => console.log(data));
-        sock.on('new-game', (data) => {
-            console.log('new-game received:', data);
-            if (this.currentPage === 'game-online') {
-                this.gamePageOnline.setupGame(data);
-            }
-            else if (this.currentPage === 'game-local') {
-                this.gamePageLocal.setupGame(data);
-            }
-            else if (this.currentPage === 'game-ai') {
-                this.gamePageAI.setupGame(data);
-            }
-        });
-        return sock;
-    }
     /**********************************************************************************************/
     /**************************************** RENDERING *******************************************/
     /**********************************************************************************************/
@@ -250,7 +214,7 @@ export class App {
                 this.updateProfilePage.render();
                 break;
             case 'live-chat':
-                this.liveChatPage = new LiveChatPage(this.uiManager, this.routerManager, this.languageManager, this.generalSocket, this.handleBackToMenu.bind(this), this.currentUser);
+                this.liveChatPage = new LiveChatPage(this.uiManager, this.routerManager, this.languageManager, this.websocketManager, this.handleBackToMenu.bind(this), this.currentUser);
                 this.liveChatPage.render(this.currentUser);
                 break;
         }
@@ -397,18 +361,22 @@ export class App {
      * Navigate to guest page
      */
     handleShowGuestPage() {
-        // this.currentUser = {
-        //   id: 'guest_' + Date.now(),
-        //   username: 'Guest',
-        //   email: 'guest@guest.com',
-        //   avatar: 'default.png',
-        //   isGuest: true
-        // };
-        // // Init game socket for guests
+        // Initialize WebsocketManager for guest users
         if (!gameSocket) {
-            this.initSocketAlt('/realtime-sockets', '/general')
-                .then((sock) => { gameSocket = sock; })
-                .catch((err) => console.error("Guest game socket init failed:", err));
+            const wsManager = WebsocketManager.getInstance();
+            wsManager.init(window.location.origin);
+            gameSocket = wsManager.gameSocket;
+
+            // Setup new-game listener for guests
+            wsManager.onGame('new-game', (data) => {
+                console.log('Guest new-game event received:', data);
+                if (this.currentPage === 'game-ai') {
+                    this.gamePageAI.setupGame(data);
+                } else if (this.currentPage === 'game-local') {
+                    this.gamePageLocal.setupGame(data);
+                }
+            });
+            console.log('Guest game socket initialized');
         }
         this.routerManager.navigateTo('menu');
     }

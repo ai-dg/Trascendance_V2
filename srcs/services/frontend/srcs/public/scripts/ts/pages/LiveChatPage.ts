@@ -3,12 +3,13 @@ import type { User } from '../modules/TypesManager.js';
 import type { LanguageManager } from '../modules/LangManager.js';
 import type { RouterManager } from '../modules/RouterManager.js';
 import { Socket } from "socket.io-client";
+import type { WebsocketManager } from '../modules/WebsocketManager.js';
 
 export class LiveChatPage {
     private uiManager: UIManager;
     private routerManager: RouterManager;
     private languageManager: LanguageManager;
-    private generalSocket: Socket | null;
+    private wsManager: WebsocketManager | null = null;
     private onBack: () => void;
     private friendRequests: Map<number, {senderId: number, message: string, element: HTMLElement}> = new Map();
     private currentUser: User | null = null;
@@ -19,14 +20,14 @@ export class LiveChatPage {
         uiManager: UIManager,
         routerManager: RouterManager,
         languageManager: LanguageManager,
-        generalSocket: Socket | null,
+        wsManager: WebsocketManager | null,
         onBack: () => void,
         currentUser: User | null
     ) {
         this.uiManager = uiManager;
         this.routerManager = routerManager;
         this.languageManager = languageManager;
-        this.generalSocket = generalSocket;
+        this.wsManager = wsManager;
         this.onBack = onBack;
         this.currentUser = currentUser;
     }
@@ -34,6 +35,15 @@ export class LiveChatPage {
     private t(key: string): string {
         return this.languageManager.t(key);
     }
+
+    public setWebsocketManager(manager: WebsocketManager) : void {
+        this.wsManager = manager;
+
+        const errorMessageDiv = document.getElementById('error-message-div') as HTMLElement;
+        const friendInput = document.getElementById('friend-input') as HTMLInputElement;
+        
+        this.setupSocketListeners(errorMessageDiv, friendInput);
+  }
 
 
     public render(user: User | null): void {
@@ -134,10 +144,12 @@ export class LiveChatPage {
         const addFriendDiv = this.uiManager.createElement('div', 'flex flex-col gap-2 mt-2 hidden');
         const friendInput = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black') as HTMLInputElement;
         friendInput.placeholder = 'Username';
+        friendInput.id = 'friend-input';
         const sendFriendBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-black rounded');
         sendFriendBtn.textContent = 'Send';
 
         const errorMessageDiv = this.uiManager.createElement('div', 'hidden text-red-500 text-sm mt-2');
+        errorMessageDiv.id = 'error-message-div';
 
         addFriendDiv.appendChild(friendInput);
         addFriendDiv.appendChild(sendFriendBtn);
@@ -147,6 +159,7 @@ export class LiveChatPage {
             addFriendDiv.classList.toggle('hidden');
         });
 
+        
         // Setup socket listeners immediately
         this.setupSocketListeners(errorMessageDiv, friendInput);
 
@@ -172,12 +185,29 @@ export class LiveChatPage {
                         return;
                     }
                 
-                    if (this.generalSocket) {
-                        this.generalSocket.emit("add-friend", {
-                            senderId,
-                            receiverId
-                        });
+                    const res = await fetch(this.routerManager.getUrl('/live-chat/friend-request'), {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ senderId, receiverId })
+                    });
+                
+                    if (!res.ok) {
+                        const resData = await res.json();
+                        throw new Error(resData.message || 'Failed to send friend request');
                     }
+                
+                    const data = await res.json();
+                    if (!data.success) {
+                        throw new Error(data.message || 'Failed to send friend request');
+                    }
+                
+                    errorMessageDiv.textContent = "Friend request sent!";
+                    errorMessageDiv.classList.remove('hidden', 'text-red-500');
+                    errorMessageDiv.classList.add('text-green-500');
+                    friendInput.value = '';
                     console.log("Friend request sent via socket.io!");
                 } catch (error) {
                     console.error("Error sending friend request:", error);
@@ -303,76 +333,65 @@ export class LiveChatPage {
         }
     }
 
-    private setupSocketListeners(errorMessageDiv: HTMLElement, friendInput: HTMLInputElement): void {
-        if (!this.generalSocket) {
+    private async setupSocketListeners(errorMessageDiv: HTMLElement, friendInput: HTMLInputElement): Promise<void> {
+        if (!this.wsManager) {
             console.log("No generalSocket available");
             return;
         }
 
-        this.generalSocket.off('friend-request');
-        this.generalSocket.off('friend-request-status');
-        this.generalSocket.off('friend-request-result');
-        this.generalSocket.off('block-friend-status');
-        this.generalSocket.off('remove-friend-status');
-
-        this.generalSocket.on('friend-request', (data) => {
-            console.log("Received friend request:", data);
-            const { senderId, message } = data;
-            this.addFriendRequestNotification(senderId, message);
+        const requests = await fetch(this.routerManager.getUrl('/live-chat/pending-requests'), {
+            method: 'GET',
+            credentials: 'include'
         });
+        const data = await requests.json();
+        if (data.success && data.requests) {
+            data.requests.forEach((request: any) => {
+                this.addFriendRequestNotification(
+                    request.senderId,
+                    request.message
+                );
+            });
+            console.log(`Loaded ${data.requests.length} pending friend requests on socket setup`);
+        }
 
-        this.generalSocket.on("friend-request-status", (msg) => {
-            console.log("Friend request status:", msg);
+        this.wsManager.offGeneral('notifications');
 
-            if (msg.success) {
-                errorMessageDiv.textContent = msg.message || "Friend request sent!";
-                errorMessageDiv.classList.remove('hidden', 'text-red-500');
-                errorMessageDiv.classList.add('text-green-500');
+        this.wsManager.onGeneral('notifications', (data) => {
+            console.log("Received notification:", data);
+            
+            switch (data.type) {
+                case 'friend-request':
+                    this.addFriendRequestNotification(
+                        data.senderId,
+                        data.message
+                    );
+                    break;
 
-                setTimeout(() => {
-                    errorMessageDiv.classList.add('hidden');
-                    friendInput.value = '';
-                }, 3000);
-            } else {
-                errorMessageDiv.textContent = msg.message || "Failed to send request";
-                errorMessageDiv.classList.remove('hidden', 'text-green-500');
-                errorMessageDiv.classList.add('text-red-500');
+                case 'friend-request-accepted':
+                    if (this.currentUser) {
+                        this.loadFriendsList(this.currentUser.id);
+                    }
+                    break;
+
+                case 'friend-removed':
+                    if (this.currentUser) {
+                        this.loadFriendsList(this.currentUser.id);
+                    }
+                    break;
+                
+                case 'clear-notification':
+                    this.removeFriendRequestNotification(data.senderId);
+                    break;
+
+                default:
+                    console.warn("Unknown notification type:", data.type);
+                    break;
             }
-        });
 
-        this.generalSocket.on('friend-request-result', (data) => {
-            console.log("Friend request result:", data);
-            const { action, message } = data;
-
-            errorMessageDiv.textContent = message;
-            errorMessageDiv.classList.remove('hidden', 'text-red-500');
-            errorMessageDiv.classList.add(action === 'accept' ? 'text-green-500' : 'text-yellow-500');
-
-            setTimeout(() => {
-                errorMessageDiv.classList.add('hidden');
-            }, 5000);
-        });
-
-        this.generalSocket.on('block-friend-status', (data) => {
-            console.log("Block friend status:", data);
-            if (data.success && this.currentUser) {
-                this.loadFriendsList(this.currentUser?.id);
-            } else {
-                console.error("Failed to block friend:", data.message);
-            }
-        });
-
-        this.generalSocket.on('remove-friend-status', (data) => {
-            console.log("Remove friend status:", data);
-            if (data.success && this.currentUser) {
-                this.loadFriendsList(this.currentUser?.id);
-            } else {
-                console.error("Failed to remove friend:", data.message);
-            }
         });
     }
 
-    private addFriendRequestNotification(senderId: number, message: string): void {
+    private async addFriendRequestNotification(senderId: number, message: string): Promise<void> {
         if (this.friendRequests.has(senderId)) {
             console.log("Notification already exists for sender:", senderId);
             return;
@@ -396,22 +415,35 @@ export class LiveChatPage {
         const rejectBtn = this.uiManager.createElement('button', 'px-3 py-1 text-xs bg-red-500 text-black rounded hover:bg-red-400');
         rejectBtn.textContent = 'Reject';
         
-        acceptBtn.addEventListener('click', () => {
-            if (this.generalSocket) {
-                this.generalSocket.emit('friend-request-response', {
-                    senderId,
-                    action: 'accept'
+        acceptBtn.addEventListener('click', async () => {
+            try {
+                const res = await fetch(this.routerManager.getUrl('/live-chat/friend-request-response'), {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ senderId: senderId, action: 'accept' })
                 });
+            } catch (error) {
+                console.error("Error accepting friend request:", error);
             }
             this.removeFriendRequestNotification(senderId);
+            this.loadFriendsList(this.currentUser?.id);
         });
 
-        rejectBtn.addEventListener('click', () => {
-            if (this.generalSocket) {
-                this.generalSocket.emit('friend-request-response', {
-                    senderId,
-                    action: 'reject'
+        rejectBtn.addEventListener('click', async () => {
+            try {
+                const res = await fetch(this.routerManager.getUrl('/live-chat/friend-request-response'), {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ senderId: senderId, action: 'reject' })
                 });
+            } catch (error) {
+                console.error("Error rejecting friend request:", error);
             }
             this.removeFriendRequestNotification(senderId);
         });
@@ -605,11 +637,29 @@ export class LiveChatPage {
 
                 console.log("Blocking friend:", this.currentSelectedFriend.id);
 
-                if (this.generalSocket) {
-                    this.generalSocket.emit('block-friend', {
-                        friendId: this.currentSelectedFriend.id
-                    });
-                }
+                const resBlock = fetch(this.routerManager.getUrl('/live-chat/block-friend'), {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ friendId: this.currentSelectedFriend.id })
+                }).then(async (response) => {
+                    if (!response.ok) {
+                        console.error('Failed to block friend:', response.status);
+                        return;
+                    }
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        console.log("Friend blocked successfully");
+                        if (this.currentUser) {
+                            this.loadFriendsList(this.currentUser.id);
+                        }
+                    } else {
+                        console.error("Failed to block friend:", data.message);
+                    }
+                });
                 this.currentSelectedFriend = null;
                 this.updateProfileView();
             });
@@ -624,11 +674,29 @@ export class LiveChatPage {
 
                 console.log("Removing friend:", this.currentSelectedFriend.id);
 
-                if (this.generalSocket) {
-                    this.generalSocket.emit('remove-friend', {
-                        friendId: this.currentSelectedFriend.id
-                    });
-                }
+                const res = fetch(this.routerManager.getUrl('/live-chat/remove-friend'), {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ friendId: this.currentSelectedFriend.id })
+                }).then(async (response) => {
+                    if (!response.ok) {
+                        console.error('Failed to remove friend:', response.status);
+                        return;
+                    }
+
+                    const data = await response.json();
+                    if (data.success) {
+                        console.log("Friend removed successfully");
+                        if (this.currentUser) {
+                            this.loadFriendsList(this.currentUser.id);
+                        }
+                    } else {
+                        console.error("Failed to remove friend:", data.message);
+                    }
+                });
                 this.currentSelectedFriend = null;
                 this.updateProfileView();
             });

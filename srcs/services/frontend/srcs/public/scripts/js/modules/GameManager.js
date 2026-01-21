@@ -111,7 +111,7 @@ export class GameManager {
     static requestGameID(type, options = {}) {
         if (!gameSocket)
             throw Error("gameSocket is not ready");
-        gameSocket.emit("game-request", { type, ...options });
+        gameSocket.emit("request-game-uid", { type, ...options });
     }
     setReady() {
         if (this.isReady)
