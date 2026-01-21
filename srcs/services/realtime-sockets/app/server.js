@@ -2,7 +2,7 @@ import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import jwt from 'jsonwebtoken';
 import { createClient } from 'redis';
-import cors from '@fastify/cors';
+//import cors from '@fastify/cors';
 import { Server } from 'socket.io';
 import crypto from 'crypto';
 import fs from 'fs';
@@ -218,8 +218,10 @@ function setupGeneralGameSocket(socket) {
 
 function requestGameUID(socket, data){
 	let uuid = crypto.randomUUID()
+	console.log("Before type")
 	if (data.type === "local")
 	{
+		console.log("Local activated")
 		console.log("data: ", data, "uuid : ", uuid)
 		
 		// runningGames[uuid] = new GameManager(socket, {
@@ -231,24 +233,34 @@ function requestGameUID(socket, data){
 		
 		socket.emit("new-game", {UUID: uuid, type: data.type});
 	}
+	else if (data.type === "ai")
+		console.log("AI Activated")
+	else if (data.type === "remote")
+		console.log("Remote Activated")
 }
 
 function gameHandler(uuid, data){
 	const game = runningGames[uuid];
-	
-	if (!game) {
+
+	if (!game) 
+	{
 		console.error(`Game ${uuid} not found!`);
 		return;
 	}
-	
-	if (data.action === "player-ready") {
-		game.setPlayerReady(data.player);
-	}
 
-	if (data.state) {
+	if (data.action === "player-ready")
+		game.setPlayerReady(data.player);
+	else if (data.action === "pause-game")
+		game.pauseGame();
+	else if (data.action === "resume-game")
+		game.resumeGame();
+	else if (data.action === "reset-game")
+		game.resetGame();
+	else if (data.state)
 		game.updatePlayerMove(data.state.paddle1, data.state.paddle2);
-	}
 }
+
+
 
 function newGameSocket(socket, data){
 	console.log("data : ", data);

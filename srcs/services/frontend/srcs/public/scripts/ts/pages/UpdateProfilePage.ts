@@ -47,9 +47,11 @@ export class UpdateProfilePage {
         );
 
         // Avatar Section
-        const title = this.uiManager.createElement('h1', 'retro-title text-3xl mb-4', this.t('userSettingsTitle'));
+  
         const avatarSection = this.uiManager.createElement('div', 'flex flex-col items-center gap-2');
-        const avatarImg = this.uiManager.createElement('img', 'w-16 h-16 rounded-full border-2 border-[#ff1493] cursor-pointer') as HTMLImageElement;
+        const avatarImg = this.uiManager.createElement('img', 'rounded-full border-2 border-[#ff1493] cursor-pointer') as HTMLImageElement;
+        avatarImg.style.width = '200px';
+        avatarImg.style.height = '200px';
         if (!this.user || !this.user.avatar) {
           avatarImg.src = 'public/avatars/default.png';
         } else if (this.user.avatar.startsWith('http')) {
@@ -65,7 +67,6 @@ export class UpdateProfilePage {
         });
 
         const avatarLabel = this.uiManager.createElement('p', 'retro-subtitle text-sm opacity-70', this.t('clickToChangeAvatar'));
-        card.appendChild(title);
         avatarSection.appendChild(avatarImg);
         avatarSection.appendChild(avatarLabel);
 

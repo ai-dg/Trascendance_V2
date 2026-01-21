@@ -50,10 +50,10 @@ export class SettingsPage {
     // Header
     const header = this.uiManager.createElement('div', 'text-center mb-8');
     const title = this.uiManager.createElement('h1', 'retro-title text-3xl mb-4', this.t('options'));
-    const subtitle = this.uiManager.createElement('p', 'retro-subtitle', this.t('optionsMessage'));
+    //const subtitle = this.uiManager.createElement('p', 'retro-subtitle', this.t('optionsMessage'));
     
     header.appendChild(title);
-    header.appendChild(subtitle);
+    //header.appendChild(subtitle);
     
     // Back Button
     const backButton = this.uiManager.createButton(
@@ -238,11 +238,11 @@ export class SettingsPage {
   const card = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 rounded-lg p-6');
   card.style.borderColor = '#ff1493';
 
-  const header = this.uiManager.createElement(
-    "h2",
-    "retro-title text-[#ff1493] text-2xl mb-2",
-    this.t("welcomeGuest")
-  );
+  // const header = this.uiManager.createElement(
+  //   "h2",
+  //   "retro-title text-[#ff1493] text-2xl mb-2",
+  //   this.t("welcomeGuest")
+  // );
   const subtitle = this.uiManager.createElement(
     "p",
     "retro-text text-center text-sm opacity-70",
@@ -268,14 +268,6 @@ export class SettingsPage {
     () => console.log("to handle signup") 
   );
 
-  // Divider
-  const divider = this.uiManager.createElement("div", "flex items-center my-2");
-  const line = this.uiManager.createElement("div", "flex-1 h-px bg-gradient-to-r from-transparent via-[#ff1493] to-transparent");
-  const orText = this.uiManager.createElement("span", "px-4 retro-text text-sm text-[#ff1493]", this.t("or"));
-  divider.appendChild(line);
-  divider.appendChild(orText);
-  divider.appendChild(line.cloneNode(true));
-
   // Google Sign In Button
   const googleBtn = this.uiManager.createButton(
     this.t("sign_in_with_google"),
@@ -292,11 +284,10 @@ export class SettingsPage {
 
   buttonsContainer.appendChild(signInBtn);
   buttonsContainer.appendChild(signUpBtn);
-  buttonsContainer.appendChild(divider);
   buttonsContainer.appendChild(googleBtn);
   buttonsContainer.appendChild(auth42Btn);
 
-  card.appendChild(header);
+  //card.appendChild(header);
   card.appendChild(subtitle);
   card.appendChild(buttonsContainer);
   card.appendChild(this.createLanguageSelector(false));
