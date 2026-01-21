@@ -11,12 +11,18 @@ import {
 } from './Data.js';
 
 export class Game {
-  constructor(socket, data, settings = DEFAULT_SETTINGS) {
+  constructor(socket, data, settings = DEFAULT_SETTINGS, redis = null) {
     this.socket = socket;
     this.uuid = data.uuid;
     this.type = data.type;
     this.settings = { ...DEFAULT_SETTINGS, ...settings };
     this.gameLoopInterval = null;
+
+    // Redis for AI/Remote player communication
+    this.redis = redis;
+    this.isAiGame = data.type === 'ai';
+    this.difficulty = data.difficulty || 'medium';
+    this.redisSubscriber = null;
 
     this.playersReady = {
       player1: false,
@@ -37,6 +43,35 @@ export class Game {
 
     // Initialiser la balle avec une vélocité alatoire
     this.ball.reset();
+
+    // Setup Redis subscription for AI input
+    if (this.isAiGame && this.redis) {
+      this.setupAiSubscription();
+    }
+  }
+
+  async setupAiSubscription() {
+    try {
+      // Create a duplicate client for subscribing (Redis requires separate client for pub/sub)
+      this.redisSubscriber = this.redis.duplicate();
+      await this.redisSubscriber.connect();
+
+      // Subscribe to AI input channel
+      await this.redisSubscriber.subscribe(`game:${this.uuid}:ai-input`, (message) => {
+        try {
+          const data = JSON.parse(message);
+          if (data.paddle2Dir !== undefined) {
+            this.playerInputs.paddle2Dir = data.paddle2Dir;
+          }
+        } catch (err) {
+          console.error('Error parsing AI input:', err);
+        }
+      });
+
+      console.log(`Game ${this.uuid}: Subscribed to AI input channel`);
+    } catch (err) {
+      console.error('Error setting up AI subscription:', err);
+    }
   }
 
 
@@ -45,6 +80,11 @@ export class Game {
     if (playerNum === 2) this.playersReady.player2 = true;
     if (playerNum === 3) {
       this.playersReady.player1 = true;
+      this.playersReady.player2 = true;
+    }
+
+    // For AI games, player2 (AI) is always ready
+    if (this.isAiGame) {
       this.playersReady.player2 = true;
     }
 
@@ -155,7 +195,10 @@ export class Game {
   ///////// PLAYER INPUTS /////////
   updatePlayerMove(paddle1Dir, paddle2Dir) {
     this.playerInputs.paddle1Dir = paddle1Dir;
-    this.playerInputs.paddle2Dir = paddle2Dir;
+    // For AI games, ignore paddle2 input from frontend - AI controls it via Redis
+    if (!this.isAiGame) {
+      this.playerInputs.paddle2Dir = paddle2Dir;
+    }
   }
 
   applyPlayerMoves() {
@@ -206,10 +249,29 @@ export class Game {
       }
     }
 
+    const gameState = this.getGameState();
+
     this.socket.emit(this.uuid, {
       type: "game-update",
-      state: this.getGameState()
+      state: gameState
     });
+
+    // Publish game state to Redis for AI service
+    if (this.isAiGame && this.redis && this.gameRunning) {
+      this.publishGameStateToAi(gameState);
+    }
+  }
+
+  async publishGameStateToAi(gameState) {
+    try {
+      await this.redis.publish(`game:${this.uuid}:state`, JSON.stringify({
+        ball: gameState.ball,
+        paddle2: gameState.paddle2,
+        difficulty: this.difficulty
+      }));
+    } catch (err) {
+      console.error('Error publishing game state to AI:', err);
+    }
   }
 
   getGameState() {
@@ -234,9 +296,19 @@ export class Game {
     }
   }
 
-  destroy() {
+  async destroy() {
     if (this.gameLoopInterval) {
       clearInterval(this.gameLoopInterval);
+    }
+
+    // Clean up Redis subscription
+    if (this.redisSubscriber) {
+      try {
+        await this.redisSubscriber.unsubscribe(`game:${this.uuid}:ai-input`);
+        await this.redisSubscriber.quit();
+      } catch (err) {
+        console.error('Error cleaning up Redis subscriber:', err);
+      }
     }
   }
 }

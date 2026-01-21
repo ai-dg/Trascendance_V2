@@ -135,10 +135,10 @@ export class GameManager {
   ///// SEND ACTIONS TO THE BACKEND //////
   /////////////////////////////////////////
 
-  static requestGameID(type: "local" | "ai" | "remote") {
+  static requestGameID(type: "local" | "ai" | "remote", options: { difficulty?: string } = {}) {
     if (!gameSocket)
       throw Error("gameSocket is not ready");
-    gameSocket.emit("game-request", { type });
+    gameSocket.emit("game-request", { type, ...options });
   }
 
   public setReady(): void

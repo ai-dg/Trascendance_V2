@@ -108,10 +108,10 @@ export class GameManager {
     //////////////////////////////////////////
     ///// SEND ACTIONS TO THE BACKEND //////
     /////////////////////////////////////////
-    static requestGameID(type) {
+    static requestGameID(type, options = {}) {
         if (!gameSocket)
             throw Error("gameSocket is not ready");
-        gameSocket.emit("game-request", { type });
+        gameSocket.emit("game-request", { type, ...options });
     }
     setReady() {
         if (this.isReady)

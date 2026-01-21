@@ -8,6 +8,7 @@ export class AIPage {
 	private gameManager: GameManager | null = null;
 	private canvas: HTMLCanvasElement | null = null;
 	private user: User | null = null;
+	private selectedDifficulty: string = 'medium';
   
 	constructor(uiManager: UIManager, onBack: () => void, user?: User | null) {
 	this.uiManager = uiManager;
@@ -80,17 +81,17 @@ export class AIPage {
 	const startButtonEasy = this.uiManager.createButton(
 		'EASY',
 		'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',
-		() => this.setReady()
+		() => this.selectDifficulty('easy')
 	);
 	const startButtonMedium = this.uiManager.createButton(
 		'MEDIUM',
 		'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',
-		() => this.setReady()
+		() => this.selectDifficulty('medium')
 	);
 	const startButtonHard = this.uiManager.createButton(
 		'HARD',
 		'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',
-		() => this.setReady()
+		() => this.selectDifficulty('hard')
 	);
 	startContent.appendChild(startTitle);
 	startContent.appendChild(startButtonEasy);
@@ -184,34 +185,40 @@ export class AIPage {
 		this.requestNewGame()
 	}
 
-  private requestNewGame(): void{
+  private selectDifficulty(difficulty: string): void {
+	this.selectedDifficulty = difficulty;
+	const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
+	if (startOverlay) {
+	  startOverlay.classList.add('hidden');
+	}
+	// Request new game with selected difficulty
+	GameManager.requestGameID("ai", { difficulty });
+  }
+
+  private requestNewGame(): void {
 	const gameOverOverlay = document.querySelector('[data-overlay="game-over"]') as HTMLElement;
 	const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
 	if (gameOverOverlay) {
 	  gameOverOverlay.classList.add('hidden');
 	  startOverlay.classList.remove('hidden')
 	}
-	GameManager.requestGameID("ai")
+	// Don't request game here - wait for difficulty selection
   }
-
 
   private setReady(): void {
-  if (this.gameManager) {
-	this.gameManager.setReady();
-	const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
-	if (startOverlay) {
-	  startOverlay.classList.add('hidden');
+	if (this.gameManager) {
+	  this.gameManager.setReady();
 	}
   }
-}
 
   public setupGame(data:any){
-	console.log("should work here in setupGame")
+	console.log("Setting up AI game with UUID:", data.UUID)
 	if (!this.canvas)
 		throw new Error("canvas is not initialised");
 	this.gameManager = new GameManager(this.canvas, data.UUID);
-	this.setupGameListeners()
-	console.log(data.UUID, this.gameManager)
+	this.setupGameListeners();
+	// Auto-ready since player already selected difficulty
+	this.setReady();
   }
 
   private setupGameListeners(): void {
