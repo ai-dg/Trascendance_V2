@@ -60,13 +60,7 @@ export class GameManager {
       window.removeEventListener('keyup', this.onKeyUp);
   }
   
-  static requestGameID(type: "local" | "ai" | "remote") {
-    console.log(type)
-    if (!gameSocket)
-      throw Error("gameSocket is not ready");
-    gameSocket.emit("game-request", { type });
-  }
-
+  
   //////////////////////////////////////////
   ///////////// GETTERS ////////////////////
   /////////////////////////////////////////
@@ -141,6 +135,12 @@ export class GameManager {
   ///// SEND ACTIONS TO THE BACKEND //////
   /////////////////////////////////////////
 
+  static requestGameID(type: "local" | "ai" | "remote") {
+    if (!gameSocket)
+      throw Error("gameSocket is not ready");
+    gameSocket.emit("game-request", { type });
+  }
+
   public setReady(): void
   { 
     if (this.isReady) 
@@ -189,8 +189,8 @@ export class GameManager {
 
     gameSocket.emit(this.gameUID, { action: "reset-game" });
   }
-
   
+
   //////////////////////////////////////////
   ///////HANDLE SERVER EVENTS /////////////
   /////////////////////////////////////////
@@ -201,7 +201,6 @@ export class GameManager {
     this.notifyListeners();
     this.startInputLoop();
   }
-  
 
   private handleServerGamePaused(data: any): void {
     this.isPaused = true;
@@ -230,7 +229,6 @@ export class GameManager {
   /////////// GAME LOOP ////////////////////
   /////////////////////////////////////////
 
-
   private stopInputLoop(): void {
     if (this.animationId) {
       cancelAnimationFrame(this.animationId);
@@ -255,7 +253,6 @@ export class GameManager {
     }
   }
 
-  
   private sendPlayerInputs(): void {
     if (!this.gameUID || !gameSocket)
       throw Error("Error with game socket!");

@@ -7,38 +7,4 @@
 
 Socket.IO path: /socket.io/
 ✅ Remote-player service running on port 3003 with Socket.IO
-✅ Utilisateur authentifié: guest:j8xksmFn0Fy4LhxwAAAB
-Before type
-Local activated
-data:  { type: 'local' } uuid :  05fd0ecb-2018-47d6-a0e8-ee11e9adfebe
-Before type
-Local activated
-data:  { type: 'local' } uuid :  5f069395-19a8-4a63-9849-9d06d655b609
-Game.startGame() called
-Before type
-AI Activated
-Before type
-AI Activated
-Before type
-Local activated
-data:  { type: 'local' } uuid :  8ead1153-84bb-474e-a06a-367dca68c5bf
-Game.startGame() called
-Before type
-Local activated
-data:  { type: 'local' } uuid :  00ff0de3-e6b0-4bcf-966c-a8b1cefd82f7
-Game.startGame() called
-Before type
-Local activated
-data:  { type: 'local' } uuid :  a135507c-97e7-4228-9117-d2d1c2fb9fec
-✅ Utilisateur authentifié: guest:_wAOaUPVOox1EXe1AAAD
-Before type
-Local activated
-data:  { type: 'local' } uuid :  aa0dcfdf-0b60-47eb-b95a-1b6632eed2fe
-Game.startGame() called
-Before type
-Local activated
-data:  { type: 'local' } uuid :  acb71714-34ef-4b13-bb4e-06bfd32e6e9d
-Game.startGame() called
-Before type
-Local activated
-data:  { type: 'local' } uuid :  c8fff449-b551-4515-89f8-7322f3779984
+✅ Utilisateur authentifié: guest:J49PnPTyxFg0_eYMAAAB

@@ -147,7 +147,7 @@ export class GamePageLocal {
     const backButton = this.uiManager.createButton(
       'BACK TO MENU',
       'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mx-auto mt-4',
-      this.onBack
+      () => this.backToMenu()
     );
     const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
     backButton.appendChild(backIcon);
@@ -316,6 +316,15 @@ export class GamePageLocal {
       this.gameManager.resumeGame();
     else
       this.gameManager.pauseGame();
+  }
+
+  private backToMenu(): void
+  {
+    if (this.gameManager)
+    {
+      this.gameManager.resetGame();
+    }
+    this.onBack();
   }
 
   private resetGame(): void

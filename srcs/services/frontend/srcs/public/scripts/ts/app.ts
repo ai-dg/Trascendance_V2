@@ -520,13 +520,13 @@ export class App {
    * Navigate to guest page
    */
   private handleShowGuestPage(): void {
-    this.currentUser = {
-      id: 'guest_' + Date.now(),
-      username: 'Guest',
-      email: 'guest@guest.com',
-      avatar: 'default.png',
-      isGuest: true
-    };
+    // this.currentUser = {
+    //   id: 'guest_' + Date.now(),
+    //   username: 'Guest',
+    //   email: 'guest@guest.com',
+    //   avatar: 'default.png',
+    //   isGuest: true
+    // };
 
     // Init game socket for guests
     if (!gameSocket) {

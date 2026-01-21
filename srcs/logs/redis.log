@@ -1,52 +1,58 @@
-1:C 20 Jan 2026 13:25:12.194 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
-1:C 20 Jan 2026 13:25:12.194 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
-1:C 20 Jan 2026 13:25:12.194 * Redis version=7.4.7, bits=64, commit=00000000, modified=0, pid=1, just started
-1:C 20 Jan 2026 13:25:12.194 * Configuration loaded
-1:M 20 Jan 2026 13:25:12.195 * Increased maximum number of open files to 10032 (it was originally set to 1024).
-1:M 20 Jan 2026 13:25:12.195 * monotonic clock: POSIX clock_gettime
-1:M 20 Jan 2026 13:25:12.196 * Running mode=standalone, port=6379.
-1:M 20 Jan 2026 13:25:12.196 * Server initialized
-1:M 20 Jan 2026 13:25:12.196 * Loading RDB produced by version 7.4.7
-1:M 20 Jan 2026 13:25:12.196 * RDB age 923 seconds
-1:M 20 Jan 2026 13:25:12.196 * RDB memory usage when created 1.00 Mb
-1:M 20 Jan 2026 13:25:12.196 * Done loading RDB, keys loaded: 18, keys expired: 0.
-1:M 20 Jan 2026 13:25:12.196 * DB loaded from disk: 0.000 seconds
-1:M 20 Jan 2026 13:25:12.196 * Ready to accept connections tcp
-1:signal-handler (1768915712) Received SIGTERM scheduling shutdown...
-1:M 20 Jan 2026 13:28:32.371 * User requested shutdown...
-1:M 20 Jan 2026 13:28:32.371 * Saving the final RDB snapshot before exiting.
-1:M 20 Jan 2026 13:28:32.382 * DB saved on disk
-1:M 20 Jan 2026 13:28:32.382 # Redis is now ready to exit, bye bye...
-1:C 20 Jan 2026 13:28:46.453 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
-1:C 20 Jan 2026 13:28:46.454 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
-1:C 20 Jan 2026 13:28:46.454 * Redis version=7.4.7, bits=64, commit=00000000, modified=0, pid=1, just started
-1:C 20 Jan 2026 13:28:46.454 * Configuration loaded
-1:M 20 Jan 2026 13:28:46.454 * Increased maximum number of open files to 10032 (it was originally set to 1024).
-1:M 20 Jan 2026 13:28:46.454 * monotonic clock: POSIX clock_gettime
-1:M 20 Jan 2026 13:28:46.455 * Running mode=standalone, port=6379.
-1:M 20 Jan 2026 13:28:46.455 * Server initialized
-1:M 20 Jan 2026 13:28:46.455 * Loading RDB produced by version 7.4.7
-1:M 20 Jan 2026 13:28:46.455 * RDB age 14 seconds
-1:M 20 Jan 2026 13:28:46.455 * RDB memory usage when created 1.03 Mb
-1:M 20 Jan 2026 13:28:46.455 * Done loading RDB, keys loaded: 19, keys expired: 0.
-1:M 20 Jan 2026 13:28:46.455 * DB loaded from disk: 0.000 seconds
-1:M 20 Jan 2026 13:28:46.455 * Ready to accept connections tcp
-1:signal-handler (1768916750) Received SIGTERM scheduling shutdown...
-1:M 20 Jan 2026 13:45:50.621 * User requested shutdown...
-1:M 20 Jan 2026 13:45:50.621 * Saving the final RDB snapshot before exiting.
-1:M 20 Jan 2026 13:45:50.632 * DB saved on disk
-1:M 20 Jan 2026 13:45:50.632 # Redis is now ready to exit, bye bye...
-1:C 20 Jan 2026 13:46:04.481 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
-1:C 20 Jan 2026 13:46:04.481 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
-1:C 20 Jan 2026 13:46:04.481 * Redis version=7.4.7, bits=64, commit=00000000, modified=0, pid=1, just started
-1:C 20 Jan 2026 13:46:04.481 * Configuration loaded
-1:M 20 Jan 2026 13:46:04.481 * Increased maximum number of open files to 10032 (it was originally set to 1024).
-1:M 20 Jan 2026 13:46:04.481 * monotonic clock: POSIX clock_gettime
-1:M 20 Jan 2026 13:46:04.482 * Running mode=standalone, port=6379.
-1:M 20 Jan 2026 13:46:04.482 * Server initialized
-1:M 20 Jan 2026 13:46:04.482 * Loading RDB produced by version 7.4.7
-1:M 20 Jan 2026 13:46:04.482 * RDB age 14 seconds
-1:M 20 Jan 2026 13:46:04.482 * RDB memory usage when created 1.03 Mb
-1:M 20 Jan 2026 13:46:04.482 * Done loading RDB, keys loaded: 18, keys expired: 0.
-1:M 20 Jan 2026 13:46:04.482 * DB loaded from disk: 0.000 seconds
-1:M 20 Jan 2026 13:46:04.482 * Ready to accept connections tcp
+1:C 20 Jan 2026 14:20:03.486 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+1:C 20 Jan 2026 14:20:03.486 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+1:C 20 Jan 2026 14:20:03.486 * Redis version=7.4.7, bits=64, commit=00000000, modified=0, pid=1, just started
+1:C 20 Jan 2026 14:20:03.486 * Configuration loaded
+1:M 20 Jan 2026 14:20:03.486 * Increased maximum number of open files to 10032 (it was originally set to 1024).
+1:M 20 Jan 2026 14:20:03.486 * monotonic clock: POSIX clock_gettime
+1:M 20 Jan 2026 14:20:03.487 * Running mode=standalone, port=6379.
+1:M 20 Jan 2026 14:20:03.487 * Server initialized
+1:M 20 Jan 2026 14:20:03.487 * Loading RDB produced by version 7.4.7
+1:M 20 Jan 2026 14:20:03.487 * RDB age 970 seconds
+1:M 20 Jan 2026 14:20:03.487 * RDB memory usage when created 1.03 Mb
+1:M 20 Jan 2026 14:20:03.487 * Done loading RDB, keys loaded: 20, keys expired: 0.
+1:M 20 Jan 2026 14:20:03.487 * DB loaded from disk: 0.000 seconds
+1:M 20 Jan 2026 14:20:03.487 * Ready to accept connections tcp
+1:M 20 Jan 2026 15:20:04.043 * 1 changes in 3600 seconds. Saving...
+1:M 20 Jan 2026 15:20:04.043 * Background saving started by pid 21
+21:C 20 Jan 2026 15:20:04.054 * DB saved on disk
+21:C 20 Jan 2026 15:20:04.054 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+1:M 20 Jan 2026 15:20:04.144 * Background saving terminated with success
+1:M 20 Jan 2026 16:20:05.001 * 1 changes in 3600 seconds. Saving...
+1:M 20 Jan 2026 16:20:05.001 * Background saving started by pid 22
+22:C 20 Jan 2026 16:20:05.019 * DB saved on disk
+22:C 20 Jan 2026 16:20:05.019 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+1:M 20 Jan 2026 16:20:05.102 * Background saving terminated with success
+1:M 20 Jan 2026 17:28:32.820 * 1 changes in 3600 seconds. Saving...
+1:M 20 Jan 2026 17:28:32.821 * Background saving started by pid 23
+23:C 20 Jan 2026 17:28:32.832 * DB saved on disk
+23:C 20 Jan 2026 17:28:32.832 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+1:M 20 Jan 2026 17:28:32.921 * Background saving terminated with success
+1:M 20 Jan 2026 18:28:33.018 * 1 changes in 3600 seconds. Saving...
+1:M 20 Jan 2026 18:28:33.018 * Background saving started by pid 24
+24:C 20 Jan 2026 18:28:33.035 * DB saved on disk
+24:C 20 Jan 2026 18:28:33.035 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+1:M 20 Jan 2026 18:28:33.119 * Background saving terminated with success
+1:M 20 Jan 2026 19:59:54.067 * 1 changes in 3600 seconds. Saving...
+1:M 20 Jan 2026 19:59:54.067 * Background saving started by pid 25
+25:C 20 Jan 2026 19:59:54.078 * DB saved on disk
+25:C 20 Jan 2026 19:59:54.079 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+1:M 20 Jan 2026 19:59:54.168 * Background saving terminated with success
+1:signal-handler (1768944336) Received SIGTERM scheduling shutdown...
+1:M 20 Jan 2026 21:25:36.272 * User requested shutdown...
+1:M 20 Jan 2026 21:25:36.272 * Saving the final RDB snapshot before exiting.
+1:M 20 Jan 2026 21:25:36.284 * DB saved on disk
+1:M 20 Jan 2026 21:25:36.284 # Redis is now ready to exit, bye bye...
+1:C 21 Jan 2026 13:28:07.864 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+1:C 21 Jan 2026 13:28:07.864 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+1:C 21 Jan 2026 13:28:07.864 * Redis version=7.4.7, bits=64, commit=00000000, modified=0, pid=1, just started
+1:C 21 Jan 2026 13:28:07.864 * Configuration loaded
+1:M 21 Jan 2026 13:28:07.865 * Increased maximum number of open files to 10032 (it was originally set to 1024).
+1:M 21 Jan 2026 13:28:07.865 * monotonic clock: POSIX clock_gettime
+1:M 21 Jan 2026 13:28:07.866 * Running mode=standalone, port=6379.
+1:M 21 Jan 2026 13:28:07.866 * Server initialized
+1:M 21 Jan 2026 13:28:07.866 * Loading RDB produced by version 7.4.7
+1:M 21 Jan 2026 13:28:07.866 * RDB age 57751 seconds
+1:M 21 Jan 2026 13:28:07.866 * RDB memory usage when created 1.03 Mb
+1:M 21 Jan 2026 13:28:07.866 * Done loading RDB, keys loaded: 21, keys expired: 0.
+1:M 21 Jan 2026 13:28:07.867 * DB loaded from disk: 0.000 seconds
+1:M 21 Jan 2026 13:28:07.867 * Ready to accept connections tcp

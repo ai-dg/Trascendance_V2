@@ -46,12 +46,6 @@ export class GameManager {
         if (this.onKeyUp)
             window.removeEventListener('keyup', this.onKeyUp);
     }
-    static requestGameID(type) {
-        console.log(type);
-        if (!gameSocket)
-            throw Error("gameSocket is not ready");
-        gameSocket.emit("game-request", { type });
-    }
     //////////////////////////////////////////
     ///////////// GETTERS ////////////////////
     /////////////////////////////////////////
@@ -114,6 +108,11 @@ export class GameManager {
     //////////////////////////////////////////
     ///// SEND ACTIONS TO THE BACKEND //////
     /////////////////////////////////////////
+    static requestGameID(type) {
+        if (!gameSocket)
+            throw Error("gameSocket is not ready");
+        gameSocket.emit("game-request", { type });
+    }
     setReady() {
         if (this.isReady)
             return;
