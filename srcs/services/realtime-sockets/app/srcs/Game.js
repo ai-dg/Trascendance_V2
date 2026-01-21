@@ -169,10 +169,26 @@ export class Game {
     this.ball.update();
     this.ball.checkWallCollision();
 
-    if (this.paddle1.checkCollisionWithBall(this.ball) ||
-        this.paddle2.checkCollisionWithBall(this.ball)) {
-      this.ball.reverseX();
-      this.ball.addRandomYVelocity();
+    // Check paddle1 collision (left paddle)
+    if (this.paddle1.checkCollisionWithBall(this.ball)) {
+      // Only reverse if ball is moving towards the paddle
+      if (this.ball.velocityX < 0) {
+        this.ball.reverseX();
+        this.ball.addRandomYVelocity();
+        // Push ball out of paddle to prevent sticking
+        this.ball.x = this.paddle1.x + this.paddle1.width;
+      }
+    }
+
+    // Check paddle2 collision (right paddle)
+    if (this.paddle2.checkCollisionWithBall(this.ball)) {
+      // Only reverse if ball is moving towards the paddle
+      if (this.ball.velocityX > 0) {
+        this.ball.reverseX();
+        this.ball.addRandomYVelocity();
+        // Push ball out of paddle to prevent sticking
+        this.ball.x = this.paddle2.x - this.ball.size;
+      }
     }
 
     const outOfBounds = this.ball.checkOutOfBounds();
