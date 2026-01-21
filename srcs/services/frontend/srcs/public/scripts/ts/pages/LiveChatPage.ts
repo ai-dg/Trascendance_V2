@@ -3,12 +3,13 @@ import type { User } from '../modules/TypesManager.js';
 import type { LanguageManager } from '../modules/LangManager.js';
 import type { RouterManager } from '../modules/RouterManager.js';
 import { Socket } from "socket.io-client";
+import type { WebsocketManager } from '../modules/WebsocketManager.js';
 
 export class LiveChatPage {
     private uiManager: UIManager;
     private routerManager: RouterManager;
     private languageManager: LanguageManager;
-    private generalSocket: Socket | null;
+    private wsManager: WebsocketManager | null = null;
     private onBack: () => void;
     private friendRequests: Map<number, {senderId: number, message: string, element: HTMLElement}> = new Map();
     private currentUser: User | null = null;
@@ -19,14 +20,14 @@ export class LiveChatPage {
         uiManager: UIManager,
         routerManager: RouterManager,
         languageManager: LanguageManager,
-        generalSocket: Socket | null,
+        wsManager: WebsocketManager | null,
         onBack: () => void,
         currentUser: User | null
     ) {
         this.uiManager = uiManager;
         this.routerManager = routerManager;
         this.languageManager = languageManager;
-        this.generalSocket = generalSocket;
+        this.wsManager = wsManager;
         this.onBack = onBack;
         this.currentUser = currentUser;
     }
@@ -34,6 +35,15 @@ export class LiveChatPage {
     private t(key: string): string {
         return this.languageManager.t(key);
     }
+
+    public setWebsocketManager(manager: WebsocketManager) : void {
+        this.wsManager = manager;
+
+        const errorMessageDiv = document.getElementById('error-message-div') as HTMLElement;
+        const friendInput = document.getElementById('friend-input') as HTMLInputElement;
+        
+        this.setupSocketListeners(errorMessageDiv, friendInput);
+  }
 
 
     public render(user: User | null): void {
@@ -134,10 +144,12 @@ export class LiveChatPage {
         const addFriendDiv = this.uiManager.createElement('div', 'flex flex-col gap-2 mt-2 hidden');
         const friendInput = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black') as HTMLInputElement;
         friendInput.placeholder = 'Username';
+        friendInput.id = 'friend-input';
         const sendFriendBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-black rounded');
         sendFriendBtn.textContent = 'Send';
 
         const errorMessageDiv = this.uiManager.createElement('div', 'hidden text-red-500 text-sm mt-2');
+        errorMessageDiv.id = 'error-message-div';
 
         addFriendDiv.appendChild(friendInput);
         addFriendDiv.appendChild(sendFriendBtn);
@@ -322,7 +334,7 @@ export class LiveChatPage {
     }
 
     private async setupSocketListeners(errorMessageDiv: HTMLElement, friendInput: HTMLInputElement): Promise<void> {
-        if (!this.generalSocket) {
+        if (!this.wsManager) {
             console.log("No generalSocket available");
             return;
         }
@@ -342,20 +354,39 @@ export class LiveChatPage {
             console.log(`Loaded ${data.requests.length} pending friend requests on socket setup`);
         }
 
-        this.generalSocket.off('notifications');
+        this.wsManager.offGeneral('notifications');
 
-        this.generalSocket.on('notifications', (data) => {
+        this.wsManager.onGeneral('notifications', (data) => {
             console.log("Received notification:", data);
             
-            if (data.type === 'friend-request') {
-                this.addFriendRequestNotification(
-                    data.senderId,
-                    data.message
-                );
+            switch (data.type) {
+                case 'friend-request':
+                    this.addFriendRequestNotification(
+                        data.senderId,
+                        data.message
+                    );
+                    break;
+
+                case 'friend-request-accepted':
+                    if (this.currentUser) {
+                        this.loadFriendsList(this.currentUser.id);
+                    }
+                    break;
+
+                case 'friend-removed':
+                    if (this.currentUser) {
+                        this.loadFriendsList(this.currentUser.id);
+                    }
+                    break;
+                
+                case 'clear-notification':
+                    this.removeFriendRequestNotification(data.senderId);
+                    break;
+
+                default:
+                    console.warn("Unknown notification type:", data.type);
+                    break;
             }
-
-            // if (data.type === 'friend-request-response') {
-
 
         });
     }
@@ -392,7 +423,7 @@ export class LiveChatPage {
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ senderId, action: 'accept' })
+                    body: JSON.stringify({ senderId: senderId, action: 'accept' })
                 });
             } catch (error) {
                 console.error("Error accepting friend request:", error);
@@ -409,7 +440,7 @@ export class LiveChatPage {
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ senderId, action: 'reject' })
+                    body: JSON.stringify({ senderId: senderId, action: 'reject' })
                 });
             } catch (error) {
                 console.error("Error rejecting friend request:", error);

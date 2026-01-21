@@ -1,17 +1,24 @@
 export class LiveChatPage {
-    constructor(uiManager, routerManager, languageManager, generalSocket, onBack, currentUser) {
+    constructor(uiManager, routerManager, languageManager, wsManager, onBack, currentUser) {
+        this.wsManager = null;
         this.friendRequests = new Map();
         this.currentUser = null;
         this.currentSelectedFriend = null;
         this.uiManager = uiManager;
         this.routerManager = routerManager;
         this.languageManager = languageManager;
-        this.generalSocket = generalSocket;
+        this.wsManager = wsManager;
         this.onBack = onBack;
         this.currentUser = currentUser;
     }
     t(key) {
         return this.languageManager.t(key);
+    }
+    setWebsocketManager(manager) {
+        this.wsManager = manager;
+        const errorMessageDiv = document.getElementById('error-message-div');
+        const friendInput = document.getElementById('friend-input');
+        this.setupSocketListeners(errorMessageDiv, friendInput);
     }
     render(user) {
         console.log("live-chat for:", user);
@@ -91,9 +98,11 @@ export class LiveChatPage {
         const addFriendDiv = this.uiManager.createElement('div', 'flex flex-col gap-2 mt-2 hidden');
         const friendInput = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black');
         friendInput.placeholder = 'Username';
+        friendInput.id = 'friend-input';
         const sendFriendBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-black rounded');
         sendFriendBtn.textContent = 'Send';
         const errorMessageDiv = this.uiManager.createElement('div', 'hidden text-red-500 text-sm mt-2');
+        errorMessageDiv.id = 'error-message-div';
         addFriendDiv.appendChild(friendInput);
         addFriendDiv.appendChild(sendFriendBtn);
         addFriendDiv.appendChild(errorMessageDiv);
@@ -248,7 +257,7 @@ export class LiveChatPage {
         }
     }
     async setupSocketListeners(errorMessageDiv, friendInput) {
-        if (!this.generalSocket) {
+        if (!this.wsManager) {
             console.log("No generalSocket available");
             return;
         }
@@ -263,13 +272,30 @@ export class LiveChatPage {
             });
             console.log(`Loaded ${data.requests.length} pending friend requests on socket setup`);
         }
-        this.generalSocket.off('notifications');
-        this.generalSocket.on('notifications', (data) => {
+        this.wsManager.offGeneral('notifications');
+        this.wsManager.onGeneral('notifications', (data) => {
             console.log("Received notification:", data);
-            if (data.type === 'friend-request') {
-                this.addFriendRequestNotification(data.senderId, data.message);
+            switch (data.type) {
+                case 'friend-request':
+                    this.addFriendRequestNotification(data.senderId, data.message);
+                    break;
+                case 'friend-request-accepted':
+                    if (this.currentUser) {
+                        this.loadFriendsList(this.currentUser.id);
+                    }
+                    break;
+                case 'friend-removed':
+                    if (this.currentUser) {
+                        this.loadFriendsList(this.currentUser.id);
+                    }
+                    break;
+                case 'clear-notification':
+                    this.removeFriendRequestNotification(data.senderId);
+                    break;
+                default:
+                    console.warn("Unknown notification type:", data.type);
+                    break;
             }
-            // if (data.type === 'friend-request-response') {
         });
     }
     async addFriendRequestNotification(senderId, message) {
@@ -298,7 +324,7 @@ export class LiveChatPage {
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ senderId, action: 'accept' })
+                    body: JSON.stringify({ senderId: senderId, action: 'accept' })
                 });
             }
             catch (error) {
@@ -315,7 +341,7 @@ export class LiveChatPage {
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ senderId, action: 'reject' })
+                    body: JSON.stringify({ senderId: senderId, action: 'reject' })
                 });
             }
             catch (error) {

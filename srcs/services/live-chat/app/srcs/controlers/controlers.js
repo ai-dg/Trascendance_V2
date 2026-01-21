@@ -332,7 +332,7 @@ export async function block_friend_route(request, reply) {
             await redis.publish('notifications', JSON.stringify({
                 targetUserId: userId,
                 event: 'friend-blocked',
-                payload: { friendId}
+                payload: { friendId }
             }));
             return reply.code(200).send({ 
                 success: true, 

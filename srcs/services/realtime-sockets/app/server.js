@@ -40,7 +40,6 @@ export const app = Fastify({trustProxy: true, https: httpsOptions});
 let socketio = null;
 
 /* Redis Client Setup */
-
 export const redis = createClient({
     socket: {
         host: process.env.REDIS_HOST,
@@ -53,7 +52,6 @@ export const subscriber = redis.duplicate();
 
 await redis.connect();
 await subscriber.connect();
-
 /* End Redis Client Setup */
 
 await app.register(cookie, {
@@ -81,7 +79,7 @@ const io = new Server(app.server, {
 
 console.log("✅ Socket.IO server created");
 
-
+// Subscribe to Redis notifications
 await subscriber.subscribe('notifications', (message) => {
     const { targetUserId, event, payload } = JSON.parse(message);
     
@@ -92,49 +90,72 @@ await subscriber.subscribe('notifications', (message) => {
     }
 });
 
+await subscriber.subscribe('game-updates', (message) => {
+	const data = JSON.parse(message);
+	const gameUUID = data.gameUUID || data.uuid;
+	io.of('/game').to(`game-${gameUUID}`).emit('game-update', data);
+});
+
+// Socket authentication middleware
+function parseCookie(cookieString, name) {
+  const cookies = cookieString.split(';').map(c => c.trim());
+  const cookie = cookies.find(c => c.startsWith(`${name}=`));
+  return cookie ? cookie.split('=')[1] : null;
+}
+
+async function socketAuthMiddleware(socket, next) {
+  try {
+
+	const cookies = socket.handshake.headers.cookie;    
+	if (!cookies) {
+		   console.log("E")
+	  return next(new Error('No cookies'));
+	}
+	const token = parseCookie(cookies, 'token');
+	
+	if (!token) {
+		   console.log("D")
+	  return next(new Error('No token'));
+	}
+
+	const val = jwt.decode(token, process.env.JWT_SECRET);
+	
+	if (!val || !val.jti) {
+		   console.log("C")
+	  return next(new Error('Invalid token'));
+	}
+	
+	const exists = await redis.get(`jwt:${val.jti}`);
+	
+	if (!exists || exists === "not valid") {
+	   console.log("B")
+	  return next(new Error('Token not valid in Redis'));
+	}
+	
+	const payload = jwt.verify(token, process.env.JWT_SECRET);
+	
+	socket.userId = payload.user_id || payload.id;
+	socket.user = payload;
+	console.log("payload : ", payload)
+	console.log("A")
+	next();
+	
+  } catch (err) {
+	console.error('Auth error:', err);
+	next(new Error('Authentication failed'));
+  }
+}
 
 // Socket.IO authentication middleware
 io.use(async (socket, next) => {
-	try {
-		const cookies = socket.handshake.headers.cookie;
-		if (!cookies) {
-			console.log("No cookies found");
-			throw new Error('No cookies');
-		}
-		
-		const tokenMatch = cookies.match(/token=([^;]+)/);
-		if (!tokenMatch) {
-			console.log("No token found");
-			throw new Error('No token');
-		}
-		
-		const token = tokenMatch[1];
-		const val = jwt.decode(token, process.env.JWT_SECRET);
-		
-		if (!val || !val.jti) {
-			console.log("Invalid token structure");
-			return next(new Error('Invalid token'));
-		}
-		
-		const exists = await redis.get(`jwt:${val.jti}`);
-		if (!exists || exists === "not valid") {
-			console.log("Token not valid in Redis");
-			return next(new Error('Token not valid'));
-		}
-		
-		const payload = jwt.verify(token, process.env.JWT_SECRET);
-		console.log("✅ User authenticated:", payload);
-		socket.user = payload;
-		next();
-		} catch (err) {
-			console.error('Auth error:', err);
-			next(new Error('Unauthorized'));
-		}
+	socketAuthMiddleware(socket, next).catch(err => {
+		next(new Error('Authentication middleware error'));
+	});
 });
 
 io.on('connection', async (socket) => {
 	console.log("🎯 Socket.IO client connected");
-	const userId = socket.user.user_id || socket.user.id || socket.user.sub;
+	const userId = socket.userId;
 	console.log("User ID:", userId);
 	if (!userId) {
 		console.error("❌ No user ID found in token!");
@@ -166,25 +187,33 @@ io.on('connection', async (socket) => {
 });
 
 const gameNamespace = io.of('/game');
-
 gameNamespace.use(socketAuthMiddleware);
+gameNamespace.on('connection', (socket) => setupGeneralGameSocket(socket));
 
-gameNamespace.on('connection',  (socket) => setupGeneralGameSocket(socket));
+function setupGeneralGameSocket(socket) {
+	const userId = socket.userId;
+	console.log('✅ Utilisateur authentifié:', userId);
+	socket.emit("welcome", {message : "welcome in the game !", userId: userId, user: socket.user})
+	socket.join(`user-${userId}`);
 
+	socket.on("request-game-uid", (data) => requestGameUID(socket, data) );
 
+	socket.on("join-game", (data) => {
+		console.log("Joining game : ", data);
+		socket.join(`game-${data.UUID}`);
+		socket.emit("joined-game", {UUID: data.UUID});
+	});
 
-function setupSocketIO(){
-	const io = socketio;
-	io.of('/general').use(socketAuthMiddleware)
-	io.of('/general').on('connection',  (socket) => setupGeneralGameSocket(socket));
-}
+	socket.on("new-game", (data) => newGameSocket(socket, data) );
+	socket.on("paddle-move", (data) => {
+		console.log("Paddle move data : ", data);
+		redis.publish(`game-input-${data.UUID}`, JSON.stringify({
+			gameUUID: data.UUID,
+			userId: userId,
+			position: data.position
+		}));
 
-function setupGeneralGameSocket(socket){
-	console.log('✅ Utilisateur authentifié:', socket.userId);
-	socket.emit("welcome", {message : "welcome in the game !", userId: socket.userId, user: socket.user})
-	socket.broadcast.emit("user-joined", {userId: socket.id});
-	socket.on("new-game", (data) => newGameSocket(socket, data))
-	socket.on("game-request", (data) => requestGameUID(socket, data))
+	});
 }
 
 function requestGameUID(socket, data){
@@ -225,68 +254,11 @@ function newGameSocket(socket, data){
 	console.log("data : ", data);
 }
 
-async function socketAuthMiddleware(socket, next) {
-  try {
-
-    const cookies = socket.handshake.headers.cookie;    
-    if (!cookies) {
-		   console.log("E")
-      return next(new Error('No cookies'));
-    }
-    const token = parseCookie(cookies, 'token');
-    
-    if (!token) {
-		   console.log("D")
-      return next(new Error('No token'));
-    }
-
-    const val = jwt.decode(token, process.env.JWT_SECRET);
-    
-    if (!val || !val.jti) {
-		   console.log("C")
-      return next(new Error('Invalid token'));
-    }
-    
-    const exists = await redis.get(`jwt:${val.jti}`);
-    
-    if (!exists || exists === "not valid") {
-	   console.log("B")
-      return next(new Error('Token not valid in Redis'));
-    }
-    
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    
-    socket.userId = payload.user_id;
-    socket.user = payload.pseudo;
-	console.log("payload : ", payload)
-    console.log("A")
-    next();
-    
-  } catch (err) {
-    console.error('Auth error:', err);
-    next(new Error('Authentication failed'));
-  }
-}
-
-
-function parseCookie(cookieString, name) {
-  const cookies = cookieString.split(';').map(c => c.trim());
-  const cookie = cookies.find(c => c.startsWith(`${name}=`));
-  return cookie ? cookie.split('=')[1] : null;
-}
 
 const start = async () => {
 	try {
 		console.log(app.printRoutes());
 		 await app.listen({ port: 3003, host: '0.0.0.0' });
-
-		// socketio = new Server(app.server, {
-		// path: '/socket.io/',
-		// cors: { origin: true, credentials: true }
-		// });
-
-		// console.log('Socket.IO path:', '/socket.io/');
-		// setupSocketIO();
 		console.log('✅ Remote-player service running on port 3003 with Socket.IO');
 	} catch (err) {
 		console.error(err);
