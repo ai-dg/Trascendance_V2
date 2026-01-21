@@ -122,32 +122,27 @@ async function socketAuthMiddleware(socket, next) {
   try {
 
     const cookies = socket.handshake.headers.cookie;    
-	// Pour nathalia : Avant que je change les cookies pour les guests, c'etait comme ca
-	// Tu me diras si c'est ok pour toi
+	// Pour nathalia : Avant que je change les cookies pour les guest, c'etait comme la partie grisee
+
+	if (!cookies) {
+	  socket.userId = `guest:${socket.id}`;
+	  socket.user = "Guest";
+	  return next();
+	}
 
     // if (!cookies) {
 	// 	   console.log("E")
     //   return next(new Error('No cookies'));
     // }
-    // const token = parseCookie(cookies, 'token');
+
+    const token = parseCookie(cookies, 'token');
     
     // if (!token) {
 	// 	   console.log("D")
     //   return next(new Error('No token'));
     // }
-
-	//GUEST
-   
-    if (!cookies) {
-      // Allow guests for game sockets
-      socket.userId = `guest:${socket.id}`;
-      socket.user = "Guest";
-      return next();
-    }
-    const token = parseCookie(cookies, 'token');
     
     if (!token) {
-      // Allow guests for game sockets
       socket.userId = `guest:${socket.id}`;
       socket.user = "Guest";
       return next();
