@@ -43,7 +43,7 @@ export class LiveChatPage {
         const friendInput = document.getElementById('friend-input') as HTMLInputElement;
         
         this.setupSocketListeners(errorMessageDiv, friendInput);
-  }
+    }
 
 
     public render(user: User | null): void {

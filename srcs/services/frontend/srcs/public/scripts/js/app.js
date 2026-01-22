@@ -9,11 +9,7 @@ import { CheckManager } from './modules/CheckManager.js';
 import { LanguageManager } from './modules/LangManager.js';
 // Pages
 import { AuthPage } from './pages/AuthPage.js';
-<<<<<<< HEAD
-import { GuestPage } from './pages/GuestPage.js';
 import { WebsocketManager } from './modules/WebsocketManager.js';
-=======
->>>>>>> rbalazs
 import { MenuPage } from './pages/MenuPage.js';
 import { GamePageLocal } from './pages/GameLocalPage.js';
 import { RemotePage } from './pages/GameRemotePage.js';
@@ -88,7 +84,6 @@ export class App {
         await this.languageManager.init();
         if (this.currentUser) {
             this.currentPage = 'menu';
-<<<<<<< HEAD
             const wsManager = WebsocketManager.getInstance();
             wsManager.init(window.location.origin);
             if (this.currentUser && !this.currentUser.isGuest) {
@@ -96,16 +91,6 @@ export class App {
                 this.liveChatPage.setWebsocketManager(wsManager);
             }
             // this.gamePageOnline.setWebsocketManager(wsManager);
-=======
-            this.generalSocket = await this.initSocket('/live-chat/general');
-            console.log(this.generalSocket);
-            gameSocket = await this.initSocketAlt('/realtime-sockets', '/general');
-            console.log(gameSocket);
-            if (!this.currentUser.isGuest) {
-                this.generalSocket = await this.initSocket('/live-chat/general');
-                console.log(this.generalSocket);
-            }
->>>>>>> rbalazs
         }
         this.render();
     }
@@ -172,57 +157,6 @@ export class App {
     /**********************************************************************************************/
     /**************************************** SOCKET MANAGEMENT ***********************************/
     /**********************************************************************************************/
-<<<<<<< HEAD
-=======
-    /**
-     * Initialize socket connection for general purposes (chat, etc.)
-     */
-    async initSocket(endpoint, handle = console.log) {
-        // const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        // // socket.io automatically handles http/ws
-        // const socket = io(`${protocol}://${window.location.host}${endpoint}`, {
-        //     transports: ['websocket'], // optional, force WS only
-        // });
-        const socket = io({ path: "/socket.io/", transports: ['websocket', 'polling'] });
-        socket.on("connect", () => {
-            console.log("✅ Connected to socket.io", endpoint);
-        });
-        socket.on("connect_error", (err) => {
-            console.error("❌ socket.io connection error", err);
-        });
-        // generic message handler (if server uses socket.emit('message', ...))
-        socket.on("message", (msg) => {
-            console.log("📩 Raw message received:", msg);
-            handle(msg);
-        });
-        return socket;
-    }
-    /**
-     * Initialize socket connection for game-related events (remote players)
-     */
-    async initSocketAlt(path, namespace) {
-        const endpoint = `${path}${namespace}`;
-        const sock = io(`${window.location.origin}${namespace}`, {
-            path: `${path}/socket.io/`, transports: ['polling']
-        });
-        sock.on('connect', () => console.log("✅ Connected to socket.io", endpoint));
-        sock.on('connect_error', (err) => console.error('❌ Erreur:', err));
-        sock.on('welcome', (data) => console.log(data));
-        sock.on('new-game', (data) => {
-            console.log('new-game received:', data);
-            if (this.currentPage === 'game-online') {
-                this.gamePageOnline.setupGame(data);
-            }
-            else if (this.currentPage === 'game-local') {
-                this.gamePageLocal.setupGame(data);
-            }
-            else if (this.currentPage === 'game-ai') {
-                this.gamePageAI.setupGame(data);
-            }
-        });
-        return sock;
-    }
->>>>>>> rbalazs
     /**********************************************************************************************/
     /**************************************** RENDERING *******************************************/
     /**********************************************************************************************/
@@ -421,12 +355,12 @@ export class App {
         //   avatar: 'default.png',
         //   isGuest: true
         // };
-        // // Init game socket for guests
-        if (!gameSocket) {
-            this.initSocketAlt('/realtime-sockets', '/general')
-                .then((sock) => { gameSocket = sock; })
-                .catch((err) => console.error("Guest game socket init failed:", err));
-        }
+        // Init game socket for guests
+        // if (!gameSocket) {
+        //   this.initSocketAlt('/realtime-sockets', '/general')
+        //     .then((sock) => { gameSocket = sock; })
+        //     .catch((err) => console.error("Guest game socket init failed:", err));
+        // }
         this.routerManager.navigateTo('menu');
     }
     /**
