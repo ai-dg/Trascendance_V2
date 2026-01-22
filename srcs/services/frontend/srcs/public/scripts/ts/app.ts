@@ -25,6 +25,8 @@ import { CheckOtp } from './pages/CheckOtp.js';
 import { SettingsPage } from './pages/SettingsPage.js';
 import { UpdateProfilePage } from './pages/UpdateProfilePage.js';
 import { LiveChatPage } from './pages/LiveChatPage.js';
+import { GuestPage } from './pages/GuestPage.js';
+
 
 // Socket.io
 declare const io: any;
@@ -66,6 +68,7 @@ export class App {
   private settingsPage!: SettingsPage;
   private updateProfilePage: UpdateProfilePage;
   private liveChatPage: LiveChatPage;
+  private guestPage: GuestPage;
 
   /**********************************************************************************************/
   /**************************************** CONSTRUCTOR ****************************************/
@@ -90,7 +93,6 @@ export class App {
     this.checkManager = new CheckManager(this.languageManager);
 
 
-
     // Initialize pages
     this.authPage = new AuthPage(
       this.uiManager, 
@@ -101,7 +103,7 @@ export class App {
       this.handleRegister.bind(this), 
       this.appHandleForgotPassword.bind(this), 
       this.handleChangePassword.bind(this), 
-      this.handleShowGuestPage.bind(this), 
+      this.handleShowGuestPage.bind(this),
       this.handleError.bind(this)
     );
     this.menuPage = new MenuPage(
@@ -125,6 +127,11 @@ export class App {
       this.uiManager,
       this.handleBackToMenu.bind(this),
       this.currentUser
+    );
+    this.guestPage = new GuestPage(
+      this.uiManager,
+      this.handleBackToAuth.bind(this),
+      this.handleConnectAsGuest.bind(this)
     );
     this.checkOtpPage = new CheckOtp(
       this.uiManager, 
@@ -302,6 +309,9 @@ export class App {
           this.menuPage.render(this.currentUser);
         });
         break;
+      case 'guest':
+        this.guestPage.render();
+        break;
       case 'game-ai':
         this.gamePageAI.render();
         break;
@@ -385,6 +395,7 @@ export class App {
     }
   }
 
+
   /**
    * Handle forgot password request
    */
@@ -460,6 +471,26 @@ export class App {
     this.authPage.showError(error);
   }
 
+  /**
+   * Handle play as guest
+   */
+  private handleConnectAsGuest(nickname: string, avatar: string): void {
+    // Create a guest user object
+    this.currentUser = {
+      id: 'guest_' + Date.now(),
+      username: nickname,
+      email: '',
+      avatar: avatar,
+      isGuest: true
+    };
+
+    localStorage.setItem('guestNickname', nickname);
+    localStorage.setItem('guestAvatar', avatar);
+    
+    console.log('Playing as guest:', nickname, 'with avatar:', avatar);
+    this.routerManager.navigateTo('menu');
+  }
+
   /**********************************************************************************************/
   /**************************************** NAVIGATION HANDLERS ********************************/
   /**********************************************************************************************/
@@ -479,24 +510,10 @@ export class App {
   }
 
   /**
-   * Navigate to guest page
+   * Handle play as guest
    */
   private handleShowGuestPage(): void {
-    // this.currentUser = {
-    //   id: 'guest_' + Date.now(),
-    //   username: 'Guest',
-    //   email: 'guest@guest.com',
-    //   avatar: 'default.png',
-    //   isGuest: true
-    // };
-
-    // Init game socket for guests
-    // if (!gameSocket) {
-    //   this.initSocketAlt('/realtime-sockets', '/general')
-    //     .then((sock) => { gameSocket = sock; })
-    //     .catch((err) => console.error("Guest game socket init failed:", err));
-    // }
-    this.routerManager.navigateTo('menu');
+    this.routerManager.navigateTo('guest');
   }
 
   /**

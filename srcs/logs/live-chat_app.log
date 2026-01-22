@@ -1,4 +1,9 @@
 Connected to Redis
-✅ Socket.IO server created
 Live-chat db ready
 live-chat service running on port 3002
+Fetching pending requests
+🔍 Loading pending requests for user: 29
+Found pending requests from DB: []
+Fetching pending requests
+🔍 Loading pending requests for user: 29
+Found pending requests from DB: []
