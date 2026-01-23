@@ -9,6 +9,7 @@ import { CheckManager } from './modules/CheckManager.js';
 import { LanguageManager } from './modules/LangManager.js';
 // Pages
 import { AuthPage } from './pages/AuthPage.js';
+import { GuestPage } from './pages/GuestPage.js';
 import { WebsocketManager } from './modules/WebsocketManager.js';
 import { MenuPage } from './pages/MenuPage.js';
 import { GamePageLocal } from './pages/GameLocalPage.js';
@@ -89,10 +90,22 @@ export class App {
             const wsManager = WebsocketManager.getInstance();
             wsManager.init(window.location.origin);
             if (this.currentUser && !this.currentUser.isGuest) {
-                // this.menuPage.setWebsocketManager(wsManager);
                 this.liveChatPage.setWebsocketManager(wsManager);
             }
-            // this.gamePageOnline.setWebsocketManager(wsManager);
+            // Store game socket reference globally for compatibility
+            gameSocket = wsManager.gameSocket;
+
+            // Setup new-game listener
+            wsManager.onGame('new-game', (data) => {
+                console.log('new-game event received:', data);
+                if (this.currentPage === 'game-ai') {
+                    this.gamePageAI.setupGame(data);
+                } else if (this.currentPage === 'game-local') {
+                    this.gamePageLocal.setupGame(data);
+                } else if (this.currentPage === 'game-online') {
+                    this.gamePageOnline.setupGame(data);
+                }
+            });
         }
         this.render();
     }
@@ -370,6 +383,23 @@ export class App {
      * Handle play as guest
      */
     handleShowGuestPage() {
+        // Initialize WebsocketManager for guest users
+        if (!gameSocket) {
+            const wsManager = WebsocketManager.getInstance();
+            wsManager.init(window.location.origin);
+            gameSocket = wsManager.gameSocket;
+
+            // Setup new-game listener for guests
+            wsManager.onGame('new-game', (data) => {
+                console.log('Guest new-game event received:', data);
+                if (this.currentPage === 'game-ai') {
+                    this.gamePageAI.setupGame(data);
+                } else if (this.currentPage === 'game-local') {
+                    this.gamePageLocal.setupGame(data);
+                }
+            });
+            console.log('Guest game socket initialized');
+        }
         this.routerManager.navigateTo('guest');
     }
     /**

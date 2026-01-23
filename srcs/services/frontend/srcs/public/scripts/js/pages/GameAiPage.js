@@ -59,9 +59,9 @@ export class AIPage {
         startOverlay.setAttribute('data-overlay', 'start-game');
         const startContent = this.uiManager.createElement('div', 'text-center retro-text');
         const startTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'CHOOSE DIFFICULTY');
-        const startButtonEasy = this.uiManager.createButton('EASY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
-        const startButtonMedium = this.uiManager.createButton('MEDIUM', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
-        const startButtonHard = this.uiManager.createButton('HARD', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
+        const startButtonEasy = this.uiManager.createButton('EASY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.startWithDifficulty('easy'));
+        const startButtonMedium = this.uiManager.createButton('MEDIUM', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.startWithDifficulty('medium'));
+        const startButtonHard = this.uiManager.createButton('HARD', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.startWithDifficulty('hard'));
         startContent.appendChild(startTitle);
         startContent.appendChild(startButtonEasy);
         startContent.appendChild(this.uiManager.createElement('div', 'h-4'));
@@ -118,27 +118,28 @@ export class AIPage {
         container.appendChild(content);
         this.uiManager.clear();
         this.uiManager.container.appendChild(container);
-        // Initialize game manager
-        if (this.canvas)
-            this.requestNewGame();
+        // Don't request game here - wait for user to select difficulty
+    }
+    startWithDifficulty(difficulty) {
+        // Hide overlay immediately for responsiveness
+        const startOverlay = document.querySelector('[data-overlay="start-game"]');
+        if (startOverlay) {
+            startOverlay.classList.add('hidden');
+        }
+        // Request game with selected difficulty
+        GameManager.requestGameID("ai", { difficulty });
     }
     requestNewGame() {
+        // Called by PLAY AGAIN button - show difficulty selection
         const gameOverOverlay = document.querySelector('[data-overlay="game-over"]');
         const startOverlay = document.querySelector('[data-overlay="start-game"]');
         if (gameOverOverlay) {
             gameOverOverlay.classList.add('hidden');
+        }
+        if (startOverlay) {
             startOverlay.classList.remove('hidden');
         }
-        GameManager.requestGameID("ai");
-    }
-    setReady() {
-        if (this.gameManager) {
-            this.gameManager.setReady();
-            const startOverlay = document.querySelector('[data-overlay="start-game"]');
-            if (startOverlay) {
-                startOverlay.classList.add('hidden');
-            }
-        }
+        // Don't request game here - wait for difficulty selection
     }
     setupGame(data) {
         console.log("should work here in setupGame");
@@ -147,6 +148,8 @@ export class AIPage {
         this.gameManager = new GameManager(this.canvas, data.UUID);
         this.setupGameListeners();
         console.log(data.UUID, this.gameManager);
+        // Auto-ready for AI mode (player already selected difficulty)
+        this.gameManager.setReady();
     }
     setupGameListeners() {
         if (!this.gameManager)

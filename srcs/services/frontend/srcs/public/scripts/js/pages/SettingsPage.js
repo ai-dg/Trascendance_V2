@@ -213,6 +213,7 @@ export class SettingsPage {
             { code: "en", flag: "🇬🇧" },
             { code: "fr", flag: "🇫🇷" },
             { code: "pt", flag: "🇧🇷" },
+            { code: "et", flag: "🇪🇪" },
         ];
         const currentLangCode = this.languageManager.getCurrentLang();
         let currentLangIndex = languages.findIndex(l => l.code === currentLangCode);
