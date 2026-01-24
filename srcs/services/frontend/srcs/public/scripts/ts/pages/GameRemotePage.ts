@@ -100,6 +100,15 @@ export class RemotePage {
 	
 	canvasContainer.appendChild(startOverlay);
 	
+	// Pause Game Overlay
+	const pauseOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg hidden');
+	pauseOverlay.setAttribute('data-overlay', 'pause-game');
+	const pauseContent = this.uiManager.createElement('div', 'text-center retro-text');
+	const pauseTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'PAUSED');
+	pauseContent.appendChild(pauseTitle);
+	pauseOverlay.appendChild(pauseContent);
+	canvasContainer.appendChild(pauseOverlay);
+
 	// Game Over Overlay
 	const gameOverOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg hidden');
 	gameOverOverlay.setAttribute('data-overlay', 'game-over');
@@ -132,12 +141,12 @@ export class RemotePage {
 	controls.appendChild(player1Controls);
 	
 	// Buttons Pause & Reset
-	const gameControls = this.uiManager.createElement('div', 'flex gap-4');
-	const pauseButton = this.uiManager.createButton(
-		'PAUSE',
-		'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200',
-		() => this.pauseGame()
-	);
+    const gameControls = this.uiManager.createElement('div', 'flex gap-4');
+    const pauseButton = this.uiManager.createButton(
+      'PAUSE / RESUME',
+      'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200',
+      () => this.pauseGame()
+    );
 	const resetButton = this.uiManager.createButton(
 		'RESTART',
 		'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200',
@@ -145,18 +154,18 @@ export class RemotePage {
 	);
 
 	// Back to Menu Button
-	const backButtonContainer = this.uiManager.createElement('div', 'text-center mb-8');
-	const backButton = this.uiManager.createButton(
-	  'BACK TO MENU',
-	  'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mx-auto mt-4',
-	  this.onBack
-	);
-	const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
-	backButton.appendChild(backIcon);
-	backButtonContainer.appendChild(backButton);
-	
-	gameControls.appendChild(pauseButton);
-	gameControls.appendChild(resetButton);
+    const backButtonContainer = this.uiManager.createElement('div', 'text-center mb-8');
+    const backButton = this.uiManager.createButton(
+      'BACK TO MENU',
+      'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mx-auto mt-4',
+      () => this.backToMenu()
+    );
+    const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
+    backButton.appendChild(backIcon);
+    backButtonContainer.appendChild(backButton);
+
+    gameControls.appendChild(pauseButton);
+    gameControls.appendChild(resetButton);
 	
 	// Game Container
 	const gameContainer = this.uiManager.createElement('div', 'flex flex-col items-center gap-6');
@@ -182,7 +191,10 @@ export class RemotePage {
   }
 
 
-  //////////// GAME LOGIC //////////---
+  //////////////////////////////////////////////
+  ///////////// GAME INITIALIZATION ////////////
+  //////////////////////////////////////////////
+
   private requestNewGame(): void{
 	const gameOverOverlay = document.querySelector('[data-overlay="game-over"]') as HTMLElement;
 	const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
@@ -192,16 +204,6 @@ export class RemotePage {
 	}
 	GameManager.requestGameID("remote")
   }
-
-  private setReady(): void {
-  if (this.gameManager) {
-	this.gameManager.setReady();
-	const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
-	if (startOverlay) {
-	  startOverlay.classList.add('hidden');
-	}
-  }
-}
 
   public setupGame(data:any){
 	console.log("should work here in setupGame")
@@ -221,6 +223,11 @@ export class RemotePage {
 	});
   }
 
+
+  //////////////////////////////////////////
+  ///////////// UPDATES ////////////////////
+  //////////////////////////////////////////
+
   private updateScore(player1Score: number, player2Score: number): void {
 	const player1Element = document.querySelector('.text-4xl.tracking-wider') as HTMLElement;
 	const player2Element = document.querySelectorAll('.text-4xl.tracking-wider')[1] as HTMLElement;
@@ -233,74 +240,111 @@ export class RemotePage {
 	}
   }
 
-  private updateGameState(gameState: any): void {
-	console.log('updateGameState called with:', gameState);
-	// Utilisons des sélecteurs plus spécifiques pour éviter les conflits
-	const gameOverOverlay = document.querySelector('[data-overlay="game-over"]') as HTMLElement;
-	const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
-	console.log('Found overlays:', { gameOverOverlay, startOverlay });
-	
-	// Vérifier si le jeu est terminé
-	const isGameOver = gameState.player1Score >= 10 || gameState.player2Score >= 10;
-	const winner = isGameOver ? (gameState.player1Score >= 10 ? 'Player 1' : 'Player 2') : null;
-	
-	if (isGameOver && winner) {
-	  // Afficher l'overlay de fin de jeu
-	  if (gameOverOverlay) {
-		if (this.gameManager)
-			this.gameManager = null;
+  private updateGameState(gameState: any): void
+  {
+    const startOverlay = document.querySelector<HTMLElement>('[data-overlay="start-game"]');
+    const pauseOverlay = document.querySelector<HTMLElement>('[data-overlay="pause-game"]');
+    const gameOverOverlay = document.querySelector<HTMLElement>('[data-overlay="game-over"]');
 
-		gameOverOverlay.classList.remove('hidden');
-		const winnerText = gameOverOverlay.querySelector('.text-2xl.mb-6.text-\\[\\#00ffff\\]') as HTMLElement;
-		if (winnerText) {
-		  winnerText.textContent = `${winner} WINS!`;
-		}
-	  }
-	  if (startOverlay) {
-		startOverlay.classList.add('hidden');
-	  }
-	} else if (!gameState.gameRunning && !isGameOver) {
-	  // Afficher l'overlay de démarrage seulement si le jeu n'a jamais été lancé (pas en pause)
-	  const isPaused = this.gameManager ? this.gameManager.getIsPaused() : false;
-	  if (startOverlay && !isPaused) {
-		startOverlay.classList.remove('hidden');
-	  } else if (startOverlay && isPaused) {
-		startOverlay.classList.add('hidden');
-	  }
-	  if (gameOverOverlay) {
-		gameOverOverlay.classList.add('hidden');
-	  }
-	} else if (gameState.gameRunning) {
-	  // Cacher tous les overlays pendant le jeu
-	  if (startOverlay) {
-		startOverlay.classList.add('hidden');
-	  }
-	  if (gameOverOverlay) {
-		gameOverOverlay.classList.add('hidden');
-	  }
-	}
+    const isGameOver = gameState.player1Score >= 10 || gameState.player2Score >= 10;
+    const winner = isGameOver ? (gameState.player1Score >= 10 ? 'Player 1' : 'Player 2') : null;
+    const isPaused = this.gameManager ? this.gameManager.getIsPaused() : false;
+
+    // Screen at the start of the game
+    if (!this.gameManager?.getHasStarted())
+    {
+      if (startOverlay)
+        startOverlay.classList.remove('hidden');
+      if (pauseOverlay)
+        pauseOverlay.classList.add('hidden');
+      if (gameOverOverlay)
+        gameOverOverlay.classList.add('hidden');
+      return;
+    }
+
+    // Screen when the game is running
+    else if (gameState.gameRunning)
+    {
+      if (startOverlay)
+        startOverlay.classList.add('hidden');
+      if (pauseOverlay)
+        pauseOverlay.classList.add('hidden');
+      if (gameOverOverlay)
+        gameOverOverlay.classList.add('hidden');
+      return;
+    }
+
+    // Screen when the game is paused
+    else if (isPaused)
+    {
+      if (pauseOverlay)
+        pauseOverlay.classList.remove('hidden');
+      if (startOverlay)
+        startOverlay.classList.add('hidden');
+      if (gameOverOverlay)
+        gameOverOverlay.classList.add('hidden');
+      return;
+    }
+
+    // Screen when the game is over
+    else if (isGameOver && winner)
+    {
+      if (this.gameManager)
+        this.gameManager = null;
+      if (gameOverOverlay)
+        gameOverOverlay.classList.remove('hidden');
+      if (startOverlay)
+        startOverlay.classList.add('hidden');
+      if (pauseOverlay)
+        pauseOverlay.classList.add('hidden');
+      return;
+    }
   }
 
-  private startGame(): void {
-	console.log('startGame() called');
-	if (this.gameManager) {
-	  console.log('GameManager exists, calling startGame()');
-	  
-	  this.gameManager.startGame();
-	} else {
-	  console.log('GameManager is null!');
-	}
+  //////////////////////////////////////////
+  ///////////// GAME FUNCTIONS ////////////
+  //////////////////////////////////////////
+
+  
+  private setReady(): void
+  {
+    if (!this.gameManager)
+      return;
+    const wasPaused = this.gameManager.getIsPaused();
+    this.gameManager.setReady();
+    if (!wasPaused)
+    {
+      const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
+      if (startOverlay)
+        startOverlay.classList.add('hidden');
+    }
   }
 
-  private pauseGame(): void {
-	if (this.gameManager) {
-	  this.gameManager.pauseGame();
-	}
+  private pauseGame(): void
+  {
+    if (!this.gameManager)
+      return;
+    if (!this.gameManager.getIsPaused() && !this.gameManager.getGameState().gameRunning)
+      return;
+    if (this.gameManager.getIsPaused())
+      this.gameManager.resumeGame();
+    else
+      this.gameManager.pauseGame();
   }
 
-  private resetGame(): void {
-	if (this.gameManager) {
-	  this.gameManager.resetGame();
-	}
+  private backToMenu(): void
+  {
+    if (this.gameManager)
+      this.gameManager.resetGame();
+    this.onBack();
+  }
+
+  private resetGame(): void
+  {
+    if (!this.gameManager)
+      return;
+    if (!this.gameManager.getGameState().gameRunning)
+      return;
+    this.gameManager.resetGame();
   }
 }
