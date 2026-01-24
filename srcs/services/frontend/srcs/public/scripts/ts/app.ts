@@ -198,25 +198,41 @@ export class App {
    */
 
 
-    private async initialize(): Promise<void> {
-        this.currentUser = await this.getConnectedUser();
-        await this.languageManager.init();
+  private async initialize(): Promise<void> {
+      this.currentUser = await this.getConnectedUser();
+      await this.languageManager.init();
 
-        if (this.currentUser) {
-          this.currentPage = 'menu';
-        
-          const wsManager = WebsocketManager.getInstance();
-          wsManager.init(window.location.origin);
-          
-          if (this.currentUser && !this.currentUser.isGuest) {
-            // this.menuPage.setWebsocketManager(wsManager);
-            this.liveChatPage.setWebsocketManager(wsManager);
+      if (this.currentUser) {
+        this.currentPage = 'menu';
+      
+        const wsManager = WebsocketManager.getInstance();
+        wsManager.init(window.location.origin);
+
+        // Expose the game socket for GameManager (imported from `../app.js`)
+        gameSocket = wsManager.gameSocket;
+
+        // Route "new-game" to the currently active game page
+        wsManager.onGame('new-game', (data: any) => {
+          if (this.currentPage === 'game-ai') {
+            this.gamePageAI.setupGame(data);
+          } else if (this.currentPage === 'game-local') {
+            this.gamePageLocal.setupGame(data);
+          } else if (this.currentPage === 'game-online') {
+            this.gamePageOnline.setupGame(data);
           }
-
-          // this.gamePageOnline.setWebsocketManager(wsManager);
+        });
+        
+        if (this.currentUser && !this.currentUser.isGuest) {
+          // this.menuPage.setWebsocketManager(wsManager);
+          this.liveChatPage.setWebsocketManager(wsManager);
         }
-        this.render();
-    }
+
+        // this.gamePageOnline.setWebsocketManager(wsManager);
+      }
+      this.render();
+  }
+
+    
 
 
   /**
@@ -376,9 +392,6 @@ export class App {
     }
   }
 
-  /**
-   * Handle user registration
-   */
   private async handleRegister(username: string, email: string, password: string, confirmPassword: string): Promise<void> {
     const text = {} as Translations; // TODO: Get translations from languageManager
     const result = await this.authManager.register({ username, email, password, confirmPassword }, text);
@@ -395,10 +408,6 @@ export class App {
     }
   }
 
-
-  /**
-   * Handle forgot password request
-   */
   private async appHandleForgotPassword(email: string): Promise<void> {
     console.log('Forgot password requested for:', email);
     const response = await this.authManager.forgotPassword(email);
@@ -410,9 +419,6 @@ export class App {
     }
   }
 
-  /**
-   * Handle password change
-   */
   private async handleChangePassword(email: string, password: string): Promise<void> {
     console.log('Change password requested for:', email);
     const otpId = this.authManager.otpData?.otp_id;
@@ -428,9 +434,6 @@ export class App {
     }
   }
 
-  /**
-   * Handle OTP verification completion for password change
-   */
   private handleNewChangePassword(success: boolean): void {
     if (success) {
       console.log('OTP verification successful, redirecting to change password');
@@ -441,9 +444,6 @@ export class App {
     }
   }
 
-  /**
-   * Handle OTP verification completion
-   */
   private handleOtpVerificationComplete(success: boolean): void {
     if (success) {
       console.log('OTP verification successful, redirecting to menu');
@@ -457,23 +457,14 @@ export class App {
     }
   }
 
-  /**
-   * Handle user logout
-   */
   private handleLogout(): void {
     this.authManager.logout();
   }
 
-  /**
-   * Handle error display
-   */
   private handleError(error: string): void {
     this.authPage.showError(error);
   }
 
-  /**
-   * Handle play as guest
-   */
   private handleConnectAsGuest(nickname: string, avatar: string): void {
     // Create a guest user object
     this.currentUser = {
@@ -487,6 +478,20 @@ export class App {
     localStorage.setItem('guestNickname', nickname);
     localStorage.setItem('guestAvatar', avatar);
     
+    // Init sockets for guests too (needed for local/ai games)
+    const wsManager = WebsocketManager.getInstance();
+    wsManager.init(window.location.origin);
+    gameSocket = wsManager.gameSocket;
+    wsManager.onGame('new-game', (data: any) => {
+      if (this.currentPage === 'game-ai') {
+        this.gamePageAI.setupGame(data);
+      } else if (this.currentPage === 'game-local') {
+        this.gamePageLocal.setupGame(data);
+      } else if (this.currentPage === 'game-online') {
+        this.gamePageOnline.setupGame(data);
+      }
+    });
+
     console.log('Playing as guest:', nickname, 'with avatar:', avatar);
     this.routerManager.navigateTo('menu');
   }
@@ -495,45 +500,27 @@ export class App {
   /**************************************** NAVIGATION HANDLERS ********************************/
   /**********************************************************************************************/
 
-  /**
-   * Navigate to menu page
-   */
   private handleBackToMenu(): void {
     this.routerManager.navigateTo('menu');
   }
 
-  /**
-   * Navigate to auth page
-   */
   private handleBackToAuth(): void {
     this.routerManager.navigateTo('auth');
   }
 
-  /**
-   * Handle play as guest
-   */
   private handleShowGuestPage(): void {
     this.routerManager.navigateTo('guest');
   }
 
-  /**
-   * Navigate to settings page
-   */
   private handleSettings(): void {
     this.routerManager.navigateTo('settings');
   }
 
-  /**
-   * Navigate to check OTP page
-   */
   private handleBackToCheckOtp(): void {
     this.routerManager.navigateTo('check-otp');
     this.render();
   }
 
-  /**
-   * Handle navigation back to update profile page
-   */
   private handleBackToUpdateProfile(success: boolean): void {
     if (success) {
       console.log("Email updated successfully!");
@@ -548,9 +535,6 @@ export class App {
   /**************************************** GAME HANDLERS **************************************/
   /**********************************************************************************************/
 
-  /**
-   * Handle AI game start
-   */
   private handlePlayGameAI(): void {
     // TODO: Implement AI game logic
     console.log('Starting AI game...');
@@ -560,18 +544,12 @@ export class App {
     this.routerManager.navigateTo('game-ai');
   }
 
-  /**
-   * Handle local multiplayer game start
-   */
   private handlePlayGameLocal(): void {
     // TODO: Implement local multiplayer logic
     console.log('Starting local multiplayer game...');
     this.routerManager.navigateTo('game-local');
   }
 
-  /**
-   * Handle online multiplayer game start
-   */
   private handlePlayGameOnline(): void {
     // TODO: Implement online multiplayer logic
     console.log('Starting online multiplayer game...');
@@ -583,10 +561,6 @@ export class App {
   /**************************************** USER HANDLERS **************************************/
   /**********************************************************************************************/
 
-
-  /**
-   * Handle chat with friends
-   */
   private handleChatWithFriends(): void {
     // TODO: Implement chat functionality
     console.log('Chat with friends functionality not yet implemented');

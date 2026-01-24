@@ -4,6 +4,7 @@ export class AIPage {
         this.gameManager = null;
         this.canvas = null;
         this.user = null;
+        this.selectedDifficulty = 'medium';
         this.uiManager = uiManager;
         this.onBack = onBack;
         this.user = user ?? null;
@@ -59,9 +60,9 @@ export class AIPage {
         startOverlay.setAttribute('data-overlay', 'start-game');
         const startContent = this.uiManager.createElement('div', 'text-center retro-text');
         const startTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'CHOOSE DIFFICULTY');
-        const startButtonEasy = this.uiManager.createButton('EASY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.startWithDifficulty('easy'));
-        const startButtonMedium = this.uiManager.createButton('MEDIUM', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.startWithDifficulty('medium'));
-        const startButtonHard = this.uiManager.createButton('HARD', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.startWithDifficulty('hard'));
+        const startButtonEasy = this.uiManager.createButton('EASY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.selectDifficulty('easy'));
+        const startButtonMedium = this.uiManager.createButton('MEDIUM', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.selectDifficulty('medium'));
+        const startButtonHard = this.uiManager.createButton('HARD', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.selectDifficulty('hard'));
         startContent.appendChild(startTitle);
         startContent.appendChild(startButtonEasy);
         startContent.appendChild(this.uiManager.createElement('div', 'h-4'));
@@ -118,38 +119,41 @@ export class AIPage {
         container.appendChild(content);
         this.uiManager.clear();
         this.uiManager.container.appendChild(container);
-        // Don't request game here - wait for user to select difficulty
+        // Initialize game manager
+        if (this.canvas)
+            this.requestNewGame();
     }
-    startWithDifficulty(difficulty) {
-        // Hide overlay immediately for responsiveness
+    selectDifficulty(difficulty) {
+        this.selectedDifficulty = difficulty;
         const startOverlay = document.querySelector('[data-overlay="start-game"]');
         if (startOverlay) {
             startOverlay.classList.add('hidden');
         }
-        // Request game with selected difficulty
+        // Request new game with selected difficulty
         GameManager.requestGameID("ai", { difficulty });
     }
     requestNewGame() {
-        // Called by PLAY AGAIN button - show difficulty selection
         const gameOverOverlay = document.querySelector('[data-overlay="game-over"]');
         const startOverlay = document.querySelector('[data-overlay="start-game"]');
         if (gameOverOverlay) {
             gameOverOverlay.classList.add('hidden');
-        }
-        if (startOverlay) {
             startOverlay.classList.remove('hidden');
         }
         // Don't request game here - wait for difficulty selection
     }
+    setReady() {
+        if (this.gameManager) {
+            this.gameManager.setReady();
+        }
+    }
     setupGame(data) {
-        console.log("should work here in setupGame");
+        console.log("Setting up AI game with UUID:", data.UUID);
         if (!this.canvas)
             throw new Error("canvas is not initialised");
         this.gameManager = new GameManager(this.canvas, data.UUID);
         this.setupGameListeners();
-        console.log(data.UUID, this.gameManager);
-        // Auto-ready for AI mode (player already selected difficulty)
-        this.gameManager.setReady();
+        // Auto-ready since player already selected difficulty
+        this.setReady();
     }
     setupGameListeners() {
         if (!this.gameManager)

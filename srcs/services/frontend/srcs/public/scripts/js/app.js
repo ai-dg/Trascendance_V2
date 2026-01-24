@@ -9,7 +9,6 @@ import { CheckManager } from './modules/CheckManager.js';
 import { LanguageManager } from './modules/LangManager.js';
 // Pages
 import { AuthPage } from './pages/AuthPage.js';
-import { GuestPage } from './pages/GuestPage.js';
 import { WebsocketManager } from './modules/WebsocketManager.js';
 import { MenuPage } from './pages/MenuPage.js';
 import { GamePageLocal } from './pages/GameLocalPage.js';
@@ -89,23 +88,25 @@ export class App {
             this.currentPage = 'menu';
             const wsManager = WebsocketManager.getInstance();
             wsManager.init(window.location.origin);
-            if (this.currentUser && !this.currentUser.isGuest) {
-                this.liveChatPage.setWebsocketManager(wsManager);
-            }
-            // Store game socket reference globally for compatibility
+            // Expose the game socket for GameManager (imported from `../app.js`)
             gameSocket = wsManager.gameSocket;
-
-            // Setup new-game listener
+            // Route "new-game" to the currently active game page
             wsManager.onGame('new-game', (data) => {
-                console.log('new-game event received:', data);
                 if (this.currentPage === 'game-ai') {
                     this.gamePageAI.setupGame(data);
-                } else if (this.currentPage === 'game-local') {
+                }
+                else if (this.currentPage === 'game-local') {
                     this.gamePageLocal.setupGame(data);
-                } else if (this.currentPage === 'game-online') {
+                }
+                else if (this.currentPage === 'game-online') {
                     this.gamePageOnline.setupGame(data);
                 }
             });
+            if (this.currentUser && !this.currentUser.isGuest) {
+                // this.menuPage.setWebsocketManager(wsManager);
+                this.liveChatPage.setWebsocketManager(wsManager);
+            }
+            // this.gamePageOnline.setWebsocketManager(wsManager);
         }
         this.render();
     }
@@ -255,9 +256,6 @@ export class App {
             this.routerManager.navigateTo('menu');
         }
     }
-    /**
-     * Handle user registration
-     */
     async handleRegister(username, email, password, confirmPassword) {
         const text = {}; // TODO: Get translations from languageManager
         const result = await this.authManager.register({ username, email, password, confirmPassword }, text);
@@ -274,9 +272,6 @@ export class App {
             // TODO: Handle successful registration without verification
         }
     }
-    /**
-     * Handle forgot password request
-     */
     async appHandleForgotPassword(email) {
         console.log('Forgot password requested for:', email);
         const response = await this.authManager.forgotPassword(email);
@@ -288,9 +283,6 @@ export class App {
             console.error(response.error);
         }
     }
-    /**
-     * Handle password change
-     */
     async handleChangePassword(email, password) {
         console.log('Change password requested for:', email);
         const otpId = this.authManager.otpData?.otp_id;
@@ -306,9 +298,6 @@ export class App {
             console.error(response.error);
         }
     }
-    /**
-     * Handle OTP verification completion for password change
-     */
     handleNewChangePassword(success) {
         if (success) {
             console.log('OTP verification successful, redirecting to change password');
@@ -319,9 +308,6 @@ export class App {
             // Stay on check-otp page to retry
         }
     }
-    /**
-     * Handle OTP verification completion
-     */
     handleOtpVerificationComplete(success) {
         if (success) {
             console.log('OTP verification successful, redirecting to menu');
@@ -335,21 +321,12 @@ export class App {
             // Stay on check-otp page to retry
         }
     }
-    /**
-     * Handle user logout
-     */
     handleLogout() {
         this.authManager.logout();
     }
-    /**
-     * Handle error display
-     */
     handleError(error) {
         this.authPage.showError(error);
     }
-    /**
-     * Handle play as guest
-     */
     handleConnectAsGuest(nickname, avatar) {
         // Create a guest user object
         this.currentUser = {
@@ -361,63 +338,43 @@ export class App {
         };
         localStorage.setItem('guestNickname', nickname);
         localStorage.setItem('guestAvatar', avatar);
+        // Init sockets for guests too (needed for local/ai games)
+        const wsManager = WebsocketManager.getInstance();
+        wsManager.init(window.location.origin);
+        gameSocket = wsManager.gameSocket;
+        wsManager.onGame('new-game', (data) => {
+            if (this.currentPage === 'game-ai') {
+                this.gamePageAI.setupGame(data);
+            }
+            else if (this.currentPage === 'game-local') {
+                this.gamePageLocal.setupGame(data);
+            }
+            else if (this.currentPage === 'game-online') {
+                this.gamePageOnline.setupGame(data);
+            }
+        });
         console.log('Playing as guest:', nickname, 'with avatar:', avatar);
         this.routerManager.navigateTo('menu');
     }
     /**********************************************************************************************/
     /**************************************** NAVIGATION HANDLERS ********************************/
     /**********************************************************************************************/
-    /**
-     * Navigate to menu page
-     */
     handleBackToMenu() {
         this.routerManager.navigateTo('menu');
     }
-    /**
-     * Navigate to auth page
-     */
     handleBackToAuth() {
         this.routerManager.navigateTo('auth');
     }
-    /**
-     * Handle play as guest
-     */
     handleShowGuestPage() {
-        // Initialize WebsocketManager for guest users
-        if (!gameSocket) {
-            const wsManager = WebsocketManager.getInstance();
-            wsManager.init(window.location.origin);
-            gameSocket = wsManager.gameSocket;
-
-            // Setup new-game listener for guests
-            wsManager.onGame('new-game', (data) => {
-                console.log('Guest new-game event received:', data);
-                if (this.currentPage === 'game-ai') {
-                    this.gamePageAI.setupGame(data);
-                } else if (this.currentPage === 'game-local') {
-                    this.gamePageLocal.setupGame(data);
-                }
-            });
-            console.log('Guest game socket initialized');
-        }
         this.routerManager.navigateTo('guest');
     }
-    /**
-     * Navigate to settings page
-     */
     handleSettings() {
         this.routerManager.navigateTo('settings');
     }
-    /**
-     * Navigate to check OTP page
-     */
     handleBackToCheckOtp() {
         this.routerManager.navigateTo('check-otp');
         this.render();
     }
-    /**
-     * Handle navigation back to update profile page
-     */
     handleBackToUpdateProfile(success) {
         if (success) {
             console.log("Email updated successfully!");
@@ -431,9 +388,6 @@ export class App {
     /**********************************************************************************************/
     /**************************************** GAME HANDLERS **************************************/
     /**********************************************************************************************/
-    /**
-     * Handle AI game start
-     */
     handlePlayGameAI() {
         // TODO: Implement AI game logic
         console.log('Starting AI game...');
@@ -442,17 +396,11 @@ export class App {
         }
         this.routerManager.navigateTo('game-ai');
     }
-    /**
-     * Handle local multiplayer game start
-     */
     handlePlayGameLocal() {
         // TODO: Implement local multiplayer logic
         console.log('Starting local multiplayer game...');
         this.routerManager.navigateTo('game-local');
     }
-    /**
-     * Handle online multiplayer game start
-     */
     handlePlayGameOnline() {
         // TODO: Implement online multiplayer logic
         console.log('Starting online multiplayer game...');
@@ -461,9 +409,6 @@ export class App {
     /**********************************************************************************************/
     /**************************************** USER HANDLERS **************************************/
     /**********************************************************************************************/
-    /**
-     * Handle chat with friends
-     */
     handleChatWithFriends() {
         // TODO: Implement chat functionality
         console.log('Chat with friends functionality not yet implemented');
