@@ -4,6 +4,8 @@ export class RemotePage {
         this.gameManager = null;
         this.canvas = null;
         this.user = null;
+        this.isSearchingOpponent = false;
+        this.selectedFriendId = null;
         this.uiManager = uiManager;
         this.onBack = onBack;
         this.user = user ?? null;
@@ -64,8 +66,8 @@ export class RemotePage {
         startOverlay.setAttribute('data-overlay', 'start-game');
         const startContent = this.uiManager.createElement('div', 'text-center retro-text');
         const startTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'CHOOSE YOUR OPPONENT');
-        const startButtonRandom = this.uiManager.createButton('PLAY AGAINST RANDOM PLAYER', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
-        const startButtonFriend = this.uiManager.createButton('PLAY AGAINST A FRIEND', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200 mt-4', () => this.setReady());
+        const startButtonRandom = this.uiManager.createButton('PLAY AGAINST RANDOM PLAYER', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.playAgainstRandomPlayer());
+        const startButtonFriend = this.uiManager.createButton('PLAY AGAINST A FRIEND', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200 mt-4', () => this.playAgainstFriend());
         startContent.appendChild(startTitle);
         startContent.appendChild(startButtonRandom);
         startContent.appendChild(this.uiManager.createElement('div', 'h-4'));
@@ -135,7 +137,14 @@ export class RemotePage {
     //////////////////////////////////////////////
     ///////////// GAME INITIALIZATION ////////////
     //////////////////////////////////////////////
+    removeWaitingScreen() {
+        document
+            .querySelectorAll('[data-overlay="waiting-screen"]')
+            .forEach((el) => el.remove());
+    }
     requestNewGame() {
+        // Always clear waiting overlay when returning to initial state
+        this.removeWaitingScreen();
         const gameOverOverlay = document.querySelector('[data-overlay="game-over"]');
         const startOverlay = document.querySelector('[data-overlay="start-game"]');
         if (gameOverOverlay) {
@@ -180,6 +189,13 @@ export class RemotePage {
         const isGameOver = gameState.player1Score >= 10 || gameState.player2Score >= 10;
         const winner = isGameOver ? (gameState.player1Score >= 10 ? 'Player 1' : 'Player 2') : null;
         const isPaused = this.gameManager ? this.gameManager.getIsPaused() : false;
+        // For waiting screen
+        if (this.isSearchingOpponent) {
+            startOverlay?.classList.add('hidden');
+            pauseOverlay?.classList.add('hidden');
+            gameOverOverlay?.classList.add('hidden');
+            return;
+        }
         // Screen at the start of the game
         if (!this.gameManager?.getHasStarted()) {
             if (startOverlay)
@@ -258,5 +274,105 @@ export class RemotePage {
         if (!this.gameManager.getGameState().gameRunning)
             return;
         this.gameManager.resetGame();
+    }
+    //////////////////////////////////////////////
+    ///////////// OPTIONS GAME ///////////////////
+    //////////////////////////////////////////////
+    playAgainstRandomPlayer() {
+        if (!this.gameManager)
+            return;
+        this.isSearchingOpponent = true;
+        document.querySelector('[data-overlay="start-game"]')?.classList.add('hidden');
+        this.removeWaitingScreen();
+        const WaitingScreen = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg z-10');
+        WaitingScreen.setAttribute('data-overlay', 'waiting-screen');
+        const WaitingScreenContent = this.uiManager.createElement('div', 'text-center retro-text');
+        const WaitingScreenTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'WAITING FOR AN OPPONENT');
+        WaitingScreenContent.appendChild(WaitingScreenTitle);
+        const cancelButton = this.uiManager.createButton('CANCEL', 'retro-button bg-transparent text-[#ff1493] px-6 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200', () => {
+            this.removeWaitingScreen();
+            this.isSearchingOpponent = false;
+            document.querySelector('[data-overlay="start-game"]')?.classList.remove('hidden');
+        });
+        WaitingScreenContent.appendChild(cancelButton);
+        WaitingScreen.appendChild(WaitingScreenContent);
+        const canvasContainer = this.canvas?.parentElement;
+        if (canvasContainer)
+            canvasContainer.appendChild(WaitingScreen);
+        else
+            this.uiManager.container.appendChild(WaitingScreen);
+    }
+    playAgainstFriend() {
+        if (!this.gameManager)
+            return;
+        this.isSearchingOpponent = true;
+        document.querySelector('[data-overlay="start-game"]')?.classList.add('hidden');
+        this.removeWaitingScreen();
+        // Invite text and overlay
+        const WaitingScreen = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg z-10');
+        WaitingScreen.setAttribute('data-overlay', 'waiting-screen');
+        const WaitingScreenContent = this.uiManager.createElement('div', 'text-center retro-text');
+        const WaitingScreenTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'INVITE A FRIEND');
+        WaitingScreenContent.appendChild(WaitingScreenTitle);
+        // Friends List 
+        const friendsList = this.uiManager.createElement('div', 'flex gap-4 justify-center');
+        const selectedLabel = this.uiManager.createElement('div', 'retro-text text-xs opacity-60 mb-2', 'Select a friend');
+        const friends = [
+            { id: 'friend1', name: 'Friend 1' },
+            { id: 'friend2', name: 'Friend 2' },
+            { id: 'friend3', name: 'Friend 3' },
+        ];
+        const friendEls = [];
+        const updateSelectionUI = () => {
+            friendEls.forEach((el) => {
+                const id = el.getAttribute('data-friend-id');
+                const isSelected = id && id === this.selectedFriendId;
+                el.classList.toggle('border-[#00ffff]', !!isSelected);
+                el.classList.toggle('border-[#ff1493]', !isSelected);
+            });
+            selectedLabel.textContent = this.selectedFriendId
+                ? `Selected: ${friends.find(f => f.id === this.selectedFriendId)?.name ?? this.selectedFriendId}`
+                : 'Select a friend';
+        };
+        friends.forEach((f) => {
+            const friendEl = this.uiManager.createElement('button', 'cursor-pointer px-4 py-2 rounded border-2 border-[#ff1493] bg-black/40 hover:bg-black/60 transition-all duration-200', f.name);
+            friendEl.type = 'button';
+            friendEl.setAttribute('data-friend-id', f.id);
+            friendEl.addEventListener('click', () => {
+                this.selectedFriendId = this.selectedFriendId === f.id ? null : f.id;
+                updateSelectionUI();
+            });
+            friendEls.push(friendEl);
+            friendsList.appendChild(friendEl);
+        });
+        WaitingScreenContent.appendChild(selectedLabel);
+        WaitingScreenContent.appendChild(friendsList);
+        // Space between list and buttons + stack buttons vertically
+        WaitingScreenContent.appendChild(this.uiManager.createElement('div', 'h-4'));
+        const buttonsWrapper = this.uiManager.createElement('div', 'flex flex-col gap-4 items-center');
+        // Invite Button
+        const inviteButton = this.uiManager.createButton('INVITE', 'retro-button bg-[#ff1493] text-black px-6 py-2 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => {
+            // TODO: Implement invite friend functionality
+            // Example: use this.selectedFriendId
+            if (!this.selectedFriendId) {
+                selectedLabel.textContent = 'Select a friend first';
+                return;
+            }
+        });
+        buttonsWrapper.appendChild(inviteButton);
+        // Cancel Button
+        const cancelButton = this.uiManager.createButton('CANCEL', 'retro-button bg-transparent text-[#ff1493] px-6 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200', () => {
+            this.removeWaitingScreen();
+            this.isSearchingOpponent = false;
+            document.querySelector('[data-overlay="start-game"]')?.classList.remove('hidden');
+        });
+        buttonsWrapper.appendChild(cancelButton);
+        WaitingScreenContent.appendChild(buttonsWrapper);
+        WaitingScreen.appendChild(WaitingScreenContent);
+        const canvasContainer = this.canvas?.parentElement;
+        if (canvasContainer)
+            canvasContainer.appendChild(WaitingScreen);
+        else
+            this.uiManager.container.appendChild(WaitingScreen);
     }
 }

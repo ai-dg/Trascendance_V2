@@ -105,6 +105,10 @@ export class GameManager {
         this.handleServerGameReset(data);
       else if (data.type === "game-update")
         this.updateGame(data);
+      else if (data.type === "play-against-random-player")
+        this.handleServerPlayAgainstRandomPlayer(data);
+      else if (data.type === "play-against-friend")
+        this.handleServerPlayAgainstFriend(data);
     });
   }
 
@@ -222,6 +226,14 @@ export class GameManager {
       this.draw();
     }
     this.notifyListeners();
+  }
+
+  private handleServerPlayAgainstRandomPlayer(data: any): void {
+    console.log("handleServerPlayAgainstRandomPlayer", data);
+  }
+
+  private handleServerPlayAgainstFriend(data: any): void {
+    console.log("handleServerPlayAgainstFriend", data);
   }
 
 

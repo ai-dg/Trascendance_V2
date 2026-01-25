@@ -174,6 +174,15 @@ export class Game {
     this.socket.emit(this.uuid, { type: "game-reset", state : this.getGameState() });
   }
 
+ 
+  playAgainstRandomPlayer() {
+    this.socket.emit(this.uuid, { type: "play-against-random-player" });
+  }
+
+  playAgainstFriend() {
+    this.socket.emit(this.uuid, { type: "play-against-friend" });
+  }
+
 
   gameLoop() {
     if (this.gameLoopInterval) {
