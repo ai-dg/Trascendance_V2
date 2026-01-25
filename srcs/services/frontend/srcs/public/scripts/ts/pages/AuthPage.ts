@@ -97,7 +97,7 @@ export class AuthPage {
         ? this.t('enter_email_to_reset')
         : this.showChangePassword
           ? this.t('enter_new_password')
-          : (this.isLogin ? this.t('WELCOME TO THE RETRO PONG') : this.t('CREATE YOUR ACCOUNT'))
+          : this.t('')
     );
     header.appendChild(title);
     header.appendChild(subtitle);
@@ -122,7 +122,7 @@ export class AuthPage {
 
       const submitButton = this.uiManager.createButton(
         this.t('reset_password'),
-        'w-full retro-button bg-[#ff1493] text-black hover:bg-transparent hover:text-[#ff1493] border-2 border-[#ff1493] py-3',
+        'retro-button auth-btn auth-btn-primary',
         () => this.onForgotPassword(this.formData.email)
       ) as HTMLButtonElement;
       submitButton.type = 'submit';
@@ -135,7 +135,7 @@ export class AuthPage {
 
       const submitButton = this.uiManager.createButton(
         this.t('change_password'),
-        'w-full retro-button bg-[#ff1493] text-black hover:bg-transparent hover:text-[#ff1493] border-2 border-[#ff1493] py-3',
+        'retro-button auth-btn auth-btn-primary',
         () => {}
       ) as HTMLButtonElement;
       submitButton.type = 'submit';
@@ -159,7 +159,9 @@ export class AuthPage {
 
       const submitButton = this.uiManager.createButton(
         this.isLogin ? this.t('login') : this.t('create_account'),
-        'w-full retro-button bg-[#ff1493] text-black hover:bg-transparent hover:text-[#ff1493] border-2 border-[#ff1493] py-3',
+        this.isLogin
+          ? 'retro-button auth-btn auth-btn-primary text-lg'
+          : 'retro-button auth-btn auth-btn-oauth',
         () => {}
       ) as HTMLButtonElement;
       submitButton.type = 'submit';
@@ -199,10 +201,6 @@ export class AuthPage {
       }
     }
 
-    const demoInfo = this.uiManager.createElement('div', 'mt-6 p-4 bg-[#9d4edd]/20 border border-[#9d4edd] rounded-lg');
-    const demoText = this.uiManager.createElement('div', 'retro-text text-xs text-[#9d4edd] text-center', this.t('project_name'));
-    demoInfo.appendChild(demoText);
-
     card.appendChild(header);
     card.appendChild(form);
 
@@ -217,13 +215,13 @@ export class AuthPage {
       // Register buttons
       const googleBtn = this.uiManager.createButton(
         this.t('sign_in_with_google'),
-        'w-full retro-button bg-white text-black hover:bg-gray-100 border-2 border-white py-3 flex items-center justify-center gap-3',
+        'retro-button auth-btn auth-btn-google',
         () => this.handleGoogleSignIn()
       );
 
       const auth42Btn = this.uiManager.createButton(
         this.t('sign_in_with_42'),
-        'w-full retro-button bg-[#00babc] text-white hover:bg-[#00a0a2] border-2 border-[#00babc] py-3 flex items-center justify-center gap-3',
+        'retro-button auth-btn auth-btn-42',
         () => this.handle42SignIn()
       );
 
@@ -233,16 +231,15 @@ export class AuthPage {
 
       const playAsGuestBtn = this.uiManager.createButton(
         this.t('play_as_guest'),
-        'w-full retro-button bg-[#00ffff] text-black hover:bg-[#00ffff]/80 hover:text-black border-2 border-[#00ffff] py-3 mt-6',
+        'retro-button auth-btn auth-btn-guest',
         this.onPlayAsGuest
       );
 
+      oauthContainer.appendChild(playAsGuestBtn);
       card.appendChild(oauthContainer);
-      card.appendChild(playAsGuestBtn);
     }
 
     card.appendChild(toggleContainer);
-    //card.appendChild(demoInfo);
     card.appendChild(this.createLanguageSelector());
 
     content.appendChild(card);
