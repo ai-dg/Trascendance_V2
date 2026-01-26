@@ -1,30 +1,34 @@
 import { gameSocket } from "../app.js";
 //import { INITIAL_READY_STATE } from "../../../realtime-sockets/app/srcs/Data.js";
 export class GameManager {
+    ctx;
+    gameState;
+    keys = {};
+    animationId = null;
+    listeners = [];
+    gameUID = null;
+    CANVAS_WIDTH = 800;
+    CANVAS_HEIGHT = 400;
+    PADDLE_WIDTH = 10;
+    PADDLE_HEIGHT = 80;
+    hasStarted = false;
+    isReady = false;
+    isPaused = false;
+    intervalId = null;
+    onKeyDown = null;
+    onKeyUp = null;
+    // Remote game properties
+    playerNumber = 1; // 1 or 2 (assigned by matchmaking)
+    opponentId = null;
+    onOpponentFound = null;
+    onOpponentDisconnected = null;
+    isRemoteGame = false; // Set to true when opponent is found
+    // A garder ?
+    playersReadyStatus = {
+        player1: false,
+        player2: false
+    };
     constructor(canvas, UUID) {
-        this.keys = {};
-        this.animationId = null;
-        this.listeners = [];
-        this.gameUID = null;
-        this.CANVAS_WIDTH = 800;
-        this.CANVAS_HEIGHT = 400;
-        this.PADDLE_WIDTH = 10;
-        this.PADDLE_HEIGHT = 80;
-        this.hasStarted = false;
-        this.isReady = false;
-        this.isPaused = false;
-        this.onKeyDown = null;
-        this.onKeyUp = null;
-        // Remote game properties
-        this.playerNumber = 1; // 1 or 2 (assigned by matchmaking)
-        this.opponentId = null;
-        this.onOpponentFound = null;
-        this.isRemoteGame = false; // Set to true when opponent is found
-        // A garder ?
-        this.playersReadyStatus = {
-            player1: false,
-            player2: false
-        };
         this.gameUID = UUID;
         this.ctx = canvas.getContext('2d');
         this.gameState = {
@@ -69,6 +73,9 @@ export class GameManager {
     getHasStarted() {
         return this.hasStarted;
     }
+    getPlayerNumber() {
+        return this.playerNumber;
+    }
     //////////////////////////////////////////
     /////// SETUP SOCKET LISTENERS //////////
     /////////////////////////////////////////
@@ -101,6 +108,8 @@ export class GameManager {
                 this.handleServerPlayAgainstFriend(data);
             else if (data.type === "opponent-found")
                 this.handleOpponentFound(data);
+            else if (data.type === "opponent-disconnected")
+                this.handleOpponentDisconnected(data);
         });
     }
     /**
@@ -136,6 +145,29 @@ export class GameManager {
     setOnOpponentFound(callback) {
         this.onOpponentFound = callback;
     }
+    /**
+     * handleOpponentDisconnected - Called when opponent leaves the game
+     */
+    handleOpponentDisconnected(data) {
+        console.log("[GameManager] Opponent disconnected!", data);
+        // Stop the game
+        this.hasStarted = false;
+        this.isPaused = false;
+        if (this.intervalId) {
+            clearInterval(this.intervalId);
+            this.intervalId = null;
+        }
+        // Notify UI (GameRemotePage will handle this)
+        if (this.onOpponentDisconnected) {
+            this.onOpponentDisconnected(data);
+        }
+    }
+    /**
+     * Set callback for when opponent disconnects
+     */
+    setOnOpponentDisconnected(callback) {
+        this.onOpponentDisconnected = callback;
+    }
     setupEventListeners() {
         this.onKeyDown = (e) => {
             this.keys[e.key.toLowerCase()] = true;
@@ -169,13 +201,10 @@ export class GameManager {
         this.isReady = true;
         if (!gameSocket || !this.gameUID)
             throw Error("gameSocket is not ready");
-
         // For remote games: send individual player number (1 or 2)
         // For local/AI: send 3 to mark both players ready
         const playerNum = isRemoteGame ? this.playerNumber : 3;
-
         console.log(`[GameManager] setReady - sending player: ${playerNum} (isRemote: ${isRemoteGame})`);
-
         gameSocket.emit(this.gameUID, {
             action: "player-ready",
             player: playerNum
@@ -289,7 +318,6 @@ export class GameManager {
             throw Error("Error with game socket!");
         let paddle1 = 0;
         let paddle2 = 0;
-
         // For remote games: only send input for your assigned paddle
         // Both players use W/S keys since the game is mirrored - everyone sees themselves on the left
         if (this.isRemoteGame) {
@@ -300,7 +328,8 @@ export class GameManager {
                 else if (this.keys['w'])
                     paddle1 = -1;
                 paddle2 = 0; // Don't send input for opponent's paddle
-            } else if (this.playerNumber === 2) {
+            }
+            else if (this.playerNumber === 2) {
                 // Player 2 controls paddle2 (also W/S keys due to mirroring)
                 paddle1 = 0; // Don't send input for opponent's paddle
                 if (this.keys['s'])
@@ -308,7 +337,8 @@ export class GameManager {
                 else if (this.keys['w'])
                     paddle2 = -1;
             }
-        } else {
+        }
+        else {
             // For local/AI games: send both paddles
             if (this.keys['s'])
                 paddle1 = 1;
@@ -319,7 +349,6 @@ export class GameManager {
             else if (this.keys['arrowup'])
                 paddle2 = -1;
         }
-
         const state = {
             paddle1,
             paddle2
@@ -393,3 +422,4 @@ export class GameManager {
         this.ctx.shadowBlur = 0;
     }
 }
+//# sourceMappingURL=GameManager.js.map

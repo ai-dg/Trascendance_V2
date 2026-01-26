@@ -1,8 +1,8 @@
 export class WebsocketManager {
-    constructor() {
-        this.generalSocket = null;
-        this.gameSocket = null;
-    }
+    static instance;
+    generalSocket = null;
+    gameSocket = null;
+    constructor() { }
     static getInstance() {
         if (!WebsocketManager.instance) {
             WebsocketManager.instance = new WebsocketManager();
@@ -54,3 +54,4 @@ export class WebsocketManager {
         this.gameSocket?.disconnect();
     }
 }
+//# sourceMappingURL=WebsocketManager.js.map

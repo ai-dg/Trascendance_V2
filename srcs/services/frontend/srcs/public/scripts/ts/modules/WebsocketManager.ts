@@ -1,5 +1,5 @@
 import type { User } from '../modules/TypesManager.js';
-import { Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 
 declare const io: any;
 
@@ -37,7 +37,7 @@ export class WebsocketManager {
     private setupDefaultListeners() {
         this.generalSocket?.on("connect", () => console.log("General socket connected"));
         this.gameSocket?.on("connect", () => console.log("Game socket connected"));
-        
+
         this.generalSocket?.on("connect_error", (err) => console.error("Error socket general:", err));
         this.gameSocket?.on("connect_error", (err) => console.error("Error socket game:", err));
   }
@@ -50,7 +50,7 @@ export class WebsocketManager {
     public offGeneral(event: string) {
         this.generalSocket?.off(event);
     }
-    
+
     public onGame(event: string, callback: (data: any) => void) {
         this.gameSocket?.off(event);
         this.gameSocket?.on(event, callback);
@@ -60,7 +60,7 @@ export class WebsocketManager {
         this.gameSocket?.off(event);
     }
 
-    public emitGeneral(event: string, data: any) { 
+    public emitGeneral(event: string, data: any) {
         this.generalSocket?.emit(event, data);
     }
 

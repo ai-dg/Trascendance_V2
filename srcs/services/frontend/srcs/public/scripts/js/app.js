@@ -2,6 +2,7 @@
 /**************************************** IMPORTS *********************************************/
 /**********************************************************************************************/
 import { RouterManager } from './modules/RouterManager.js';
+import {} from './modules/TypesManager.js';
 // Managers
 import { AuthManager } from './modules/AuthManager.js';
 import { UIManager } from './modules/UIManager.js';
@@ -25,16 +26,38 @@ export let gameSocket = null;
 /**********************************************************************************************/
 export class App {
     /**********************************************************************************************/
+    /**************************************** PROPERTIES *****************************************/
+    /**********************************************************************************************/
+    // Core Managers
+    //private container: HTMLElement;
+    authManager;
+    routerManager;
+    uiManager;
+    checkManager;
+    languageManager;
+    // State
+    currentUser = null;
+    currentPage = 'auth';
+    // Socket Connections
+    generalSocket = null;
+    TournamentSocket = null;
+    // Page Instances
+    authPage;
+    websocketManager;
+    menuPage;
+    gamePageLocal;
+    gamePageAI;
+    gamePageOnline;
+    checkOtpPage;
+    settingsPage;
+    updateProfilePage;
+    liveChatPage;
+    guestPage;
+    /**********************************************************************************************/
     /**************************************** CONSTRUCTOR ****************************************/
     /**********************************************************************************************/
     constructor(container) {
         //this.container = container;
-        // State
-        this.currentUser = null;
-        this.currentPage = 'auth';
-        // Socket Connections
-        this.generalSocket = null;
-        this.TournamentSocket = null;
         this.authManager = new AuthManager(this.handleBackToCheckOtp.bind(this));
         this.routerManager = new RouterManager((user) => {
             this.currentUser = user;
@@ -418,3 +441,4 @@ export class App {
             console.log('Connect to chat wih friends');
     }
 }
+//# sourceMappingURL=app.js.map

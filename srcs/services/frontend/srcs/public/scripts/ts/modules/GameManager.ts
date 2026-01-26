@@ -19,6 +19,7 @@ export class GameManager {
   private hasStarted: boolean = false;
   private isReady: boolean = false;
   private isPaused: boolean = false;
+  private intervalId: number | null = null;
 
   private onKeyDown: ((e: KeyboardEvent) => void) | null = null;
   private onKeyUp: ((e: KeyboardEvent) => void) | null = null;
@@ -27,6 +28,7 @@ export class GameManager {
   private playerNumber: number = 1; // 1 or 2 (assigned by matchmaking)
   private opponentId: string | null = null;
   private onOpponentFound: ((data: any) => void) | null = null;
+  private onOpponentDisconnected: ((data: any) => void) | null = null;
   private isRemoteGame: boolean = false; // Set to true when opponent is found
 
   // A garder ?
@@ -89,6 +91,10 @@ export class GameManager {
     return this.hasStarted;
   }
 
+  public getPlayerNumber(): number {
+    return this.playerNumber;
+  }
+
   //////////////////////////////////////////
   /////// SETUP SOCKET LISTENERS //////////
   /////////////////////////////////////////
@@ -123,6 +129,8 @@ export class GameManager {
         this.handleServerPlayAgainstFriend(data);
       else if (data.type === "opponent-found")
         this.handleOpponentFound(data);
+      else if (data.type === "opponent-disconnected")
+        this.handleOpponentDisconnected(data);
     });
   }
 
@@ -164,6 +172,34 @@ export class GameManager {
    */
   public setOnOpponentFound(callback: (data: any) => void): void {
     this.onOpponentFound = callback;
+  }
+
+  /**
+   * handleOpponentDisconnected - Called when opponent leaves the game
+   */
+  private handleOpponentDisconnected(data: any): void {
+    console.log("[GameManager] Opponent disconnected!", data);
+
+    // Stop the game
+    this.hasStarted = false;
+    this.isPaused = false;
+
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+
+    // Notify UI (GameRemotePage will handle this)
+    if (this.onOpponentDisconnected) {
+      this.onOpponentDisconnected(data);
+    }
+  }
+
+  /**
+   * Set callback for when opponent disconnects
+   */
+  public setOnOpponentDisconnected(callback: (data: any) => void): void {
+    this.onOpponentDisconnected = callback;
   }
 
   private setupEventListeners(): void {

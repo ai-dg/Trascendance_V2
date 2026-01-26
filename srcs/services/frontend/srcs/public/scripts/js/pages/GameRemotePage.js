@@ -1,11 +1,14 @@
+import { UIManager } from '../modules/UIManager.js';
 import { GameManager } from '../modules/GameManager.js';
 export class RemotePage {
+    uiManager;
+    onBack;
+    gameManager = null;
+    canvas = null;
+    user = null;
+    isSearchingOpponent = false;
+    selectedFriendId = null;
     constructor(uiManager, onBack, user) {
-        this.gameManager = null;
-        this.canvas = null;
-        this.user = null;
-        this.isSearchingOpponent = false;
-        this.selectedFriendId = null;
         this.uiManager = uiManager;
         this.onBack = onBack;
         this.user = user ?? null;
@@ -173,6 +176,11 @@ export class RemotePage {
             console.log("[RemotePage] Opponent found!", data);
             this.handleOpponentFound(data);
         });
+        // Handle when opponent disconnects
+        this.gameManager.setOnOpponentDisconnected((data) => {
+            console.log("[RemotePage] Opponent disconnected!", data);
+            this.handleOpponentDisconnected(data);
+        });
     }
     /**
      * handleOpponentFound - Called when matchmaking finds an opponent
@@ -193,6 +201,36 @@ export class RemotePage {
             content.appendChild(title);
             content.appendChild(subtitle);
             content.appendChild(readyButton);
+            startOverlay.appendChild(content);
+            startOverlay.classList.remove('hidden');
+        }
+    }
+    /**
+     * handleOpponentDisconnected - Called when opponent leaves the game
+     * Shows notification and returns to matchmaking lobby
+     */
+    handleOpponentDisconnected(data) {
+        console.log("[RemotePage] Handling opponent disconnect", data);
+        // Clean up game manager
+        if (this.gameManager) {
+            this.gameManager.destroy();
+            this.gameManager = null;
+        }
+        // Remove all overlays
+        this.removeWaitingScreen();
+        document.querySelector('[data-overlay="game-over"]')?.classList.add('hidden');
+        document.querySelector('[data-overlay="pause-game"]')?.classList.add('hidden');
+        // Show disconnect notification on start overlay
+        const startOverlay = document.querySelector('[data-overlay="start-game"]');
+        if (startOverlay) {
+            startOverlay.innerHTML = '';
+            const content = this.uiManager.createElement('div', 'text-center retro-text');
+            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'OPPONENT DISCONNECTED');
+            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'Your opponent has left the game.');
+            const backButton = this.uiManager.createButton('BACK TO LOBBY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.requestNewGame());
+            content.appendChild(title);
+            content.appendChild(message);
+            content.appendChild(backButton);
             startOverlay.appendChild(content);
             startOverlay.classList.remove('hidden');
         }
@@ -260,8 +298,21 @@ export class RemotePage {
                 this.gameManager.destroy();
                 this.gameManager = null;
             }
-            if (gameOverOverlay)
+            if (gameOverOverlay) {
+                // Update game over content to return to lobby instead of playing again
+                const winnerText = gameOverOverlay.querySelector('.text-2xl');
+                if (winnerText) {
+                    const playerNum = this.gameManager?.getPlayerNumber() ?? 1;
+                    winnerText.textContent = winner === 'Player 1' ?
+                        (playerNum === 1 ? 'YOU WIN!' : 'YOU LOSE!') :
+                        (playerNum === 2 ? 'YOU WIN!' : 'YOU LOSE!');
+                }
+                const playAgainBtn = gameOverOverlay.querySelector('button');
+                if (playAgainBtn) {
+                    playAgainBtn.textContent = 'RETURN TO LOBBY';
+                }
                 gameOverOverlay.classList.remove('hidden');
+            }
             if (startOverlay)
                 startOverlay.classList.add('hidden');
             if (pauseOverlay)
@@ -413,3 +464,4 @@ export class RemotePage {
             this.uiManager.container.appendChild(WaitingScreen);
     }
 }
+//# sourceMappingURL=GameRemotePage.js.map

@@ -1,17 +1,29 @@
+import { UIManager } from '../modules/UIManager.js';
 import { CheckManager } from '../modules/CheckManager.js';
 export class AuthPage {
+    uiManager;
+    authManager;
+    checkManager;
+    languageManager;
+    onLogin;
+    onRegister;
+    onForgotPassword;
+    onChangePassword;
+    onPlayAsGuest;
+    onError;
+    isLogin = true;
+    showForgotPassword = false;
+    showChangePassword = false;
+    formData = {
+        username: '',
+        email: '',
+        password: '',
+        confirmPassword: ''
+    };
+    errors = [];
+    text = {};
+    boundHandleSubmit;
     constructor(uiManager, authManager, checkManager, languageManager, onLogin, onRegister, onForgotPassword, onChangePassword, onPlayAsGuest, onError) {
-        this.isLogin = true;
-        this.showForgotPassword = false;
-        this.showChangePassword = false;
-        this.formData = {
-            username: '',
-            email: '',
-            password: '',
-            confirmPassword: ''
-        };
-        this.errors = [];
-        this.text = {};
         this.uiManager = uiManager;
         this.authManager = authManager;
         this.languageManager = languageManager;
@@ -336,3 +348,4 @@ export class AuthPage {
         this.render();
     }
 }
+//# sourceMappingURL=AuthPage.js.map

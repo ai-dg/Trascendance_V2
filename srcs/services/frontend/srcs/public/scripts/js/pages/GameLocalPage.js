@@ -1,8 +1,11 @@
+import { UIManager } from '../modules/UIManager.js';
 import { GameManager } from '../modules/GameManager.js';
 export class GamePageLocal {
+    uiManager;
+    onBack;
+    gameManager = null;
+    canvas = null;
     constructor(uiManager, onBack, user) {
-        this.gameManager = null;
-        this.canvas = null;
         this.uiManager = uiManager;
         this.onBack = onBack;
     }
@@ -251,3 +254,4 @@ export class GamePageLocal {
         this.gameManager.resetGame();
     }
 }
+//# sourceMappingURL=GameLocalPage.js.map

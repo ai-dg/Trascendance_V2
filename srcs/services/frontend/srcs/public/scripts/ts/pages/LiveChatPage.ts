@@ -2,7 +2,7 @@ import { UIManager } from '../modules/UIManager.js';
 import type { User } from '../modules/TypesManager.js';
 import type { LanguageManager } from '../modules/LangManager.js';
 import type { RouterManager } from '../modules/RouterManager.js';
-import { Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 import type { WebsocketManager } from '../modules/WebsocketManager.js';
 
 export class LiveChatPage {
@@ -41,7 +41,7 @@ export class LiveChatPage {
 
         const errorMessageDiv = document.getElementById('error-message-div') as HTMLElement;
         const friendInput = document.getElementById('friend-input') as HTMLInputElement;
-        
+
         this.setupSocketListeners(errorMessageDiv, friendInput);
   }
 
@@ -87,7 +87,7 @@ export class LiveChatPage {
 
         btnDiv.appendChild(deleteBtn);
         btnDiv.appendChild(blockBtn);
-        
+
         avatarSection.appendChild(avatarImg);
         avatarSection.appendChild(username);
         avatarSection.appendChild(btnDiv);
@@ -102,14 +102,14 @@ export class LiveChatPage {
         // Title
         const messagesTitle = this.uiManager.createElement('div', 'text-[#00ffff] text-sm mb-2 opacity-60');
         messagesTitle.textContent = 'Messages';
-        
+
         // Field of messages
         const messagesContainer = this.uiManager.createElement('div', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 overflow-y-auto');
         messagesContainer.style.minHeight = '500px';
         messagesContainer.id = 'messages-div';
 
-        
-        
+
+
         messagesDiv.appendChild(messagesTitle);
         messagesDiv.appendChild(messagesContainer);
 
@@ -132,7 +132,7 @@ export class LiveChatPage {
 
         // Social Div
         const socialDiv = this.uiManager.createElement('div', 'w-80 bg-black/40 backdrop-blur-sm border-2 border-[#9d4edd] rounded-lg flex flex-col py-6 px-4 min-h-[700px]');
-        
+
         // Social Header
         const socialHeaderWrapper = this.uiManager.createElement('div', 'flex items-center justify-between mb-4');
         const socialHeader = this.uiManager.createElement('h3', 'retro-text text-xl text-[#00ffff]');
@@ -159,7 +159,7 @@ export class LiveChatPage {
             addFriendDiv.classList.toggle('hidden');
         });
 
-        
+
         // Setup socket listeners immediately
         this.setupSocketListeners(errorMessageDiv, friendInput);
 
@@ -177,14 +177,14 @@ export class LiveChatPage {
                 try {
                     const senderId = user.id;
                     const receiverId = await this.getIdByUsername(username);
-                
+
                     if (!receiverId) {
                         errorMessageDiv.textContent = "User id not found";
                         errorMessageDiv.classList.remove('hidden', 'text-green-500');
                         errorMessageDiv.classList.add('text-red-500');
                         return;
                     }
-                
+
                     const res = await fetch(this.routerManager.getUrl('/live-chat/friend-request'), {
                         method: 'POST',
                         credentials: 'include',
@@ -193,17 +193,17 @@ export class LiveChatPage {
                         },
                         body: JSON.stringify({ senderId, receiverId })
                     });
-                
+
                     if (!res.ok) {
                         const resData = await res.json();
                         throw new Error(resData.message || 'Failed to send friend request');
                     }
-                
+
                     const data = await res.json();
                     if (!data.success) {
                         throw new Error(data.message || 'Failed to send friend request');
                     }
-                
+
                     errorMessageDiv.textContent = "Friend request sent!";
                     errorMessageDiv.classList.remove('hidden', 'text-red-500');
                     errorMessageDiv.classList.add('text-green-500');
@@ -238,11 +238,11 @@ export class LiveChatPage {
         const notifList = this.uiManager.createElement('div', 'w-full');
         const notifTitle = this.uiManager.createElement('h4', 'retro-text text-lg text-[#00ffff] mb-2');
         notifTitle.textContent = 'Notifications';
-        
+
         // Container for all friend request notifications
         const notificationsContainer = this.uiManager.createElement('div', 'flex flex-col gap-2 mt-2 max-h-96 overflow-y-auto');
         notificationsContainer.id = 'notifications-container';
-        
+
         notifList.appendChild(notifTitle);
         notifList.appendChild(notificationsContainer);
         socialDiv.appendChild(notifList);
@@ -358,7 +358,7 @@ export class LiveChatPage {
 
         this.wsManager.onGeneral('notifications', (data) => {
             console.log("Received notification:", data);
-            
+
             switch (data.type) {
                 case 'friend-request':
                     this.addFriendRequestNotification(
@@ -378,7 +378,7 @@ export class LiveChatPage {
                         this.loadFriendsList(this.currentUser.id);
                     }
                     break;
-                
+
                 case 'clear-notification':
                     this.removeFriendRequestNotification(data.senderId);
                     break;
@@ -404,7 +404,7 @@ export class LiveChatPage {
         }
 
         const notifCard = this.uiManager.createElement('div', 'p-3 bg-black/80 border border-[#ff1493] rounded');
-        
+
         const notifMessage = this.uiManager.createElement('p', 'text-[#00ffff] text-sm mb-2');
         notifMessage.textContent = message;
 
@@ -414,7 +414,7 @@ export class LiveChatPage {
 
         const rejectBtn = this.uiManager.createElement('button', 'px-3 py-1 text-xs bg-red-500 text-black rounded hover:bg-red-400');
         rejectBtn.textContent = 'Reject';
-        
+
         acceptBtn.addEventListener('click', async () => {
             try {
                 const res = await fetch(this.routerManager.getUrl('/live-chat/friend-request-response'), {
@@ -447,16 +447,16 @@ export class LiveChatPage {
             }
             this.removeFriendRequestNotification(senderId);
         });
-        
+
         notifButtons.appendChild(acceptBtn);
         notifButtons.appendChild(rejectBtn);
         notifCard.appendChild(notifMessage);
         notifCard.appendChild(notifButtons);
-        
+
         container.appendChild(notifCard);
-        
+
         this.friendRequests.set(senderId, { senderId, message, element: notifCard });
-        
+
         console.log(`Added notification for sender ${senderId}. Total notifications: ${this.friendRequests.size}`);
     }
 
@@ -468,16 +468,16 @@ export class LiveChatPage {
         }
 
         notification.element.remove();
-        
+
         this.friendRequests.delete(senderId);
-        
+
         console.log(`Removed notification for sender ${senderId}. Remaining: ${this.friendRequests.size}`);
     }
 
     private async loadPendingFriendRequests(userId: any): Promise<void> {
         try {
             console.log("Loading pending friend requests for user:", userId);
-            
+
             const res = await fetch(this.routerManager.getUrl('/live-chat/pending-requests'), {
                 method: 'GET',
                 credentials: 'include'
@@ -512,7 +512,7 @@ export class LiveChatPage {
     private async loadFriendsList(userId: any): Promise<void> {
         try {
             console.log("Loading friends list for user:", userId);
-            
+
             const res = await fetch(this.routerManager.getUrl('/live-chat/get-friends'), {
                 method: 'GET',
                 credentials: 'include'
@@ -550,17 +550,17 @@ export class LiveChatPage {
             console.error("Profile Div not found");
             return;
         }
-    
+
         container.innerHTML = '';
-    
+
         for (const friend of friends) {
             const username = friend.username;
-        
+
             const friendItem = this.uiManager.createElement(
                 'div',
                 'p-2 bg-black/40 border border-[#00ffff]/30 rounded hover:bg-black/60 cursor-pointer transition-colors'
             );
-        
+
             const friendName = this.uiManager.createElement('p', 'text-[#00ffff] text-sm');
             friendName.textContent = username || `User ${username}`;
 
@@ -580,7 +580,7 @@ export class LiveChatPage {
                 });
 
             });
-                    
+
             friendItem.appendChild(friendName);
             container.appendChild(friendItem);
             };
@@ -591,7 +591,7 @@ export class LiveChatPage {
     private updateProfileView(): void {
         const profileDiv = document.getElementById('profile-div');
         if (!profileDiv) return;
-            
+
         const friendImg = profileDiv.querySelector('img') as HTMLImageElement;
         const friendPseudo = profileDiv.querySelector('p');
         console.log("Updating profile view for friend:", this.currentSelectedFriend);
@@ -649,7 +649,7 @@ export class LiveChatPage {
                         console.error('Failed to block friend:', response.status);
                         return;
                     }
-                    
+
                     const data = await response.json();
                     if (data.success) {
                         console.log("Friend blocked successfully");
@@ -702,7 +702,7 @@ export class LiveChatPage {
             });
         }
     }
-    
+
 
     private displayNoFriends(): void {
         const container = document.getElementById('friends-container');
@@ -713,14 +713,14 @@ export class LiveChatPage {
         emptyMessage.textContent = 'No friends yet. Add some!';
         container.appendChild(emptyMessage);
     }
-    
-    
-    
-    
+
+
+
+
     /**********************************************************************************************/
     /**************************************** LIVE-CHAT **************************************/
     /**********************************************************************************************/
-    
+
     private addMessage(
         text: string,
         isMine: boolean
@@ -732,21 +732,21 @@ export class LiveChatPage {
             'div',
             `flex mb-2 ${isMine ? 'justify-end' : 'justify-start'}`
         );
-        
+
         const bubble = this.uiManager.createElement(
             'div',
             isMine
             ? 'bg-[#ffffff] text-white px-3 py-2 rounded-lg max-w-[70%]'
             : 'bg-white/70 text-[#ffffff] border border-[#00ffff]/40 px-3 py-2 rounded-lg max-w-[70%]'
         );
-        
+
         bubble.textContent = text;
         wrapper.appendChild(bubble);
         messagesContainer.appendChild(wrapper);
-        
+
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
-    
-    
-    
+
+
+
 }

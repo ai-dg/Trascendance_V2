@@ -1,10 +1,13 @@
+import { UIManager } from '../modules/UIManager.js';
 import { GameManager } from '../modules/GameManager.js';
 export class AIPage {
+    uiManager;
+    onBack;
+    gameManager = null;
+    canvas = null;
+    user = null;
+    selectedDifficulty = 'medium';
     constructor(uiManager, onBack, user) {
-        this.gameManager = null;
-        this.canvas = null;
-        this.user = null;
-        this.selectedDifficulty = 'medium';
         this.uiManager = uiManager;
         this.onBack = onBack;
         this.user = user ?? null;
@@ -283,3 +286,4 @@ export class AIPage {
         this.gameManager.resetGame();
     }
 }
+//# sourceMappingURL=GameAiPage.js.map

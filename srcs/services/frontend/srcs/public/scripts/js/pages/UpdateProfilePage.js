@@ -1,5 +1,15 @@
+import { UIManager } from '../modules/UIManager.js';
+import { AuthManager } from '../modules/AuthManager.js';
 import { CheckManager } from '../modules/CheckManager.js';
 export class UpdateProfilePage {
+    uiManager;
+    routerManager;
+    authManager;
+    checkManager;
+    languageManager;
+    onBack;
+    onUpdateProfile;
+    user;
     constructor(uiManager, routerManager, authManager, languageManager, onBack, onUpdateProfile, user) {
         this.uiManager = uiManager;
         this.routerManager = routerManager;
@@ -384,3 +394,4 @@ export class UpdateProfilePage {
         this.uiManager.container.appendChild(container);
     }
 }
+//# sourceMappingURL=UpdateProfilePage.js.map

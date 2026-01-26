@@ -8,3 +8,4 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('App container not found');
     }
 });
+//# sourceMappingURL=main.js.map
