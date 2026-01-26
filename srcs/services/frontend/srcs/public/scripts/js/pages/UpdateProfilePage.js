@@ -20,7 +20,7 @@ export class UpdateProfilePage {
     }
     buildProfilePage() {
         const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-start p-8');
-        const card = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-8 shadow-[0_0_30px_#ff1493] w-full max-w-md flex flex-col items-center gap-8');
+        const card = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-8 shadow-[0_0_30px_#ff1493] w-full max-w-md flex flex-col items-center gap-8 mt-16');
         // Avatar Section
         const avatarSection = this.uiManager.createElement('div', 'flex flex-col items-center gap-2');
         const avatarImg = this.uiManager.createElement('img', 'rounded-full border-2 border-[#ff1493] cursor-pointer');
@@ -268,8 +268,7 @@ export class UpdateProfilePage {
             this.handlerDeleteAccount();
         });
         // Back button (optional)
-        const backButton = this.uiManager.createButton(this.t('backToSettings'), 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 mt-4', () => {
-            console.log('Back to settings clicked');
+        const backButton = this.uiManager.createButton(this.t('backToSettings'), 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200', () => {
             this.onBack();
         });
         card.appendChild(deleteButton);
@@ -279,8 +278,14 @@ export class UpdateProfilePage {
     }
     renderAvatarSelector() {
         const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
-        const card = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-8 shadow-[0_0_30px_#ff1493] w-full max-w-md flex flex-col items-center gap-8');
-        const title = this.uiManager.createElement('h1', 'retro-title text-3xl mb-6', this.t('chooseYourAvatar'));
+        const card = this.uiManager.createElement('div', 
+        // Card large ("bannière") mais contenu gardé étroit au centre
+        'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-8 shadow-[0_0_30px_#ff1493] w-full flex flex-col items-center');
+        card.style.width = '1300px';
+        const inner = this.uiManager.createElement('div', 'w-full max-w-md flex flex-col items-center gap-8');
+        const title = this.uiManager.createElement('h1', 
+        // inline-flex => le titre ne "s'étire" pas en largeur avec la bannière
+        'retro-title text-sm mb-6 inline-flex text-center', this.t('chooseYourAvatar'));
         const avatarContainer = this.uiManager.createAvatarSelector(async (avatarId) => {
             try {
                 const res = await fetch(this.routerManager.getUrl('/auth/update-avatar'), {
@@ -302,9 +307,13 @@ export class UpdateProfilePage {
             }
         }, this.user?.avatar);
         const backButton = this.uiManager.createButton(this.t('back'), 'retro-button bg-transparent text-[#00ffff] px-8 py-3 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200', () => this.render());
-        card.appendChild(title);
-        card.appendChild(avatarContainer);
-        card.appendChild(backButton);
+        const titleWrapper = this.uiManager.createElement('div', 'w-full flex justify-center');
+        titleWrapper.style.width = '300%';
+        titleWrapper.appendChild(title);
+        inner.appendChild(titleWrapper);
+        inner.appendChild(avatarContainer);
+        inner.appendChild(backButton);
+        card.appendChild(inner);
         container.appendChild(card);
         this.uiManager.clear();
         this.uiManager.container.appendChild(container);

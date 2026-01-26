@@ -112,7 +112,7 @@ export class GamePageLocal {
         gameContainer.appendChild(canvasContainer);
         gameContainer.appendChild(controls);
         gameContainer.appendChild(gameControls);
-        // Main Bloc 
+        // Main Bloc
         const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-6xl');
         content.appendChild(gameContainer);
         content.appendChild(backButtonContainer);
@@ -123,6 +123,9 @@ export class GamePageLocal {
         if (this.canvas)
             this.requestNewGame();
     }
+    //////////////////////////////////////////////
+    ///////////// GAME INITIALIZATION ////////////
+    //////////////////////////////////////////////
     requestNewGame() {
         const gameOverOverlay = document.querySelector('[data-overlay="game-over"]');
         const startOverlay = document.querySelector('[data-overlay="start-game"]');
@@ -232,9 +235,8 @@ export class GamePageLocal {
             this.gameManager.pauseGame();
     }
     backToMenu() {
-        if (this.gameManager) {
+        if (this.gameManager)
             this.gameManager.resetGame();
-        }
         this.onBack();
     }
     resetGame() {

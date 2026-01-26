@@ -7,7 +7,7 @@ export class GamePageLocal {
   private onBack: () => void;
   private gameManager: GameManager | null = null;
   private canvas: HTMLCanvasElement | null = null;
-  
+
   constructor(uiManager: UIManager, onBack: () => void, user?: User | null) {
     this.uiManager = uiManager;
     this.onBack = onBack;
@@ -16,7 +16,7 @@ export class GamePageLocal {
   //////////////////////////////////////////////
   ///////////// DESIGN & RENDERING /////////////
   //////////////////////////////////////////////
-  
+
   public render(): void
   {
     // Avatars
@@ -33,37 +33,37 @@ export class GamePageLocal {
     avatarPlayer2Img.style.height = '110px';
     avatarPlayer2Img.src = 'public/avatars/avatar2.png';
     avatarPlayer2Section.appendChild(avatarPlayer2Img);
-  
-  
+
+
     // Score Display
     const scoreDisplay = this.uiManager.createElement('div', 'flex gap-16 items-center retro-text');
-    
+
     const player1Score = this.uiManager.createElement('div', 'text-center');
     const player1Label = this.uiManager.createElement('div', 'text-lg opacity-60', 'PLAYER 1');
     player1Label.textContent = 'PLAYER 1';
     const player1Value = this.uiManager.createElement('div', 'text-4xl tracking-wider', '00');
     player1Score.appendChild(player1Label);
     player1Score.appendChild(player1Value);
-    
+
     const vsLabel = this.uiManager.createElement('div', 'text-2xl opacity-40', 'VS');
-    
+
     const player2Score = this.uiManager.createElement('div', 'text-center');
     const player2Label = this.uiManager.createElement('div', 'text-lg opacity-60', 'PLAYER 2');
     const player2Value = this.uiManager.createElement('div', 'text-4xl tracking-wider', '00');
     player2Score.appendChild(player2Label);
     player2Score.appendChild(player2Value);
-    
+
     scoreDisplay.appendChild(avatarPlayer1Section);
     scoreDisplay.appendChild(player1Score);
     scoreDisplay.appendChild(vsLabel);
     scoreDisplay.appendChild(player2Score);
     scoreDisplay.appendChild(avatarPlayer2Section);
-    
+
     // Game Canvas Container
     const canvasContainer = this.uiManager.createElement('div', 'relative');
     this.canvas = this.uiManager.createCanvas(800, 400, 'border-2 border-[#ff1493] rounded-lg bg-black shadow-[0_0_20px_#ff1493] retro-canvas');
     canvasContainer.appendChild(this.canvas);
-    
+
     // Start Game Overlay
     const startOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg');
     startOverlay.setAttribute('data-overlay', 'start-game');
@@ -77,9 +77,9 @@ export class GamePageLocal {
     startContent.appendChild(startTitle);
     startContent.appendChild(startButton);
     startOverlay.appendChild(startContent);
-    
+
     canvasContainer.appendChild(startOverlay);
-    
+
     // Pause Game Overlay
     const pauseOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg hidden');
     pauseOverlay.setAttribute('data-overlay', 'pause-game');
@@ -88,7 +88,7 @@ export class GamePageLocal {
     pauseContent.appendChild(pauseTitle);
     pauseOverlay.appendChild(pauseContent);
     canvasContainer.appendChild(pauseOverlay);
-    
+
     // Game Over Overlay
     const gameOverOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg hidden');
     gameOverOverlay.setAttribute('data-overlay', 'game-over');
@@ -105,11 +105,11 @@ export class GamePageLocal {
     gameOverContent.appendChild(playAgainButton);
     gameOverOverlay.appendChild(gameOverContent);
     canvasContainer.appendChild(gameOverOverlay);
-    
-    
+
+
     // Controls
     const controls = this.uiManager.createElement('div', 'flex gap-12 retro-text text-sm opacity-60');
-    
+
     const player1Controls = this.uiManager.createElement('div', 'text-center');
     const player1Title = this.uiManager.createElement('div', 'mb-2', 'PLAYER 1');
     const player1Up = this.uiManager.createElement('div', '', 'W - UP');
@@ -117,7 +117,7 @@ export class GamePageLocal {
     player1Controls.appendChild(player1Title);
     player1Controls.appendChild(player1Up);
     player1Controls.appendChild(player1Down);
-    
+
     const player2Controls = this.uiManager.createElement('div', 'text-center');
     const player2Title = this.uiManager.createElement('div', 'mb-2', 'PLAYER 2');
     const player2Up = this.uiManager.createElement('div', '', '↑ - UP');
@@ -125,10 +125,10 @@ export class GamePageLocal {
     player2Controls.appendChild(player2Title);
     player2Controls.appendChild(player2Up);
     player2Controls.appendChild(player2Down);
-    
+
     controls.appendChild(player1Controls);
     controls.appendChild(player2Controls);
-    
+
     // Buttons Pause & Reset
     const gameControls = this.uiManager.createElement('div', 'flex gap-4');
     const pauseButton = this.uiManager.createButton(
@@ -141,7 +141,7 @@ export class GamePageLocal {
       'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200',
       () => this.resetGame()
     );
-  
+
     // Back to Menu Button
     const backButtonContainer = this.uiManager.createElement('div', 'text-center mb-8');
     const backButton = this.uiManager.createButton(
@@ -152,32 +152,34 @@ export class GamePageLocal {
     const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
     backButton.appendChild(backIcon);
     backButtonContainer.appendChild(backButton);
-    
+
     gameControls.appendChild(pauseButton);
     gameControls.appendChild(resetButton);
-    
+
     // Game Container
     const gameContainer = this.uiManager.createElement('div', 'flex flex-col items-center gap-6');
     gameContainer.appendChild(scoreDisplay);
     gameContainer.appendChild(canvasContainer);
     gameContainer.appendChild(controls);
-    gameContainer.appendChild(gameControls);    
-  
-    // Main Bloc 
+    gameContainer.appendChild(gameControls);
+
+    // Main Bloc
     const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-6xl');
     content.appendChild(gameContainer);
     content.appendChild(backButtonContainer);
-    
+
     const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
     container.appendChild(content);
     this.uiManager.clear();
     this.uiManager.container.appendChild(container);
-    
+
     if (this.canvas)
       this.requestNewGame()
   }
 
-
+  //////////////////////////////////////////////
+  ///////////// GAME INITIALIZATION ////////////
+  //////////////////////////////////////////////
 
   private requestNewGame(): void
   {
@@ -186,9 +188,9 @@ export class GamePageLocal {
     if (gameOverOverlay)
     {
       gameOverOverlay.classList.add('hidden');
-	    startOverlay.classList.remove('hidden')
-	  }
-	  GameManager.requestGameID("local")
+      startOverlay.classList.remove('hidden')
+    }
+    GameManager.requestGameID("local")
   }
 
   public setupGame(data:any)
@@ -198,7 +200,7 @@ export class GamePageLocal {
     this.gameManager = new GameManager(this.canvas, data.UUID);
     this.setupGameListeners()
   }
-  
+
   private setupGameListeners(): void
   {
     if (!this.gameManager)
@@ -219,24 +221,24 @@ export class GamePageLocal {
   {
     const player1Element = document.querySelector('.text-4xl.tracking-wider') as HTMLElement;
     const player2Element = document.querySelectorAll('.text-4xl.tracking-wider')[1] as HTMLElement;
-    
+
     if (player1Element)
       player1Element.textContent = player1Score.toString().padStart(2, '0');
     if (player2Element)
       player2Element.textContent = player2Score.toString().padStart(2, '0');
   }
-  
+
 
   private updateGameState(gameState: any): void
   {
     const startOverlay = document.querySelector<HTMLElement>('[data-overlay="start-game"]');
     const pauseOverlay = document.querySelector<HTMLElement>('[data-overlay="pause-game"]');
     const gameOverOverlay = document.querySelector<HTMLElement>('[data-overlay="game-over"]');
-  
+
     const isGameOver = gameState.player1Score >= 10 || gameState.player2Score >= 10;
     const winner = isGameOver ? (gameState.player1Score >= 10 ? 'Player 1' : 'Player 2') : null;
     const isPaused = this.gameManager ? this.gameManager.getIsPaused() : false;
-    
+
     // Screen at the start of the game
     if (!this.gameManager?.getHasStarted())
     {
@@ -248,19 +250,19 @@ export class GamePageLocal {
         gameOverOverlay.classList.add('hidden');
       return;
     }
-  
+
     // Screen when the game is running
     else if (gameState.gameRunning)
-      {
-        if (startOverlay) 
+    {
+      if (startOverlay)
         startOverlay.classList.add('hidden');
-      if (pauseOverlay) 
+      if (pauseOverlay)
         pauseOverlay.classList.add('hidden');
-      if (gameOverOverlay) 
+      if (gameOverOverlay)
         gameOverOverlay.classList.add('hidden');
       return;
     }
-    
+
     // Screen when the game is paused
     else if (isPaused)
     {
@@ -272,7 +274,7 @@ export class GamePageLocal {
         gameOverOverlay.classList.add('hidden');
       return;
     }
-  
+
     // Screen when the game is over
     else if (isGameOver && winner)
     {
@@ -321,9 +323,7 @@ export class GamePageLocal {
   private backToMenu(): void
   {
     if (this.gameManager)
-    {
       this.gameManager.resetGame();
-    }
     this.onBack();
   }
 

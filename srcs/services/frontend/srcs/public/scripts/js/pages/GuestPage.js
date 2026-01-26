@@ -8,9 +8,10 @@ export class GuestPage {
     render() {
         const container = this.uiManager.createElement('div', 'retro-container size-full flex items-center justify-center p-8');
         const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-md');
+        content.style.maxWidth = '600px';
         // Header
         const header = this.uiManager.createElement('div', 'text-center mb-8');
-        const title = this.uiManager.createElement('h1', 'retro-title text-4xl mb-4', 'PLAY AS GUEST');
+        const title = this.uiManager.createElement('h1', 'retro-title text-4xl mb-4', 'GUEST MODE');
         const separator = this.uiManager.createElement('div', 'w-full h-px bg-gradient-to-r from-transparent via-[#ff1493] to-transparent mb-8');
         header.appendChild(title);
         header.appendChild(separator);

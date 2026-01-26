@@ -4,6 +4,7 @@ export class AIPage {
         this.gameManager = null;
         this.canvas = null;
         this.user = null;
+        this.selectedDifficulty = 'medium';
         this.uiManager = uiManager;
         this.onBack = onBack;
         this.user = user ?? null;
@@ -59,9 +60,9 @@ export class AIPage {
         startOverlay.setAttribute('data-overlay', 'start-game');
         const startContent = this.uiManager.createElement('div', 'text-center retro-text');
         const startTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'CHOOSE DIFFICULTY');
-        const startButtonEasy = this.uiManager.createButton('EASY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
-        const startButtonMedium = this.uiManager.createButton('MEDIUM', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
-        const startButtonHard = this.uiManager.createButton('HARD', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
+        const startButtonEasy = this.uiManager.createButton('EASY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.selectDifficulty('easy'));
+        const startButtonMedium = this.uiManager.createButton('MEDIUM', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.selectDifficulty('medium'));
+        const startButtonHard = this.uiManager.createButton('HARD', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.selectDifficulty('hard'));
         startContent.appendChild(startTitle);
         startContent.appendChild(startButtonEasy);
         startContent.appendChild(this.uiManager.createElement('div', 'h-4'));
@@ -70,6 +71,14 @@ export class AIPage {
         startContent.appendChild(startButtonHard);
         startOverlay.appendChild(startContent);
         canvasContainer.appendChild(startOverlay);
+        // Pause Game Overlay
+        const pauseOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg hidden');
+        pauseOverlay.setAttribute('data-overlay', 'pause-game');
+        const pauseContent = this.uiManager.createElement('div', 'text-center retro-text');
+        const pauseTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'PAUSED');
+        pauseContent.appendChild(pauseTitle);
+        pauseOverlay.appendChild(pauseContent);
+        canvasContainer.appendChild(pauseOverlay);
         // Game Over Overlay
         const gameOverOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg hidden');
         gameOverOverlay.setAttribute('data-overlay', 'game-over');
@@ -94,11 +103,11 @@ export class AIPage {
         controls.appendChild(player1Controls);
         // Buttons Pause & Reset
         const gameControls = this.uiManager.createElement('div', 'flex gap-4');
-        const pauseButton = this.uiManager.createButton('PAUSE', 'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200', () => this.pauseGame());
+        const pauseButton = this.uiManager.createButton('PAUSE / RESUME', 'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200', () => this.pauseGame());
         const resetButton = this.uiManager.createButton('RESTART', 'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200', () => this.resetGame());
         // Back to Menu Button
         const backButtonContainer = this.uiManager.createElement('div', 'text-center mb-8');
-        const backButton = this.uiManager.createButton('BACK TO MENU', 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mx-auto mt-4', this.onBack);
+        const backButton = this.uiManager.createButton('BACK TO MENU', 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mx-auto mt-4', () => this.backToMenu());
         const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
         backButton.appendChild(backIcon);
         backButtonContainer.appendChild(backButton);
@@ -122,6 +131,18 @@ export class AIPage {
         if (this.canvas)
             this.requestNewGame();
     }
+    //////////////////////////////////////////////
+    /////////// GAME INITIALIZATION ////////////
+    //////////////////////////////////////////////
+    selectDifficulty(difficulty) {
+        this.selectedDifficulty = difficulty;
+        const startOverlay = document.querySelector('[data-overlay="start-game"]');
+        if (startOverlay) {
+            startOverlay.classList.add('hidden');
+        }
+        // Request new game with selected difficulty
+        GameManager.requestGameID("ai", { difficulty });
+    }
     requestNewGame() {
         const gameOverOverlay = document.querySelector('[data-overlay="game-over"]');
         const startOverlay = document.querySelector('[data-overlay="start-game"]');
@@ -129,24 +150,27 @@ export class AIPage {
             gameOverOverlay.classList.add('hidden');
             startOverlay.classList.remove('hidden');
         }
-        GameManager.requestGameID("ai");
+        // Don't request game here - wait for difficulty selection
     }
     setReady() {
-        if (this.gameManager) {
-            this.gameManager.setReady();
+        if (!this.gameManager)
+            return;
+        const wasPaused = this.gameManager.getIsPaused();
+        this.gameManager.setReady();
+        if (!wasPaused) {
             const startOverlay = document.querySelector('[data-overlay="start-game"]');
-            if (startOverlay) {
+            if (startOverlay)
                 startOverlay.classList.add('hidden');
-            }
         }
     }
     setupGame(data) {
-        console.log("should work here in setupGame");
+        console.log("Setting up AI game with UUID:", data.UUID);
         if (!this.canvas)
             throw new Error("canvas is not initialised");
         this.gameManager = new GameManager(this.canvas, data.UUID);
         this.setupGameListeners();
-        console.log(data.UUID, this.gameManager);
+        // Auto-ready since player already selected difficulty
+        this.setReady();
     }
     setupGameListeners() {
         if (!this.gameManager)
@@ -156,6 +180,9 @@ export class AIPage {
             this.updateGameState(gameState);
         });
     }
+    //////////////////////////////////////////
+    ///////////// UPDATES ////////////////////
+    //////////////////////////////////////////
     updateScore(player1Score, player2Score) {
         const player1Element = document.querySelector('.text-4xl.tracking-wider');
         const player2Element = document.querySelectorAll('.text-4xl.tracking-wider')[1];
@@ -167,69 +194,88 @@ export class AIPage {
         }
     }
     updateGameState(gameState) {
-        console.log('updateGameState called with:', gameState);
-        // Utilisons des sélecteurs plus spécifiques pour éviter les conflits
-        const gameOverOverlay = document.querySelector('[data-overlay="game-over"]');
         const startOverlay = document.querySelector('[data-overlay="start-game"]');
-        console.log('Found overlays:', { gameOverOverlay, startOverlay });
-        // Vérifier si le jeu est terminé
+        const pauseOverlay = document.querySelector('[data-overlay="pause-game"]');
+        const gameOverOverlay = document.querySelector('[data-overlay="game-over"]');
         const isGameOver = gameState.player1Score >= 10 || gameState.player2Score >= 10;
         const winner = isGameOver ? (gameState.player1Score >= 10 ? 'Player 1' : 'Player 2') : null;
-        if (isGameOver && winner) {
-            // Afficher l'overlay de fin de jeu
-            if (gameOverOverlay) {
-                if (this.gameManager)
-                    this.gameManager = null;
-                gameOverOverlay.classList.remove('hidden');
-                const winnerText = gameOverOverlay.querySelector('.text-2xl.mb-6.text-\\[\\#00ffff\\]');
-                if (winnerText) {
-                    winnerText.textContent = `${winner} WINS!`;
-                }
-            }
-            if (startOverlay) {
-                startOverlay.classList.add('hidden');
-            }
-        }
-        else if (!gameState.gameRunning && !isGameOver) {
-            const isPaused = this.gameManager ? this.gameManager.getIsPaused() : false;
-            if (startOverlay && !isPaused) {
+        const isPaused = this.gameManager ? this.gameManager.getIsPaused() : false;
+        // Screen at the start of the game
+        if (!this.gameManager?.getHasStarted()) {
+            if (startOverlay)
                 startOverlay.classList.remove('hidden');
-            }
-            else if (startOverlay && isPaused) {
-                startOverlay.classList.add('hidden');
-            }
-            if (gameOverOverlay) {
+            if (pauseOverlay)
+                pauseOverlay.classList.add('hidden');
+            if (gameOverOverlay)
                 gameOverOverlay.classList.add('hidden');
-            }
+            return;
         }
+        // Screen at the start of the game
+        if (!this.gameManager?.getHasStarted()) {
+            if (startOverlay)
+                startOverlay.classList.remove('hidden');
+            if (pauseOverlay)
+                pauseOverlay.classList.add('hidden');
+            if (gameOverOverlay)
+                gameOverOverlay.classList.add('hidden');
+            return;
+        }
+        // Screen when the game is running
         else if (gameState.gameRunning) {
-            // Cacher tous les overlays pendant le jeu
-            if (startOverlay) {
+            if (startOverlay)
                 startOverlay.classList.add('hidden');
-            }
-            if (gameOverOverlay) {
+            if (pauseOverlay)
+                pauseOverlay.classList.add('hidden');
+            if (gameOverOverlay)
                 gameOverOverlay.classList.add('hidden');
-            }
+            return;
+        }
+        // Screen when the game is paused
+        else if (isPaused) {
+            if (pauseOverlay)
+                pauseOverlay.classList.remove('hidden');
+            if (startOverlay)
+                startOverlay.classList.add('hidden');
+            if (gameOverOverlay)
+                gameOverOverlay.classList.add('hidden');
+            return;
+        }
+        // Screen when the game is over
+        else if (isGameOver && winner) {
+            if (this.gameManager)
+                this.gameManager = null;
+            if (gameOverOverlay)
+                gameOverOverlay.classList.remove('hidden');
+            if (startOverlay)
+                startOverlay.classList.add('hidden');
+            if (pauseOverlay)
+                pauseOverlay.classList.add('hidden');
+            return;
         }
     }
-    startGame() {
-        console.log('startGame() called');
-        if (this.gameManager) {
-            console.log('GameManager exists, calling startGame()');
-            this.gameManager.startGame();
-        }
-        else {
-            console.log('GameManager is null!');
-        }
-    }
+    //////////////////////////////////////////
+    ///////////// GAME FUNCTIONS ////////////
+    //////////////////////////////////////////
     pauseGame() {
-        if (this.gameManager) {
+        if (!this.gameManager)
+            return;
+        if (!this.gameManager.getIsPaused() && !this.gameManager.getGameState().gameRunning)
+            return;
+        if (this.gameManager.getIsPaused())
+            this.gameManager.resumeGame();
+        else
             this.gameManager.pauseGame();
-        }
+    }
+    backToMenu() {
+        if (this.gameManager)
+            this.gameManager.resetGame();
+        this.onBack();
     }
     resetGame() {
-        if (this.gameManager) {
-            this.gameManager.resetGame();
-        }
+        if (!this.gameManager)
+            return;
+        if (!this.gameManager.getGameState().gameRunning)
+            return;
+        this.gameManager.resetGame();
     }
 }

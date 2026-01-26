@@ -39,11 +39,11 @@ export class UpdateProfilePage {
     private buildProfilePage(): HTMLElement {
         const container = this.uiManager.createElement(
           'div',
-          'retro-container size-full flex flex-col items-center justify-start p-8'
+          'retro-container size-full flex flex-col items-center justify-start p-8',
         );  
         const card = this.uiManager.createElement(
           'div',
-          'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-8 shadow-[0_0_30px_#ff1493] w-full max-w-md flex flex-col items-center gap-8'
+          'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-8 shadow-[0_0_30px_#ff1493] w-full max-w-md flex flex-col items-center gap-8 mt-16'
         );
 
         // Avatar Section
@@ -356,9 +356,8 @@ export class UpdateProfilePage {
         // Back button (optional)
         const backButton = this.uiManager.createButton(
           this.t('backToSettings'),
-          'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 mt-4',
+          'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200',
           () => {
-            console.log('Back to settings clicked');
             this.onBack();
           }
         );
@@ -377,12 +376,19 @@ export class UpdateProfilePage {
 
       const card = this.uiManager.createElement(
         'div',
-        'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-8 shadow-[0_0_30px_#ff1493] w-full max-w-md flex flex-col items-center gap-8'
+        // Card large ("bannière") mais contenu gardé étroit au centre
+        'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-8 shadow-[0_0_30px_#ff1493] w-full flex flex-col items-center'
+      );
+      card.style.width = '1300px';
+      const inner = this.uiManager.createElement(
+        'div',
+        'w-full max-w-md flex flex-col items-center gap-8'
       );
 
       const title = this.uiManager.createElement(
         'h1',
-        'retro-title text-3xl mb-6',
+        // inline-flex => le titre ne "s'étire" pas en largeur avec la bannière
+        'retro-title text-sm mb-6 inline-flex text-center',
         this.t('chooseYourAvatar')
       );
 
@@ -417,9 +423,14 @@ export class UpdateProfilePage {
         () => this.render()
       );
 
-      card.appendChild(title);
-      card.appendChild(avatarContainer);
-      card.appendChild(backButton);
+      const titleWrapper = this.uiManager.createElement('div', 'w-full flex justify-center');
+      titleWrapper.style.width = '300%';
+    
+      titleWrapper.appendChild(title);
+      inner.appendChild(titleWrapper);
+      inner.appendChild(avatarContainer);
+      inner.appendChild(backButton);
+      card.appendChild(inner);
 
       container.appendChild(card);
 

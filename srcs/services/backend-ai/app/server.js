@@ -1,6 +1,8 @@
 import Fastify from 'fastify';
 import fs from 'fs';
 import path from 'path';
+import { createClient } from 'redis';
+import { Ai } from './srcs/Ai.js';
 
 // HTTPS options
 let httpsOptions = {};
@@ -19,16 +21,98 @@ try {
 
 const app = Fastify({https: httpsOptions});
 
-app.get('/', async () => {	
-
-	return { status: 'ok', service: 'backend-ai' };
+// Redis clients
+const redis = createClient({
+	socket: {
+		host: process.env.REDIS_HOST,
+		port: process.env.REDIS_PORT
+	},
+	password: process.env.REDIS_PASSWORD
 });
 
+const redisSubscriber = createClient({
+	socket: {
+		host: process.env.REDIS_HOST,
+		port: process.env.REDIS_PORT
+	},
+	password: process.env.REDIS_PASSWORD
+});
+
+// Store AI instances per game with last activity timestamp
+const aiInstances = new Map();
+const AI_INSTANCE_TTL = 10 * 60 * 1000; // 10 minutes
+
+app.get('/', async () => {
+	return { status: 'ok', service: 'backend-ai', activeGames: aiInstances.size };
+});
+
+async function setupRedisSubscription() {
+	try {
+		await redis.connect();
+		await redisSubscriber.connect();
+		console.log('✅ Connected to Redis');
+
+		// Subscribe to game state channels
+		await redisSubscriber.pSubscribe('game:*:state', async (message, channel) => {
+			try {
+				const uuid = channel.split(':')[1];
+				const gameState = JSON.parse(message);
+
+				// Get or create AI instance
+				let aiData = aiInstances.get(uuid);
+				if (!aiData) {
+					aiData = {
+						ai: new Ai(gameState.difficulty || 'medium'),
+						lastActivity: Date.now()
+					};
+					aiInstances.set(uuid, aiData);
+					console.log(`Created AI for game ${uuid} (${gameState.difficulty || 'medium'})`);
+				} else {
+					aiData.lastActivity = Date.now();
+				}
+
+				// Calculate and publish AI move
+				const paddle2Dir = aiData.ai.calculateMove(gameState.ball, gameState.paddle2);
+				await redis.publish(`game:${uuid}:ai-input`, JSON.stringify({ paddle2Dir }));
+
+			} catch (err) {
+				console.error('Error processing game state:', err);
+			}
+		});
+
+		// Subscribe to game end events for cleanup
+		await redisSubscriber.pSubscribe('game:*:end', (message, channel) => {
+			const uuid = channel.split(':')[1];
+			if (aiInstances.has(uuid)) {
+				aiInstances.delete(uuid);
+				console.log(`Cleaned up AI for game ${uuid}`);
+			}
+		});
+
+		console.log('✅ Subscribed to game channels');
+
+		// Periodic cleanup of stale AI instances
+		setInterval(() => {
+			const now = Date.now();
+			for (const [uuid, data] of aiInstances.entries()) {
+				if (now - data.lastActivity > AI_INSTANCE_TTL) {
+					aiInstances.delete(uuid);
+					console.log(`Cleaned up stale AI for game ${uuid}`);
+				}
+			}
+		}, 60 * 1000); // Check every minute
+
+	} catch (err) {
+		console.error('Redis connection error:', err);
+		process.exit(1);
+	}
+}
 
 const start = async () => {
 	try {
-		app.listen({ port: 3004, host: '0.0.0.0' });
-		console.log('Match maker service running');
+		await setupRedisSubscription();
+		await app.listen({ port: 3004, host: '0.0.0.0' });
+		console.log('✅ Backend-AI service running on port 3004');
 	} catch (err) {
 		console.error(err);
 		process.exit(1);

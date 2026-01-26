@@ -67,14 +67,13 @@ async function setupDatabase() {
 			filename: '/data/auth.sqlite',
 			driver: sqlite3.Database
 		})
-	
+
 		await db.exec(`
 			CREATE TABLE IF NOT EXISTS users (
 			user_id INTEGER PRIMARY KEY AUTOINCREMENT,
 			user_mail TEXT NOT NULL UNIQUE,
 			pseudo TEXT NOT NULL UNIQUE,
-			user_password TEXT NOT NULL,
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+			user_password TEXT NOT NULL,		avatar TEXT,			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 			);`);
 		return db;
 	}
