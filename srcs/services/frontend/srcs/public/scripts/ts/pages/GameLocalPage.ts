@@ -177,6 +177,9 @@ export class GamePageLocal {
       this.requestNewGame()
   }
 
+  //////////////////////////////////////////////
+  ///////////// GAME INITIALIZATION ////////////
+  //////////////////////////////////////////////
 
   private requestNewGame(): void
   {
@@ -320,9 +323,7 @@ export class GamePageLocal {
   private backToMenu(): void
   {
     if (this.gameManager)
-    {
       this.gameManager.resetGame();
-    }
     this.onBack();
   }
 

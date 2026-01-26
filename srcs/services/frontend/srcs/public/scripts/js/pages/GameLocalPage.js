@@ -123,6 +123,9 @@ export class GamePageLocal {
         if (this.canvas)
             this.requestNewGame();
     }
+    //////////////////////////////////////////////
+    ///////////// GAME INITIALIZATION ////////////
+    //////////////////////////////////////////////
     requestNewGame() {
         const gameOverOverlay = document.querySelector('[data-overlay="game-over"]');
         const startOverlay = document.querySelector('[data-overlay="start-game"]');
@@ -232,9 +235,8 @@ export class GamePageLocal {
             this.gameManager.pauseGame();
     }
     backToMenu() {
-        if (this.gameManager) {
+        if (this.gameManager)
             this.gameManager.resetGame();
-        }
         this.onBack();
     }
     resetGame() {

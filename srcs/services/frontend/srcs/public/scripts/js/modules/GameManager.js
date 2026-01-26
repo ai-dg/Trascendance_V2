@@ -84,6 +84,10 @@ export class GameManager {
                 this.handleServerGameReset(data);
             else if (data.type === "game-update")
                 this.updateGame(data);
+            else if (data.type === "play-against-random-player")
+                this.handleServerPlayAgainstRandomPlayer(data);
+            else if (data.type === "play-against-friend")
+                this.handleServerPlayAgainstFriend(data);
         });
     }
     setupEventListeners() {
@@ -177,6 +181,12 @@ export class GameManager {
             this.draw();
         }
         this.notifyListeners();
+    }
+    handleServerPlayAgainstRandomPlayer(data) {
+        console.log("handleServerPlayAgainstRandomPlayer", data);
+    }
+    handleServerPlayAgainstFriend(data) {
+        console.log("handleServerPlayAgainstFriend", data);
     }
     //////////////////////////////////////////
     /////////// GAME LOOP ////////////////////

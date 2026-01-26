@@ -30,10 +30,14 @@ export class AuthPage {
     t(key) {
         return this.languageManager.t(key);
     }
+    //////////////////////////////////////////////
+    //////////////////DESIGN PAGE ////////////////
+    //////////////////////////////////////////////
     render() {
         console.log("render: ", this.showChangePassword);
         const container = this.uiManager.createElement('div', 'retro-container size-full flex items-center justify-center p-8');
-        const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-md');
+        const content = this.uiManager.createElement('div', 'relative z-10');
+        content.style.width = '600px';
         const card = this.uiManager.createElement('div', 'auth-card bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-8 shadow-[0_0_30px_#ff1493]');
         // Header
         const header = this.uiManager.createElement('div', 'text-center mb-8');
@@ -46,7 +50,7 @@ export class AuthPage {
             ? this.t('enter_email_to_reset')
             : this.showChangePassword
                 ? this.t('enter_new_password')
-                : (this.isLogin ? this.t('access_the_arcade') : this.t('join_the_arcade')));
+                : this.t(''));
         header.appendChild(title);
         header.appendChild(subtitle);
         // Error messages
@@ -64,7 +68,7 @@ export class AuthPage {
         if (this.showForgotPassword) {
             const emailField = this.createField(this.t('email'), 'email', 'email', this.t('enter_email'));
             form.appendChild(emailField);
-            const submitButton = this.uiManager.createButton(this.t('reset_password'), 'w-full retro-button bg-[#ff1493] text-black hover:bg-transparent hover:text-[#ff1493] border-2 border-[#ff1493] py-3', () => this.onForgotPassword(this.formData.email));
+            const submitButton = this.uiManager.createButton(this.t('reset_password'), 'retro-button auth-btn auth-btn-primary', () => this.onForgotPassword(this.formData.email));
             submitButton.type = 'submit';
             form.appendChild(submitButton);
         }
@@ -73,7 +77,7 @@ export class AuthPage {
             const passwordConfirmField = this.createField(this.t('password_confirm'), 'password', 'confirmPassword', this.t('enter_again_new_password'));
             form.appendChild(passwordField);
             form.appendChild(passwordConfirmField);
-            const submitButton = this.uiManager.createButton(this.t('change_password'), 'w-full retro-button bg-[#ff1493] text-black hover:bg-transparent hover:text-[#ff1493] border-2 border-[#ff1493] py-3', () => { });
+            const submitButton = this.uiManager.createButton(this.t('change_password'), 'retro-button auth-btn auth-btn-primary', () => { });
             submitButton.type = 'submit';
             form.appendChild(submitButton);
         }
@@ -90,7 +94,9 @@ export class AuthPage {
                 const confirmPasswordField = this.createField(this.t('confirm_password'), 'password', 'confirmPassword', this.t('confirm_password_placeholder'));
                 form.appendChild(confirmPasswordField);
             }
-            const submitButton = this.uiManager.createButton(this.isLogin ? this.t('login') : this.t('create_account'), 'w-full retro-button bg-[#ff1493] text-black hover:bg-transparent hover:text-[#ff1493] border-2 border-[#ff1493] py-3', () => { });
+            const submitButton = this.uiManager.createButton(this.isLogin ? this.t('login') : this.t('create_account'), this.isLogin
+                ? 'retro-button auth-btn auth-btn-primary text-lg'
+                : 'retro-button auth-btn auth-btn-oauth', () => { });
             submitButton.type = 'submit';
             form.appendChild(submitButton);
         }
@@ -126,36 +132,34 @@ export class AuthPage {
                 toggleContainer.appendChild(forgotPasswordContainer);
             }
         }
-        const demoInfo = this.uiManager.createElement('div', 'mt-6 p-4 bg-[#9d4edd]/20 border border-[#9d4edd] rounded-lg');
-        const demoText = this.uiManager.createElement('div', 'retro-text text-xs text-[#9d4edd] text-center', this.t('project_name'));
-        demoInfo.appendChild(demoText);
         card.appendChild(header);
         card.appendChild(form);
         if (!this.showForgotPassword || !this.showChangePassword) {
             const oauthContainer = this.uiManager.createElement('div', 'mt-6 space-y-3');
             const divider = this.uiManager.createElement('div', 'flex items-center my-4');
             const dividerLine = this.uiManager.createElement('div', 'flex-1 h-px bg-gradient-to-r from-transparent via-[#ff1493] to-transparent');
-            const dividerText = this.uiManager.createElement('span', 'px-4 retro-text text-sm text-[#ff1493]', this.t('or'));
             divider.appendChild(dividerLine);
-            divider.appendChild(dividerText);
             divider.appendChild(this.uiManager.createElement('div', 'flex-1 h-px bg-gradient-to-r from-transparent via-[#ff1493] to-transparent'));
-            const googleBtn = this.uiManager.createButton(this.t('sign_in_with_google'), 'w-full retro-button bg-white text-black hover:bg-gray-100 border-2 border-white py-3 flex items-center justify-center gap-3', () => this.handleGoogleSignIn());
-            const auth42Btn = this.uiManager.createButton(this.t('sign_in_with_42'), 'w-full retro-button bg-[#00babc] text-white hover:bg-[#00a0a2] border-2 border-[#00babc] py-3 flex items-center justify-center gap-3', () => this.handle42SignIn());
+            // Register buttons
+            const googleBtn = this.uiManager.createButton(this.t('sign_in_with_google'), 'retro-button auth-btn auth-btn-google', () => this.handleGoogleSignIn());
+            const auth42Btn = this.uiManager.createButton(this.t('sign_in_with_42'), 'retro-button auth-btn auth-btn-42', () => this.handle42SignIn());
             oauthContainer.appendChild(divider);
             oauthContainer.appendChild(googleBtn);
             oauthContainer.appendChild(auth42Btn);
-            const playAsGuestBtn = this.uiManager.createButton(this.t('play_as_guest'), 'w-full retro-button bg-[#00ffff] text-black hover:bg-[#00ffff]/80 hover:text-black border-2 border-[#00ffff] py-3 mt-6', this.onPlayAsGuest);
+            const playAsGuestBtn = this.uiManager.createButton(this.t('play_as_guest'), 'retro-button auth-btn auth-btn-guest', this.onPlayAsGuest);
+            oauthContainer.appendChild(playAsGuestBtn);
             card.appendChild(oauthContainer);
-            card.appendChild(playAsGuestBtn);
         }
         card.appendChild(toggleContainer);
-        card.appendChild(demoInfo);
         card.appendChild(this.createLanguageSelector());
         content.appendChild(card);
         container.appendChild(content);
         this.uiManager.clear();
         this.uiManager.container.appendChild(container);
     }
+    //////////////////////////////////////////////
+    ///////////// CREATE ELEMENTS ////////////////
+    //////////////////////////////////////////////
     createField(label, type, name, placeholder) {
         const fieldContainer = this.uiManager.createElement('div');
         const labelElement = this.uiManager.createElement('label', 'retro-text text-sm block mb-2', label);
@@ -172,6 +176,80 @@ export class AuthPage {
         });
         fieldContainer.appendChild(input);
         return fieldContainer;
+    }
+    createLanguageSelector() {
+        const languages = [
+            { code: "en", flag: "🇬🇧" },
+            { code: "fr", flag: "🇫🇷" },
+            { code: "pt", flag: "🇧🇷" },
+            { code: "et", flag: "🇪🇪" },
+        ];
+        const currentLangCode = this.languageManager.getCurrentLang();
+        let currentLangIndex = languages.findIndex(l => l.code === currentLangCode);
+        if (currentLangIndex === -1)
+            currentLangIndex = 0;
+        const wrapper = this.uiManager.createElement("div", "flex items-center justify-center gap-2 mt-6 cursor-pointer");
+        const label = this.uiManager.createElement("span", "retro-text text-[#ff1493]", "LANGUAGE:");
+        const flag = this.uiManager.createElement("span", "text-2xl", languages[currentLangIndex].flag);
+        flag.addEventListener("click", async () => {
+            currentLangIndex = (currentLangIndex + 1) % languages.length;
+            const nextLang = languages[currentLangIndex];
+            flag.textContent = nextLang.flag;
+            try {
+                await this.languageManager.setLang(nextLang.code);
+                await this.languageManager.loadTranslations();
+                this.render();
+            }
+            catch (err) {
+                console.error("Error changing language:", err);
+            }
+        });
+        wrapper.appendChild(label);
+        wrapper.appendChild(flag);
+        return wrapper;
+    }
+    toggleMode() {
+        this.isLogin = !this.isLogin;
+        this.formData = { username: '', email: '', password: '', confirmPassword: '' };
+        this.errors = [];
+        this.render();
+    }
+    //////////////////////////////////////////////
+    ///////////// HANDLERS ///////////////////////
+    //////////////////////////////////////////////
+    handleGoogleSignIn() {
+        // TODO: Implement Google OAuth
+        console.log('Google Sign In clicked');
+        // This would typically redirect to Google OAuth or open a popup
+    }
+    handle42SignIn() {
+        // TODO: Implement 42 OAuth
+        console.log('42 Sign In clicked');
+        window.location.href = 'https://localhost/auth/42/login';
+        console.log('42 signin after window change');
+        // This would typically redirect to 42 OAuth or open a popup
+    }
+    handleForgotPassword() {
+        this.showForgotPassword = true;
+        this.errors = [];
+        this.render();
+    }
+    handleChangePassword() {
+        this.showForgotPassword = false;
+        this.showChangePassword = true;
+        this.errors = [];
+        this.render();
+    }
+    handleBackToLogin() {
+        this.showForgotPassword = false;
+        this.errors = [];
+        this.render();
+    }
+    handleBackToForgotPassword() {
+        this.showChangePassword = false;
+        this.showForgotPassword = true;
+        this.errors = [];
+        this.render();
     }
     handleSubmit(e) {
         console.log("handleSubmit called");
@@ -243,76 +321,9 @@ export class AuthPage {
             return;
         }
     }
-    createLanguageSelector() {
-        const languages = [
-            { code: "en", flag: "🇬🇧" },
-            { code: "fr", flag: "🇫🇷" },
-            { code: "pt", flag: "🇧🇷" },
-        ];
-        const currentLangCode = this.languageManager.getCurrentLang();
-        let currentLangIndex = languages.findIndex(l => l.code === currentLangCode);
-        if (currentLangIndex === -1)
-            currentLangIndex = 0;
-        const wrapper = this.uiManager.createElement("div", "flex items-center justify-center gap-2 mt-6 cursor-pointer");
-        const label = this.uiManager.createElement("span", "retro-text text-[#ff1493]", "LANGUAGE:");
-        const flag = this.uiManager.createElement("span", "text-2xl", languages[currentLangIndex].flag);
-        flag.addEventListener("click", async () => {
-            currentLangIndex = (currentLangIndex + 1) % languages.length;
-            const nextLang = languages[currentLangIndex];
-            flag.textContent = nextLang.flag;
-            try {
-                await this.languageManager.setLang(nextLang.code);
-                await this.languageManager.loadTranslations();
-                this.render();
-            }
-            catch (err) {
-                console.error("Error changing language:", err);
-            }
-        });
-        wrapper.appendChild(label);
-        wrapper.appendChild(flag);
-        return wrapper;
-    }
-    toggleMode() {
-        this.isLogin = !this.isLogin;
-        this.formData = { username: '', email: '', password: '', confirmPassword: '' };
-        this.errors = [];
-        this.render();
-    }
-    handleGoogleSignIn() {
-        // TODO: Implement Google OAuth
-        console.log('Google Sign In clicked');
-        // This would typically redirect to Google OAuth or open a popup
-    }
-    handle42SignIn() {
-        // TODO: Implement 42 OAuth
-        console.log('42 Sign In clicked');
-        window.location.href = 'https://localhost/auth/42/login';
-        console.log('42 signin after window change');
-        // This would typically redirect to 42 OAuth or open a popup
-    }
-    handleForgotPassword() {
-        this.showForgotPassword = true;
-        this.errors = [];
-        this.render();
-    }
-    handleChangePassword() {
-        this.showForgotPassword = false;
-        this.showChangePassword = true;
-        this.errors = [];
-        this.render();
-    }
-    handleBackToLogin() {
-        this.showForgotPassword = false;
-        this.errors = [];
-        this.render();
-    }
-    handleBackToForgotPassword() {
-        this.showChangePassword = false;
-        this.showForgotPassword = true;
-        this.errors = [];
-        this.render();
-    }
+    //////////////////////////////////////////////
+    ///////////// SHOW FUNCTIONS /////////////////
+    //////////////////////////////////////////////
     showError(error) {
         this.errors = [error];
         this.render();
