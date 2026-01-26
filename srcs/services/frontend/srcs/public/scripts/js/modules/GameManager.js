@@ -19,6 +19,7 @@ export class GameManager {
         this.playerNumber = 1; // 1 or 2 (assigned by matchmaking)
         this.opponentId = null;
         this.onOpponentFound = null;
+        this.isRemoteGame = false; // Set to true when opponent is found
         // A garder ?
         this.playersReadyStatus = {
             player1: false,
@@ -109,6 +110,7 @@ export class GameManager {
         console.log("[GameManager] Opponent found!", data);
         this.playerNumber = data.playerNumber; // 1 or 2
         this.opponentId = data.opponentId;
+        this.isRemoteGame = true; // Mark this as a remote game
         // If player 2, switch to the matched game UUID
         if (data.playerNumber === 2 && data.gameUUID) {
             console.log(`[GameManager] Player 2 switching from ${this.gameUID} to ${data.gameUUID}`);
@@ -287,14 +289,37 @@ export class GameManager {
             throw Error("Error with game socket!");
         let paddle1 = 0;
         let paddle2 = 0;
-        if (this.keys['s'])
-            paddle1 = 1;
-        else if (this.keys['w'])
-            paddle1 = -1;
-        if (this.keys['arrowdown'])
-            paddle2 = 1;
-        else if (this.keys['arrowup'])
-            paddle2 = -1;
+
+        // For remote games: only send input for your assigned paddle
+        // Both players use W/S keys since the game is mirrored - everyone sees themselves on the left
+        if (this.isRemoteGame) {
+            if (this.playerNumber === 1) {
+                // Player 1 controls paddle1 (W/S keys)
+                if (this.keys['s'])
+                    paddle1 = 1;
+                else if (this.keys['w'])
+                    paddle1 = -1;
+                paddle2 = 0; // Don't send input for opponent's paddle
+            } else if (this.playerNumber === 2) {
+                // Player 2 controls paddle2 (also W/S keys due to mirroring)
+                paddle1 = 0; // Don't send input for opponent's paddle
+                if (this.keys['s'])
+                    paddle2 = 1;
+                else if (this.keys['w'])
+                    paddle2 = -1;
+            }
+        } else {
+            // For local/AI games: send both paddles
+            if (this.keys['s'])
+                paddle1 = 1;
+            else if (this.keys['w'])
+                paddle1 = -1;
+            if (this.keys['arrowdown'])
+                paddle2 = 1;
+            else if (this.keys['arrowup'])
+                paddle2 = -1;
+        }
+
         const state = {
             paddle1,
             paddle2

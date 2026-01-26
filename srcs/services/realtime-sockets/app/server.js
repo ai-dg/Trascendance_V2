@@ -219,7 +219,24 @@ function setupGeneralGameSocket(socket) {
 			userId: userId,
 			position: data.position
 		}));
+	});
 
+	// Handle disconnect - clean up matchmaking and games
+	socket.on('disconnect', async () => {
+		console.log(`[Game Socket] User ${userId} disconnected`);
+
+		// Cancel matchmaking search if they were searching
+		const playerInfo = await cancelSearch(redis, userId);
+
+		// Clean up their game if it exists
+		if (playerInfo && playerInfo.gameUUID) {
+			const game = runningGames[playerInfo.gameUUID];
+			if (game) {
+				await game.destroy();
+				delete runningGames[playerInfo.gameUUID];
+				console.log(`[Game Socket] Cleaned up game ${playerInfo.gameUUID} for disconnected player`);
+			}
+		}
 	});
 }
 

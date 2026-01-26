@@ -27,6 +27,7 @@ export class GameManager {
   private playerNumber: number = 1; // 1 or 2 (assigned by matchmaking)
   private opponentId: string | null = null;
   private onOpponentFound: ((data: any) => void) | null = null;
+  private isRemoteGame: boolean = false; // Set to true when opponent is found
 
   // A garder ?
   private playersReadyStatus = {
@@ -66,7 +67,7 @@ export class GameManager {
       window.removeEventListener('keyup', this.onKeyUp);
     // Remove socket listener to prevent memory leaks
     if (gameSocket && this.gameUID) {
-      gameSocket.off(this.gameUID);
+      gameSocket.removeAllListeners(this.gameUID);
       console.log(`[GameManager] Socket listener removed for: ${this.gameUID}`);
     }
   }
@@ -132,35 +133,30 @@ export class GameManager {
     console.log("[GameManager] Opponent found!", data);
     this.playerNumber = data.playerNumber; // 1 or 2
     this.opponentId = data.opponentId;
+    this.isRemoteGame = true; // Mark this as a remote game
 
-    // IMPORTANT: If we're player 2, we need to switch to player 1's game
+    // If player 2, switch to the matched game UUID
     if (data.playerNumber === 2 && data.gameUUID) {
-      console.log(`[GameManager] Switching from game ${this.gameUID} to ${data.gameUUID}`);
-      this.switchToGame(data.gameUUID);
+      console.log(`[GameManager] Player 2 switching from ${this.gameUID} to ${data.gameUUID}`);
+
+      // Remove old socket listener
+      if (gameSocket && this.gameUID) {
+        gameSocket.removeAllListeners(this.gameUID);
+        console.log(`[GameManager] Removed listener for old UUID: ${this.gameUID}`);
+      }
+
+      // Update to new game UUID
+      this.gameUID = data.gameUUID;
+
+      // Set up listener for the new game
+      this.setupSocketListeners();
+      console.log(`[GameManager] Now listening on matched game: ${this.gameUID}`);
     }
 
     // Notify listeners that opponent was found
     if (this.onOpponentFound) {
       this.onOpponentFound(data);
     }
-  }
-
-  /**
-   * switchToGame - Switch to a different game (used when player 2 joins player 1's game)
-   */
-  private switchToGame(newGameUID: string): void {
-    // Remove listener from old game
-    if (gameSocket && this.gameUID) {
-      gameSocket.off(this.gameUID);
-    }
-
-    // Switch to new game
-    this.gameUID = newGameUID;
-
-    // Set up listener for new game
-    this.setupSocketListeners();
-
-    console.log(`[GameManager] Now listening to game: ${this.gameUID}`);
   }
 
   /**
@@ -359,15 +355,36 @@ export class GameManager {
     let paddle1 = 0;
     let paddle2 = 0;
 
-    if (this.keys['s'])
-      paddle1 = 1;
-    else if (this.keys['w'])
-      paddle1 = -1;
+    // For remote games: only send input for your assigned paddle
+    // Both players use W/S keys since the game is mirrored - everyone sees themselves on the left
+    if (this.isRemoteGame) {
+      if (this.playerNumber === 1) {
+        // Player 1 controls paddle1 (W/S keys)
+        if (this.keys['s'])
+          paddle1 = 1;
+        else if (this.keys['w'])
+          paddle1 = -1;
+        paddle2 = 0; // Don't send input for opponent's paddle
+      } else if (this.playerNumber === 2) {
+        // Player 2 controls paddle2 (also W/S keys due to mirroring)
+        paddle1 = 0; // Don't send input for opponent's paddle
+        if (this.keys['s'])
+          paddle2 = 1;
+        else if (this.keys['w'])
+          paddle2 = -1;
+      }
+    } else {
+      // For local/AI games: send both paddles
+      if (this.keys['s'])
+        paddle1 = 1;
+      else if (this.keys['w'])
+        paddle1 = -1;
 
-    if (this.keys['arrowdown'])
-      paddle2 = 1;
-    else if (this.keys['arrowup'])
-      paddle2 = -1;
+      if (this.keys['arrowdown'])
+        paddle2 = 1;
+      else if (this.keys['arrowup'])
+        paddle2 = -1;
+    }
 
     const state = {
       paddle1,
