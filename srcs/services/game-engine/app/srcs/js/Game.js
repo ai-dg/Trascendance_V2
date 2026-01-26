@@ -7,16 +7,30 @@ import {
   INITIAL_PADDLE2_STATE,
   INITIAL_BALL_STATE,
   CANVAS_HEIGHT,
+  CANVAS_WIDTH,
   PADDLE_HEIGHT
 } from './Data.js';
 
 export class Game {
   constructor(socket, data, settings = DEFAULT_SETTINGS, redis = null) {
-    this.socket = socket;
     this.uuid = data.uuid;
     this.type = data.type;
     this.settings = { ...DEFAULT_SETTINGS, ...settings };
     this.gameLoopInterval = null;
+
+    // ============================================
+    // PLAYER SOCKETS (for remote multiplayer)
+    // ============================================
+    // For local/AI: only player1Socket is used
+    // For remote: both sockets are used
+    this.player1Socket = socket;
+    this.player2Socket = null;
+    this.player1Id = null;
+    this.player2Id = null;
+    this.isRemoteGame = data.type === 'remote';
+
+    // Legacy support: this.socket for backwards compatibility
+    this.socket = socket;
 
     // Redis for AI/Remote player communication
     this.redis = redis;
@@ -50,6 +64,96 @@ export class Game {
     }
   }
 
+  /**
+   * addPlayer2 - Add the second player to a remote game
+   * Called by matchmaking when an opponent is found
+   */
+  addPlayer2(socket, odileUserId) {
+    console.log(`[Game ${this.uuid}] Adding player 2: ${odileUserId}`);
+    this.player2Socket = socket;
+    this.player2Id = odileUserId;
+  }
+
+  /**
+   * emitToPlayers - Send event to all connected players
+   * For remote games: sends to both players
+   * For local/AI: sends only to player 1
+   */
+  emitToPlayers(eventType, data) {
+    const payload = { type: eventType, ...data };
+
+    // Always emit to player 1
+    if (this.player1Socket) {
+      this.player1Socket.emit(this.uuid, payload);
+    }
+
+    // For remote games, also emit to player 2
+    if (this.isRemoteGame && this.player2Socket) {
+      this.player2Socket.emit(this.uuid, payload);
+    }
+  }
+
+  /**
+   * emitGameUpdate - Send game state to players
+   * Player 2 receives a MIRRORED view (their paddle appears on the left)
+   */
+  emitGameUpdate(gameState) {
+    // Player 1 gets normal state
+    if (this.player1Socket) {
+      this.player1Socket.emit(this.uuid, {
+        type: "game-update",
+        state: gameState
+      });
+    }
+
+    // Player 2 gets mirrored state (for remote games)
+    if (this.isRemoteGame && this.player2Socket) {
+      const mirroredState = this.mirrorGameState(gameState);
+      this.player2Socket.emit(this.uuid, {
+        type: "game-update",
+        state: mirroredState
+      });
+    }
+  }
+
+  /**
+   * mirrorGameState - Create a mirrored view of the game state for player 2
+   *
+   * The mirror effect:
+   * - Player 2's paddle (paddle2) becomes paddle1 in their view (left side)
+   * - Player 1's paddle (paddle1) becomes paddle2 in their view (right side)
+   * - Ball X position is mirrored
+   * - Ball X velocity is reversed
+   * - Scores are swapped
+   */
+  mirrorGameState(state) {
+    return {
+      // Swap paddles: player 2 sees their paddle on the left
+      paddle1: {
+        x: CANVAS_WIDTH - state.paddle2.x - 10, // Mirror X position
+        y: state.paddle2.y
+      },
+      paddle2: {
+        x: CANVAS_WIDTH - state.paddle1.x - 10, // Mirror X position
+        y: state.paddle1.y
+      },
+      // Mirror ball position and velocity
+      ball: {
+        x: CANVAS_WIDTH - state.ball.x - state.ball.size,
+        y: state.ball.y,
+        size: state.ball.size,
+        velocityX: -state.ball.velocityX, // Reverse direction
+        velocityY: state.ball.velocityY
+      },
+      // Swap scores: player 2 sees their score on the left
+      player1Score: state.player2Score,
+      player2Score: state.player1Score,
+      gameRunning: state.gameRunning,
+      winner: state.winner === 'player1' ? 'player2' :
+              state.winner === 'player2' ? 'player1' : state.winner
+    };
+  }
+
   async setupAiSubscription() {
     try {
       // Create a duplicate client for subscribing (Redis requires separate client for pub/sub)
@@ -76,25 +180,32 @@ export class Game {
 
 
   setPlayerReady(playerNum) {
-    if (playerNum === 1) this.playersReady.player1 = true;
-    if (playerNum === 2) this.playersReady.player2 = true;
-    if (playerNum === 3) {
+    console.log(`[Game ${this.uuid}] setPlayerReady called: playerNum=${playerNum}, type=${this.type}`);
+
+    if (playerNum === 1) {
+      this.playersReady.player1 = true;
+    } else if (playerNum === 2) {
+      this.playersReady.player2 = true;
+    } else if (playerNum === 3) {
+      // For local/AI games: mark both players ready
       this.playersReady.player1 = true;
       this.playersReady.player2 = true;
     }
 
-    // For AI games, player2 (AI) is always ready
-    if (this.isAiGame) {
+    // For AI games ONLY, player2 (AI) is always ready when player1 clicks ready
+    if (this.isAiGame && playerNum === 1) {
       this.playersReady.player2 = true;
     }
 
-    this.socket.emit(this.uuid, {
-      type: "ready-status",
+    console.log(`[Game ${this.uuid}] Ready status - P1: ${this.playersReady.player1}, P2: ${this.playersReady.player2}`);
+
+    this.emitToPlayers("ready-status", {
       player1Ready: this.playersReady.player1,
       player2Ready: this.playersReady.player2
     });
 
     if (this.playersReady.player1 && this.playersReady.player2) {
+      console.log(`[Game ${this.uuid}] Both players ready! Starting countdown...`);
       this.startCountdown();
     }
   }
@@ -104,10 +215,7 @@ export class Game {
     let count = 3;
 
     const countdownInterval = setInterval(() => {
-      this.socket.emit(this.uuid, {
-        type: "countdown",
-        count: count
-      });
+      this.emitToPlayers("countdown", { count: count });
 
       count--;
 
@@ -126,7 +234,7 @@ export class Game {
     console.log('Game.startGame() called');
     this.gameRunning = true;
     this.score.winner = null;
-    this.socket.emit(this.uuid, { type: "game-start" });
+    this.emitToPlayers("game-start", {});
     this.gameLoop();
   }
 
@@ -136,7 +244,9 @@ export class Game {
       clearInterval(this.gameLoopInterval);
       this.gameLoopInterval = null;
     }
-    this.socket.emit(this.uuid, { type: "game-paused", state : this.getGameState() });
+    // For pause, send the current state (mirrored for player 2)
+    this.emitGameUpdate(this.getGameState());
+    this.emitToPlayers("game-paused", {});
   }
 
   resumeGame() {
@@ -145,7 +255,7 @@ export class Game {
 
     this.gameRunning = true;
 
-    this.socket.emit(this.uuid, { type: "game-start" });
+    this.emitToPlayers("game-start", {});
     this.gameLoop();
   }
 
@@ -171,16 +281,18 @@ export class Game {
       player2: false
     };
 
-    this.socket.emit(this.uuid, { type: "game-reset", state : this.getGameState() });
+    this.emitToPlayers("game-reset", { state: this.getGameState() });
   }
 
- 
+
   playAgainstRandomPlayer() {
-    this.socket.emit(this.uuid, { type: "play-against-random-player" });
+    // This is now handled by matchmaking system in server.js
+    // Keeping for backwards compatibility
+    this.emitToPlayers("play-against-random-player", {});
   }
 
   playAgainstFriend() {
-    this.socket.emit(this.uuid, { type: "play-against-friend" });
+    this.emitToPlayers("play-against-friend", {});
   }
 
 
@@ -260,10 +372,8 @@ export class Game {
 
     const gameState = this.getGameState();
 
-    this.socket.emit(this.uuid, {
-      type: "game-update",
-      state: gameState
-    });
+    // Send game state to all players (with mirroring for player 2)
+    this.emitGameUpdate(gameState);
 
     // Publish game state to Redis for AI service
     if (this.isAiGame && this.redis && this.gameRunning) {

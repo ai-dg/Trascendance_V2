@@ -232,6 +232,41 @@ export class RemotePage {
 	  this.updateScore(gameState.player1Score, gameState.player2Score);
 	  this.updateGameState(gameState);
 	});
+
+	// Handle when matchmaking finds an opponent
+	this.gameManager.setOnOpponentFound((data) => {
+	  console.log("[RemotePage] Opponent found!", data);
+	  this.handleOpponentFound(data);
+	});
+  }
+
+  /**
+   * handleOpponentFound - Called when matchmaking finds an opponent
+   * Removes waiting screen and starts the ready phase
+   */
+  private handleOpponentFound(data: any): void {
+	this.isSearchingOpponent = false;
+	this.removeWaitingScreen();
+
+	// Show ready screen (both players need to click ready)
+	const startOverlay = document.querySelector<HTMLElement>('[data-overlay="start-game"]');
+	if (startOverlay) {
+	  // Change the overlay content to show "Opponent found! Click READY"
+	  startOverlay.innerHTML = '';
+	  const content = this.uiManager.createElement('div', 'text-center retro-text');
+	  const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#00ffff]', 'OPPONENT FOUND!');
+	  const subtitle = this.uiManager.createElement('div', 'text-lg mb-6 text-[#ff1493]', `Playing against: ${data.opponentId}`);
+	  const readyButton = this.uiManager.createButton(
+		'READY',
+		'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',
+		() => this.setReady()
+	  );
+	  content.appendChild(title);
+	  content.appendChild(subtitle);
+	  content.appendChild(readyButton);
+	  startOverlay.appendChild(content);
+	  startOverlay.classList.remove('hidden');
+	}
   }
 
 
@@ -308,8 +343,10 @@ export class RemotePage {
     // Screen when the game is over
     else if (isGameOver && winner)
     {
-      if (this.gameManager)
+      if (this.gameManager) {
+        this.gameManager.destroy();
         this.gameManager = null;
+      }
       if (gameOverOverlay)
         gameOverOverlay.classList.remove('hidden');
       if (startOverlay)
@@ -330,7 +367,8 @@ export class RemotePage {
     if (!this.gameManager)
       return;
     const wasPaused = this.gameManager.getIsPaused();
-    this.gameManager.setReady();
+    // Pass true for remote games - each player marks only themselves ready
+    this.gameManager.setReady(true);
     if (!wasPaused)
     {
       const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
@@ -353,8 +391,10 @@ export class RemotePage {
 
   private backToMenu(): void
   {
-    if (this.gameManager)
-      this.gameManager.resetGame();
+    if (this.gameManager) {
+      this.gameManager.destroy();
+      this.gameManager = null;
+    }
     this.onBack();
   }
 
@@ -379,17 +419,19 @@ export class RemotePage {
     this.isSearchingOpponent = true;
     document.querySelector<HTMLElement>('[data-overlay="start-game"]')?.classList.add('hidden');
     this.removeWaitingScreen();
-    
+
     const WaitingScreen = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg z-10');
     WaitingScreen.setAttribute('data-overlay', 'waiting-screen');
     const WaitingScreenContent = this.uiManager.createElement('div', 'text-center retro-text');
-    const WaitingScreenTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'WAITING FOR AN OPPONENT');
+    const WaitingScreenTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'WAITING FOR AN OPPONENT...');
     WaitingScreenContent.appendChild(WaitingScreenTitle);
-    
+
     const cancelButton = this.uiManager.createButton(
       'CANCEL',
       'retro-button bg-transparent text-[#ff1493] px-6 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200',
       () => {
+        // Cancel matchmaking search
+        this.gameManager?.cancelSearch();
         this.removeWaitingScreen();
         this.isSearchingOpponent = false;
         document.querySelector<HTMLElement>('[data-overlay="start-game"]')?.classList.remove('hidden');
@@ -397,14 +439,15 @@ export class RemotePage {
     );
     WaitingScreenContent.appendChild(cancelButton);
     WaitingScreen.appendChild(WaitingScreenContent);
-    
+
     const canvasContainer = this.canvas?.parentElement;
     if (canvasContainer)
       canvasContainer.appendChild(WaitingScreen);
     else
       this.uiManager.container.appendChild(WaitingScreen);
-  
-    
+
+    // IMPORTANT: Tell server to start searching for opponent!
+    this.gameManager.searchForRandomOpponent();
   }
 
 

@@ -340,6 +340,8 @@ services:
       - NODE_ENV=${NODE_ENV}
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
       interval: 10s
@@ -388,3 +390,6 @@ networks:
     driver: bridge
   transcendence:
     driver: bridge
+
+volumes:
+  rabbitmq_data:

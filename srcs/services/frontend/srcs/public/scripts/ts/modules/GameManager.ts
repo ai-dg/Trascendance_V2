@@ -23,6 +23,11 @@ export class GameManager {
   private onKeyDown: ((e: KeyboardEvent) => void) | null = null;
   private onKeyUp: ((e: KeyboardEvent) => void) | null = null;
 
+  // Remote game properties
+  private playerNumber: number = 1; // 1 or 2 (assigned by matchmaking)
+  private opponentId: string | null = null;
+  private onOpponentFound: ((data: any) => void) | null = null;
+
   // A garder ?
   private playersReadyStatus = {
     player1: false,
@@ -53,11 +58,17 @@ export class GameManager {
   }
 
   public destroy(): void {
+    console.log(`[GameManager] destroy() called for game: ${this.gameUID}`);
     this.stopInputLoop();
     if (this.onKeyDown)
       window.removeEventListener('keydown', this.onKeyDown);
     if (this.onKeyUp)
       window.removeEventListener('keyup', this.onKeyUp);
+    // Remove socket listener to prevent memory leaks
+    if (gameSocket && this.gameUID) {
+      gameSocket.off(this.gameUID);
+      console.log(`[GameManager] Socket listener removed for: ${this.gameUID}`);
+    }
   }
 
 
@@ -109,7 +120,54 @@ export class GameManager {
         this.handleServerPlayAgainstRandomPlayer(data);
       else if (data.type === "play-against-friend")
         this.handleServerPlayAgainstFriend(data);
+      else if (data.type === "opponent-found")
+        this.handleOpponentFound(data);
     });
+  }
+
+  /**
+   * handleOpponentFound - Called when matchmaking finds an opponent
+   */
+  private handleOpponentFound(data: any): void {
+    console.log("[GameManager] Opponent found!", data);
+    this.playerNumber = data.playerNumber; // 1 or 2
+    this.opponentId = data.opponentId;
+
+    // IMPORTANT: If we're player 2, we need to switch to player 1's game
+    if (data.playerNumber === 2 && data.gameUUID) {
+      console.log(`[GameManager] Switching from game ${this.gameUID} to ${data.gameUUID}`);
+      this.switchToGame(data.gameUUID);
+    }
+
+    // Notify listeners that opponent was found
+    if (this.onOpponentFound) {
+      this.onOpponentFound(data);
+    }
+  }
+
+  /**
+   * switchToGame - Switch to a different game (used when player 2 joins player 1's game)
+   */
+  private switchToGame(newGameUID: string): void {
+    // Remove listener from old game
+    if (gameSocket && this.gameUID) {
+      gameSocket.off(this.gameUID);
+    }
+
+    // Switch to new game
+    this.gameUID = newGameUID;
+
+    // Set up listener for new game
+    this.setupSocketListeners();
+
+    console.log(`[GameManager] Now listening to game: ${this.gameUID}`);
+  }
+
+  /**
+   * Set callback for when opponent is found (used by GameRemotePage)
+   */
+  public setOnOpponentFound(callback: (data: any) => void): void {
+    this.onOpponentFound = callback;
   }
 
   private setupEventListeners(): void {
@@ -145,7 +203,7 @@ export class GameManager {
     gameSocket.emit("request-game-uid", { type, ...options });
   }
 
-  public setReady(): void
+  public setReady(isRemoteGame: boolean = false): void
   {
     if (this.isReady)
       return;
@@ -154,9 +212,15 @@ export class GameManager {
     if (!gameSocket || !this.gameUID)
       throw Error("gameSocket is not ready");
 
+    // For remote games: send individual player number (1 or 2)
+    // For local/AI: send 3 to mark both players ready
+    const playerNum = isRemoteGame ? this.playerNumber : 3;
+
+    console.log(`[GameManager] setReady - sending player: ${playerNum} (isRemote: ${isRemoteGame})`);
+
     gameSocket.emit(this.gameUID, {
       action: "player-ready",
-      player: 3 // Pour le mode local et IA, on simule les 2 joueurs prêts // plus tard, pour les jeux a deux, on implémentera le numero du joueur a envoyer en fonction de l'attribution du placement...
+      player: playerNum
     });
     this.hasStarted = true;
   }
@@ -192,6 +256,29 @@ export class GameManager {
     this.notifyListeners();
 
     gameSocket.emit(this.gameUID, { action: "reset-game" });
+  }
+
+  /**
+   * searchForRandomOpponent - Tell server to find us an opponent
+   * This triggers the matchmaking system
+   */
+  public searchForRandomOpponent(): void {
+    if (!this.gameUID || !gameSocket)
+      throw Error("Error with game socket!");
+
+    console.log("[GameManager] Searching for random opponent...");
+    gameSocket.emit(this.gameUID, { action: "play-against-random-player" });
+  }
+
+  /**
+   * cancelSearch - Cancel matchmaking search
+   */
+  public cancelSearch(): void {
+    if (!this.gameUID || !gameSocket)
+      throw Error("Error with game socket!");
+
+    console.log("[GameManager] Canceling search...");
+    gameSocket.emit(this.gameUID, { action: "cancel-matchmaking" });
   }
 
 

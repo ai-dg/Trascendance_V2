@@ -9,6 +9,7 @@ import fs from 'fs';
 import { Game } from '../../game-engine/app/srcs/js/Game.js';
 // import { GameManager } from '../../game-engine/app/srcs/js/GameManager.js';
 import path from 'path';
+import { handleMatchmaking, cancelSearch } from './matchmaking.js';
 
 
 const is_prod = process.env.NODE_ENV === "PROD";
@@ -235,7 +236,7 @@ function requestGameUID(socket, data){
 			type: data.type
 		});
 
-		socket.on(uuid, (eventData) => gameHandler(uuid, eventData));
+		socket.on(uuid, (eventData) => gameHandler(uuid, eventData, socket));
 
 		socket.emit("new-game", {UUID: uuid, type: data.type});
 	}
@@ -250,7 +251,7 @@ function requestGameUID(socket, data){
 			difficulty: data.difficulty || 'medium'
 		}, undefined, redis);
 
-		socket.on(uuid, (eventData) => gameHandler(uuid, eventData));
+		socket.on(uuid, (eventData) => gameHandler(uuid, eventData, socket));
 
 		socket.emit("new-game", {UUID: uuid, type: data.type});
 	}
@@ -264,13 +265,51 @@ function requestGameUID(socket, data){
 			type: data.type
 		});
 
-		socket.on(uuid, (eventData) => gameHandler(uuid, eventData));
+		socket.on(uuid, (eventData) => gameHandler(uuid, eventData, socket));
 
 		socket.emit("new-game", {UUID: uuid, type: data.type});
 	}
 }
 
-function gameHandler(uuid, data){
+/**
+ * onMatchFound - Callback when matchmaking finds two players
+ * Sets up player 2 in the game and notifies both players
+ */
+function onMatchFound(matchData) {
+	const { game, gameUUID, player1Socket, player1UserId, player2Socket, player2UserId, player2GameUUID } = matchData;
+
+	// Add player 2 to the game (we'll implement this in Game.js)
+	game.addPlayer2(player2Socket, player2UserId);
+
+	// Remove player 2's old game listener (memory leak prevention)
+	player2Socket.removeAllListeners(player2GameUUID);
+	console.log(`[Server] Removed player 2's old listener: ${player2GameUUID}`);
+
+	// Set up socket listener for player 2's inputs on the MATCHED game
+	player2Socket.on(gameUUID, (eventData) => gameHandler(gameUUID, eventData, player2Socket));
+
+	// Notify Player 1: "Opponent found!" (emit on player 1's game channel)
+	player1Socket.emit(gameUUID, {
+		type: "opponent-found",
+		playerNumber: 1,
+		opponentId: player2UserId
+	});
+
+	// Notify Player 2: "Opponent found!"
+	// IMPORTANT: Emit on player 2's ORIGINAL game channel (they're still listening there)
+	// They will then switch to the matched game
+	player2Socket.emit(player2GameUUID, {
+		type: "opponent-found",
+		playerNumber: 2,
+		opponentId: player1UserId,
+		gameUUID: gameUUID  // The game they should switch to
+	});
+
+	console.log(`[Server] Match ready! Game: ${gameUUID}`);
+	console.log(`[Server] Player 2 notified on their channel: ${player2GameUUID}`);
+}
+
+function gameHandler(uuid, data, socket){
 	const game = runningGames[uuid];
 
 	if (!game)
@@ -287,10 +326,18 @@ function gameHandler(uuid, data){
 		game.resumeGame();
 	else if (data.action === "reset-game")
 		game.resetGame();
-	else if (data.action === "play-against-random-player")
-		game.playAgainstRandomPlayer();
+	else if (data.action === "play-against-random-player") {
+		// Call matchmaking system instead of the game method
+		const odileUserId = socket.userId || socket.id; // Use userId if authenticated, else socket.id
+		handleMatchmaking(redis, socket, odileUserId, uuid, runningGames, onMatchFound);
+	}
 	else if (data.action === "play-against-friend")
 		game.playAgainstFriend();
+	else if (data.action === "cancel-matchmaking") {
+		// New action: cancel search
+		const odileUserId = socket.userId || socket.id;
+		cancelSearch(redis, odileUserId);
+	}
 	else if (data.state)
 		game.updatePlayerMove(data.state.paddle1, data.state.paddle2);
 }
