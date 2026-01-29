@@ -75,6 +75,30 @@ export class Game {
   }
 
   /**
+   * handlePlayerDisconnect - Called when a player disconnects from remote game
+   * Notifies the remaining player and stops the game
+   */
+  handlePlayerDisconnect(disconnectedPlayerId) {
+    console.log(`[Game ${this.uuid}] Player ${disconnectedPlayerId} disconnected`);
+
+    // Stop the game immediately
+    this.gameRunning = false;
+    if (this.gameLoopInterval) {
+      clearInterval(this.gameLoopInterval);
+      this.gameLoopInterval = null;
+    }
+
+    // Notify the remaining player
+    const remainingSocket = disconnectedPlayerId === this.player1Id ? this.player2Socket : this.player1Socket;
+    if (remainingSocket) {
+      remainingSocket.emit(this.uuid, {
+        type: 'opponent-disconnected',
+        message: 'Your opponent has disconnected. Returning to menu...'
+      });
+    }
+  }
+
+  /**
    * emitToPlayers - Send event to all connected players
    * For remote games: sends to both players
    * For local/AI: sends only to player 1

@@ -104,6 +104,7 @@ export class GameManager {
       throw Error("gameSocket is not ready");
 
     gameSocket.on(this.gameUID, (data: any) => {
+      console.log(`[GameManager] <<<< RECEIVED EVENT on ${this.gameUID}:`, data?.type || 'NO TYPE', data);
       if (!data?.type)
         return;
       if (data.type === "ready-status") {
@@ -129,8 +130,10 @@ export class GameManager {
         this.handleServerPlayAgainstFriend(data);
       else if (data.type === "opponent-found")
         this.handleOpponentFound(data);
-      else if (data.type === "opponent-disconnected")
+      else if (data.type === "opponent-disconnected") {
+        console.log("[GameManager] OPPONENT DISCONNECTED EVENT RECEIVED", data);
         this.handleOpponentDisconnected(data);
+      }
     });
   }
 
@@ -178,7 +181,7 @@ export class GameManager {
    * handleOpponentDisconnected - Called when opponent leaves the game
    */
   private handleOpponentDisconnected(data: any): void {
-    console.log("[GameManager] Opponent disconnected!", data);
+    console.log("[GameManager] handleOpponentDisconnected() called", data);
 
     // Stop the game
     this.hasStarted = false;
@@ -189,9 +192,12 @@ export class GameManager {
       this.intervalId = null;
     }
 
+    console.log("[GameManager] Calling onOpponentDisconnected callback");
     // Notify UI (GameRemotePage will handle this)
     if (this.onOpponentDisconnected) {
       this.onOpponentDisconnected(data);
+    } else {
+      console.warn("[GameManager] No onOpponentDisconnected callback set!");
     }
   }
 

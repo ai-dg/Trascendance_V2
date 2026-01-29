@@ -187,9 +187,7 @@ export class RemotePage {
 	this.uiManager.clear();
 	this.uiManager.container.appendChild(container);
 
-	// Initialize game manager
-	if (this.canvas)
-		this.requestNewGame()
+	// Don't auto-create game - wait for user to select game mode
   }
 
 
@@ -204,16 +202,20 @@ export class RemotePage {
   }
 
   private requestNewGame(): void{
-    // Always clear waiting overlay when returning to initial state
+    // Return to lobby - show game mode selection
     this.removeWaitingScreen();
 
 	const gameOverOverlay = document.querySelector('[data-overlay="game-over"]') as HTMLElement;
 	const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
+
 	if (gameOverOverlay) {
 	  gameOverOverlay.classList.add('hidden');
-	  startOverlay.classList.remove('hidden')
 	}
-	GameManager.requestGameID("remote")
+	if (startOverlay) {
+	  startOverlay.classList.remove('hidden');
+	}
+
+	// Don't create game yet - wait for user to select mode
   }
 
   public setupGame(data:any){
@@ -303,7 +305,7 @@ export class RemotePage {
 	  const backButton = this.uiManager.createButton(
 		'BACK TO LOBBY',
 		'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',
-		() => this.requestNewGame()
+		() => this.backToLobby()
 	  );
 	  content.appendChild(title);
 	  content.appendChild(message);
@@ -447,11 +449,36 @@ export class RemotePage {
 
   private backToMenu(): void
   {
+    // Cancel matchmaking if searching
+    if (this.isSearchingOpponent && this.gameManager) {
+      this.gameManager.cancelSearch();
+      this.isSearchingOpponent = false;
+    }
+
+    // Destroy game and return to main menu
     if (this.gameManager) {
       this.gameManager.destroy();
       this.gameManager = null;
     }
     this.onBack();
+  }
+
+  private backToLobby(): void
+  {
+    // Cancel matchmaking if searching
+    if (this.isSearchingOpponent && this.gameManager) {
+      this.gameManager.cancelSearch();
+      this.isSearchingOpponent = false;
+    }
+
+    // Destroy current game
+    if (this.gameManager) {
+      this.gameManager.destroy();
+      this.gameManager = null;
+    }
+
+    // Return to lobby (show game mode selection)
+    this.requestNewGame();
   }
 
   private resetGame(): void
@@ -469,14 +496,28 @@ export class RemotePage {
 
   private playAgainstRandomPlayer(): void
   {
-    if (!this.gameManager)
-      return;
+	// Create new game if needed
+	if (!this.gameManager) {
+	  GameManager.requestGameID("remote");
+	  // Wait for setupGame to be called, then start matchmaking
+	  setTimeout(() => {
+		if (!this.gameManager) return;
+		this.playAgainstRandomPlayer(); // Retry after game is created
+	  }, 100);
+	  return;
+	}
 
-    this.isSearchingOpponent = true;
-    document.querySelector<HTMLElement>('[data-overlay="start-game"]')?.classList.add('hidden');
-    this.removeWaitingScreen();
+	this.startMatchmaking();
+  }
 
-    const WaitingScreen = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg z-10');
+  private startMatchmaking(): void {
+	if (!this.gameManager) return;
+
+	this.isSearchingOpponent = true;
+	document.querySelector<HTMLElement>('[data-overlay="start-game"]')?.classList.add('hidden');
+	this.removeWaitingScreen();
+
+	const WaitingScreen = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg z-10');
     WaitingScreen.setAttribute('data-overlay', 'waiting-screen');
     const WaitingScreenContent = this.uiManager.createElement('div', 'text-center retro-text');
     const WaitingScreenTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'WAITING FOR AN OPPONENT...');
@@ -509,8 +550,16 @@ export class RemotePage {
 
   private playAgainstFriend(): void
   {
-    if (!this.gameManager)
+    // Create new game if needed
+    if (!this.gameManager) {
+      GameManager.requestGameID("remote");
+      // Wait for setupGame to be called, then show friend selection
+      setTimeout(() => {
+        if (!this.gameManager) return;
+        this.playAgainstFriend(); // Retry after game is created
+      }, 100);
       return;
+    }
 
     this.isSearchingOpponent = true;
     document.querySelector<HTMLElement>('[data-overlay="start-game"]')?.classList.add('hidden');

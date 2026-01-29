@@ -15,6 +15,10 @@ import { handleMatchmaking, cancelSearch } from './matchmaking.js';
 const is_prod = process.env.NODE_ENV === "PROD";
 export const base_url = is_prod ? "www.transcendance.com" : "localhost";
 
+// Track active games and which users are in them
+const runningGames = new Map();
+const userGames = new Map(); // userId -> gameUUID mapping
+
 // HTTPS options
 let httpsOptions = null;
 try {
@@ -66,8 +70,6 @@ app.get('/', async () => {
 });
 
 const generalConnections = new Map();
-const runningGames = new Map();
-
 
 // Create Socket.IO server
 const io = new Server(app.server, {
@@ -226,15 +228,29 @@ function setupGeneralGameSocket(socket) {
 		console.log(`[Game Socket] User ${userId} disconnected`);
 
 		// Cancel matchmaking search if they were searching
-		const playerInfo = await cancelSearch(redis, userId);
+		await cancelSearch(redis, userId);
 
-		// Clean up their game if it exists
-		if (playerInfo && playerInfo.gameUUID) {
-			const game = runningGames[playerInfo.gameUUID];
+		// Check if this user was in an active game
+		const gameUUID = userGames.get(userId);
+		if (gameUUID) {
+			const game = runningGames.get(gameUUID);
 			if (game) {
+				console.log(`[Game Socket] User ${userId} was in game ${gameUUID}`);
+
+				// If it's a remote game, notify the opponent
+				if (game.isRemoteGame) {
+					console.log(`[Game Socket] Notifying opponent of disconnect`);
+					game.handlePlayerDisconnect(userId);
+				}
+
 				await game.destroy();
-				delete runningGames[playerInfo.gameUUID];
-				console.log(`[Game Socket] Cleaned up game ${playerInfo.gameUUID} for disconnected player`);
+				runningGames.delete(gameUUID);
+
+				// Clean up user tracking for both players
+				if (game.player1Id) userGames.delete(game.player1Id);
+				if (game.player2Id) userGames.delete(game.player2Id);
+
+				console.log(`[Game Socket] Cleaned up game ${gameUUID} for disconnected player`);
 			}
 		}
 	});
@@ -248,10 +264,17 @@ function requestGameUID(socket, data){
 		console.log("Local activated")
 		console.log("data: ", data, "uuid : ", uuid)
 
-		runningGames[uuid] = new Game(socket, {
+		const game = new Game(socket, {
 			uuid: uuid,
 			type: data.type
 		});
+
+		// Set player 1 ID
+		game.player1Id = socket.userId;
+		runningGames.set(uuid, game);
+
+		// Track that this user is in this game
+		userGames.set(socket.userId, uuid);
 
 		socket.on(uuid, (eventData) => gameHandler(uuid, eventData, socket));
 
@@ -262,11 +285,18 @@ function requestGameUID(socket, data){
 		console.log("AI Activated")
 		console.log("data: ", data, "uuid : ", uuid)
 
-		runningGames[uuid] = new Game(socket, {
+		const game = new Game(socket, {
 			uuid: uuid,
 			type: data.type,
 			difficulty: data.difficulty || 'medium'
 		}, undefined, redis);
+
+		// Set player 1 ID
+		game.player1Id = socket.userId;
+		runningGames.set(uuid, game);
+
+		// Track that this user is in this game
+		userGames.set(socket.userId, uuid);
 
 		socket.on(uuid, (eventData) => gameHandler(uuid, eventData, socket));
 
@@ -277,10 +307,17 @@ function requestGameUID(socket, data){
 		console.log("Remote Activated")
 		console.log("data: ", data, "uuid : ", uuid)
 
-		runningGames[uuid] = new Game(socket, {
+		const game = new Game(socket, {
 			uuid: uuid,
 			type: data.type
 		});
+
+		// Set player 1 ID immediately
+		game.player1Id = socket.userId;
+		runningGames.set(uuid, game);
+
+		// Track that this user is in this game
+		userGames.set(socket.userId, uuid);
 
 		socket.on(uuid, (eventData) => gameHandler(uuid, eventData, socket));
 
@@ -297,6 +334,11 @@ function onMatchFound(matchData) {
 
 	// Add player 2 to the game (we'll implement this in Game.js)
 	game.addPlayer2(player2Socket, player2UserId);
+
+	// Track both players in this game
+	userGames.set(player1UserId, gameUUID);
+	userGames.set(player2UserId, gameUUID);
+	console.log(`[Server] Both players tracked in game ${gameUUID}`)
 
 	// Remove player 2's old game listener (memory leak prevention)
 	player2Socket.removeAllListeners(player2GameUUID);
@@ -327,7 +369,7 @@ function onMatchFound(matchData) {
 }
 
 function gameHandler(uuid, data, socket){
-	const game = runningGames[uuid];
+	const game = runningGames.get(uuid);
 
 	if (!game)
 	{
