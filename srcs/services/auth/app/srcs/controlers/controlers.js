@@ -588,7 +588,7 @@ export async function signup_otp_validation_route(request, reply)
 			console.log("insert: ", insert);
 		const userId = insert.lastID;
 		console.log("userId: " + userId);
-		const langRes = await fetch('http://language-manager:3001/create-lang', {
+		const langRes = await fetch('https://language-manager:3001/create-lang', {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ user_id: userId, lang: "en" })
