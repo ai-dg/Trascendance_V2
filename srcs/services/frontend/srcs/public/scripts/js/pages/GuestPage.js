@@ -1,10 +1,6 @@
-import { UIManager } from '../modules/UIManager.js';
 export class GuestPage {
-    uiManager;
-    onBack;
-    onPlayAsGuest;
-    selectedAvatar = 'avatar1';
     constructor(uiManager, onBack, onPlayAsGuest) {
+        this.selectedAvatar = 'avatar1';
         this.uiManager = uiManager;
         this.onBack = onBack;
         this.onPlayAsGuest = onPlayAsGuest;
@@ -97,4 +93,3 @@ export class GuestPage {
         }
     }
 }
-//# sourceMappingURL=GuestPage.js.map

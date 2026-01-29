@@ -29,6 +29,7 @@ export class GameManager {
   private opponentId: string | null = null;
   private onOpponentFound: ((data: any) => void) | null = null;
   private onOpponentDisconnected: ((data: any) => void) | null = null;
+  private onMatchmakingError: ((data: any) => void) | null = null;
   private isRemoteGame: boolean = false; // Set to true when opponent is found
 
   // A garder ?
@@ -67,8 +68,13 @@ export class GameManager {
       window.removeEventListener('keydown', this.onKeyDown);
     if (this.onKeyUp)
       window.removeEventListener('keyup', this.onKeyUp);
-    // Remove socket listener to prevent memory leaks
+
+    // Notify server to clean up the game
     if (gameSocket && this.gameUID) {
+      gameSocket.emit(this.gameUID, { action: "destroy-game" });
+      console.log(`[GameManager] Sent destroy-game to server for: ${this.gameUID}`);
+
+      // Remove socket listener to prevent memory leaks
       gameSocket.removeAllListeners(this.gameUID);
       console.log(`[GameManager] Socket listener removed for: ${this.gameUID}`);
     }
@@ -133,6 +139,10 @@ export class GameManager {
       else if (data.type === "opponent-disconnected") {
         console.log("[GameManager] OPPONENT DISCONNECTED EVENT RECEIVED", data);
         this.handleOpponentDisconnected(data);
+      }
+      else if (data.type === "matchmaking-error") {
+        console.log("[GameManager] MATCHMAKING ERROR:", data);
+        this.handleMatchmakingError(data);
       }
     });
   }
@@ -206,6 +216,26 @@ export class GameManager {
    */
   public setOnOpponentDisconnected(callback: (data: any) => void): void {
     this.onOpponentDisconnected = callback;
+  }
+
+  /**
+   * handleMatchmakingError - Called when matchmaking fails (e.g., already searching)
+   */
+  private handleMatchmakingError(data: any): void {
+    console.log("[GameManager] handleMatchmakingError() called", data);
+
+    if (this.onMatchmakingError) {
+      this.onMatchmakingError(data);
+    } else {
+      console.warn("[GameManager] No onMatchmakingError callback set!");
+    }
+  }
+
+  /**
+   * Set callback for matchmaking errors
+   */
+  public setOnMatchmakingError(callback: (data: any) => void): void {
+    this.onMatchmakingError = callback;
   }
 
   private setupEventListeners(): void {

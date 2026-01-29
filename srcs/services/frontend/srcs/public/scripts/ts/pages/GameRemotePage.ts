@@ -212,6 +212,25 @@ export class RemotePage {
 	  gameOverOverlay.classList.add('hidden');
 	}
 	if (startOverlay) {
+	  // Restore original lobby content (may have been replaced by error/disconnect screens)
+	  startOverlay.innerHTML = '';
+	  const startContent = this.uiManager.createElement('div', 'text-center retro-text');
+	  const startTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'CHOOSE YOUR OPPONENT');
+	  const startButtonRandom = this.uiManager.createButton(
+		'PLAY AGAINST RANDOM PLAYER',
+		'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',
+		() => this.playAgainstRandomPlayer()
+	  );
+	  const startButtonFriend = this.uiManager.createButton(
+		'PLAY AGAINST A FRIEND',
+		'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200 mt-4',
+		() => this.playAgainstFriend()
+	  );
+	  startContent.appendChild(startTitle);
+	  startContent.appendChild(startButtonRandom);
+	  startContent.appendChild(this.uiManager.createElement('div', 'h-4'));
+	  startContent.appendChild(startButtonFriend);
+	  startOverlay.appendChild(startContent);
 	  startOverlay.classList.remove('hidden');
 	}
 
@@ -245,6 +264,12 @@ export class RemotePage {
 	this.gameManager.setOnOpponentDisconnected((data) => {
 	  console.log("[RemotePage] Opponent disconnected!", data);
 	  this.handleOpponentDisconnected(data);
+	});
+
+	// Handle matchmaking errors (e.g., already searching)
+	this.gameManager.setOnMatchmakingError((data) => {
+	  console.log("[RemotePage] Matchmaking error!", data);
+	  this.handleMatchmakingError(data);
 	});
   }
 
@@ -302,6 +327,42 @@ export class RemotePage {
 	  const content = this.uiManager.createElement('div', 'text-center retro-text');
 	  const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'OPPONENT DISCONNECTED');
 	  const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'Your opponent has left the game.');
+	  const backButton = this.uiManager.createButton(
+		'BACK TO LOBBY',
+		'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',
+		() => this.backToLobby()
+	  );
+	  content.appendChild(title);
+	  content.appendChild(message);
+	  content.appendChild(backButton);
+	  startOverlay.appendChild(content);
+	  startOverlay.classList.remove('hidden');
+	}
+  }
+
+  /**
+   * handleMatchmakingError - Called when matchmaking fails
+   * Shows error message and returns to lobby
+   */
+  private handleMatchmakingError(data: any): void {
+	console.log("[RemotePage] Handling matchmaking error", data);
+
+	this.isSearchingOpponent = false;
+	this.removeWaitingScreen();
+
+	// Clean up game manager since matchmaking failed
+	if (this.gameManager) {
+	  this.gameManager.destroy();
+	  this.gameManager = null;
+	}
+
+	// Show error on start overlay
+	const startOverlay = document.querySelector<HTMLElement>('[data-overlay="start-game"]');
+	if (startOverlay) {
+	  startOverlay.innerHTML = '';
+	  const content = this.uiManager.createElement('div', 'text-center retro-text');
+	  const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'MATCHMAKING ERROR');
+	  const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'An error occurred while searching for an opponent.');
 	  const backButton = this.uiManager.createButton(
 		'BACK TO LOBBY',
 		'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',
@@ -389,6 +450,9 @@ export class RemotePage {
     // Screen when the game is over
     else if (isGameOver && winner)
     {
+      // Get player number before destroying gameManager
+      const playerNum = this.gameManager?.getPlayerNumber() ?? 1;
+
       if (this.gameManager) {
         this.gameManager.destroy();
         this.gameManager = null;
@@ -397,7 +461,6 @@ export class RemotePage {
         // Update game over content to return to lobby instead of playing again
         const winnerText = gameOverOverlay.querySelector('.text-2xl');
         if (winnerText) {
-          const playerNum = this.gameManager?.getPlayerNumber() ?? 1;
           winnerText.textContent = winner === 'Player 1' ?
             (playerNum === 1 ? 'YOU WIN!' : 'YOU LOSE!') :
             (playerNum === 2 ? 'YOU WIN!' : 'YOU LOSE!');

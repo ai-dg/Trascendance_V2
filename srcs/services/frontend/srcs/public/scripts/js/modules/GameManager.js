@@ -1,34 +1,33 @@
 import { gameSocket } from "../app.js";
 //import { INITIAL_READY_STATE } from "../../../realtime-sockets/app/srcs/Data.js";
 export class GameManager {
-    ctx;
-    gameState;
-    keys = {};
-    animationId = null;
-    listeners = [];
-    gameUID = null;
-    CANVAS_WIDTH = 800;
-    CANVAS_HEIGHT = 400;
-    PADDLE_WIDTH = 10;
-    PADDLE_HEIGHT = 80;
-    hasStarted = false;
-    isReady = false;
-    isPaused = false;
-    intervalId = null;
-    onKeyDown = null;
-    onKeyUp = null;
-    // Remote game properties
-    playerNumber = 1; // 1 or 2 (assigned by matchmaking)
-    opponentId = null;
-    onOpponentFound = null;
-    onOpponentDisconnected = null;
-    isRemoteGame = false; // Set to true when opponent is found
-    // A garder ?
-    playersReadyStatus = {
-        player1: false,
-        player2: false
-    };
     constructor(canvas, UUID) {
+        this.keys = {};
+        this.animationId = null;
+        this.listeners = [];
+        this.gameUID = null;
+        this.CANVAS_WIDTH = 800;
+        this.CANVAS_HEIGHT = 400;
+        this.PADDLE_WIDTH = 10;
+        this.PADDLE_HEIGHT = 80;
+        this.hasStarted = false;
+        this.isReady = false;
+        this.isPaused = false;
+        this.intervalId = null;
+        this.onKeyDown = null;
+        this.onKeyUp = null;
+        // Remote game properties
+        this.playerNumber = 1; // 1 or 2 (assigned by matchmaking)
+        this.opponentId = null;
+        this.onOpponentFound = null;
+        this.onOpponentDisconnected = null;
+        this.onMatchmakingError = null;
+        this.isRemoteGame = false; // Set to true when opponent is found
+        // A garder ?
+        this.playersReadyStatus = {
+            player1: false,
+            player2: false
+        };
         this.gameUID = UUID;
         this.ctx = canvas.getContext('2d');
         this.gameState = {
@@ -55,8 +54,11 @@ export class GameManager {
             window.removeEventListener('keydown', this.onKeyDown);
         if (this.onKeyUp)
             window.removeEventListener('keyup', this.onKeyUp);
-        // Remove socket listener to prevent memory leaks
+        // Notify server to clean up the game
         if (gameSocket && this.gameUID) {
+            gameSocket.emit(this.gameUID, { action: "destroy-game" });
+            console.log(`[GameManager] Sent destroy-game to server for: ${this.gameUID}`);
+            // Remove socket listener to prevent memory leaks
             gameSocket.removeAllListeners(this.gameUID);
             console.log(`[GameManager] Socket listener removed for: ${this.gameUID}`);
         }
@@ -112,6 +114,10 @@ export class GameManager {
             else if (data.type === "opponent-disconnected") {
                 console.log("[GameManager] OPPONENT DISCONNECTED EVENT RECEIVED", data);
                 this.handleOpponentDisconnected(data);
+            }
+            else if (data.type === "matchmaking-error") {
+                console.log("[GameManager] MATCHMAKING ERROR:", data);
+                this.handleMatchmakingError(data);
             }
         });
     }
@@ -174,6 +180,24 @@ export class GameManager {
      */
     setOnOpponentDisconnected(callback) {
         this.onOpponentDisconnected = callback;
+    }
+    /**
+     * handleMatchmakingError - Called when matchmaking fails (e.g., already searching)
+     */
+    handleMatchmakingError(data) {
+        console.log("[GameManager] handleMatchmakingError() called", data);
+        if (this.onMatchmakingError) {
+            this.onMatchmakingError(data);
+        }
+        else {
+            console.warn("[GameManager] No onMatchmakingError callback set!");
+        }
+    }
+    /**
+     * Set callback for matchmaking errors
+     */
+    setOnMatchmakingError(callback) {
+        this.onMatchmakingError = callback;
     }
     setupEventListeners() {
         this.onKeyDown = (e) => {
@@ -429,4 +453,3 @@ export class GameManager {
         this.ctx.shadowBlur = 0;
     }
 }
-//# sourceMappingURL=GameManager.js.map

@@ -1,9 +1,8 @@
 export class LanguageManager {
-    routerManager;
-    currentLang = 'en';
-    translations = {};
     constructor(routerManager) {
         this.routerManager = routerManager;
+        this.currentLang = 'en';
+        this.translations = {};
     }
     async init() {
         try {
@@ -49,4 +48,3 @@ export class LanguageManager {
         return this.currentLang;
     }
 }
-//# sourceMappingURL=LangManager.js.map

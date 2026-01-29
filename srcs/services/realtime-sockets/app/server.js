@@ -397,6 +397,26 @@ function gameHandler(uuid, data, socket){
 		const odileUserId = socket.userId || socket.id;
 		cancelSearch(redis, odileUserId);
 	}
+	else if (data.action === "destroy-game") {
+		// Clean up game when frontend destroys it
+		console.log(`[Game ${uuid}] Destroy request received`);
+		const odileUserId = socket.userId || socket.id;
+
+		// Cancel any matchmaking search
+		cancelSearch(redis, odileUserId);
+
+		// Clean up the game
+		if (game) {
+			game.destroy();
+			runningGames.delete(uuid);
+
+			// Clean up user tracking
+			if (game.player1Id) userGames.delete(game.player1Id);
+			if (game.player2Id) userGames.delete(game.player2Id);
+
+			console.log(`[Game ${uuid}] Game destroyed and cleaned up`);
+		}
+	}
 	else if (data.state)
 		game.updatePlayerMove(data.state.paddle1, data.state.paddle2);
 }

@@ -1,14 +1,9 @@
-import { UIManager } from '../modules/UIManager.js';
 export class LiveChatPage {
-    uiManager;
-    routerManager;
-    languageManager;
-    wsManager = null;
-    onBack;
-    friendRequests = new Map();
-    currentUser = null;
-    currentSelectedFriend = null;
     constructor(uiManager, routerManager, languageManager, wsManager, onBack, currentUser) {
+        this.wsManager = null;
+        this.friendRequests = new Map();
+        this.currentUser = null;
+        this.currentSelectedFriend = null;
         this.uiManager = uiManager;
         this.routerManager = routerManager;
         this.languageManager = languageManager;
@@ -596,4 +591,3 @@ export class LiveChatPage {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 }
-//# sourceMappingURL=LiveChatPage.js.map

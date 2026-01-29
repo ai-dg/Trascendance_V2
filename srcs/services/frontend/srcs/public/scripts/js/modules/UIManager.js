@@ -1,6 +1,10 @@
 export class UIManager {
-    container;
     constructor(container) {
+        this.defaultAvatars = [
+            { id: 'avatar1', name: 'Military Duck', description: 'Tactical', filename: 'avatar1.png' },
+            { id: 'avatar2', name: 'Detective Duck', description: 'Mysterious', filename: 'avatar2.png' },
+            { id: 'avatar3', name: 'Gentleman Duck', description: 'Classy', filename: 'avatar3.png' },
+        ];
         this.container = container;
     }
     clear() {
@@ -166,11 +170,6 @@ export class UIManager {
             }, duration);
         });
     }
-    defaultAvatars = [
-        { id: 'avatar1', name: 'Military Duck', description: 'Tactical', filename: 'avatar1.png' },
-        { id: 'avatar2', name: 'Detective Duck', description: 'Mysterious', filename: 'avatar2.png' },
-        { id: 'avatar3', name: 'Gentleman Duck', description: 'Classy', filename: 'avatar3.png' },
-    ];
     createAvatarSelector(onSelect, selectedAvatarId) {
         const avatarContainer = this.createElement('div', 'flex justify-center gap-6');
         this.defaultAvatars.forEach((avatar) => {
@@ -196,4 +195,3 @@ export class UIManager {
         return avatarContainer;
     }
 }
-//# sourceMappingURL=UIManager.js.map

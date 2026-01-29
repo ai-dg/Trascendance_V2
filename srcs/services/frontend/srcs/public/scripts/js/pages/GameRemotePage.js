@@ -1,14 +1,11 @@
-import { UIManager } from '../modules/UIManager.js';
 import { GameManager } from '../modules/GameManager.js';
 export class RemotePage {
-    uiManager;
-    onBack;
-    gameManager = null;
-    canvas = null;
-    user = null;
-    isSearchingOpponent = false;
-    selectedFriendId = null;
     constructor(uiManager, onBack, user) {
+        this.gameManager = null;
+        this.canvas = null;
+        this.user = null;
+        this.isSearchingOpponent = false;
+        this.selectedFriendId = null;
         this.uiManager = uiManager;
         this.onBack = onBack;
         this.user = user ?? null;
@@ -133,9 +130,7 @@ export class RemotePage {
         container.appendChild(content);
         this.uiManager.clear();
         this.uiManager.container.appendChild(container);
-        // Initialize game manager
-        if (this.canvas)
-            this.requestNewGame();
+        // Don't auto-create game - wait for user to select game mode
     }
     //////////////////////////////////////////////
     ///////////// GAME INITIALIZATION ////////////
@@ -146,15 +141,28 @@ export class RemotePage {
             .forEach((el) => el.remove());
     }
     requestNewGame() {
-        // Always clear waiting overlay when returning to initial state
+        // Return to lobby - show game mode selection
         this.removeWaitingScreen();
         const gameOverOverlay = document.querySelector('[data-overlay="game-over"]');
         const startOverlay = document.querySelector('[data-overlay="start-game"]');
         if (gameOverOverlay) {
             gameOverOverlay.classList.add('hidden');
+        }
+        if (startOverlay) {
+            // Restore original lobby content (may have been replaced by error/disconnect screens)
+            startOverlay.innerHTML = '';
+            const startContent = this.uiManager.createElement('div', 'text-center retro-text');
+            const startTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'CHOOSE YOUR OPPONENT');
+            const startButtonRandom = this.uiManager.createButton('PLAY AGAINST RANDOM PLAYER', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.playAgainstRandomPlayer());
+            const startButtonFriend = this.uiManager.createButton('PLAY AGAINST A FRIEND', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200 mt-4', () => this.playAgainstFriend());
+            startContent.appendChild(startTitle);
+            startContent.appendChild(startButtonRandom);
+            startContent.appendChild(this.uiManager.createElement('div', 'h-4'));
+            startContent.appendChild(startButtonFriend);
+            startOverlay.appendChild(startContent);
             startOverlay.classList.remove('hidden');
         }
-        GameManager.requestGameID("remote");
+        // Don't create game yet - wait for user to select mode
     }
     setupGame(data) {
         console.log("should work here in setupGame");
@@ -180,6 +188,11 @@ export class RemotePage {
         this.gameManager.setOnOpponentDisconnected((data) => {
             console.log("[RemotePage] Opponent disconnected!", data);
             this.handleOpponentDisconnected(data);
+        });
+        // Handle matchmaking errors (e.g., already searching)
+        this.gameManager.setOnMatchmakingError((data) => {
+            console.log("[RemotePage] Matchmaking error!", data);
+            this.handleMatchmakingError(data);
         });
     }
     /**
@@ -227,7 +240,35 @@ export class RemotePage {
             const content = this.uiManager.createElement('div', 'text-center retro-text');
             const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'OPPONENT DISCONNECTED');
             const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'Your opponent has left the game.');
-            const backButton = this.uiManager.createButton('BACK TO LOBBY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.requestNewGame());
+            const backButton = this.uiManager.createButton('BACK TO LOBBY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.backToLobby());
+            content.appendChild(title);
+            content.appendChild(message);
+            content.appendChild(backButton);
+            startOverlay.appendChild(content);
+            startOverlay.classList.remove('hidden');
+        }
+    }
+    /**
+     * handleMatchmakingError - Called when matchmaking fails
+     * Shows error message and returns to lobby
+     */
+    handleMatchmakingError(data) {
+        console.log("[RemotePage] Handling matchmaking error", data);
+        this.isSearchingOpponent = false;
+        this.removeWaitingScreen();
+        // Clean up game manager since matchmaking failed
+        if (this.gameManager) {
+            this.gameManager.destroy();
+            this.gameManager = null;
+        }
+        // Show error on start overlay
+        const startOverlay = document.querySelector('[data-overlay="start-game"]');
+        if (startOverlay) {
+            startOverlay.innerHTML = '';
+            const content = this.uiManager.createElement('div', 'text-center retro-text');
+            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'MATCHMAKING ERROR');
+            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'An error occurred while searching for an opponent.');
+            const backButton = this.uiManager.createButton('BACK TO LOBBY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.backToLobby());
             content.appendChild(title);
             content.appendChild(message);
             content.appendChild(backButton);
@@ -294,6 +335,8 @@ export class RemotePage {
         }
         // Screen when the game is over
         else if (isGameOver && winner) {
+            // Get player number before destroying gameManager
+            const playerNum = this.gameManager?.getPlayerNumber() ?? 1;
             if (this.gameManager) {
                 this.gameManager.destroy();
                 this.gameManager = null;
@@ -302,7 +345,6 @@ export class RemotePage {
                 // Update game over content to return to lobby instead of playing again
                 const winnerText = gameOverOverlay.querySelector('.text-2xl');
                 if (winnerText) {
-                    const playerNum = this.gameManager?.getPlayerNumber() ?? 1;
                     winnerText.textContent = winner === 'Player 1' ?
                         (playerNum === 1 ? 'YOU WIN!' : 'YOU LOSE!') :
                         (playerNum === 2 ? 'YOU WIN!' : 'YOU LOSE!');
@@ -346,11 +388,31 @@ export class RemotePage {
             this.gameManager.pauseGame();
     }
     backToMenu() {
+        // Cancel matchmaking if searching
+        if (this.isSearchingOpponent && this.gameManager) {
+            this.gameManager.cancelSearch();
+            this.isSearchingOpponent = false;
+        }
+        // Destroy game and return to main menu
         if (this.gameManager) {
             this.gameManager.destroy();
             this.gameManager = null;
         }
         this.onBack();
+    }
+    backToLobby() {
+        // Cancel matchmaking if searching
+        if (this.isSearchingOpponent && this.gameManager) {
+            this.gameManager.cancelSearch();
+            this.isSearchingOpponent = false;
+        }
+        // Destroy current game
+        if (this.gameManager) {
+            this.gameManager.destroy();
+            this.gameManager = null;
+        }
+        // Return to lobby (show game mode selection)
+        this.requestNewGame();
     }
     resetGame() {
         if (!this.gameManager)
@@ -363,6 +425,20 @@ export class RemotePage {
     ///////////// OPTIONS GAME ///////////////////
     //////////////////////////////////////////////
     playAgainstRandomPlayer() {
+        // Create new game if needed
+        if (!this.gameManager) {
+            GameManager.requestGameID("remote");
+            // Wait for setupGame to be called, then start matchmaking
+            setTimeout(() => {
+                if (!this.gameManager)
+                    return;
+                this.playAgainstRandomPlayer(); // Retry after game is created
+            }, 100);
+            return;
+        }
+        this.startMatchmaking();
+    }
+    startMatchmaking() {
         if (!this.gameManager)
             return;
         this.isSearchingOpponent = true;
@@ -391,8 +467,17 @@ export class RemotePage {
         this.gameManager.searchForRandomOpponent();
     }
     playAgainstFriend() {
-        if (!this.gameManager)
+        // Create new game if needed
+        if (!this.gameManager) {
+            GameManager.requestGameID("remote");
+            // Wait for setupGame to be called, then show friend selection
+            setTimeout(() => {
+                if (!this.gameManager)
+                    return;
+                this.playAgainstFriend(); // Retry after game is created
+            }, 100);
             return;
+        }
         this.isSearchingOpponent = true;
         document.querySelector('[data-overlay="start-game"]')?.classList.add('hidden');
         this.removeWaitingScreen();
@@ -464,4 +549,3 @@ export class RemotePage {
             this.uiManager.container.appendChild(WaitingScreen);
     }
 }
-//# sourceMappingURL=GameRemotePage.js.map
