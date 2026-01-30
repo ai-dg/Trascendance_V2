@@ -85,7 +85,7 @@ export class App {
       // this.updateCurrentPage();
     });
 
-    this.websocketManager = new WebsocketManager();
+    this.websocketManager = WebsocketManager.getInstance();
 
     // Managers
     this.uiManager = new UIManager(container);
@@ -107,7 +107,9 @@ export class App {
       this.handleError.bind(this)
     );
     this.menuPage = new MenuPage(
-      this.uiManager, 
+      this.uiManager,
+      this.websocketManager,
+      this.routerManager,
       this.handlePlayGameAI.bind(this), 
       this.handlePlayGameLocal.bind(this), 
       this.handlePlayGameOnline.bind(this),  
@@ -322,6 +324,7 @@ export class App {
         break;
       case 'menu':
         requestAnimationFrame(() => {
+          this.menuPage.setCurrentUser(this.currentUser);
           this.menuPage.render(this.currentUser);
         });
         break;

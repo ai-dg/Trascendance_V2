@@ -72,6 +72,10 @@ async function setupLiveChatdb() {
 			    sent_at DATETIME DEFAULT CURRENT_TIMESTAMP
 			  );
 			`);
+		await db.exec(`
+		    CREATE INDEX IF NOT EXISTS idx_messages_participants 
+		    ON messages (sender_id, receiver_id);
+		`);
 
 			console.log("Live-chat db ready");
 		return db;
