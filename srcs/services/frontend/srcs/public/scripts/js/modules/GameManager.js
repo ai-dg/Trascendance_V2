@@ -1,21 +1,7 @@
-"use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.GameManager = void 0;
-var app_js_1 = require("../app.js");
+import { gameSocket } from "../app.js";
 //import { INITIAL_READY_STATE } from "../../../realtime-sockets/app/srcs/Data.js";
-var GameManager = /** @class */ (function () {
-    function GameManager(canvas, UUID) {
+export class GameManager {
+    constructor(canvas, UUID) {
         this.keys = {};
         this.animationId = null;
         this.listeners = [];
@@ -69,152 +55,150 @@ var GameManager = /** @class */ (function () {
      * @param notifyServer - If true, sends destroy-game to server. Set to false for remote games
      *                       that should allow reconnection (server handles cleanup on disconnect)
      */
-    GameManager.prototype.destroy = function (notifyServer) {
-        if (notifyServer === void 0) { notifyServer = true; }
-        console.log("[GameManager] destroy() called for game: ".concat(this.gameUID, ", notifyServer: ").concat(notifyServer));
+    destroy(notifyServer = true) {
+        console.log(`[GameManager] destroy() called for game: ${this.gameUID}, notifyServer: ${notifyServer}`);
         this.stopInputLoop();
         if (this.onKeyDown)
             window.removeEventListener('keydown', this.onKeyDown);
         if (this.onKeyUp)
             window.removeEventListener('keyup', this.onKeyUp);
-        if (app_js_1.gameSocket && this.gameUID) {
+        if (gameSocket && this.gameUID) {
             // Only notify server to destroy if explicitly requested
             // For remote games in progress, let server handle via disconnect event
             if (notifyServer) {
-                app_js_1.gameSocket.emit(this.gameUID, { action: "destroy-game" });
-                console.log("[GameManager] Sent destroy-game to server for: ".concat(this.gameUID));
+                gameSocket.emit(this.gameUID, { action: "destroy-game" });
+                console.log(`[GameManager] Sent destroy-game to server for: ${this.gameUID}`);
             }
             else {
-                console.log("[GameManager] NOT sending destroy-game (allowing reconnection)");
+                console.log(`[GameManager] NOT sending destroy-game (allowing reconnection)`);
             }
             // Remove socket listener to prevent memory leaks
-            app_js_1.gameSocket.removeAllListeners(this.gameUID);
-            console.log("[GameManager] Socket listener removed for: ".concat(this.gameUID));
+            gameSocket.removeAllListeners(this.gameUID);
+            console.log(`[GameManager] Socket listener removed for: ${this.gameUID}`);
         }
-    };
+    }
     /**
      * Check if this is a remote game that has started (for reconnection logic)
      */
-    GameManager.prototype.isActiveRemoteGame = function () {
+    isActiveRemoteGame() {
         return this.isRemoteGame && this.hasStarted;
-    };
+    }
     //////////////////////////////////////////
     ///////////// GETTERS ////////////////////
     /////////////////////////////////////////
-    GameManager.prototype.getGameState = function () {
-        return __assign({}, this.gameState);
-    };
-    GameManager.prototype.getIsPaused = function () {
+    getGameState() {
+        return { ...this.gameState };
+    }
+    getIsPaused() {
         return this.isPaused;
-    };
-    GameManager.prototype.getHasStarted = function () {
+    }
+    getHasStarted() {
         return this.hasStarted;
-    };
-    GameManager.prototype.getPlayerNumber = function () {
+    }
+    getPlayerNumber() {
         return this.playerNumber;
-    };
+    }
     /**
      * Set the player number (used for reconnection)
      */
-    GameManager.prototype.setPlayerNumber = function (num) {
+    setPlayerNumber(num) {
         this.playerNumber = num;
         this.isRemoteGame = true;
-        console.log("[GameManager] Player number set to: ".concat(num));
-    };
+        console.log(`[GameManager] Player number set to: ${num}`);
+    }
     //////////////////////////////////////////
     /////// SETUP SOCKET LISTENERS //////////
     /////////////////////////////////////////
-    GameManager.prototype.setupSocketListeners = function () {
-        var _this = this;
-        if (!app_js_1.gameSocket || !this.gameUID)
+    setupSocketListeners() {
+        if (!gameSocket || !this.gameUID)
             throw Error("gameSocket is not ready");
-        app_js_1.gameSocket.on(this.gameUID, function (data) {
-            console.log("[GameManager] <<<< RECEIVED EVENT on ".concat(_this.gameUID, ":"), (data === null || data === void 0 ? void 0 : data.type) || 'NO TYPE', data);
-            if (!(data === null || data === void 0 ? void 0 : data.type))
+        gameSocket.on(this.gameUID, (data) => {
+            console.log(`[GameManager] <<<< RECEIVED EVENT on ${this.gameUID}:`, data?.type || 'NO TYPE', data);
+            if (!data?.type)
                 return;
             if (data.type === "ready-status") {
-                _this.playersReadyStatus = {
+                this.playersReadyStatus = {
                     player1: data.player1Ready,
                     player2: data.player2Ready
                 };
-                _this.drawReadyScreen();
+                this.drawReadyScreen();
             }
             else if (data.type === "countdown")
-                _this.drawCountdown(data.count);
+                this.drawCountdown(data.count);
             else if (data.type === "game-start")
-                _this.startGame();
+                this.startGame();
             else if (data.type === "game-paused")
-                _this.handleServerGamePaused(data);
+                this.handleServerGamePaused(data);
             else if (data.type === "game-reset")
-                _this.handleServerGameReset(data);
+                this.handleServerGameReset(data);
             else if (data.type === "game-update")
-                _this.updateGame(data);
+                this.updateGame(data);
             else if (data.type === "play-against-random-player")
-                _this.handleServerPlayAgainstRandomPlayer(data);
+                this.handleServerPlayAgainstRandomPlayer(data);
             else if (data.type === "play-against-friend")
-                _this.handleServerPlayAgainstFriend(data);
+                this.handleServerPlayAgainstFriend(data);
             else if (data.type === "opponent-found")
-                _this.handleOpponentFound(data);
+                this.handleOpponentFound(data);
             else if (data.type === "opponent-disconnected") {
                 console.log("[GameManager] OPPONENT DISCONNECTED EVENT RECEIVED", data);
-                _this.handleOpponentDisconnected(data);
+                this.handleOpponentDisconnected(data);
             }
             else if (data.type === "matchmaking-error") {
                 console.log("[GameManager] MATCHMAKING ERROR:", data);
-                _this.handleMatchmakingError(data);
+                this.handleMatchmakingError(data);
             }
             else if (data.type === "opponent-reconnected") {
                 console.log("[GameManager] OPPONENT RECONNECTED:", data);
-                _this.handleOpponentReconnected(data);
+                this.handleOpponentReconnected(data);
             }
             else if (data.type === "reconnection-timeout") {
                 console.log("[GameManager] RECONNECTION TIMEOUT:", data);
-                _this.handleReconnectionTimeout(data);
+                this.handleReconnectionTimeout(data);
             }
         });
-    };
+    }
     /**
      * handleOpponentFound - Called when matchmaking finds an opponent
      */
-    GameManager.prototype.handleOpponentFound = function (data) {
+    handleOpponentFound(data) {
         console.log("[GameManager] Opponent found!", data);
         this.playerNumber = data.playerNumber; // 1 or 2
         this.opponentId = data.opponentId;
         this.isRemoteGame = true; // Mark this as a remote game
         // If player 2, switch to the matched game UUID
         if (data.playerNumber === 2 && data.gameUUID) {
-            console.log("[GameManager] Player 2 switching from ".concat(this.gameUID, " to ").concat(data.gameUUID));
+            console.log(`[GameManager] Player 2 switching from ${this.gameUID} to ${data.gameUUID}`);
             // Remove old socket listener
-            if (app_js_1.gameSocket && this.gameUID) {
-                app_js_1.gameSocket.removeAllListeners(this.gameUID);
-                console.log("[GameManager] Removed listener for old UUID: ".concat(this.gameUID));
+            if (gameSocket && this.gameUID) {
+                gameSocket.removeAllListeners(this.gameUID);
+                console.log(`[GameManager] Removed listener for old UUID: ${this.gameUID}`);
             }
             // Update to new game UUID
             this.gameUID = data.gameUUID;
             // Set up listener for the new game
             this.setupSocketListeners();
-            console.log("[GameManager] Now listening on matched game: ".concat(this.gameUID));
+            console.log(`[GameManager] Now listening on matched game: ${this.gameUID}`);
             // Confirm to server that we're now listening on the new channel
-            if (app_js_1.gameSocket && this.gameUID) {
-                app_js_1.gameSocket.emit(this.gameUID, { action: "player-2-joined" });
-                console.log("[GameManager] Sent player-2-joined confirmation");
+            if (gameSocket && this.gameUID) {
+                gameSocket.emit(this.gameUID, { action: "player-2-joined" });
+                console.log(`[GameManager] Sent player-2-joined confirmation`);
             }
         }
         // Notify listeners that opponent was found
         if (this.onOpponentFound) {
             this.onOpponentFound(data);
         }
-    };
+    }
     /**
      * Set callback for when opponent is found (used by GameRemotePage)
      */
-    GameManager.prototype.setOnOpponentFound = function (callback) {
+    setOnOpponentFound(callback) {
         this.onOpponentFound = callback;
-    };
+    }
     /**
      * handleOpponentDisconnected - Called when opponent leaves the game
      */
-    GameManager.prototype.handleOpponentDisconnected = function (data) {
+    handleOpponentDisconnected(data) {
         console.log("[GameManager] handleOpponentDisconnected() called", data);
         // Stop the game
         this.hasStarted = false;
@@ -231,17 +215,17 @@ var GameManager = /** @class */ (function () {
         else {
             console.warn("[GameManager] No onOpponentDisconnected callback set!");
         }
-    };
+    }
     /**
      * Set callback for when opponent disconnects
      */
-    GameManager.prototype.setOnOpponentDisconnected = function (callback) {
+    setOnOpponentDisconnected(callback) {
         this.onOpponentDisconnected = callback;
-    };
+    }
     /**
      * handleMatchmakingError - Called when matchmaking fails (e.g., already searching)
      */
-    GameManager.prototype.handleMatchmakingError = function (data) {
+    handleMatchmakingError(data) {
         console.log("[GameManager] handleMatchmakingError() called", data);
         if (this.onMatchmakingError) {
             this.onMatchmakingError(data);
@@ -249,17 +233,17 @@ var GameManager = /** @class */ (function () {
         else {
             console.warn("[GameManager] No onMatchmakingError callback set!");
         }
-    };
+    }
     /**
      * Set callback for matchmaking errors
      */
-    GameManager.prototype.setOnMatchmakingError = function (callback) {
+    setOnMatchmakingError(callback) {
         this.onMatchmakingError = callback;
-    };
+    }
     /**
      * handleOpponentReconnected - Called when disconnected opponent returns
      */
-    GameManager.prototype.handleOpponentReconnected = function (data) {
+    handleOpponentReconnected(data) {
         console.log("[GameManager] handleOpponentReconnected() called", data);
         // Reset ready states - both need to click Ready again
         this.isReady = false;
@@ -270,17 +254,17 @@ var GameManager = /** @class */ (function () {
         else {
             console.warn("[GameManager] No onOpponentReconnected callback set!");
         }
-    };
+    }
     /**
      * Set callback for when opponent reconnects
      */
-    GameManager.prototype.setOnOpponentReconnected = function (callback) {
+    setOnOpponentReconnected(callback) {
         this.onOpponentReconnected = callback;
-    };
+    }
     /**
      * handleReconnectionTimeout - Called when opponent doesn't reconnect in time
      */
-    GameManager.prototype.handleReconnectionTimeout = function (data) {
+    handleReconnectionTimeout(data) {
         console.log("[GameManager] handleReconnectionTimeout() called", data);
         if (this.onReconnectionTimeout) {
             this.onReconnectionTimeout(data);
@@ -288,184 +272,178 @@ var GameManager = /** @class */ (function () {
         else {
             console.warn("[GameManager] No onReconnectionTimeout callback set!");
         }
-    };
+    }
     /**
      * Set callback for reconnection timeout
      */
-    GameManager.prototype.setOnReconnectionTimeout = function (callback) {
+    setOnReconnectionTimeout(callback) {
         this.onReconnectionTimeout = callback;
-    };
-    GameManager.prototype.setupEventListeners = function () {
-        var _this = this;
-        this.onKeyDown = function (e) {
-            _this.keys[e.key.toLowerCase()] = true;
+    }
+    setupEventListeners() {
+        this.onKeyDown = (e) => {
+            this.keys[e.key.toLowerCase()] = true;
         };
-        this.onKeyUp = function (e) {
-            _this.keys[e.key.toLowerCase()] = false;
+        this.onKeyUp = (e) => {
+            this.keys[e.key.toLowerCase()] = false;
         };
         window.addEventListener('keydown', this.onKeyDown);
         window.addEventListener('keyup', this.onKeyUp);
-    };
-    GameManager.prototype.addListener = function (callback) {
-        var _this = this;
+    }
+    addListener(callback) {
         this.listeners.push(callback);
-        return function () {
-            _this.listeners = _this.listeners.filter(function (l) { return l !== callback; });
+        return () => {
+            this.listeners = this.listeners.filter(l => l !== callback);
         };
-    };
-    GameManager.prototype.notifyListeners = function () {
-        var _this = this;
-        this.listeners.forEach(function (callback) { return callback(_this.getGameState()); });
-    };
+    }
+    notifyListeners() {
+        this.listeners.forEach(callback => callback(this.getGameState()));
+    }
     //////////////////////////////////////////
     ///// SEND ACTIONS TO THE BACKEND //////
     /////////////////////////////////////////
-    GameManager.requestGameID = function (type, options) {
-        if (options === void 0) { options = {}; }
-        if (!app_js_1.gameSocket)
+    static requestGameID(type, options = {}) {
+        if (!gameSocket)
             throw Error("gameSocket is not ready");
-        app_js_1.gameSocket.emit("request-game-uid", __assign({ type: type }, options));
-    };
+        gameSocket.emit("request-game-uid", { type, ...options });
+    }
     /**
      * Check if user has a game waiting for reconnection
      */
-    GameManager.checkForReconnection = function (onResult) {
-        if (!app_js_1.gameSocket)
+    static checkForReconnection(onResult) {
+        if (!gameSocket)
             throw Error("gameSocket is not ready");
         // Set up one-time listeners for the response
-        app_js_1.gameSocket.once('reconnection-available', function (data) {
+        gameSocket.once('reconnection-available', (data) => {
             console.log("[GameManager] Reconnection available:", data);
-            onResult(__assign({ hasGame: true }, data));
+            onResult({ hasGame: true, ...data });
         });
-        app_js_1.gameSocket.once('no-reconnection-available', function () {
+        gameSocket.once('no-reconnection-available', () => {
             console.log("[GameManager] No reconnection available");
             onResult({ hasGame: false });
         });
-        app_js_1.gameSocket.emit('check-reconnection');
-    };
+        gameSocket.emit('check-reconnection');
+    }
     /**
      * Attempt to reconnect to an existing game
      */
-    GameManager.reconnectToGame = function (gameUUID, onResult) {
-        if (!app_js_1.gameSocket)
+    static reconnectToGame(gameUUID, onResult) {
+        if (!gameSocket)
             throw Error("gameSocket is not ready");
         // Set up one-time listeners for the response
-        app_js_1.gameSocket.once('reconnection-success', function (data) {
+        gameSocket.once('reconnection-success', (data) => {
             console.log("[GameManager] Reconnection success:", data);
-            onResult(__assign({ success: true }, data));
+            onResult({ success: true, ...data });
         });
-        app_js_1.gameSocket.once('reconnection-failed', function (data) {
+        gameSocket.once('reconnection-failed', (data) => {
             console.log("[GameManager] Reconnection failed:", data);
-            onResult(__assign({ success: false }, data));
+            onResult({ success: false, ...data });
         });
-        app_js_1.gameSocket.emit('reconnect-to-game', { gameUUID: gameUUID });
-    };
-    GameManager.prototype.setReady = function (isRemoteGame) {
-        if (isRemoteGame === void 0) { isRemoteGame = false; }
+        gameSocket.emit('reconnect-to-game', { gameUUID });
+    }
+    setReady(isRemoteGame = false) {
         if (this.isReady)
             return;
         this.isReady = true;
-        if (!app_js_1.gameSocket || !this.gameUID)
+        if (!gameSocket || !this.gameUID)
             throw Error("gameSocket is not ready");
         // For remote games: send individual player number (1 or 2)
         // For local/AI: send 3 to mark both players ready
-        var playerNum = isRemoteGame ? this.playerNumber : 3;
-        console.log("[GameManager] setReady - sending player: ".concat(playerNum, " (isRemote: ").concat(isRemoteGame, ")"));
-        app_js_1.gameSocket.emit(this.gameUID, {
+        const playerNum = isRemoteGame ? this.playerNumber : 3;
+        console.log(`[GameManager] setReady - sending player: ${playerNum} (isRemote: ${isRemoteGame})`);
+        gameSocket.emit(this.gameUID, {
             action: "player-ready",
             player: playerNum
         });
         this.hasStarted = true;
-    };
-    GameManager.prototype.pauseGame = function () {
-        if (!app_js_1.gameSocket || !this.gameUID)
+    }
+    pauseGame() {
+        if (!gameSocket || !this.gameUID)
             throw Error("gameSocket is not ready");
         this.isPaused = true;
         this.stopInputLoop();
         this.notifyListeners();
-        app_js_1.gameSocket.emit(this.gameUID, { action: "pause-game" });
-    };
-    GameManager.prototype.resumeGame = function () {
-        if (!app_js_1.gameSocket || !this.gameUID)
+        gameSocket.emit(this.gameUID, { action: "pause-game" });
+    }
+    resumeGame() {
+        if (!gameSocket || !this.gameUID)
             throw Error("gameSocket is not ready");
         this.isPaused = false;
         this.notifyListeners();
-        app_js_1.gameSocket.emit(this.gameUID, { action: "resume-game" });
-    };
-    GameManager.prototype.resetGame = function () {
-        if (!this.gameUID || !app_js_1.gameSocket)
+        gameSocket.emit(this.gameUID, { action: "resume-game" });
+    }
+    resetGame() {
+        if (!this.gameUID || !gameSocket)
             throw Error("Error with game socket!");
         this.isReady = false;
         this.isPaused = false;
         this.hasStarted = false;
         this.stopInputLoop();
         this.notifyListeners();
-        app_js_1.gameSocket.emit(this.gameUID, { action: "reset-game" });
-    };
+        gameSocket.emit(this.gameUID, { action: "reset-game" });
+    }
     /**
      * searchForRandomOpponent - Tell server to find us an opponent
      * This triggers the matchmaking system
      */
-    GameManager.prototype.searchForRandomOpponent = function () {
-        if (!this.gameUID || !app_js_1.gameSocket)
+    searchForRandomOpponent() {
+        if (!this.gameUID || !gameSocket)
             throw Error("Error with game socket!");
         console.log("[GameManager] Searching for random opponent...");
-        app_js_1.gameSocket.emit(this.gameUID, { action: "play-against-random-player" });
-    };
+        gameSocket.emit(this.gameUID, { action: "play-against-random-player" });
+    }
     /**
      * cancelSearch - Cancel matchmaking search
      */
-    GameManager.prototype.cancelSearch = function () {
-        if (!this.gameUID || !app_js_1.gameSocket)
+    cancelSearch() {
+        if (!this.gameUID || !gameSocket)
             throw Error("Error with game socket!");
         console.log("[GameManager] Canceling search...");
-        app_js_1.gameSocket.emit(this.gameUID, { action: "cancel-matchmaking" });
-    };
+        gameSocket.emit(this.gameUID, { action: "cancel-matchmaking" });
+    }
     //////////////////////////////////////////
     ///////HANDLE SERVER EVENTS /////////////
     /////////////////////////////////////////
-    GameManager.prototype.startGame = function () {
+    startGame() {
         this.gameState.gameRunning = true;
         this.isPaused = false;
         this.notifyListeners();
         this.startInputLoop();
-    };
-    GameManager.prototype.handleServerGamePaused = function (data) {
+    }
+    handleServerGamePaused(data) {
         this.isPaused = true;
         this.stopInputLoop();
-        if (data === null || data === void 0 ? void 0 : data.state) {
+        if (data?.state) {
             this.gameState = data.state;
             this.draw();
         }
         this.notifyListeners();
-    };
-    GameManager.prototype.handleServerGameReset = function (data) {
+    }
+    handleServerGameReset(data) {
         this.isReady = false;
         this.isPaused = false;
         this.stopInputLoop();
-        if (data === null || data === void 0 ? void 0 : data.state) {
+        if (data?.state) {
             this.gameState = data.state;
             this.draw();
         }
         this.notifyListeners();
-    };
-    GameManager.prototype.handleServerPlayAgainstRandomPlayer = function (data) {
+    }
+    handleServerPlayAgainstRandomPlayer(data) {
         console.log("handleServerPlayAgainstRandomPlayer", data);
-    };
-    GameManager.prototype.handleServerPlayAgainstFriend = function (data) {
+    }
+    handleServerPlayAgainstFriend(data) {
         console.log("handleServerPlayAgainstFriend", data);
-    };
+    }
     //////////////////////////////////////////
     /////////// GAME LOOP ////////////////////
     /////////////////////////////////////////
-    GameManager.prototype.stopInputLoop = function () {
+    stopInputLoop() {
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
             this.animationId = null;
         }
-    };
-    GameManager.prototype.startInputLoop = function () {
-        var _this = this;
+    }
+    startInputLoop() {
         if (!this.gameState.gameRunning)
             return;
         // Apply local paddle movement immediately for responsiveness
@@ -474,18 +452,18 @@ var GameManager = /** @class */ (function () {
         this.sendPlayerInputs();
         // Render the current state (local prediction + server ball/opponent)
         this.draw();
-        this.animationId = requestAnimationFrame(function () { return _this.startInputLoop(); });
-    };
+        this.animationId = requestAnimationFrame(() => this.startInputLoop());
+    }
     /**
      * Apply paddle movement locally for instant feedback (client-side prediction)
      */
-    GameManager.prototype.applyLocalPaddleMovement = function () {
+    applyLocalPaddleMovement() {
         // Only do local prediction for remote games
         if (!this.isRemoteGame)
             return;
         // Determine which paddle this player controls
-        var paddleKey = this.playerNumber === 1 ? 'paddle1' : 'paddle2';
-        var paddle = this.gameState[paddleKey];
+        const paddleKey = this.playerNumber === 1 ? 'paddle1' : 'paddle2';
+        const paddle = this.gameState[paddleKey];
         // Apply movement based on keys
         if (this.keys['w']) {
             paddle.y -= this.PADDLE_SPEED;
@@ -495,13 +473,13 @@ var GameManager = /** @class */ (function () {
         }
         // Clamp to canvas bounds
         paddle.y = Math.max(0, Math.min(this.CANVAS_HEIGHT - this.PADDLE_HEIGHT, paddle.y));
-    };
-    GameManager.prototype.updateGame = function (data) {
+    }
+    updateGame(data) {
         if (data.state) {
             if (this.isRemoteGame && this.gameState.gameRunning) {
                 // For remote games: preserve local paddle position, use server for everything else
-                var myPaddleKey = this.playerNumber === 1 ? 'paddle1' : 'paddle2';
-                var localPaddleY = this.gameState[myPaddleKey].y;
+                const myPaddleKey = this.playerNumber === 1 ? 'paddle1' : 'paddle2';
+                const localPaddleY = this.gameState[myPaddleKey].y;
                 // Update game state from server
                 this.gameState = data.state;
                 // Restore local paddle position (our prediction)
@@ -519,12 +497,12 @@ var GameManager = /** @class */ (function () {
             }
             this.notifyListeners();
         }
-    };
-    GameManager.prototype.sendPlayerInputs = function () {
-        if (!this.gameUID || !app_js_1.gameSocket)
+    }
+    sendPlayerInputs() {
+        if (!this.gameUID || !gameSocket)
             throw Error("Error with game socket!");
-        var paddle1 = 0;
-        var paddle2 = 0;
+        let paddle1 = 0;
+        let paddle2 = 0;
         // For remote games: only send input for your assigned paddle
         // Both players use W/S keys since the game is mirrored - everyone sees themselves on the left
         if (this.isRemoteGame) {
@@ -556,18 +534,18 @@ var GameManager = /** @class */ (function () {
             else if (this.keys['arrowup'])
                 paddle2 = -1;
         }
-        var state = {
-            paddle1: paddle1,
-            paddle2: paddle2
+        const state = {
+            paddle1,
+            paddle2
         };
-        if (!app_js_1.gameSocket)
+        if (!gameSocket)
             throw Error("Error with game socket!");
-        app_js_1.gameSocket.emit(this.gameUID, { state: state });
-    };
+        gameSocket.emit(this.gameUID, { state });
+    }
     //////////////////////////////////////////
     /////////// GAME DESIGN /////////////////
     /////////////////////////////////////////
-    GameManager.prototype.draw = function () {
+    draw() {
         // Clear canvas
         this.ctx.fillStyle = '#000000';
         this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
@@ -597,8 +575,8 @@ var GameManager = /** @class */ (function () {
         }
         // Reset shadow
         this.ctx.shadowBlur = 0;
-    };
-    GameManager.prototype.drawReadyScreen = function () {
+    }
+    drawReadyScreen() {
         // Clear canvas
         this.ctx.fillStyle = '#000000';
         this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
@@ -610,12 +588,12 @@ var GameManager = /** @class */ (function () {
         // Status Player 1
         this.ctx.font = '24px Arial';
         this.ctx.fillStyle = this.playersReadyStatus.player1 ? '#00ff00' : '#ff0000';
-        this.ctx.fillText("Player 1: ".concat(this.playersReadyStatus.player1 ? 'READY ✓' : 'NOT READY'), this.CANVAS_WIDTH / 2, 220);
+        this.ctx.fillText(`Player 1: ${this.playersReadyStatus.player1 ? 'READY ✓' : 'NOT READY'}`, this.CANVAS_WIDTH / 2, 220);
         // Status Player 2
         this.ctx.fillStyle = this.playersReadyStatus.player2 ? '#00ff00' : '#ff0000';
-        this.ctx.fillText("Player 2: ".concat(this.playersReadyStatus.player2 ? 'READY ✓' : 'NOT READY'), this.CANVAS_WIDTH / 2, 260);
-    };
-    GameManager.prototype.drawCountdown = function (count) {
+        this.ctx.fillText(`Player 2: ${this.playersReadyStatus.player2 ? 'READY ✓' : 'NOT READY'}`, this.CANVAS_WIDTH / 2, 260);
+    }
+    drawCountdown(count) {
         // Clear canvas
         this.ctx.fillStyle = '#000000';
         this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
@@ -627,7 +605,5 @@ var GameManager = /** @class */ (function () {
         this.ctx.shadowBlur = 20;
         this.ctx.fillText(count.toString(), this.CANVAS_WIDTH / 2, this.CANVAS_HEIGHT / 2 + 40);
         this.ctx.shadowBlur = 0;
-    };
-    return GameManager;
-}());
-exports.GameManager = GameManager;
+    }
+}
