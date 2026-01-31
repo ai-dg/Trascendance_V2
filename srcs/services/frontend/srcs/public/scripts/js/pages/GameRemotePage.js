@@ -130,7 +130,106 @@ export class RemotePage {
         container.appendChild(content);
         this.uiManager.clear();
         this.uiManager.container.appendChild(container);
-        // Don't auto-create game - wait for user to select game mode
+        // Check if there's a game to reconnect to
+        this.checkForReconnection();
+    }
+    /**
+     * Check if there's an existing game to reconnect to
+     */
+    checkForReconnection() {
+        GameManager.checkForReconnection((result) => {
+            if (result.hasGame) {
+                console.log("[RemotePage] Found game to reconnect:", result);
+                this.showReconnectionOption(result);
+            }
+            else {
+                console.log("[RemotePage] No game to reconnect to");
+                // Just show the normal lobby (already displayed)
+            }
+        });
+    }
+    /**
+     * Show option to reconnect to an existing game
+     */
+    showReconnectionOption(data) {
+        const startOverlay = document.querySelector('[data-overlay="start-game"]');
+        if (startOverlay) {
+            startOverlay.innerHTML = '';
+            const content = this.uiManager.createElement('div', 'text-center retro-text');
+            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#00ffff]', 'ONGOING GAME FOUND');
+            // Show current score
+            const scoreText = data.gameState ?
+                `Score: ${data.gameState.player1Score} - ${data.gameState.player2Score}` :
+                '';
+            const scoreDisplay = this.uiManager.createElement('div', 'text-lg mb-2 text-[#ff1493]', scoreText);
+            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'You have an ongoing game. Would you like to reconnect?');
+            const buttonsContainer = this.uiManager.createElement('div', 'flex flex-col gap-4 items-center');
+            const reconnectButton = this.uiManager.createButton('RECONNECT', 'retro-button bg-[#00ffff] text-black px-8 py-3 rounded border-2 border-[#00ffff] hover:bg-transparent hover:text-[#00ffff] transition-all duration-200', () => this.handleReconnect(data.gameUUID));
+            const newGameButton = this.uiManager.createButton('START NEW GAME', 'retro-button bg-transparent text-[#ff1493] px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200', () => this.requestNewGame());
+            buttonsContainer.appendChild(reconnectButton);
+            buttonsContainer.appendChild(newGameButton);
+            content.appendChild(title);
+            if (scoreText)
+                content.appendChild(scoreDisplay);
+            content.appendChild(message);
+            content.appendChild(buttonsContainer);
+            startOverlay.appendChild(content);
+            startOverlay.classList.remove('hidden');
+        }
+    }
+    /**
+     * Handle reconnection to existing game
+     */
+    handleReconnect(gameUUID) {
+        console.log("[RemotePage] Attempting to reconnect to game:", gameUUID);
+        GameManager.reconnectToGame(gameUUID, (result) => {
+            if (result.success) {
+                console.log("[RemotePage] Reconnection successful:", result);
+                // Set up the game manager with the reconnected game
+                if (!this.canvas)
+                    throw new Error("canvas is not initialized");
+                this.gameManager = new GameManager(this.canvas, result.gameUUID);
+                this.gameManager.setPlayerNumber(result.playerNumber); // Set correct player number for reconnection
+                this.setupGameListeners();
+                // Show ready screen
+                const startOverlay = document.querySelector('[data-overlay="start-game"]');
+                if (startOverlay) {
+                    startOverlay.innerHTML = '';
+                    const content = this.uiManager.createElement('div', 'text-center retro-text');
+                    const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#00ffff]', 'RECONNECTED!');
+                    const scoreText = result.gameState ?
+                        `Score: ${result.gameState.player1Score} - ${result.gameState.player2Score}` :
+                        '';
+                    const scoreDisplay = this.uiManager.createElement('div', 'text-lg mb-2 text-[#ff1493]', scoreText);
+                    const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', 'Both players click READY to resume the game.');
+                    const readyButton = this.uiManager.createButton('READY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
+                    content.appendChild(title);
+                    if (scoreText)
+                        content.appendChild(scoreDisplay);
+                    content.appendChild(message);
+                    content.appendChild(readyButton);
+                    startOverlay.appendChild(content);
+                    startOverlay.classList.remove('hidden');
+                }
+            }
+            else {
+                console.log("[RemotePage] Reconnection failed:", result);
+                // Show error and return to lobby
+                const startOverlay = document.querySelector('[data-overlay="start-game"]');
+                if (startOverlay) {
+                    startOverlay.innerHTML = '';
+                    const content = this.uiManager.createElement('div', 'text-center retro-text');
+                    const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'RECONNECTION FAILED');
+                    const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', result.message || 'Could not reconnect to the game.');
+                    const backButton = this.uiManager.createButton('BACK TO LOBBY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.requestNewGame());
+                    content.appendChild(title);
+                    content.appendChild(message);
+                    content.appendChild(backButton);
+                    startOverlay.appendChild(content);
+                    startOverlay.classList.remove('hidden');
+                }
+            }
+        });
     }
     //////////////////////////////////////////////
     ///////////// GAME INITIALIZATION ////////////
@@ -194,6 +293,16 @@ export class RemotePage {
             console.log("[RemotePage] Matchmaking error!", data);
             this.handleMatchmakingError(data);
         });
+        // Handle when opponent reconnects
+        this.gameManager.setOnOpponentReconnected((data) => {
+            console.log("[RemotePage] Opponent reconnected!", data);
+            this.handleOpponentReconnected(data);
+        });
+        // Handle when reconnection times out
+        this.gameManager.setOnReconnectionTimeout((data) => {
+            console.log("[RemotePage] Reconnection timeout!", data);
+            this.handleReconnectionTimeout(data);
+        });
     }
     /**
      * handleOpponentFound - Called when matchmaking finds an opponent
@@ -220,26 +329,90 @@ export class RemotePage {
     }
     /**
      * handleOpponentDisconnected - Called when opponent leaves the game
-     * Shows notification and returns to matchmaking lobby
+     * Shows options to wait for reconnection or leave
      */
     handleOpponentDisconnected(data) {
         console.log("[RemotePage] Handling opponent disconnect", data);
-        // Clean up game manager
-        if (this.gameManager) {
-            this.gameManager.destroy();
-            this.gameManager = null;
-        }
+        // DON'T destroy gameManager - keep listening for reconnection events
         // Remove all overlays
         this.removeWaitingScreen();
         document.querySelector('[data-overlay="game-over"]')?.classList.add('hidden');
         document.querySelector('[data-overlay="pause-game"]')?.classList.add('hidden');
-        // Show disconnect notification on start overlay
+        // Show disconnect notification with wait/leave options
         const startOverlay = document.querySelector('[data-overlay="start-game"]');
         if (startOverlay) {
             startOverlay.innerHTML = '';
             const content = this.uiManager.createElement('div', 'text-center retro-text');
             const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'OPPONENT DISCONNECTED');
-            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'Your opponent has left the game.');
+            // Show current score if available
+            const scoreText = data.gameState ?
+                `Current score: ${data.gameState.player1Score} - ${data.gameState.player2Score}` :
+                '';
+            const scoreDisplay = this.uiManager.createElement('div', 'text-lg mb-2 text-[#00ffff]', scoreText);
+            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.waitingForReconnection ?
+                'Your opponent has disconnected. You can wait for them to reconnect or leave the game.' :
+                data.message || 'Your opponent has left the game.');
+            const buttonsContainer = this.uiManager.createElement('div', 'flex flex-col gap-4 items-center');
+            if (data.waitingForReconnection) {
+                const waitMessage = this.uiManager.createElement('div', 'text-sm mb-4 text-[#9d4edd]', 'Waiting for opponent to reconnect... (2 minute timeout)');
+                content.appendChild(waitMessage);
+            }
+            const leaveButton = this.uiManager.createButton('LEAVE GAME', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.backToLobby());
+            buttonsContainer.appendChild(leaveButton);
+            content.appendChild(title);
+            if (scoreText)
+                content.appendChild(scoreDisplay);
+            content.appendChild(message);
+            content.appendChild(buttonsContainer);
+            startOverlay.appendChild(content);
+            startOverlay.classList.remove('hidden');
+        }
+    }
+    /**
+     * handleOpponentReconnected - Called when disconnected opponent returns
+     * Shows ready screen for both players to resume
+     */
+    handleOpponentReconnected(data) {
+        console.log("[RemotePage] Handling opponent reconnect", data);
+        // Show ready screen
+        const startOverlay = document.querySelector('[data-overlay="start-game"]');
+        if (startOverlay) {
+            startOverlay.innerHTML = '';
+            const content = this.uiManager.createElement('div', 'text-center retro-text');
+            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#00ffff]', 'OPPONENT RECONNECTED!');
+            // Show current score
+            const scoreText = data.gameState ?
+                `Score: ${data.gameState.player1Score} - ${data.gameState.player2Score}` :
+                '';
+            const scoreDisplay = this.uiManager.createElement('div', 'text-lg mb-2 text-[#ff1493]', scoreText);
+            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', 'Both players click READY to resume the game.');
+            const readyButton = this.uiManager.createButton('READY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
+            content.appendChild(title);
+            if (scoreText)
+                content.appendChild(scoreDisplay);
+            content.appendChild(message);
+            content.appendChild(readyButton);
+            startOverlay.appendChild(content);
+            startOverlay.classList.remove('hidden');
+        }
+    }
+    /**
+     * handleReconnectionTimeout - Called when opponent doesn't reconnect in time
+     */
+    handleReconnectionTimeout(data) {
+        console.log("[RemotePage] Handling reconnection timeout", data);
+        // Clean up game manager now
+        if (this.gameManager) {
+            this.gameManager.destroy();
+            this.gameManager = null;
+        }
+        // Show timeout notification
+        const startOverlay = document.querySelector('[data-overlay="start-game"]');
+        if (startOverlay) {
+            startOverlay.innerHTML = '';
+            const content = this.uiManager.createElement('div', 'text-center retro-text');
+            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'RECONNECTION TIMEOUT');
+            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'Opponent did not reconnect in time. The game has ended.');
             const backButton = this.uiManager.createButton('BACK TO LOBBY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.backToLobby());
             content.appendChild(title);
             content.appendChild(message);

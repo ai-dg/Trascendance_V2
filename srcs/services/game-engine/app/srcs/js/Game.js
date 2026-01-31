@@ -28,6 +28,12 @@ export class Game {
     this.player1Id = null;
     this.player2Id = null;
     this.isRemoteGame = data.type === 'remote';
+    this.player2Joined = false; // True when Player 2 confirms they're listening on this channel
+
+    // Reconnection state
+    this.waitingForReconnection = false;
+    this.disconnectedPlayerId = null;
+    this.reconnectionTimeout = null;
 
     // Legacy support: this.socket for backwards compatibility
     this.socket = socket;
@@ -75,27 +81,121 @@ export class Game {
   }
 
   /**
-   * handlePlayerDisconnect - Called when a player disconnects from remote game
-   * Notifies the remaining player and stops the game
+   * setPlayer2Joined - Called when Player 2 confirms they've switched to this game channel
+   * This ensures Player 2 won't miss any events
    */
-  handlePlayerDisconnect(disconnectedPlayerId) {
+  setPlayer2Joined() {
+    console.log(`[Game ${this.uuid}] Player 2 confirmed joined`);
+    this.player2Joined = true;
+
+    // If Player 1 already clicked ready while Player 2 was switching, send the ready status now
+    if (this.playersReady.player1) {
+      this.emitReadyStatus();
+    }
+  }
+
+  /**
+   * handlePlayerDisconnect - Called when a player disconnects from remote game
+   * Pauses the game and waits for reconnection
+   */
+  handlePlayerDisconnect(disconnectedPlayerId, onReconnectionTimeout) {
     console.log(`[Game ${this.uuid}] Player ${disconnectedPlayerId} disconnected`);
 
-    // Stop the game immediately
+    // Pause the game
     this.gameRunning = false;
     if (this.gameLoopInterval) {
       clearInterval(this.gameLoopInterval);
       this.gameLoopInterval = null;
     }
 
+    // Set reconnection state
+    this.waitingForReconnection = true;
+    this.disconnectedPlayerId = disconnectedPlayerId;
+
+    // Reset ready states - both players need to click Ready after reconnection
+    this.playersReady.player1 = false;
+    this.playersReady.player2 = false;
+
     // Notify the remaining player
     const remainingSocket = disconnectedPlayerId === this.player1Id ? this.player2Socket : this.player1Socket;
     if (remainingSocket) {
       remainingSocket.emit(this.uuid, {
         type: 'opponent-disconnected',
-        message: 'Your opponent has disconnected. Returning to menu...'
+        message: 'Your opponent has disconnected.',
+        waitingForReconnection: true,
+        gameState: this.getGameState() // Send current score etc.
       });
     }
+
+    // Set timeout for reconnection (2 minutes)
+    this.reconnectionTimeout = setTimeout(() => {
+      console.log(`[Game ${this.uuid}] Reconnection timeout expired`);
+      this.waitingForReconnection = false;
+
+      // Notify remaining player that reconnection timed out
+      if (remainingSocket && remainingSocket.connected) {
+        remainingSocket.emit(this.uuid, {
+          type: 'reconnection-timeout',
+          message: 'Opponent did not reconnect in time. Game ended.'
+        });
+      }
+
+      // Call the cleanup callback
+      if (onReconnectionTimeout) {
+        onReconnectionTimeout(this.uuid);
+      }
+    }, 120000); // 2 minutes
+  }
+
+  /**
+   * reconnectPlayer - Called when a disconnected player returns
+   */
+  reconnectPlayer(playerId, socket) {
+    console.log(`[Game ${this.uuid}] Player ${playerId} reconnecting`);
+
+    if (!this.waitingForReconnection || this.disconnectedPlayerId !== playerId) {
+      console.log(`[Game ${this.uuid}] Invalid reconnection attempt`);
+      return false;
+    }
+
+    // Clear reconnection timeout
+    if (this.reconnectionTimeout) {
+      clearTimeout(this.reconnectionTimeout);
+      this.reconnectionTimeout = null;
+    }
+
+    // Update the socket for the reconnected player
+    if (playerId === this.player1Id) {
+      this.player1Socket = socket;
+    } else if (playerId === this.player2Id) {
+      this.player2Socket = socket;
+    }
+
+    // Reset reconnection state
+    this.waitingForReconnection = false;
+    this.disconnectedPlayerId = null;
+
+    // Notify both players that reconnection was successful
+    this.emitToPlayers('opponent-reconnected', {
+      message: 'Opponent has reconnected! Both players click READY to resume.',
+      gameState: this.getGameState()
+    });
+
+    return true;
+  }
+
+  /**
+   * Check if this game is waiting for a specific player to reconnect
+   */
+  isWaitingForPlayer(playerId) {
+    return this.waitingForReconnection && this.disconnectedPlayerId === playerId;
+  }
+
+  /**
+   * Get the ID of the player who should reconnect
+   */
+  getDisconnectedPlayerId() {
+    return this.disconnectedPlayerId;
   }
 
   /**
@@ -223,15 +323,30 @@ export class Game {
 
     console.log(`[Game ${this.uuid}] Ready status - P1: ${this.playersReady.player1}, P2: ${this.playersReady.player2}`);
 
-    this.emitToPlayers("ready-status", {
-      player1Ready: this.playersReady.player1,
-      player2Ready: this.playersReady.player2
-    });
+    // For remote games, only emit ready status if Player 2 has confirmed they're listening
+    // (or if it's Player 2 setting ready, they must be listening)
+    if (this.isRemoteGame && !this.player2Joined && playerNum === 1) {
+      console.log(`[Game ${this.uuid}] Player 2 hasn't joined yet, deferring ready-status emit`);
+      // Ready status will be emitted when Player 2 joins (in setPlayer2Joined)
+      return;
+    }
+
+    this.emitReadyStatus();
 
     if (this.playersReady.player1 && this.playersReady.player2) {
       console.log(`[Game ${this.uuid}] Both players ready! Starting countdown...`);
       this.startCountdown();
     }
+  }
+
+  /**
+   * emitReadyStatus - Send current ready status to all players
+   */
+  emitReadyStatus() {
+    this.emitToPlayers("ready-status", {
+      player1Ready: this.playersReady.player1,
+      player2Ready: this.playersReady.player2
+    });
   }
 
 

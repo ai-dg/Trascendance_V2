@@ -236,13 +236,27 @@ function setupGeneralGameSocket(socket) {
 			const game = runningGames.get(gameUUID);
 			if (game) {
 				console.log(`[Game Socket] User ${userId} was in game ${gameUUID}`);
+				console.log(`[Game Socket] Game type: ${game.type}, isRemoteGame: ${game.isRemoteGame}`);
 
-				// If it's a remote game, notify the opponent
+				// If it's a remote game, wait for reconnection instead of destroying
 				if (game.isRemoteGame) {
-					console.log(`[Game Socket] Notifying opponent of disconnect`);
-					game.handlePlayerDisconnect(userId);
+					console.log(`[Game Socket] Remote game - waiting for reconnection`);
+					game.handlePlayerDisconnect(userId, (expiredGameUUID) => {
+						// Cleanup callback when reconnection timeout expires
+						console.log(`[Game Socket] Reconnection timeout - cleaning up game ${expiredGameUUID}`);
+						const expiredGame = runningGames.get(expiredGameUUID);
+						if (expiredGame) {
+							expiredGame.destroy();
+							runningGames.delete(expiredGameUUID);
+							if (expiredGame.player1Id) userGames.delete(expiredGame.player1Id);
+							if (expiredGame.player2Id) userGames.delete(expiredGame.player2Id);
+						}
+					});
+					// Don't delete game or user tracking - keep for reconnection
+					return;
 				}
 
+				// For non-remote games, clean up immediately
 				await game.destroy();
 				runningGames.delete(gameUUID);
 
@@ -252,6 +266,63 @@ function setupGeneralGameSocket(socket) {
 
 				console.log(`[Game Socket] Cleaned up game ${gameUUID} for disconnected player`);
 			}
+		}
+	});
+
+	// Check if user has a game waiting for reconnection when they connect
+	socket.on('check-reconnection', () => {
+		console.log(`[Game Socket] User ${userId} checking for reconnection opportunities`);
+
+		// Find any game waiting for this user to reconnect
+		for (const [gameUUID, game] of runningGames.entries()) {
+			if (game.isWaitingForPlayer && game.isWaitingForPlayer(userId)) {
+				console.log(`[Game Socket] Found game ${gameUUID} waiting for user ${userId}`);
+				socket.emit('reconnection-available', {
+					gameUUID: gameUUID,
+					gameState: game.getGameState(),
+					message: 'You have an ongoing game. Would you like to reconnect?'
+				});
+				return;
+			}
+		}
+
+		// No game found
+		socket.emit('no-reconnection-available', {});
+	});
+
+	// Handle reconnection request
+	socket.on('reconnect-to-game', (data) => {
+		const { gameUUID } = data;
+		console.log(`[Game Socket] User ${userId} attempting to reconnect to game ${gameUUID}`);
+
+		const game = runningGames.get(gameUUID);
+		if (!game) {
+			socket.emit('reconnection-failed', { message: 'Game no longer exists' });
+			return;
+		}
+
+		if (!game.isWaitingForPlayer(userId)) {
+			socket.emit('reconnection-failed', { message: 'Game is not waiting for you' });
+			return;
+		}
+
+		// Reconnect the player
+		const success = game.reconnectPlayer(userId, socket);
+		if (success) {
+			// Set up socket listener for this game
+			socket.on(gameUUID, (eventData) => gameHandler(gameUUID, eventData, socket));
+
+			// Update user tracking
+			userGames.set(userId, gameUUID);
+
+			socket.emit('reconnection-success', {
+				gameUUID: gameUUID,
+				gameState: game.getGameState(),
+				playerNumber: userId === game.player1Id ? 1 : 2
+			});
+			console.log(`[Game Socket] User ${userId} reconnected to game ${gameUUID}`);
+		} else {
+			socket.emit('reconnection-failed', { message: 'Reconnection failed' });
 		}
 	});
 }
@@ -373,11 +444,20 @@ function gameHandler(uuid, data, socket){
 
 	if (!game)
 	{
-		console.error(`Game ${uuid} not found!`);
+		// Game may have been destroyed - this is normal after game ends
+		// Only log if it's not a state update (paddle movement)
+		if (!data.state) {
+			console.warn(`[Game ${uuid}] Game not found (may have ended)`);
+		}
 		return;
 	}
 
-	if (data.action === "player-ready")
+	if (data.action === "player-2-joined") {
+		// Player 2 confirms they've switched to this game channel
+		console.log(`[Game ${uuid}] Player 2 joined and ready to receive events`);
+		game.setPlayer2Joined();
+	}
+	else if (data.action === "player-ready")
 		game.setPlayerReady(data.player);
 	else if (data.action === "pause-game")
 		game.pauseGame();
