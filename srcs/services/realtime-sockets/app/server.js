@@ -498,7 +498,7 @@ function gameHandler(uuid, data, socket){
 		}
 	}
 	else if (data.state)
-		game.updatePlayerMove(data.state.paddle1, data.state.paddle2);
+		game.updatePlayerMove(data.state.paddle1, data.state.paddle2, socket.id);
 }
 
 

@@ -456,14 +456,16 @@ export class GameManager {
     }
     /**
      * Apply paddle movement locally for instant feedback (client-side prediction)
+     * This modifies the display position only, doesn't affect game state
      */
     applyLocalPaddleMovement() {
         // Only do local prediction for remote games
         if (!this.isRemoteGame)
             return;
-        // Determine which paddle this player controls
-        const paddleKey = this.playerNumber === 1 ? 'paddle1' : 'paddle2';
-        const paddle = this.gameState[paddleKey];
+        // Apply prediction to a temporary render state
+        // Note: This is overridden by server state in updateGame, which is correct
+        // The prediction is just for smoother visual feedback between server updates
+        const paddle = this.gameState.paddle1;
         // Apply movement based on keys
         if (this.keys['w']) {
             paddle.y -= this.PADDLE_SPEED;
@@ -476,19 +478,10 @@ export class GameManager {
     }
     updateGame(data) {
         if (data.state) {
-            if (this.isRemoteGame && this.gameState.gameRunning) {
-                // For remote games: preserve local paddle position, use server for everything else
-                const myPaddleKey = this.playerNumber === 1 ? 'paddle1' : 'paddle2';
-                const localPaddleY = this.gameState[myPaddleKey].y;
-                // Update game state from server
-                this.gameState = data.state;
-                // Restore local paddle position (our prediction)
-                this.gameState[myPaddleKey].y = localPaddleY;
-            }
-            else {
-                // For local/AI games: use server state directly
-                this.gameState = data.state;
-            }
+            // Always use server state as the authoritative source
+            // This ensures collision detection is accurate
+            this.gameState = data.state;
+
             if (this.gameState.gameRunning)
                 this.isPaused = false;
             // Only draw here for non-remote games (remote games draw in startInputLoop)

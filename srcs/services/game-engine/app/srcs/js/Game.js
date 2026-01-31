@@ -453,11 +453,27 @@ export class Game {
   }
 
   ///////// PLAYER INPUTS /////////
-  updatePlayerMove(paddle1Dir, paddle2Dir) {
-    this.playerInputs.paddle1Dir = paddle1Dir;
-    // For AI games, ignore paddle2 input from frontend - AI controls it via Redis
-    if (!this.isAiGame) {
-      this.playerInputs.paddle2Dir = paddle2Dir;
+  updatePlayerMove(paddle1Dir, paddle2Dir, socketId = null) {
+    // For remote games: each player should only control their assigned paddle
+    if (this.isRemoteGame && socketId) {
+      // Determine which socket this is
+      const isPlayer1 = this.player1Socket && this.player1Socket.id === socketId;
+      const isPlayer2 = this.player2Socket && this.player2Socket.id === socketId;
+
+      if (isPlayer1) {
+        // Player 1 socket: only update paddle1
+        this.playerInputs.paddle1Dir = paddle1Dir;
+      } else if (isPlayer2) {
+        // Player 2 socket: only update paddle2
+        this.playerInputs.paddle2Dir = paddle2Dir;
+      }
+    } else {
+      // Local/AI games: accept both inputs normally
+      this.playerInputs.paddle1Dir = paddle1Dir;
+      // For AI games, ignore paddle2 input from frontend - AI controls it via Redis
+      if (!this.isAiGame) {
+        this.playerInputs.paddle2Dir = paddle2Dir;
+      }
     }
   }
 
