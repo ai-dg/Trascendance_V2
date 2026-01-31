@@ -1,8 +1,16 @@
 import { UIManager } from '../modules/UIManager.js';
+import { WebsocketManager } from '../modules/WebsocketManager.js';
 import type { User } from '../modules/TypesManager.js';
+import type { RouterManager } from '../modules/RouterManager.js';
+import { SocialManager } from '../modules/SocialManager.js';
 
 export class MenuPage {
   private uiManager: UIManager;
+  private wsManager: WebsocketManager | null = null;
+  private routerManager: RouterManager | null = null;
+  private currentUser: User | null = null;
+  private socialManager: SocialManager | null = null;
+
   private onPlayGameAI: () => void;
   private onPlayGameLocal: () => void;
   private onPlayGameOnline: () => void;
@@ -45,6 +53,8 @@ export class MenuPage {
 
   constructor(
     uiManager: UIManager,
+    wsManager: WebsocketManager,
+    routerManager: RouterManager,
     onPlayGameAI: () => void,
     onPlayGameLocal: () => void,
     onPlayGameOnline: () => void,
@@ -53,6 +63,8 @@ export class MenuPage {
     onLogout: () => void
   ) {
     this.uiManager = uiManager;
+    this.wsManager = wsManager;
+    this.routerManager = routerManager;
     this.onPlayGameAI = onPlayGameAI;
     this.onPlayGameLocal = onPlayGameLocal;
     this.onPlayGameOnline = onPlayGameOnline;
@@ -62,6 +74,8 @@ export class MenuPage {
   }
 
   public render(user: User | null): void {
+    this.currentUser = user;
+
     const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
     const content = this.uiManager.createElement('div', 'relative z-10 w-full flex-1 mx-auto flex flex-col items-center');
     content.style.maxWidth = '1400px';
@@ -231,64 +245,6 @@ export class MenuPage {
     //});
 
     
-    ////////////////////////////////////////////////
-    ////////// SOCIAL HEADER + ADD FRIEND //////////
-    ////////////////////////////////////////////////
-
-    // div lateral social
-    const socialDiv = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-6');
-    socialDiv.style.minHeight = '480px';
-    
-    const socialHeaderWrapper = this.uiManager.createElement('div', 'flex items-center justify-between mb-4');
-
-    const socialHeader = this.uiManager.createElement('h3', 'retro-text text-xl text-[#00ffff]');
-    socialHeader.textContent = 'SOCIAL';
-
-    const addFriendBtn = this.uiManager.createElement('button', 'px-2 py-1 text-sm bg-black text-red-500 border border-red-500 rounded');
-    addFriendBtn.innerHTML = '+';
-
-    const addFriendDiv = this.uiManager.createElement('div', 'flex gap-2 mt-2 hidden');
-    const friendInput = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black') as HTMLInputElement;
-    friendInput.placeholder = 'Username';
-    const sendFriendBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-black rounded');
-    sendFriendBtn.textContent = 'Send';
-
-    addFriendDiv.appendChild(friendInput);
-    addFriendDiv.appendChild(sendFriendBtn);
-
-    addFriendBtn.addEventListener('click', () => {
-        addFriendDiv.classList.toggle('hidden');
-    });
-
-    socialHeaderWrapper.appendChild(socialHeader);
-    socialHeaderWrapper.appendChild(addFriendBtn);
-    socialDiv.appendChild(socialHeaderWrapper);
-    socialDiv.appendChild(addFriendDiv);
-
-    // Online List
-    const onlineList = this.uiManager.createElement('div', 'w-full mb-6');
-    const onlineTitle = this.uiManager.createElement('h4', 'retro-text text-lg text-[#00ffff] mb-2');
-    onlineTitle.textContent = 'Online';
-
-    const onlineListContent = this.uiManager.createElement('div', 'text-[#00ffff] opacity-80');
-    onlineListContent.textContent = 'List of online users goes here...';
-
-    onlineList.appendChild(onlineTitle);
-    onlineList.appendChild(onlineListContent);
-    socialDiv.appendChild(onlineList);
-
-    // Notifications
-    const notifications = this.uiManager.createElement('div', 'w-full');
-    const notificationsTitle = this.uiManager.createElement('h4', 'retro-text text-lg text-[#00ffff] mb-2');
-    notificationsTitle.textContent = 'Notifications';
-
-    const notificationsContent = this.uiManager.createElement('div', 'text-[#00ffff] opacity-80');
-    notificationsContent.textContent = 'Notifications list goes here...';
-
-    notifications.appendChild(notificationsTitle);
-    notifications.appendChild(notificationsContent);
-    socialDiv.appendChild(notifications);
-
     ///////////////////////////////////
     /////////// Main Grid /////////////
     ///////////////////////////////////
@@ -303,7 +259,23 @@ export class MenuPage {
   // Social Div Wrapper
   const socialDivWrapper = this.uiManager.createElement('div', 'w-80 flex flex-col flex-shrink-0');
   socialDivWrapper.style.justifySelf = 'end';
-  socialDivWrapper.appendChild(socialDiv);
+  
+  
+  if (this.wsManager && this.routerManager) {
+    this.socialManager = new SocialManager(
+      this.uiManager,
+      this.routerManager,
+      this.wsManager,
+      this.currentUser,
+      () => null,
+      (friendId, username) => {
+        sessionStorage.setItem('selectedFriendId', friendId.toString());
+        sessionStorage.setItem('selectedFriendUsername', username);
+        this.onChatWithFriends();
+      }
+    );
+    this.socialManager.render(socialDivWrapper);
+  }
 
   mainGrid.style.alignItems = 'stretch';
 
@@ -369,5 +341,15 @@ export class MenuPage {
 
     this.uiManager.clear();
     this.uiManager.container.appendChild(container);
+
   }
+
+  public setRouterManager(routerManager: RouterManager): void {
+    this.routerManager = routerManager;
+  }
+
+  public setCurrentUser(user: User | null): void {
+    this.currentUser = user;
+  }
+
 }

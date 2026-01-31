@@ -1,6 +1,5 @@
 import { app, redis } from '../../server.js';
 import jwt from 'jsonwebtoken';
-// import { verify } from 'jsonwebtoken';
 
 
 
@@ -388,42 +387,6 @@ export async function remove_friend(request, reply) {
         return reply.code(500).send({ success: false, message: dbErr.message });
     }
 }
-
-// export async function find_pending_requests(request, reply) {
-//     const { userId } = request.user.user_id;
-//     try {
-//         	const pendingRequests = await app.db.all(`
-//         	    SELECT 
-//         	        CASE 
-//         	            WHEN user_id = ? THEN friend_id 
-//         	            ELSE user_id 
-//         	        END as senderId,
-//         	        requester_id
-//         	    FROM friendships 
-//         	    WHERE (user_id = ? OR friend_id = ?) 
-//         	      AND status = 'pending'
-//         	      AND requester_id != ?
-//         	`, [userId, userId, userId, userId]);
-        
-//         	console.log(`Found ${pendingRequests.length} pending friend requests for user ${userId}`);
-//             const oldKeys = await redis.keys(`friend-request:${userId}:*`);
-//             if (oldKeys.length > 0) {
-//                 console.log(`Cleaning up ${oldKeys.length} old Redis keys for user ${userId}`);
-//                 for (const key of oldKeys) {
-//                     await redis.del(key);
-//                 }
-//             }
-//     		return reply.code(200).send({ 
-//                 success: true, 
-//                 count: pendingRequests.length,
-//                 requests: pendingRequests 
-//             });
-// 	} catch (error) {
-//         console.error("Error loading pending friend requests on connection:", error);
-//         return reply.code(500).send({ success: false, message: "Server error" });
-//     }
-// }
-
 
 export async function add_friend(request, reply) {
 			const senderId = request.user.user_id || request.user.id || request.user.sub;

@@ -7,6 +7,11 @@ import { friend_request_route,
          remove_friend
  } from "../controlers/controlers.js";
 
+ import {
+        send_message_route,
+        get_messages_route
+ } from "../controlers/messageControlers.js";
+
 export function routes(app, options)
 {
     app.post('/friend-request', async (request, reply) => friend_request_route(request, reply));
@@ -18,4 +23,6 @@ export function routes(app, options)
     app.post('/block-friend', async (request, reply) => block_friend_route(request, reply));
     app.post('/remove-friend', async (request, reply) => remove_friend(request, reply));
 
+    app.post('/send-message', async (request, reply) => send_message_route(request, reply));
+    app.get('/get-messages', async (request, reply) => get_messages_route(request, reply));
 }

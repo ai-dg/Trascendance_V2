@@ -55,50 +55,5 @@ export async function createFriendRequest(token, receiverId) {
     }
 }
 
-export async function responseFriendRequest(token, senderId, action) {
-    
-    if (!token) {
-        return { success: false, message: "Not authenticated" };
-    }
-
-    let payload;
-    try {
-        payload = jwt.verify(token, process.env.JWT_SECRET);
-    } catch {
-        return reply.code(401).send({ success: false, message: "Invalid or expired token" });
-    }
-    
-    const userId = payload.user_id;
-    
-    try {
-        const [smallerId, largerId] = userId < senderId 
-            ? [userId, senderId] 
-            : [senderId, userId];
-
-        if (action === 'accept') {
-            // Update status to 'accepted'
-            await app.db.run(`
-                UPDATE friendships 
-                SET status = 'accepted' 
-                WHERE user_id = ? AND friend_id = ?
-            `, [smallerId, largerId]);
-        } else {
-            // Delete the request if rejected
-            await app.db.run(`
-                DELETE FROM friendships 
-                WHERE user_id = ? AND friend_id = ?
-            `, [smallerId, largerId]);
-        }
-        
-        return { 
-            success: true, 
-            message: action === 'accept' ? "Friend request accepted" : "Friend request rejected"
-        };
-    } catch (dbErr) {
-        console.error('DB error:', dbErr);
-        return reply.code(500).send({ success: false, message: "Database error" });
-    }
-}
-
 
 
