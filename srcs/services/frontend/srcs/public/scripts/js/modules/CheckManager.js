@@ -1,27 +1,32 @@
-import { AuthManager } from "./AuthManager.js";
-export class CheckManager {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CheckManager = void 0;
+var AuthManager_js_1 = require("./AuthManager.js");
+var CheckManager = /** @class */ (function () {
     // TODO: maybe should get Translations text in the constructor
-    constructor(languageManager) {
-        this.auth = new AuthManager(() => console.log("To register user or login in someone"));
+    function CheckManager(languageManager) {
+        this.auth = new AuthManager_js_1.AuthManager(function () {
+            return console.log("To register user or login in someone");
+        });
         this.languageManager = languageManager;
     }
-    t(key) {
+    CheckManager.prototype.t = function (key) {
         return this.languageManager.t(key);
-    }
-    getElement(id) {
-        const el = document.getElementById(id);
+    };
+    CheckManager.prototype.getElement = function (id) {
+        var el = document.getElementById(id);
         if (!el)
-            throw new Error(`Element #${id} not found`);
+            throw new Error("Element #".concat(id, " not found"));
         return el;
-    }
-    checkEmail(email) {
-        const errors = [];
+    };
+    CheckManager.prototype.checkEmail = function (email) {
+        var errors = [];
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
             errors.push(this.t('errEmail'));
         return errors;
-    }
-    checkPassword(passwd) {
-        const errors = [];
+    };
+    CheckManager.prototype.checkPassword = function (passwd) {
+        var errors = [];
         if (passwd.length < 8)
             errors.push(this.t('errLength'));
         if (!/[A-Z]/.test(passwd))
@@ -31,9 +36,9 @@ export class CheckManager {
         if (!/[0-9]/.test(passwd))
             errors.push(this.t('errNbr'));
         return errors;
-    }
-    checkUsername(login) {
-        const errors = [];
+    };
+    CheckManager.prototype.checkUsername = function (login) {
+        var errors = [];
         if (!/^[A-Za-z0-9]+$/.test(login)) {
             errors.push(this.t('errInvalidChars') || "Username can only have lettres and numbers");
         }
@@ -42,55 +47,59 @@ export class CheckManager {
         if (login.length > 20)
             errors.push(this.t('errTooLong') || "Username too long");
         return errors;
-    }
-    checkForm(login, email, passwd) {
-        let errors = [];
+    };
+    CheckManager.prototype.checkForm = function (login, email, passwd) {
+        var errors = [];
         errors = errors.concat(this.checkUsername(login));
         errors = errors.concat(this.checkEmail(email));
         errors = errors.concat(this.checkPassword(passwd));
         return errors;
-    }
-    setupSignUpForm(form) {
-        form.addEventListener("submit", (e) => {
+    };
+    CheckManager.prototype.setupSignUpForm = function (form) {
+        var _this = this;
+        form.addEventListener("submit", function (e) {
             e.preventDefault();
-            const login = form.querySelector('#login').value.trim();
-            const email = form.querySelector('#email').value.trim();
-            const passwd = form.querySelector('#passwd').value.trim();
-            const passwdConfirm = form.querySelector('#passwdConfirm').value.trim();
-            const errorDiv = this.getElement('formErrors');
-            const errors = this.checkForm(login, email, passwd);
+            var login = form.querySelector('#login').value.trim();
+            var email = form.querySelector('#email').value.trim();
+            var passwd = form.querySelector('#passwd').value.trim();
+            var passwdConfirm = form.querySelector('#passwdConfirm').value.trim();
+            var errorDiv = _this.getElement('formErrors');
+            var errors = _this.checkForm(login, email, passwd);
             if (passwd != passwdConfirm)
                 errors.concat("Passwords dont match!");
             if (errors.length > 0) {
-                errorDiv.innerHTML = errors.map(err => `<p>- ${err}</p>`).join('');
+                errorDiv.innerHTML = errors.map(function (err) { return "<p>- ".concat(err, "</p>"); }).join('');
                 return;
             }
             errorDiv.innerHTML = '';
-            this.auth.registerUser(login, passwd, email, 'signup');
+            _this.auth.registerUser(login, passwd, email, 'signup');
         });
-    }
-    setupChangePassForm(form, text) {
-        return new Promise((resolve, reject) => {
-            form.addEventListener("submit", (e) => {
+    };
+    CheckManager.prototype.setupChangePassForm = function (form, text) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            form.addEventListener("submit", function (e) {
                 e.preventDefault();
-                const passwd = form.querySelector('#passwd').value.trim();
-                const passwdConfirm = form.querySelector('#passwdConfirm').value.trim();
-                const errorDiv = this.getElement('formErrors');
-                let errors = [];
+                var passwd = form.querySelector('#passwd').value.trim();
+                var passwdConfirm = form.querySelector('#passwdConfirm').value.trim();
+                var errorDiv = _this.getElement('formErrors');
+                var errors = [];
                 if (!passwd || !passwdConfirm) {
                     reject(new Error("Input elements not found"));
                     return;
                 }
                 if (passwd != passwdConfirm)
                     errors.concat("Passwords dont match!");
-                errors = errors.concat(this.checkPassword(passwd));
+                errors = errors.concat(_this.checkPassword(passwd));
                 if (errors.length > 0) {
-                    errorDiv.innerHTML = errors.map(err => `<p>- ${err}</p>`).join('');
+                    errorDiv.innerHTML = errors.map(function (err) { return "<p>- ".concat(err, "</p>"); }).join('');
                     return;
                 }
                 errorDiv.innerHTML = '';
                 resolve(passwd);
             });
         });
-    }
-}
+    };
+    return CheckManager;
+}());
+exports.CheckManager = CheckManager;

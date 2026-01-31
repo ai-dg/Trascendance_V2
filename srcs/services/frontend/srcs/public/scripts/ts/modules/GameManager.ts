@@ -15,6 +15,7 @@ export class GameManager {
   private readonly CANVAS_HEIGHT = 400;
   private readonly PADDLE_WIDTH = 10;
   private readonly PADDLE_HEIGHT = 80;
+  private readonly PADDLE_SPEED = 8; // Must match server's PADDLE_SPEED
 
   private hasStarted: boolean = false;
   private isReady: boolean = false;
@@ -534,16 +535,66 @@ export class GameManager {
   private startInputLoop(): void {
     if (!this.gameState.gameRunning)
       return;
+
+    // Apply local paddle movement immediately for responsiveness
+    this.applyLocalPaddleMovement();
+
+    // Send inputs to server
     this.sendPlayerInputs();
+
+    // Render the current state (local prediction + server ball/opponent)
+    this.draw();
+
     this.animationId = requestAnimationFrame(() => this.startInputLoop());
   }
 
+  /**
+   * Apply paddle movement locally for instant feedback (client-side prediction)
+   */
+  private applyLocalPaddleMovement(): void {
+    // Only do local prediction for remote games
+    if (!this.isRemoteGame) return;
+
+    // Determine which paddle this player controls
+    const paddleKey = this.playerNumber === 1 ? 'paddle1' : 'paddle2';
+    const paddle = this.gameState[paddleKey];
+
+    // Apply movement based on keys
+    if (this.keys['w']) {
+      paddle.y -= this.PADDLE_SPEED;
+    }
+    if (this.keys['s']) {
+      paddle.y += this.PADDLE_SPEED;
+    }
+
+    // Clamp to canvas bounds
+    paddle.y = Math.max(0, Math.min(this.CANVAS_HEIGHT - this.PADDLE_HEIGHT, paddle.y));
+  }
+
   updateGame(data: any): void {
-    if (data.state){
-      this.gameState = data.state;
+    if (data.state) {
+      if (this.isRemoteGame && this.gameState.gameRunning) {
+        // For remote games: preserve local paddle position, use server for everything else
+        const myPaddleKey = this.playerNumber === 1 ? 'paddle1' : 'paddle2';
+        const localPaddleY = this.gameState[myPaddleKey].y;
+
+        // Update game state from server
+        this.gameState = data.state;
+
+        // Restore local paddle position (our prediction)
+        this.gameState[myPaddleKey].y = localPaddleY;
+      } else {
+        // For local/AI games: use server state directly
+        this.gameState = data.state;
+      }
+
       if (this.gameState.gameRunning)
         this.isPaused = false;
-      this.draw();
+
+      // Only draw here for non-remote games (remote games draw in startInputLoop)
+      if (!this.isRemoteGame) {
+        this.draw();
+      }
       this.notifyListeners();
     }
   }
