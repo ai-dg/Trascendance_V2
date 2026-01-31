@@ -92,5 +92,7 @@ export function randomTournamentResult(){
 			timestamp: ts - 306,
 
 		}]
-		console.log(matches)
+
+		//console.log(matches)
+		return { tournament, matches };
 }
