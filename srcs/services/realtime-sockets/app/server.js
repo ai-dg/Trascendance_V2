@@ -9,7 +9,7 @@ import fs from 'fs';
 import { Game } from '../../game-engine/app/srcs/js/Game.js';
 // import { GameManager } from '../../game-engine/app/srcs/js/GameManager.js';
 import path from 'path';
-//import { handleMatchmaking, cancelSearch } from './matchmaking.js';
+import { handleMatchmaking, cancelSearch } from './matchmaking.js';
 
 
 const is_prod = process.env.NODE_ENV === "PROD";

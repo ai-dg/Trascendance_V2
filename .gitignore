@@ -6,6 +6,8 @@ srcs/logs/
 *.sqlite
 *.map
 *.js
+!srcs/services/realtime-sockets/**/*.js
+!srcs/services/game-engine/**/*.js
 *.d.ts
 srcs/logs/pids.txt
 srcs/services/auth/app/auth.sqlite
