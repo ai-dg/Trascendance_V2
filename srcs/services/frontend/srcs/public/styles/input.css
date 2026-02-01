@@ -291,6 +291,7 @@ body {
 .justify-center { justify-content: center; }
 .justify-start { justify-content: flex-start; }
 .justify-between { justify-content: space-between; }
+.justify-end { justify-content: flex-end; }
 
 /* Text */
 .text-center { text-align: center; }

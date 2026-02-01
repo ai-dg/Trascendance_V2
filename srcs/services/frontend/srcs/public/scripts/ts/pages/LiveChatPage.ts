@@ -47,9 +47,6 @@ export class LiveChatPage {
 
         this.checkSessionStorageForRedirect();
 
-        if (this.currentSelectedFriend == null && user != null)
-            this.currentSelectedFriend = user;
-
         const container = this.uiManager.createElement('div', 'retro-container size-full p-8');
 
         // Header
@@ -73,7 +70,7 @@ export class LiveChatPage {
                 this.wsManager,
                 this.currentUser,
                 () => this.currentSelectedFriend ? this.currentSelectedFriend.nbrId : null,
-                (friendId, username) => this.handleFriendSelection(friendId, username)
+                (friendId, username, avatar) => this.handleFriendSelection(friendId, username, avatar)
             );
             this.socialManager.render(socialWrapper);
         }
@@ -88,10 +85,10 @@ export class LiveChatPage {
         const backDiv = this.uiManager.createElement('div', 'flex justify-center items-center h-screen');
 
         const backButton = this.uiManager.createButton(
-            this.t('backToSettings'),
+            this.t('BACK TO MENU'),
             'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 mt-4',
             () => {
-                console.log('Back to settings clicked');
+                console.log('Back to menu clicked');
                 this.onBack();
             }
         );
@@ -104,7 +101,7 @@ export class LiveChatPage {
         this.uiManager.container.appendChild(container);
 
         if (this.currentSelectedFriend) {
-            await this.handleFriendSelection(this.currentSelectedFriend.nbrId, this.currentSelectedFriend.username);
+            await this.handleFriendSelection(this.currentSelectedFriend.nbrId, this.currentSelectedFriend.username, this.currentSelectedFriend.avatar);
         }
     }
 
@@ -115,16 +112,23 @@ export class LiveChatPage {
 
         const avatarSection = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
         const avatarImg = this.uiManager.createElement('img', 'w-12 h-12 rounded-full border-2 border-[#ff1493] cursor-pointer') as HTMLImageElement;
+        avatarSection.style.width = '100px';
+        avatarSection.style.height = '100px';
+        avatarImg.style.width = '100px';
+        avatarImg.style.height = '100px';
         
         if (!this.currentSelectedFriend || !this.currentSelectedFriend.avatar)
-            avatarImg.src = 'public/avatars/default.png';
+            avatarImg.src = 'public/avatars/unknownPlayer.jpeg';
         else if (this.currentSelectedFriend.avatar.startsWith('http'))
             avatarImg.src = this.currentSelectedFriend.avatar;
         else
             avatarImg.src = `public/avatars/${this.currentSelectedFriend.avatar}.png`;
 
         const username = this.uiManager.createElement('p', 'retro-subtitle text-lg text-[#00ffff] font-bold');
-        username.textContent = this.currentSelectedFriend ? this.currentSelectedFriend.username : 'USERNAME';
+        if (!this.currentSelectedFriend || !this.currentSelectedFriend.username)
+            username.textContent = ' ';
+        else
+            username.textContent = this.currentSelectedFriend.username;
 
         const btnDiv = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
         const deleteBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-red rounded');
@@ -209,13 +213,13 @@ export class LiveChatPage {
         }
     }
 
-    private async handleFriendSelection(friendId: any, username: string) {
+    private async handleFriendSelection(friendId: any, username: string, avatar?: string | null) {
         console.log("Handling friend selection:", username);
         
         this.currentSelectedFriend = {
             username: username,
             id: friendId,
-            avatar: '',
+            avatar: avatar ?? '',
             isGuest: false,
             nbrId: Number(friendId)
         };
@@ -281,13 +285,13 @@ export class LiveChatPage {
 
         const wrapper = this.uiManager.createElement(
             'div',
-            `flex mb-2 ${isMine ? 'justify-end' : 'justify-start'}`
+            `flex mb-2 w-full ${isMine ? 'justify-end' : 'justify-start'}`
         );
         
         const bubble = this.uiManager.createElement(
             'div',
             isMine
-            ? 'bg-[#ffffff] text-white px-3 py-2 rounded-lg max-w-[70%]'
+            ? 'bg-black text-[#ff1493] border border-[#ff1493]/40 px-3 py-2 rounded-lg max-w-[70%]'
             : 'bg-white/70 text-[#ffffff] border border-[#00ffff]/40 px-3 py-2 rounded-lg max-w-[70%]'
         );
         

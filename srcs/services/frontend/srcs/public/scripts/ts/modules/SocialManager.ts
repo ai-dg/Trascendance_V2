@@ -12,7 +12,7 @@ export class SocialManager {
     private friendRequests: Map<number, {senderId: number, message: string, element: HTMLElement}> = new Map();
     private chatNotifications: Map<number, { senderId: number, element: HTMLElement }> = new Map();
     private getCurrentSelectedFriendId: () => number | null;
-    private onFriendSelected: (friendId: number, friendUsername: string) => void;
+    private onFriendSelected: (friendId: number, friendUsername: string, friendAvatar?: string | null) => void;
 
     constructor(
         uiManager: UIManager,
@@ -20,7 +20,7 @@ export class SocialManager {
         wsManager: WebsocketManager,
         currentUser: User | null,
         getCurrentSelectedFriendId: () => any | null,
-        onFriendSelect: (friendId: number, friendUsername: string) => void
+        onFriendSelect: (friendId: number, friendUsername: string, friendAvatar?: string | null) => void
     ) {
         this.uiManager = uiManager;
         this.routerManager = routerManager;
@@ -44,8 +44,12 @@ export class SocialManager {
         const socialHeader = this.uiManager.createElement('h3', 'retro-text text-xl text-[#00ffff]');
         socialHeader.textContent = 'SOCIAL';
 
-        const addFriendBtn = this.uiManager.createElement('button', 'px-2 py-1 text-sm bg-black text-red-500 border border-red-500 rounded');
-        addFriendBtn.innerHTML = 'ADD +';
+        const addFriendBtn = this.uiManager.createElement('div');
+        const img = this.uiManager.createElement('img', 'w-6 h-6') as HTMLImageElement;
+        img.style.width = '25px';
+        img.style.height = '25px';
+        img.src = 'public/avatars/add.png';
+        addFriendBtn.appendChild(img);
 
         const addFriendDiv = this.uiManager.createElement('div', 'flex flex-col gap-2 mt-2 hidden');
         const friendInput = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black') as HTMLInputElement;
@@ -237,15 +241,36 @@ export class SocialManager {
             const text = this.uiManager.createElement('p', 'text-[#00ffff] text-sm');
             text.textContent = `${notif.username}: ${notif.message}`;
             
+            // Added Avatar for profileColumn
             notifCard.appendChild(text);
-            notifCard.addEventListener('click', () => {
-                this.wsManager.clearNotification(notif.senderId);
+            notifCard.addEventListener('click', async () => {
+                const senderId = Number(notif.senderId);
+                this.wsManager.clearNotification(senderId);
                 this.syncSocialPanel();
-                this.onFriendSelected(notif.senderId, notif.username);
+
+                const avatar = await this.getAvatarById(senderId);
+                this.onFriendSelected(senderId, notif.username, avatar);
             });
 
             container.appendChild(notifCard);
         });
+    }
+
+    private async getAvatarById(id: number): Promise<string | null> {
+        try {
+            const res = await fetch(this.routerManager.getUrl('/auth/username-id'), {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: String(id) })
+            });
+            if (!res.ok) return null;
+            const data = await res.json();
+            return data?.data?.user?.avatar ?? null;
+        } catch (error) {
+            console.error("Error fetching avatar:", error);
+            return null;
+        }
     }
 
 
@@ -506,7 +531,7 @@ export class SocialManager {
                 this.wsManager.clearNotification(friendId);
                 this.syncSocialPanel();
                 
-                this.onFriendSelected(friendId, username);
+                this.onFriendSelected(friendId, username, friend.avatar);
             });
                     
             friendItem.appendChild(friendName);
