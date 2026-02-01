@@ -21,7 +21,7 @@ export class SocialManager {
         const socialHeaderWrapper = this.uiManager.createElement('div', 'flex items-center justify-between mb-4');
         const socialHeader = this.uiManager.createElement('h3', 'retro-text text-xl text-[#00ffff]');
         socialHeader.textContent = 'SOCIAL';
-        const addFriendBtn = this.uiManager.createElement('div');
+        const addFriendBtn = this.uiManager.createElement('div', 'mt-1 px-1');
         const img = this.uiManager.createElement('img', 'w-6 h-6');
         img.style.width = '25px';
         img.style.height = '25px';
@@ -31,7 +31,7 @@ export class SocialManager {
         const friendInput = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black');
         friendInput.placeholder = 'Username';
         friendInput.id = 'friend-input';
-        const sendFriendBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-black rounded');
+        const sendFriendBtn = this.uiManager.createElement('button', 'px-4 py-2 mb-4 bg-[#00ffff] text-black rounded');
         sendFriendBtn.textContent = 'Send';
         const errorMessageDiv = this.uiManager.createElement('div', 'hidden text-red-500 text-sm mt-2');
         errorMessageDiv.id = 'error-message-div';

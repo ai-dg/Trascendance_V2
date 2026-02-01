@@ -111,7 +111,7 @@ export class LiveChatPage {
         messagesDiv.appendChild(messagesTitle);
         messagesDiv.appendChild(messagesContainer);
         const inputDiv = this.uiManager.createElement('div', 'flex gap-2 mt-2 flex-shrink-0');
-        const inputField = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black');
+        const inputField = this.uiManager.createElement('input', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
         const sendButton = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-black rounded');
         sendButton.textContent = 'SEND';
         inputField.addEventListener('keydown', (e) => {
