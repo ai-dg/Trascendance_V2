@@ -1,35 +1,39 @@
 import { gameSocket } from "../app.js";
 //import { INITIAL_READY_STATE } from "../../../realtime-sockets/app/srcs/Data.js";
 export class GameManager {
+    ctx;
+    gameState;
+    keys = {};
+    animationId = null;
+    listeners = [];
+    gameUID = null;
+    CANVAS_WIDTH = 800;
+    CANVAS_HEIGHT = 400;
+    PADDLE_WIDTH = 10;
+    PADDLE_HEIGHT = 80;
+    hasStarted = false;
+    isReady = false;
+    isPaused = false;
+    intervalId = null;
+    onKeyDown = null;
+    onKeyUp = null;
+    // Remote game properties
+    playerNumber = 1; // 1 or 2 (assigned by matchmaking)
+    opponentId = null;
+    onOpponentFound = null;
+    onOpponentDisconnected = null;
+    onMatchmakingError = null;
+    onOpponentReconnected = null;
+    onReconnectionTimeout = null;
+    onCountdownStart = null;
+    isRemoteGame = false; // Set to true when opponent is found
+    isInCountdown = false; // Prevent draw() from overwriting countdown
+    // A garder ?
+    playersReadyStatus = {
+        player1: false,
+        player2: false
+    };
     constructor(canvas, UUID) {
-        this.keys = {};
-        this.animationId = null;
-        this.listeners = [];
-        this.gameUID = null;
-        this.CANVAS_WIDTH = 800;
-        this.CANVAS_HEIGHT = 400;
-        this.PADDLE_WIDTH = 10;
-        this.PADDLE_HEIGHT = 80;
-        this.hasStarted = false;
-        this.isReady = false;
-        this.isPaused = false;
-        this.intervalId = null;
-        this.onKeyDown = null;
-        this.onKeyUp = null;
-        // Remote game properties
-        this.playerNumber = 1; // 1 or 2 (assigned by matchmaking)
-        this.opponentId = null;
-        this.onOpponentFound = null;
-        this.onOpponentDisconnected = null;
-        this.onMatchmakingError = null;
-        this.onOpponentReconnected = null;
-        this.onReconnectionTimeout = null;
-        this.isRemoteGame = false; // Set to true when opponent is found
-        // A garder ?
-        this.playersReadyStatus = {
-            player1: false,
-            player2: false
-        };
         this.gameUID = UUID;
         this.ctx = canvas.getContext('2d');
         this.gameState = {
@@ -123,10 +127,21 @@ export class GameManager {
                     player1: data.player1Ready,
                     player2: data.player2Ready
                 };
+                // Set countdown flag to prevent draw() from overwriting ready screen
+                this.isInCountdown = true;
                 this.drawReadyScreen();
             }
-            else if (data.type === "countdown")
+            else if (data.type === "countdown") {
+                console.log(`[GameManager] COUNTDOWN RECEIVED: ${data.count}`);
+                // Set countdown flag to prevent draw() from overwriting
+                this.isInCountdown = true;
+                // Notify UI to hide overlays on EVERY countdown (not just first)
+                if (this.onCountdownStart) {
+                    console.log("[GameManager] Calling onCountdownStart callback");
+                    this.onCountdownStart();
+                }
                 this.drawCountdown(data.count);
+            }
             else if (data.type === "game-start")
                 this.startGame();
             else if (data.type === "game-paused")
@@ -202,13 +217,18 @@ export class GameManager {
      */
     handleOpponentDisconnected(data) {
         console.log("[GameManager] handleOpponentDisconnected() called", data);
-        // Stop the game
+        // CRITICAL: Stop the game loop IMMEDIATELY to prevent draw() from overwriting countdown/ready screens
+        this.gameState.gameRunning = false;
         this.hasStarted = false;
         this.isPaused = false;
+        // Stop the animation loop (this is the actual game rendering loop)
+        this.stopInputLoop();
+        // Also clear any legacy interval if exists
         if (this.intervalId) {
             clearInterval(this.intervalId);
             this.intervalId = null;
         }
+        console.log("[GameManager] Game loop stopped, gameRunning:", this.gameState.gameRunning);
         console.log("[GameManager] Calling onOpponentDisconnected callback");
         // Notify UI (GameRemotePage will handle this)
         if (this.onOpponentDisconnected) {
@@ -280,6 +300,12 @@ export class GameManager {
      */
     setOnReconnectionTimeout(callback) {
         this.onReconnectionTimeout = callback;
+    }
+    /**
+     * Set callback for when countdown starts (to hide overlays)
+     */
+    setOnCountdownStart(callback) {
+        this.onCountdownStart = callback;
     }
     setupEventListeners() {
         this.onKeyDown = (e) => {
@@ -416,6 +442,7 @@ export class GameManager {
     ///////HANDLE SERVER EVENTS /////////////
     /////////////////////////////////////////
     startGame() {
+        this.isInCountdown = false; // Countdown finished, game starting
         this.gameState.gameRunning = true;
         this.isPaused = false;
         this.notifyListeners();
@@ -471,7 +498,10 @@ export class GameManager {
             this.gameState = data.state;
             if (this.gameState.gameRunning)
                 this.isPaused = false;
-            this.draw();
+            // Don't draw game state during countdown - would overwrite countdown numbers
+            if (!this.isInCountdown) {
+                this.draw();
+            }
             this.notifyListeners();
         }
     }
@@ -554,6 +584,7 @@ export class GameManager {
         this.ctx.shadowBlur = 0;
     }
     drawReadyScreen() {
+        console.log("[GameManager] drawReadyScreen called, canvas valid:", !!this.ctx);
         // Clear canvas
         this.ctx.fillStyle = '#000000';
         this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
@@ -571,6 +602,7 @@ export class GameManager {
         this.ctx.fillText(`Player 2: ${this.playersReadyStatus.player2 ? 'READY ✓' : 'NOT READY'}`, this.CANVAS_WIDTH / 2, 260);
     }
     drawCountdown(count) {
+        console.log("[GameManager] drawCountdown called with count:", count, "canvas valid:", !!this.ctx);
         // Clear canvas
         this.ctx.fillStyle = '#000000';
         this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
@@ -584,3 +616,4 @@ export class GameManager {
         this.ctx.shadowBlur = 0;
     }
 }
+//# sourceMappingURL=GameManager.js.map

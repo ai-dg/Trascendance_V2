@@ -32,7 +32,9 @@ export class GameManager {
   private onMatchmakingError: ((data: any) => void) | null = null;
   private onOpponentReconnected: ((data: any) => void) | null = null;
   private onReconnectionTimeout: ((data: any) => void) | null = null;
+  private onCountdownStart: (() => void) | null = null;
   private isRemoteGame: boolean = false; // Set to true when opponent is found
+  private isInCountdown: boolean = false; // Prevent draw() from overwriting countdown
 
   // A garder ?
   private playersReadyStatus = {
@@ -150,10 +152,21 @@ export class GameManager {
           player1: data.player1Ready,
           player2: data.player2Ready
         };
+        // Set countdown flag to prevent draw() from overwriting ready screen
+        this.isInCountdown = true;
         this.drawReadyScreen();
       }
-      else if (data.type === "countdown")
+      else if (data.type === "countdown") {
+        console.log(`[GameManager] COUNTDOWN RECEIVED: ${data.count}`);
+        // Set countdown flag to prevent draw() from overwriting
+        this.isInCountdown = true;
+        // Notify UI to hide overlays on EVERY countdown (not just first)
+        if (this.onCountdownStart) {
+          console.log("[GameManager] Calling onCountdownStart callback");
+          this.onCountdownStart();
+        }
         this.drawCountdown(data.count);
+      }
       else if (data.type === "game-start")
         this.startGame();
       else if (data.type === "game-paused")
@@ -239,15 +252,21 @@ export class GameManager {
   private handleOpponentDisconnected(data: any): void {
     console.log("[GameManager] handleOpponentDisconnected() called", data);
 
-    // Stop the game
+    // CRITICAL: Stop the game loop IMMEDIATELY to prevent draw() from overwriting countdown/ready screens
+    this.gameState.gameRunning = false;
     this.hasStarted = false;
     this.isPaused = false;
 
+    // Stop the animation loop (this is the actual game rendering loop)
+    this.stopInputLoop();
+
+    // Also clear any legacy interval if exists
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
 
+    console.log("[GameManager] Game loop stopped, gameRunning:", this.gameState.gameRunning);
     console.log("[GameManager] Calling onOpponentDisconnected callback");
     // Notify UI (GameRemotePage will handle this)
     if (this.onOpponentDisconnected) {
@@ -326,6 +345,13 @@ export class GameManager {
    */
   public setOnReconnectionTimeout(callback: (data: any) => void): void {
     this.onReconnectionTimeout = callback;
+  }
+
+  /**
+   * Set callback for when countdown starts (to hide overlays)
+   */
+  public setOnCountdownStart(callback: () => void): void {
+    this.onCountdownStart = callback;
   }
 
   private setupEventListeners(): void {
@@ -499,6 +525,7 @@ export class GameManager {
   /////////////////////////////////////////
 
   public startGame(): void {
+    this.isInCountdown = false; // Countdown finished, game starting
     this.gameState.gameRunning = true;
     this.isPaused = false;
     this.notifyListeners();
@@ -569,7 +596,10 @@ export class GameManager {
       if (this.gameState.gameRunning)
         this.isPaused = false;
 
-      this.draw();
+      // Don't draw game state during countdown - would overwrite countdown numbers
+      if (!this.isInCountdown) {
+        this.draw();
+      }
       this.notifyListeners();
     }
   }
@@ -680,6 +710,7 @@ export class GameManager {
   }
 
   private drawReadyScreen(): void {
+    console.log("[GameManager] drawReadyScreen called, canvas valid:", !!this.ctx);
     // Clear canvas
     this.ctx.fillStyle = '#000000';
     this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
@@ -709,6 +740,7 @@ export class GameManager {
   }
 
   private drawCountdown(count: number): void {
+    console.log("[GameManager] drawCountdown called with count:", count, "canvas valid:", !!this.ctx);
     // Clear canvas
     this.ctx.fillStyle = '#000000';
     this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);

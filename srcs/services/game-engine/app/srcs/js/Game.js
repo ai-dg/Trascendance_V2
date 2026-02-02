@@ -35,6 +35,9 @@ export class Game {
     this.disconnectedPlayerId = null;
     this.reconnectionTimeout = null;
 
+    // Countdown state to prevent duplicates
+    this.countdownInProgress = false;
+
     // Legacy support: this.socket for backwards compatibility
     this.socket = socket;
 
@@ -105,6 +108,7 @@ export class Game {
 
     // Pause the game
     this.gameRunning = false;
+    this.countdownInProgress = false; // Reset countdown state so it can start again after reconnection
     if (this.gameLoopInterval) {
       clearInterval(this.gameLoopInterval);
       this.gameLoopInterval = null;
@@ -217,12 +221,18 @@ export class Game {
 
     // Always emit to player 1
     if (this.player1Socket) {
+      console.log(`[Game ${this.uuid}] Emitting ${eventType} to player1 (socket connected: ${this.player1Socket.connected})`);
       this.player1Socket.emit(this.uuid, payload);
+    } else {
+      console.log(`[Game ${this.uuid}] WARNING: No player1Socket for ${eventType}`);
     }
 
     // For remote games, also emit to player 2
     if (this.isRemoteGame && this.player2Socket) {
+      console.log(`[Game ${this.uuid}] Emitting ${eventType} to player2 (socket connected: ${this.player2Socket.connected})`);
       this.player2Socket.emit(this.uuid, payload);
+    } else if (this.isRemoteGame) {
+      console.log(`[Game ${this.uuid}] WARNING: No player2Socket for ${eventType}`);
     }
   }
 
@@ -360,15 +370,26 @@ export class Game {
 
 
   startCountdown() {
+    // Prevent duplicate countdowns
+    if (this.countdownInProgress) {
+      console.log(`[Game ${this.uuid}] Countdown already in progress, skipping`);
+      return;
+    }
+    this.countdownInProgress = true;
+
     let count = 3;
+    console.log(`[Game ${this.uuid}] Starting countdown...`);
+    console.log(`[Game ${this.uuid}] player1Socket connected: ${this.player1Socket?.connected}, player2Socket connected: ${this.player2Socket?.connected}`);
 
     const countdownInterval = setInterval(() => {
+      console.log(`[Game ${this.uuid}] Emitting countdown: ${count}`);
       this.emitToPlayers("countdown", { count: count });
 
       count--;
 
       if (count < 0) {
         clearInterval(countdownInterval);
+        this.countdownInProgress = false;
         this.startGame();
       }
     }, 1000);
@@ -410,6 +431,7 @@ export class Game {
   resetGame() {
     this.score.reset();
     this.gameRunning = false;
+    this.countdownInProgress = false; // Reset countdown state
     this.paddle1.reset(CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2);
     this.paddle2.reset(CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2);
     this.ball.reset();

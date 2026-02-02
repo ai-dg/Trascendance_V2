@@ -420,6 +420,48 @@ export class RemotePage {
 	  console.log("[RemotePage] Reconnection timeout!", data);
 	  this.handleReconnectionTimeout(data);
 	});
+
+	// Handle countdown start - hide overlays so countdown is visible
+	this.gameManager.setOnCountdownStart(() => {
+	  console.log("[RemotePage] Countdown started - FORCE hiding ALL overlays");
+
+	  // Remove waiting screen if any
+	  this.removeWaitingScreen();
+
+	  // Hide ALL possible overlays using BOTH class and inline style
+	  const startOverlay = document.querySelector<HTMLElement>('[data-overlay="start-game"]');
+	  const pauseOverlay = document.querySelector<HTMLElement>('[data-overlay="pause-game"]');
+	  const gameOverOverlay = document.querySelector<HTMLElement>('[data-overlay="game-over"]');
+
+	  // Log all overlays for debugging
+	  const allOverlays = document.querySelectorAll('[data-overlay]');
+	  console.log("[RemotePage] All overlays found:", allOverlays.length);
+	  allOverlays.forEach((el, i) => {
+		const htmlEl = el as HTMLElement;
+		console.log(`[RemotePage] Overlay ${i}: ${htmlEl.getAttribute('data-overlay')}, display: ${getComputedStyle(htmlEl).display}`);
+	  });
+
+	  if (startOverlay) {
+		startOverlay.classList.add('hidden');
+		startOverlay.style.display = 'none';
+		console.log("[RemotePage] startOverlay hidden with display:none");
+	  }
+	  if (pauseOverlay) {
+		pauseOverlay.classList.add('hidden');
+		pauseOverlay.style.display = 'none';
+	  }
+	  if (gameOverOverlay) {
+		gameOverOverlay.classList.add('hidden');
+		gameOverOverlay.style.display = 'none';
+	  }
+
+	  // Also hide ANY remaining overlay elements
+	  allOverlays.forEach((el) => {
+		const htmlEl = el as HTMLElement;
+		htmlEl.classList.add('hidden');
+		htmlEl.style.display = 'none';
+	  });
+	});
   }
 
   /**
@@ -447,6 +489,8 @@ export class RemotePage {
 	  content.appendChild(subtitle);
 	  content.appendChild(readyButton);
 	  startOverlay.appendChild(content);
+	  // Show overlay - clear any inline styles and remove hidden class
+	  startOverlay.style.display = '';
 	  startOverlay.classList.remove('hidden');
 	}
   }
@@ -505,7 +549,10 @@ export class RemotePage {
 	  content.appendChild(message);
 	  content.appendChild(buttonsContainer);
 	  startOverlay.appendChild(content);
+	  // Show overlay - clear any inline styles and remove hidden class
+	  startOverlay.style.display = '';
 	  startOverlay.classList.remove('hidden');
+	  console.log("[RemotePage] Showing disconnect overlay");
 	}
   }
 
@@ -544,7 +591,10 @@ export class RemotePage {
 	  content.appendChild(message);
 	  content.appendChild(readyButton);
 	  startOverlay.appendChild(content);
+	  // Show overlay - clear any inline styles and remove hidden class
+	  startOverlay.style.display = '';
 	  startOverlay.classList.remove('hidden');
+	  console.log("[RemotePage] Showing reconnect overlay with Ready button");
 	}
   }
 
@@ -729,14 +779,12 @@ export class RemotePage {
   private setReady(): void {
     if (!this.gameManager)
       return;
-    const wasPaused = this.gameManager.getIsPaused();
     // Pass true for remote games - each player marks only themselves ready
     this.gameManager.setReady(true);
-    if (!wasPaused) {
-      const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
-      if (startOverlay)
-        startOverlay.classList.add('hidden');
-    }
+    // Always hide the start overlay when Ready is clicked so countdown is visible
+    const startOverlay = document.querySelector('[data-overlay="start-game"]') as HTMLElement;
+    if (startOverlay)
+      startOverlay.classList.add('hidden');
   }
 
   private pauseGame(): void {

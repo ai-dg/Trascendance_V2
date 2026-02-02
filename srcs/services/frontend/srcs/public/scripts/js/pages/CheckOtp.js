@@ -1,6 +1,15 @@
+import { UIManager } from '../modules/UIManager.js';
 import { CheckManager } from '../modules/CheckManager.js';
 import { OTPManagers } from '../modules/OTPManager.js';
 export class CheckOtp {
+    uiManager;
+    check;
+    otpManager;
+    languageManager;
+    onVerificationComplete;
+    onChangePassword;
+    onUpdateProfile;
+    onBack;
     constructor(uiManager, languageManager, onVerificationComplete, onChangePassword, onUpdateProfile, onBack) {
         this.uiManager = uiManager;
         this.languageManager = languageManager;
@@ -124,3 +133,4 @@ export class CheckOtp {
         }
     }
 }
+//# sourceMappingURL=CheckOtp.js.map

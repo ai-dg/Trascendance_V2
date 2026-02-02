@@ -1,10 +1,10 @@
 export class WebsocketManager {
-    constructor() {
-        this.generalSocket = null;
-        this.gameSocket = null;
-        this.onGameReconnectCallback = null;
-        this.gameSocketWasConnected = false;
-    }
+    static instance;
+    generalSocket = null;
+    gameSocket = null;
+    onGameReconnectCallback = null;
+    gameSocketWasConnected = false;
+    constructor() { }
     static getInstance() {
         if (!WebsocketManager.instance) {
             WebsocketManager.instance = new WebsocketManager();
@@ -73,3 +73,4 @@ export class WebsocketManager {
         this.gameSocket?.disconnect();
     }
 }
+//# sourceMappingURL=WebsocketManager.js.map

@@ -1,7 +1,9 @@
+import { AuthManager } from "./AuthManager.js";
 export class RouterManager {
+    currentPage = 'auth';
+    listeners = [];
+    updateUserCallback;
     constructor(updateUserCallback) {
-        this.currentPage = 'auth';
-        this.listeners = [];
         this.updateUserCallback = updateUserCallback;
         this.loadInitialRoute();
     }
@@ -50,3 +52,4 @@ export class RouterManager {
 // 		path = '/' + path;
 // 	return getWebSocketProtocol() + '//' + getBaseUrl() + path;
 // }
+//# sourceMappingURL=RouterManager.js.map

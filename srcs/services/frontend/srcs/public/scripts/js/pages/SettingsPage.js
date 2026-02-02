@@ -1,23 +1,34 @@
+import { LanguageManager } from '../modules/LangManager.js';
+import { UIManager } from '../modules/UIManager.js';
 import { UpdateProfilePage } from './UpdateProfilePage.js';
 export class SettingsPage {
+    user;
+    isGuest;
+    uiManager;
+    routerManager;
+    authManager;
+    languageManager;
+    authPage;
+    onBack;
+    onUpdateProfile;
+    settings = {
+        soundEnabled: true,
+        musicVolume: 75,
+        effectsVolume: 60,
+        fullscreen: false,
+        scanLines: true,
+        glowEffects: true,
+        ballSpeed: 6,
+        paddleSpeed: 8,
+        showFPS: false,
+        colorTheme: 'synthwave'
+    };
     t(key) {
         return this.languageManager.t(key);
     }
     constructor(uiManager, routerManager, authManager, languageManager, authPage, onBack, onUpdateProfile, user, isGuest = false) {
         this.user = user;
         this.isGuest = isGuest;
-        this.settings = {
-            soundEnabled: true,
-            musicVolume: 75,
-            effectsVolume: 60,
-            fullscreen: false,
-            scanLines: true,
-            glowEffects: true,
-            ballSpeed: 6,
-            paddleSpeed: 8,
-            showFPS: false,
-            colorTheme: 'synthwave'
-        };
         this.uiManager = uiManager;
         this.routerManager = routerManager;
         this.authManager = authManager;
@@ -257,3 +268,4 @@ export class SettingsPage {
         this.render();
     }
 }
+//# sourceMappingURL=SettingsPage.js.map
