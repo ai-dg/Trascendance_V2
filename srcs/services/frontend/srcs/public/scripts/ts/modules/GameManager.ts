@@ -66,7 +66,7 @@ export class GameManager {
   /**
    * Destroy the game manager
    * @param notifyServer - If true, sends destroy-game to server. Set to false for remote games
-   *                       that should allow reconnection (server handles cleanup on disconnect)
+   *                       that should allow reconnection (triggers player-left instead)
    */
   public destroy(notifyServer: boolean = true): void {
     console.log(`[GameManager] destroy() called for game: ${this.gameUID}, notifyServer: ${notifyServer}`);
@@ -77,13 +77,14 @@ export class GameManager {
       window.removeEventListener('keyup', this.onKeyUp);
 
     if (gameSocket && this.gameUID) {
-      // Only notify server to destroy if explicitly requested
-      // For remote games in progress, let server handle via disconnect event
       if (notifyServer) {
+        // Completely destroy the game on server
         gameSocket.emit(this.gameUID, { action: "destroy-game" });
         console.log(`[GameManager] Sent destroy-game to server for: ${this.gameUID}`);
       } else {
-        console.log(`[GameManager] NOT sending destroy-game (allowing reconnection)`);
+        // For active remote games: notify server that player left (triggers reconnection flow)
+        this.leaveGame();
+        console.log(`[GameManager] Sent player-left to server (reconnection enabled)`);
       }
 
       // Remove socket listener to prevent memory leaks
@@ -137,8 +138,11 @@ export class GameManager {
     if (!gameSocket || !this.gameUID)
       throw Error("gameSocket is not ready");
 
+    console.log(`[GameManager] Setting up socket listeners for game: ${this.gameUID}`);
+    console.log(`[GameManager] gameSocket connected: ${gameSocket.connected}`);
+
     gameSocket.on(this.gameUID, (data: any) => {
-      console.log(`[GameManager] <<<< RECEIVED EVENT on ${this.gameUID}:`, data?.type || 'NO TYPE', data);
+      console.log(`[GameManager] <<<< RECEIVED EVENT on ${this.gameUID}:`, data?.type || 'NO TYPE');
       if (!data?.type)
         return;
       if (data.type === "ready-status") {
@@ -475,6 +479,18 @@ export class GameManager {
 
     console.log("[GameManager] Canceling search...");
     gameSocket.emit(this.gameUID, { action: "cancel-matchmaking" });
+  }
+
+  /**
+   * leaveGame - Leave a remote game gracefully (triggers reconnection flow on server)
+   * Used when player navigates away from an active remote game
+   */
+  public leaveGame(): void {
+    if (!this.gameUID || !gameSocket)
+      return;
+
+    console.log("[GameManager] Leaving game (triggering reconnection flow)...");
+    gameSocket.emit(this.gameUID, { action: "player-left" });
   }
 
 

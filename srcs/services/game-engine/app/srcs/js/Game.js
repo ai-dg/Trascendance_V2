@@ -99,7 +99,9 @@ export class Game {
    * Pauses the game and waits for reconnection
    */
   handlePlayerDisconnect(disconnectedPlayerId, onReconnectionTimeout) {
-    console.log(`[Game ${this.uuid}] Player ${disconnectedPlayerId} disconnected`);
+    console.log(`[Game ${this.uuid}] handlePlayerDisconnect called for player: ${disconnectedPlayerId}`);
+    console.log(`[Game ${this.uuid}] player1Id: ${this.player1Id}, player2Id: ${this.player2Id}`);
+    console.log(`[Game ${this.uuid}] player1Socket connected: ${this.player1Socket?.connected}, player2Socket connected: ${this.player2Socket?.connected}`);
 
     // Pause the game
     this.gameRunning = false;
@@ -118,13 +120,20 @@ export class Game {
 
     // Notify the remaining player
     const remainingSocket = disconnectedPlayerId === this.player1Id ? this.player2Socket : this.player1Socket;
-    if (remainingSocket) {
+    const remainingPlayerId = disconnectedPlayerId === this.player1Id ? this.player2Id : this.player1Id;
+
+    console.log(`[Game ${this.uuid}] Remaining player: ${remainingPlayerId}, socket exists: ${!!remainingSocket}, connected: ${remainingSocket?.connected}`);
+
+    if (remainingSocket && remainingSocket.connected) {
+      console.log(`[Game ${this.uuid}] Emitting opponent-disconnected to remaining player`);
       remainingSocket.emit(this.uuid, {
         type: 'opponent-disconnected',
         message: 'Your opponent has disconnected.',
         waitingForReconnection: true,
         gameState: this.getGameState() // Send current score etc.
       });
+    } else {
+      console.log(`[Game ${this.uuid}] WARNING: Cannot notify remaining player - socket not connected`);
     }
 
     // Set timeout for reconnection (2 minutes)

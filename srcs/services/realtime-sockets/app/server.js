@@ -225,22 +225,30 @@ function setupGeneralGameSocket(socket) {
 
 	// Handle disconnect - clean up matchmaking and games
 	socket.on('disconnect', async () => {
-		console.log(`[Game Socket] User ${userId} disconnected`);
+		console.log(`[Game Socket] ========== DISCONNECT EVENT ==========`);
+		console.log(`[Game Socket] User ${userId} disconnected (socket.id: ${socket.id})`);
 
 		// Cancel matchmaking search if they were searching
 		await cancelSearch(redis, userId);
 
 		// Check if this user was in an active game
 		const gameUUID = userGames.get(userId);
+		console.log(`[Game Socket] User ${userId} -> gameUUID: ${gameUUID}`);
+		console.log(`[Game Socket] All userGames:`, [...userGames.entries()]);
+
 		if (gameUUID) {
 			const game = runningGames.get(gameUUID);
+			console.log(`[Game Socket] Found game: ${!!game}`);
+
 			if (game) {
 				console.log(`[Game Socket] User ${userId} was in game ${gameUUID}`);
 				console.log(`[Game Socket] Game type: ${game.type}, isRemoteGame: ${game.isRemoteGame}`);
+				console.log(`[Game Socket] Game player1Id: ${game.player1Id}, player2Id: ${game.player2Id}`);
+				console.log(`[Game Socket] Game player2Joined: ${game.player2Joined}`);
 
-				// If it's a remote game, wait for reconnection instead of destroying
-				if (game.isRemoteGame) {
-					console.log(`[Game Socket] Remote game - waiting for reconnection`);
+				// If it's a remote game AND player 2 has joined, wait for reconnection
+				if (game.isRemoteGame && game.player2Id) {
+					console.log(`[Game Socket] Remote game with 2 players - waiting for reconnection`);
 					game.handlePlayerDisconnect(userId, (expiredGameUUID) => {
 						// Cleanup callback when reconnection timeout expires
 						console.log(`[Game Socket] Reconnection timeout - cleaning up game ${expiredGameUUID}`);
@@ -256,7 +264,8 @@ function setupGeneralGameSocket(socket) {
 					return;
 				}
 
-				// For non-remote games, clean up immediately
+				// For non-remote games or remote games without player 2, clean up immediately
+				console.log(`[Game Socket] Cleaning up game immediately (not a 2-player remote game)`);
 				await game.destroy();
 				runningGames.delete(gameUUID);
 
@@ -266,7 +275,10 @@ function setupGeneralGameSocket(socket) {
 
 				console.log(`[Game Socket] Cleaned up game ${gameUUID} for disconnected player`);
 			}
+		} else {
+			console.log(`[Game Socket] User ${userId} was not in any tracked game`);
 		}
+		console.log(`[Game Socket] ========== END DISCONNECT ==========`);
 	});
 
 	// Check if user has a game waiting for reconnection when they connect
@@ -403,13 +415,19 @@ function requestGameUID(socket, data){
 function onMatchFound(matchData) {
 	const { game, gameUUID, player1Socket, player1UserId, player2Socket, player2UserId, player2GameUUID } = matchData;
 
+	console.log(`[Server] ========== MATCH FOUND ==========`);
+	console.log(`[Server] Game UUID: ${gameUUID}`);
+	console.log(`[Server] Player 1: ${player1UserId} (socket: ${player1Socket.id})`);
+	console.log(`[Server] Player 2: ${player2UserId} (socket: ${player2Socket.id})`);
+
 	// Add player 2 to the game (we'll implement this in Game.js)
 	game.addPlayer2(player2Socket, player2UserId);
 
 	// Track both players in this game
 	userGames.set(player1UserId, gameUUID);
 	userGames.set(player2UserId, gameUUID);
-	console.log(`[Server] Both players tracked in game ${gameUUID}`)
+	console.log(`[Server] Both players tracked in game ${gameUUID}`);
+	console.log(`[Server] userGames after match:`, [...userGames.entries()]);
 
 	// Remove player 2's old game listener (memory leak prevention)
 	player2Socket.removeAllListeners(player2GameUUID);
@@ -476,6 +494,37 @@ function gameHandler(uuid, data, socket){
 		// New action: cancel search
 		const odileUserId = socket.userId || socket.id;
 		cancelSearch(redis, odileUserId);
+	}
+	else if (data.action === "player-left") {
+		// Player intentionally left (e.g., clicked Back to Menu during active game)
+		// This triggers reconnection flow instead of destroying the game
+		const leavingUserId = socket.userId || socket.id;
+		console.log(`[Game ${uuid}] Player ${leavingUserId} left intentionally`);
+
+		if (game && game.isRemoteGame && game.player2Id) {
+			// Trigger the same reconnection flow as a socket disconnect
+			game.handlePlayerDisconnect(leavingUserId, (expiredGameUUID) => {
+				// Cleanup callback when reconnection timeout expires
+				console.log(`[Game Socket] Reconnection timeout - cleaning up game ${expiredGameUUID}`);
+				const expiredGame = runningGames.get(expiredGameUUID);
+				if (expiredGame) {
+					expiredGame.destroy();
+					runningGames.delete(expiredGameUUID);
+					if (expiredGame.player1Id) userGames.delete(expiredGame.player1Id);
+					if (expiredGame.player2Id) userGames.delete(expiredGame.player2Id);
+				}
+			});
+			console.log(`[Game ${uuid}] Reconnection flow triggered for leaving player`);
+		} else {
+			// Not a 2-player remote game, just destroy it
+			console.log(`[Game ${uuid}] Not a 2-player remote game, destroying`);
+			if (game) {
+				game.destroy();
+				runningGames.delete(uuid);
+				if (game.player1Id) userGames.delete(game.player1Id);
+				if (game.player2Id) userGames.delete(game.player2Id);
+			}
+		}
 	}
 	else if (data.action === "destroy-game") {
 		// Clean up game when frontend destroys it

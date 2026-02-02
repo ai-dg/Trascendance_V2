@@ -7,6 +7,8 @@ export class WebsocketManager {
   private static instance: WebsocketManager;
   public generalSocket: Socket | null = null;
   public gameSocket: Socket | null = null;
+  private onGameReconnectCallback: (() => void) | null = null;
+  private gameSocketWasConnected: boolean = false;
 
   public constructor() {}
 
@@ -34,12 +36,32 @@ export class WebsocketManager {
     this.setupDefaultListeners();
   }
 
-    private setupDefaultListeners() {
-        this.generalSocket?.on("connect", () => console.log("General socket connected"));
-        this.gameSocket?.on("connect", () => console.log("Game socket connected"));
+  /**
+   * Set callback to be called when game socket reconnects after a disconnect
+   */
+  public setOnGameReconnect(callback: () => void) {
+    this.onGameReconnectCallback = callback;
+  }
 
-        this.generalSocket?.on("connect_error", (err) => console.error("Error socket general:", err));
-        this.gameSocket?.on("connect_error", (err) => console.error("Error socket game:", err));
+  private setupDefaultListeners() {
+    this.generalSocket?.on("connect", () => console.log("General socket connected"));
+
+    this.gameSocket?.on("connect", () => {
+      console.log("Game socket connected");
+      // If we were previously connected and now reconnected, trigger reconnection check
+      if (this.gameSocketWasConnected && this.onGameReconnectCallback) {
+        console.log("[WebsocketManager] Game socket reconnected - triggering reconnection check");
+        this.onGameReconnectCallback();
+      }
+      this.gameSocketWasConnected = true;
+    });
+
+    this.gameSocket?.on("disconnect", (reason) => {
+      console.log("[WebsocketManager] Game socket disconnected:", reason);
+    });
+
+    this.generalSocket?.on("connect_error", (err) => console.error("Error socket general:", err));
+    this.gameSocket?.on("connect_error", (err) => console.error("Error socket game:", err));
   }
 
     public onGeneral(event: string, callback: (data: any) => void) {

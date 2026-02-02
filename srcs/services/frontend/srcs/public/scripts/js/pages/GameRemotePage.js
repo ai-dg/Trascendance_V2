@@ -274,18 +274,19 @@ export class RemotePage {
     setupGameListeners() {
         if (!this.gameManager)
             return;
+        console.log("[RemotePage] Setting up game listeners");
         this.gameManager.addListener((gameState) => {
             this.updateScore(gameState.player1Score, gameState.player2Score);
             this.updateGameState(gameState);
         });
         // Handle when matchmaking finds an opponent
         this.gameManager.setOnOpponentFound((data) => {
-            console.log("[RemotePage] Opponent found!", data);
+            console.log("[RemotePage] Opponent found callback triggered!", data);
             this.handleOpponentFound(data);
         });
         // Handle when opponent disconnects
         this.gameManager.setOnOpponentDisconnected((data) => {
-            console.log("[RemotePage] Opponent disconnected!", data);
+            console.log("[RemotePage] Opponent disconnected callback triggered!", data);
             this.handleOpponentDisconnected(data);
         });
         // Handle matchmaking errors (e.g., already searching)
@@ -565,9 +566,12 @@ export class RemotePage {
             this.gameManager.cancelSearch();
             this.isSearchingOpponent = false;
         }
-        // Destroy game and return to main menu
+        // For remote games in progress, DON'T destroy the game on server
+        // Let the socket disconnect trigger the reconnection flow
         if (this.gameManager) {
-            this.gameManager.destroy();
+            const isActiveRemote = this.gameManager.isActiveRemoteGame();
+            // Pass false to NOT notify server for active remote games (allows reconnection)
+            this.gameManager.destroy(!isActiveRemote);
             this.gameManager = null;
         }
         this.onBack();
@@ -578,9 +582,12 @@ export class RemotePage {
             this.gameManager.cancelSearch();
             this.isSearchingOpponent = false;
         }
-        // Destroy current game
+        // For remote games in progress, DON'T destroy the game on server
+        // Let the socket disconnect trigger the reconnection flow
         if (this.gameManager) {
-            this.gameManager.destroy();
+            const isActiveRemote = this.gameManager.isActiveRemoteGame();
+            // Pass false to NOT notify server for active remote games (allows reconnection)
+            this.gameManager.destroy(!isActiveRemote);
             this.gameManager = null;
         }
         // Return to lobby (show game mode selection)
