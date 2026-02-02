@@ -17,6 +17,7 @@ export class Game {
     this.type = data.type;
     this.settings = { ...DEFAULT_SETTINGS, ...settings };
     this.gameLoopInterval = null;
+    this.gameLoopRunning = false;
 
     // ============================================
     // PLAYER SOCKETS (for remote multiplayer)
@@ -480,15 +481,24 @@ export class Game {
 
 
   gameLoop() {
+    // Prevent multiple game loops from running simultaneously
+    if (this.gameLoopRunning) {
+      console.warn(`[Game ${this.uuid}] gameLoop already running, skipping duplicate call`);
+      return;
+    }
+
     if (this.gameLoopInterval) {
       clearInterval(this.gameLoopInterval);
     }
+
+    this.gameLoopRunning = true;
 
     // 60 FPS = ~16.67ms par frame
     this.gameLoopInterval = setInterval(() => {
       if (!this.gameRunning) {
         clearInterval(this.gameLoopInterval);
         this.gameLoopInterval = null;
+        this.gameLoopRunning = false;
         return;
       }
 
@@ -617,6 +627,8 @@ export class Game {
   async destroy() {
     if (this.gameLoopInterval) {
       clearInterval(this.gameLoopInterval);
+      this.gameLoopInterval = null;
+      this.gameLoopRunning = false;
     }
 
     // Clear reconnection timeout to prevent callback from firing after destroy
