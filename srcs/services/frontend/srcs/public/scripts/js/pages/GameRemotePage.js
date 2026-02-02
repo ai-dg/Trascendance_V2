@@ -273,6 +273,7 @@ export class RemotePage {
             startContent.appendChild(startButtonFriend);
             startOverlay.appendChild(startContent);
             startOverlay.classList.remove('hidden');
+            startOverlay.style.display = ''; // Clear inline display:none from countdown/pause
         }
         // Don't create game yet - wait for user to select mode
     }
@@ -554,8 +555,11 @@ export class RemotePage {
         const startOverlay = document.querySelector('[data-overlay="start-game"]');
         const pauseOverlay = document.querySelector('[data-overlay="pause-game"]');
         const gameOverOverlay = document.querySelector('[data-overlay="game-over"]');
-        const isGameOver = gameState.player1Score >= 10 || gameState.player2Score >= 10;
-        const winner = isGameOver ? (gameState.player1Score >= 10 ? 'Player 1' : 'Player 2') : null;
+        const winnerFromState = gameState.winner ?? null;
+        const isGameOverByScore = gameState.player1Score >= 10 || gameState.player2Score >= 10;
+        const winnerByScore = isGameOverByScore ? (gameState.player1Score >= 10 ? 'Player 1' : 'Player 2') : null;
+        const winner = winnerFromState || winnerByScore;
+        const isGameOver = !!winner;
         const isPaused = this.gameManager ? this.gameManager.getIsPaused() : false;
         console.log('[GameRemotePage] updateGameState called - gameRunning:', gameState.gameRunning, 'isPaused:', isPaused, 'hasStarted:', this.gameManager?.getHasStarted());
         // For waiting screen
@@ -575,6 +579,40 @@ export class RemotePage {
                 pauseOverlay.classList.add('hidden');
             if (gameOverOverlay)
                 gameOverOverlay.classList.add('hidden');
+            return;
+        }
+        // Screen when the game is over
+        else if (isGameOver && winner) {
+            if (this.gameManager) {
+                this.gameManager.destroy();
+                this.gameManager = null;
+            }
+            if (gameOverOverlay) {
+                // Update game over content to return to lobby instead of playing again
+                const winnerText = gameOverOverlay.querySelector('.text-2xl');
+                if (winnerText) {
+                    // After server mirroring, player1Score is always YOUR score
+                    // and player2Score is always opponent's score for BOTH players
+                    // So if player1Score >= 10, YOU won. If player2Score >= 10, opponent won.
+                    // Prefer server-reported winner; fallback to score
+                    if (winnerFromState) {
+                        winnerText.textContent = winnerFromState === 'Player 1' ? 'YOU WIN!' : 'YOU LOSE!';
+                    }
+                    else {
+                        winnerText.textContent = gameState.player1Score >= 10 ? 'YOU WIN!' : 'YOU LOSE!';
+                    }
+                }
+                const playAgainBtn = gameOverOverlay.querySelector('button');
+                if (playAgainBtn) {
+                    playAgainBtn.textContent = 'RETURN TO LOBBY';
+                }
+                gameOverOverlay.classList.remove('hidden');
+                gameOverOverlay.style.display = ''; // Clear inline display:none from countdown/pause
+            }
+            if (startOverlay)
+                startOverlay.classList.add('hidden');
+            if (pauseOverlay)
+                pauseOverlay.classList.add('hidden');
             return;
         }
         // Screen when the game is paused - CHECK THIS BEFORE gameRunning!
@@ -603,33 +641,6 @@ export class RemotePage {
                 pauseOverlay.classList.add('hidden');
             if (gameOverOverlay)
                 gameOverOverlay.classList.add('hidden');
-            return;
-        }
-        // Screen when the game is over
-        else if (isGameOver && winner) {
-            if (this.gameManager) {
-                this.gameManager.destroy();
-                this.gameManager = null;
-            }
-            if (gameOverOverlay) {
-                // Update game over content to return to lobby instead of playing again
-                const winnerText = gameOverOverlay.querySelector('.text-2xl');
-                if (winnerText) {
-                    // After server mirroring, player1Score is always YOUR score
-                    // and player2Score is always opponent's score for BOTH players
-                    // So if player1Score >= 10, YOU won. If player2Score >= 10, opponent won.
-                    winnerText.textContent = gameState.player1Score >= 10 ? 'YOU WIN!' : 'YOU LOSE!';
-                }
-                const playAgainBtn = gameOverOverlay.querySelector('button');
-                if (playAgainBtn) {
-                    playAgainBtn.textContent = 'RETURN TO LOBBY';
-                }
-                gameOverOverlay.classList.remove('hidden');
-            }
-            if (startOverlay)
-                startOverlay.classList.add('hidden');
-            if (pauseOverlay)
-                pauseOverlay.classList.add('hidden');
             return;
         }
     }
