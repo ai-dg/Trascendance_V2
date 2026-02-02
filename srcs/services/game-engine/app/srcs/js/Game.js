@@ -38,6 +38,7 @@ export class Game {
 
     // Countdown state to prevent duplicates
     this.countdownInProgress = false;
+    this.countdownInterval = null;
 
     // Legacy support: this.socket for backwards compatibility
     this.socket = socket;
@@ -110,6 +111,14 @@ export class Game {
     // Pause the game
     this.gameRunning = false;
     this.countdownInProgress = false; // Reset countdown state so it can start again after reconnection
+
+    // Stop countdown if in progress
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+      this.countdownInterval = null;
+      console.log(`[Game ${this.uuid}] Countdown stopped due to disconnect`);
+    }
+
     if (this.gameLoopInterval) {
       clearInterval(this.gameLoopInterval);
       this.gameLoopInterval = null;
@@ -326,6 +335,16 @@ export class Game {
   setPlayerReady(playerNum) {
     console.log(`[Game ${this.uuid}] setPlayerReady called: playerNum=${playerNum}, type=${this.type}`);
 
+    // Prevent setting the same player ready multiple times
+    if (playerNum === 1 && this.playersReady.player1) {
+      console.log(`[Game ${this.uuid}] Player 1 already ready, ignoring duplicate call`);
+      return;
+    }
+    if (playerNum === 2 && this.playersReady.player2) {
+      console.log(`[Game ${this.uuid}] Player 2 already ready, ignoring duplicate call`);
+      return;
+    }
+
     if (playerNum === 1) {
       this.playersReady.player1 = true;
     } else if (playerNum === 2) {
@@ -382,18 +401,31 @@ export class Game {
     console.log(`[Game ${this.uuid}] Starting countdown...`);
     console.log(`[Game ${this.uuid}] player1Socket connected: ${this.player1Socket?.connected}, player2Socket connected: ${this.player2Socket?.connected}`);
 
-    const countdownInterval = setInterval(() => {
+    this.countdownInterval = setInterval(() => {
       console.log(`[Game ${this.uuid}] Emitting countdown: ${count}`);
       this.emitToPlayers("countdown", { count: count });
 
       count--;
 
       if (count < 0) {
-        clearInterval(countdownInterval);
+        clearInterval(this.countdownInterval);
+        this.countdownInterval = null;
         this.countdownInProgress = false;
         this.startGame();
       }
     }, 1000);
+  }
+
+  /**
+   * stopCountdown - Cancel countdown when player disconnects
+   */
+  stopCountdown() {
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+      this.countdownInterval = null;
+      this.countdownInProgress = false;
+      console.log(`[Game ${this.uuid}] Countdown stopped`);
+    }
   }
 
   ///////////////////////////////////////////
@@ -625,6 +657,9 @@ export class Game {
   }
 
   async destroy() {
+    // Stop countdown if in progress
+    this.stopCountdown();
+
     if (this.gameLoopInterval) {
       clearInterval(this.gameLoopInterval);
       this.gameLoopInterval = null;

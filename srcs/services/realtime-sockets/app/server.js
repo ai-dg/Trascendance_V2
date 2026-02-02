@@ -205,7 +205,9 @@ function setupGeneralGameSocket(socket) {
 	socket.emit("welcome", {message : "welcome in the game !", userId: userId, user: socket.user})
 	socket.join(`user-${userId}`);
 
-	socket.on("request-game-uid", (data) => requestGameUID(socket, data) );
+	socket.on("request-game-uid", async (data) => {
+		await requestGameUID(socket, data);
+	});
 
 	socket.on("join-game", (data) => {
 		console.log("Joining game : ", data);
@@ -339,7 +341,9 @@ function setupGeneralGameSocket(socket) {
 	});
 }
 
-function requestGameUID(socket, data){
+async function requestGameUID(socket, data){
+	const userId = socket.userId;
+
 	let uuid = crypto.randomUUID()
 	console.log("Before type")
 	if (data.type === "local")
@@ -498,6 +502,33 @@ async function gameHandler(uuid, data, socket){
 		// New action: cancel search
 		const odileUserId = socket.userId || socket.id;
 		cancelSearch(redis, odileUserId);
+	}
+	else if (data.action === "reject-reconnection") {
+		// Player explicitly chose "START NEW GAME" instead of reconnecting
+		const rejectingUserId = socket.userId || socket.id;
+		console.log(`[Game ${uuid}] Player ${rejectingUserId} rejected reconnection`);
+
+		if (game && game.isRemoteGame && game.player2Id) {
+			const otherPlayerId = game.player1Id === rejectingUserId ? game.player2Id : game.player1Id;
+			const otherSocket = game.player1Id === rejectingUserId ? game.player2Socket : game.player1Socket;
+
+			// Notify the other player
+			if (otherSocket && otherSocket.connected) {
+				console.log(`[Game ${uuid}] Notifying ${otherPlayerId} that opponent rejected reconnection`);
+				otherSocket.emit(uuid, {
+					type: 'opponent-abandoned',
+					message: 'Your opponent has started a new game. This game has been ended.'
+				});
+			}
+
+			// Clean up the game
+			await game.destroy();
+			runningGames.delete(uuid);
+			if (game.player1Id) userGames.delete(game.player1Id);
+			if (game.player2Id) userGames.delete(game.player2Id);
+
+			console.log(`[Game ${uuid}] Game ended due to reconnection rejection`);
+		}
 	}
 	else if (data.action === "player-left") {
 		// Player intentionally left (e.g., clicked Back to Menu during active game)

@@ -32,6 +32,7 @@ export class GameManager {
   private onMatchmakingError: ((data: any) => void) | null = null;
   private onOpponentReconnected: ((data: any) => void) | null = null;
   private onReconnectionTimeout: ((data: any) => void) | null = null;
+  private onOpponentAbandoned: ((data: any) => void) | null = null;
   private onCountdownStart: (() => void) | null = null;
   private isRemoteGame: boolean = false; // Set to true when opponent is found
   private isInCountdown: boolean = false; // Prevent draw() from overwriting countdown
@@ -123,6 +124,10 @@ export class GameManager {
     return this.playerNumber;
   }
 
+  public getGameUID(): string | null {
+    return this.gameUID;
+  }
+
   /**
    * Set the player number (used for reconnection)
    */
@@ -196,6 +201,10 @@ export class GameManager {
       else if (data.type === "reconnection-timeout") {
         console.log("[GameManager] RECONNECTION TIMEOUT:", data);
         this.handleReconnectionTimeout(data);
+      }
+      else if (data.type === "opponent-abandoned") {
+        console.log("[GameManager] OPPONENT ABANDONED:", data);
+        this.handleOpponentAbandoned(data);
       }
     });
   }
@@ -341,10 +350,30 @@ export class GameManager {
   }
 
   /**
+   * handleOpponentAbandoned - Called when opponent starts new game instead of reconnecting
+   */
+  private handleOpponentAbandoned(data: any): void {
+    console.log("[GameManager] handleOpponentAbandoned() called", data);
+
+    if (this.onOpponentAbandoned) {
+      this.onOpponentAbandoned(data);
+    } else {
+      console.warn("[GameManager] No onOpponentAbandoned callback set!");
+    }
+  }
+
+  /**
    * Set callback for reconnection timeout
    */
   public setOnReconnectionTimeout(callback: (data: any) => void): void {
     this.onReconnectionTimeout = callback;
+  }
+
+  /**
+   * Set callback for opponent abandoned
+   */
+  public setOnOpponentAbandoned(callback: (data: any) => void): void {
+    this.onOpponentAbandoned = callback;
   }
 
   /**

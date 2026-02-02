@@ -1,4 +1,5 @@
 import { GameManager } from '../modules/GameManager.js';
+import { gameSocket } from '../app.js';
 export class RemotePage {
     constructor(uiManager, onBack, user) {
         this.gameManager = null;
@@ -165,7 +166,7 @@ export class RemotePage {
             const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'You have an ongoing game. Would you like to reconnect?');
             const buttonsContainer = this.uiManager.createElement('div', 'flex flex-col gap-4 items-center');
             const reconnectButton = this.uiManager.createButton('RECONNECT', 'retro-button bg-[#00ffff] text-black px-8 py-3 rounded border-2 border-[#00ffff] hover:bg-transparent hover:text-[#00ffff] transition-all duration-200', () => this.handleReconnect(data.gameUUID));
-            const newGameButton = this.uiManager.createButton('START NEW GAME', 'retro-button bg-transparent text-[#ff1493] px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200', () => this.requestNewGame());
+            const newGameButton = this.uiManager.createButton('START NEW GAME', 'retro-button bg-transparent text-[#ff1493] px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200', () => this.rejectReconnection(data.gameUUID));
             buttonsContainer.appendChild(reconnectButton);
             buttonsContainer.appendChild(newGameButton);
             content.appendChild(title);
@@ -239,6 +240,18 @@ export class RemotePage {
             .querySelectorAll('[data-overlay="waiting-screen"]')
             .forEach((el) => el.remove());
     }
+    /**
+     * Reject reconnection and notify server so other player is informed
+     */
+    rejectReconnection(gameUID) {
+        console.log("[RemotePage] User rejected reconnection, notifying server for game:", gameUID);
+        // Notify server that this player is rejecting reconnection
+        if (gameSocket) {
+            gameSocket.emit(gameUID, { action: 'reject-reconnection' });
+        }
+        // Show lobby
+        this.requestNewGame();
+    }
     requestNewGame() {
         // Return to lobby - show game mode selection
         this.removeWaitingScreen();
@@ -303,6 +316,11 @@ export class RemotePage {
         this.gameManager.setOnReconnectionTimeout((data) => {
             console.log("[RemotePage] Reconnection timeout!", data);
             this.handleReconnectionTimeout(data);
+        });
+        // Handle when opponent abandons the game (starts new game instead of reconnecting)
+        this.gameManager.setOnOpponentAbandoned((data) => {
+            console.log("[RemotePage] Opponent abandoned!", data);
+            this.handleOpponentAbandoned(data);
         });
         // Handle countdown start - hide overlays so countdown is visible
         this.gameManager.setOnCountdownStart(() => {
@@ -458,6 +476,31 @@ export class RemotePage {
             const content = this.uiManager.createElement('div', 'text-center retro-text');
             const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'RECONNECTION TIMEOUT');
             const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'Opponent did not reconnect in time. The game has ended.');
+            const backButton = this.uiManager.createButton('BACK TO LOBBY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.backToLobby());
+            content.appendChild(title);
+            content.appendChild(message);
+            content.appendChild(backButton);
+            startOverlay.appendChild(content);
+            startOverlay.classList.remove('hidden');
+        }
+    }
+    /**
+     * handleOpponentAbandoned - Called when opponent starts new game instead of reconnecting
+     */
+    handleOpponentAbandoned(data) {
+        console.log("[RemotePage] Handling opponent abandoned", data);
+        // Clean up game manager now
+        if (this.gameManager) {
+            this.gameManager.destroy();
+            this.gameManager = null;
+        }
+        // Show abandoned notification
+        const startOverlay = document.querySelector('[data-overlay="start-game"]');
+        if (startOverlay) {
+            startOverlay.innerHTML = '';
+            const content = this.uiManager.createElement('div', 'text-center retro-text');
+            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'OPPONENT LEFT');
+            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'Your opponent has started a new game. This game has been ended.');
             const backButton = this.uiManager.createButton('BACK TO LOBBY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.backToLobby());
             content.appendChild(title);
             content.appendChild(message);

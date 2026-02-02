@@ -24,6 +24,7 @@ export class GameManager {
         this.onMatchmakingError = null;
         this.onOpponentReconnected = null;
         this.onReconnectionTimeout = null;
+        this.onOpponentAbandoned = null;
         this.onCountdownStart = null;
         this.isRemoteGame = false; // Set to true when opponent is found
         this.isInCountdown = false; // Prevent draw() from overwriting countdown
@@ -100,6 +101,9 @@ export class GameManager {
     getPlayerNumber() {
         return this.playerNumber;
     }
+    getGameUID() {
+        return this.gameUID;
+    }
     /**
      * Set the player number (used for reconnection)
      */
@@ -169,6 +173,10 @@ export class GameManager {
             else if (data.type === "reconnection-timeout") {
                 console.log("[GameManager] RECONNECTION TIMEOUT:", data);
                 this.handleReconnectionTimeout(data);
+            }
+            else if (data.type === "opponent-abandoned") {
+                console.log("[GameManager] OPPONENT ABANDONED:", data);
+                this.handleOpponentAbandoned(data);
             }
         });
     }
@@ -294,10 +302,28 @@ export class GameManager {
         }
     }
     /**
+     * handleOpponentAbandoned - Called when opponent starts new game instead of reconnecting
+     */
+    handleOpponentAbandoned(data) {
+        console.log("[GameManager] handleOpponentAbandoned() called", data);
+        if (this.onOpponentAbandoned) {
+            this.onOpponentAbandoned(data);
+        }
+        else {
+            console.warn("[GameManager] No onOpponentAbandoned callback set!");
+        }
+    }
+    /**
      * Set callback for reconnection timeout
      */
     setOnReconnectionTimeout(callback) {
         this.onReconnectionTimeout = callback;
+    }
+    /**
+     * Set callback for opponent abandoned
+     */
+    setOnOpponentAbandoned(callback) {
+        this.onOpponentAbandoned = callback;
     }
     /**
      * Set callback for when countdown starts (to hide overlays)
