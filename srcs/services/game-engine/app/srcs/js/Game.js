@@ -17,7 +17,6 @@ export class Game {
     this.type = data.type;
     this.settings = { ...DEFAULT_SETTINGS, ...settings };
     this.gameLoopInterval = null;
-    this.gameLoopRunning = false;
 
     // ============================================
     // PLAYER SOCKETS (for remote multiplayer)
@@ -253,19 +252,29 @@ export class Game {
   emitGameUpdate(gameState) {
     // Player 1 gets normal state
     if (this.player1Socket) {
-      this.player1Socket.emit(this.uuid, {
-        type: "game-update",
-        state: gameState
-      });
+      try {
+        this.player1Socket.emit(this.uuid, {
+          type: "game-update",
+          state: gameState
+        });
+      } catch (err) {
+        console.error(`[Game ${this.uuid}] Error emitting to player 1:`, err);
+      }
+    } else {
+      console.warn(`[Game ${this.uuid}] emitGameUpdate: player1Socket is null!`);
     }
 
     // Player 2 gets mirrored state (for remote games)
     if (this.isRemoteGame && this.player2Socket) {
-      const mirroredState = this.mirrorGameState(gameState);
-      this.player2Socket.emit(this.uuid, {
-        type: "game-update",
-        state: mirroredState
-      });
+      try {
+        const mirroredState = this.mirrorGameState(gameState);
+        this.player2Socket.emit(this.uuid, {
+          type: "game-update",
+          state: mirroredState
+        });
+      } catch (err) {
+        console.error(`[Game ${this.uuid}] Error emitting to player 2:`, err);
+      }
     }
   }
 
@@ -449,6 +458,7 @@ export class Game {
     }
 
     this.gameRunning = false;
+    this.gameLoopRunning = false; // Reset so resume can restart the loop
     if (this.gameLoopInterval) {
       clearInterval(this.gameLoopInterval);
       this.gameLoopInterval = null;
@@ -513,29 +523,34 @@ export class Game {
 
 
   gameLoop() {
-    // Prevent multiple game loops from running simultaneously
-    if (this.gameLoopRunning) {
-      console.warn(`[Game ${this.uuid}] gameLoop already running, skipping duplicate call`);
-      return;
-    }
-
-    if (this.gameLoopInterval) {
-      clearInterval(this.gameLoopInterval);
-    }
-
-    this.gameLoopRunning = true;
-
-    // 60 FPS = ~16.67ms par frame
-    this.gameLoopInterval = setInterval(() => {
-      if (!this.gameRunning) {
+    try {
+      if (this.gameLoopInterval) {
         clearInterval(this.gameLoopInterval);
         this.gameLoopInterval = null;
-        this.gameLoopRunning = false;
-        return;
       }
 
-      this.update();
-    }, 1000 / 60); // 60 FPS
+      console.log(`[Game ${this.uuid}] gameLoop() starting, gameRunning: ${this.gameRunning}`);
+
+      // 60 FPS = ~16.67ms par frame
+      this.gameLoopInterval = setInterval(() => {
+        try {
+          if (!this.gameRunning) {
+            console.log(`[Game ${this.uuid}] gameLoop() ending - gameRunning is false`);
+            if (this.gameLoopInterval) {
+              clearInterval(this.gameLoopInterval);
+              this.gameLoopInterval = null;
+            }
+            return;
+          }
+
+          this.update();
+        } catch (err) {
+          console.error(`[Game ${this.uuid}] Error in gameLoop interval:`, err);
+        }
+      }, 1000 / 60); // 60 FPS
+    } catch (err) {
+      console.error(`[Game ${this.uuid}] Error in gameLoop():`, err);
+    }
   }
 
   ///////// PLAYER INPUTS /////////
@@ -663,7 +678,6 @@ export class Game {
     if (this.gameLoopInterval) {
       clearInterval(this.gameLoopInterval);
       this.gameLoopInterval = null;
-      this.gameLoopRunning = false;
     }
 
     // Clear reconnection timeout to prevent callback from firing after destroy

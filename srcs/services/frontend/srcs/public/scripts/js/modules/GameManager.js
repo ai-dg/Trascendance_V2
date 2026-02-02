@@ -419,8 +419,9 @@ export class GameManager {
     resumeGame() {
         if (!gameSocket || !this.gameUID)
             throw Error("gameSocket is not ready");
-        this.isPaused = false;
-        this.notifyListeners();
+        // Don't change isPaused here - wait for server's game-start event
+        // this.isPaused = false;
+        // this.notifyListeners();
         gameSocket.emit(this.gameUID, { action: "resume-game" });
     }
     resetGame() {
@@ -507,8 +508,13 @@ export class GameManager {
         }
     }
     startInputLoop() {
-        if (!this.gameState.gameRunning)
+        if (!this.gameState.gameRunning) {
+            // Ensure the loop is fully stopped so it can be restarted on resume
+            console.log('[GameManager] startInputLoop stopped: gameRunning=false');
+            this.stopInputLoop();
             return;
+        }
+        console.log('[GameManager] startInputLoop frame - gameRunning=true, animationId set');
         // Send inputs to server
         this.sendPlayerInputs();
         // Render the current state from server
@@ -522,6 +528,11 @@ export class GameManager {
             this.gameState = data.state;
             if (this.gameState.gameRunning)
                 this.isPaused = false;
+            // If game is running but input loop was stopped (e.g., after pause), restart it
+            if (this.gameState.gameRunning && !this.isInCountdown && !this.animationId) {
+                console.log('[GameManager] Restarting input loop: gameRunning=true, animationId=null');
+                this.startInputLoop();
+            }
             // Don't draw game state during countdown - would overwrite countdown numbers
             if (!this.isInCountdown) {
                 this.draw();
