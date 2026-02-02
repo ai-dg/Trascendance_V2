@@ -249,12 +249,12 @@ function setupGeneralGameSocket(socket) {
 				// If it's a remote game AND player 2 has joined, wait for reconnection
 				if (game.isRemoteGame && game.player2Id) {
 					console.log(`[Game Socket] Remote game with 2 players - waiting for reconnection`);
-					game.handlePlayerDisconnect(userId, (expiredGameUUID) => {
+					game.handlePlayerDisconnect(userId, async (expiredGameUUID) => {
 						// Cleanup callback when reconnection timeout expires
 						console.log(`[Game Socket] Reconnection timeout - cleaning up game ${expiredGameUUID}`);
 						const expiredGame = runningGames.get(expiredGameUUID);
 						if (expiredGame) {
-							expiredGame.destroy();
+							await expiredGame.destroy();
 							runningGames.delete(expiredGameUUID);
 							if (expiredGame.player1Id) userGames.delete(expiredGame.player1Id);
 							if (expiredGame.player2Id) userGames.delete(expiredGame.player2Id);
@@ -457,7 +457,7 @@ function onMatchFound(matchData) {
 	console.log(`[Server] Player 2 notified on their channel: ${player2GameUUID}`);
 }
 
-function gameHandler(uuid, data, socket){
+async function gameHandler(uuid, data, socket){
 	const game = runningGames.get(uuid);
 
 	if (!game)
@@ -523,7 +523,7 @@ function gameHandler(uuid, data, socket){
 			// Not a 2-player remote game, just destroy it
 			console.log(`[Game ${uuid}] Not a 2-player remote game, destroying`);
 			if (game) {
-				game.destroy();
+				await game.destroy();
 				runningGames.delete(uuid);
 				if (game.player1Id) userGames.delete(game.player1Id);
 				if (game.player2Id) userGames.delete(game.player2Id);
@@ -540,7 +540,7 @@ function gameHandler(uuid, data, socket){
 
 		// Clean up the game
 		if (game) {
-			game.destroy();
+			await game.destroy();
 			runningGames.delete(uuid);
 
 			// Clean up user tracking

@@ -619,6 +619,13 @@ export class Game {
       clearInterval(this.gameLoopInterval);
     }
 
+    // Clear reconnection timeout to prevent callback from firing after destroy
+    if (this.reconnectionTimeout) {
+      clearTimeout(this.reconnectionTimeout);
+      this.reconnectionTimeout = null;
+      console.log(`[Game ${this.uuid}] Reconnection timeout cleared on destroy`);
+    }
+
     // Clean up Redis subscription
     if (this.redisSubscriber) {
       try {
