@@ -15,6 +15,50 @@ import { handleMatchmaking, cancelSearch } from './matchmaking.js';
 const is_prod = process.env.NODE_ENV === "PROD";
 export const base_url = is_prod ? "www.transcendance.com" : "localhost";
 
+const AUTH_INTERNAL_URL = process.env.AUTH_INTERNAL_URL || 'https://auth_app:3000';
+
+function isNumericUserId(userId) {
+	if (userId === null || userId === undefined) return false;
+	if (typeof userId === 'number') return Number.isFinite(userId);
+	if (typeof userId !== 'string') return false;
+	return /^\d+$/.test(userId);
+}
+
+async function fetchAuthUserById(userId) {
+	if (!isNumericUserId(userId)) {
+		return { username: null, avatar: null };
+	}
+
+	try {
+		const serviceToken = jwt.sign(
+			{ service: 'realtime-sockets' },
+			process.env.JWT_SECRET,
+			{ expiresIn: '5m' }
+		);
+
+		const res = await fetch(`${AUTH_INTERNAL_URL}/username-id`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${serviceToken}`
+			},
+			body: JSON.stringify({ id: String(userId) })
+		});
+
+		if (!res.ok) {
+			return { username: null, avatar: null };
+		}
+		const data = await res.json();
+		return {
+			username: data?.data?.user?.pseudo ?? null,
+			avatar: data?.data?.user?.avatar ?? null
+		};
+	} catch (err) {
+		console.warn('[realtime-sockets] Failed to fetch user from auth:', err?.message || err);
+		return { username: null, avatar: null };
+	}
+}
+
 // Track active games and which users are in them
 const runningGames = new Map();
 const userGames = new Map(); // userId -> gameUUID mapping
@@ -403,6 +447,11 @@ function requestGameUID(socket, data){
 function onMatchFound(matchData) {
 	const { game, gameUUID, player1Socket, player1UserId, player2Socket, player2UserId, player2GameUUID } = matchData;
 
+	Promise.all([
+		fetchAuthUserById(player1UserId),
+		fetchAuthUserById(player2UserId)
+	]).then(([player1Info, player2Info]) => {
+
 	// Add player 2 to the game (we'll implement this in Game.js)
 	game.addPlayer2(player2Socket, player2UserId);
 
@@ -422,7 +471,9 @@ function onMatchFound(matchData) {
 	player1Socket.emit(gameUUID, {
 		type: "opponent-found",
 		playerNumber: 1,
-		opponentId: player2UserId
+		opponentId: player2UserId,
+		opponentUsername: player2Info?.username ?? null,
+		opponentAvatar: player2Info?.avatar ?? null
 	});
 
 	// Notify Player 2: "Opponent found!"
@@ -432,11 +483,29 @@ function onMatchFound(matchData) {
 		type: "opponent-found",
 		playerNumber: 2,
 		opponentId: player1UserId,
+		opponentUsername: player1Info?.username ?? null,
+		opponentAvatar: player1Info?.avatar ?? null,
 		gameUUID: gameUUID  // The game they should switch to
 	});
 
 	console.log(`[Server] Match ready! Game: ${gameUUID}`);
 	console.log(`[Server] Player 2 notified on their channel: ${player2GameUUID}`);
+	}).catch((err) => {
+		console.warn('[Server] Failed to enrich opponent-found payload:', err?.message || err);
+
+		// Fallback: send minimal payload
+		player1Socket.emit(gameUUID, {
+			type: "opponent-found",
+			playerNumber: 1,
+			opponentId: player2UserId
+		});
+		player2Socket.emit(player2GameUUID, {
+			type: "opponent-found",
+			playerNumber: 2,
+			opponentId: player1UserId,
+			gameUUID: gameUUID
+		});
+	});
 }
 
 function gameHandler(uuid, data, socket){

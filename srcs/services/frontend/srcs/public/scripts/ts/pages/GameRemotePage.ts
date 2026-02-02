@@ -11,6 +11,11 @@ export class RemotePage {
   private isSearchingOpponent: boolean = false;
   private selectedFriendId: string | null = null;
 
+	private avatarPlayer1ImgEl: HTMLImageElement | null = null;
+	private avatarPlayer2ImgEl: HTMLImageElement | null = null;
+	private player1LabelEl: HTMLElement | null = null;
+	private player2LabelEl: HTMLElement | null = null;
+
   constructor(uiManager: UIManager, onBack: () => void, user?: User | null) {
 	this.uiManager = uiManager;
 	this.onBack = onBack;
@@ -41,13 +46,13 @@ export class RemotePage {
     const avatarPlayer2Img = this.uiManager.createElement('img', 'rounded-full') as HTMLImageElement;
     avatarPlayer2Img.style.width = '110px';
     avatarPlayer2Img.style.height = '110px';
-    if (!this.user || !this.user.avatar)
-        avatarPlayer2Img.src = 'public/avatars/default.png';
-    else if (this.user.avatar.startsWith('http'))
-        avatarPlayer2Img.src = this.user.avatar;
-    else
-        avatarPlayer2Img.src = `public/avatars/${this.user.avatar}.png`;
+	//avatarPlayer2Img.src = this.resolveAvatarSrc(null);
+	avatarPlayer2Img.src = 'public/avatars/unknownPlayer.jpeg';
 	avatarPlayer2Section.appendChild(avatarPlayer2Img);
+
+	// Keep references so we can update after matchmaking
+	this.avatarPlayer1ImgEl = avatarPlayer1Img;
+	this.avatarPlayer2ImgEl = avatarPlayer2Img;
 
 
 	// Score Display
@@ -63,10 +68,13 @@ export class RemotePage {
 	const vsLabel = this.uiManager.createElement('div', 'text-2xl opacity-40', 'VS');
 
 	const player2Score = this.uiManager.createElement('div', 'text-center');
-	const player2Label = this.uiManager.createElement('div', 'text-lg opacity-60', 'PLAYER 2');
+	const player2Label = this.uiManager.createElement('div', 'text-lg opacity-60', '???');
 	const player2Value = this.uiManager.createElement('div', 'text-4xl tracking-wider', '00');
 	player2Score.appendChild(player2Label);
 	player2Score.appendChild(player2Value);
+
+	this.player1LabelEl = player1Label;
+	this.player2LabelEl = player2Label;
 
 	scoreDisplay.appendChild(avatarPlayer1Section);
 	scoreDisplay.appendChild(player1Score);
@@ -428,6 +436,20 @@ export class RemotePage {
 	this.isSearchingOpponent = false;
 	this.removeWaitingScreen();
 
+	const myUsername = this.user?.username ?? 'PLAYER 1';
+	const opponentUsername = data?.opponentUsername ?? (data?.opponentId !== undefined ? String(data.opponentId) : 'PLAYER 2');
+	const myAvatarSrc = this.resolveAvatarSrc(this.user?.avatar ?? null);
+	const opponentAvatarSrc = this.resolveAvatarSrc(data?.opponentAvatar ?? null);
+
+	if (this.player1LabelEl)
+		this.player1LabelEl.textContent = myUsername;
+	if (this.avatarPlayer1ImgEl)
+		this.avatarPlayer1ImgEl.src = myAvatarSrc;
+	if (this.player2LabelEl)
+		this.player2LabelEl.textContent = opponentUsername;
+	if (this.avatarPlayer2ImgEl)
+		this.avatarPlayer2ImgEl.src = opponentAvatarSrc;
+
 	// Show ready screen (both players need to click ready)
 	const startOverlay = document.querySelector<HTMLElement>('[data-overlay="start-game"]');
 	if (startOverlay) {
@@ -435,7 +457,8 @@ export class RemotePage {
 	  startOverlay.innerHTML = '';
 	  const content = this.uiManager.createElement('div', 'text-center retro-text');
 	  const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#00ffff]', 'OPPONENT FOUND!');
-	  const subtitle = this.uiManager.createElement('div', 'text-lg mb-6 text-[#ff1493]', `Playing against: ${data.opponentId}`);
+	  const subtitleName = data?.opponentUsername ?? data?.opponentId;
+	  const subtitle = this.uiManager.createElement('div', 'text-lg mb-6 text-[#ff1493]', `Playing against: ${subtitleName}`);
 	  const readyButton = this.uiManager.createButton(
 		'READY',
 		'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',
@@ -448,6 +471,14 @@ export class RemotePage {
 	  startOverlay.classList.remove('hidden');
 	}
   }
+
+	private resolveAvatarSrc(avatar: string | null | undefined): string {
+		if (!avatar)
+			return 'public/avatars/default.png';
+		if (avatar.startsWith('http'))
+			return avatar;
+		return `public/avatars/${avatar}.png`;
+	}
 
   /**
    * handleOpponentDisconnected - Called when opponent leaves the game
