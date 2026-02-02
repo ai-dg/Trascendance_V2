@@ -36,6 +36,30 @@ export async function friend_request_route(request, reply) {
             ON CONFLICT(user_id, friend_id) DO NOTHING
         `, [userId, receiverId, userId]);
 
+        let username = `User ${userId}`;
+        try {
+        const res = await fetch(`https://auth_app:3000/username-id`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ id: userId }),
+        });
+        if (res.ok) {
+            const userData = await res.json();
+            console.log(`Username found for user ${userId}:`, userData.data?.user?.pseudo);
+            if (userData.data?.user?.pseudo) {
+                username = userData.data.user.pseudo;
+            }
+        }
+        else {
+            console.log(`Failed to fetch username for user ${userId}:`, res.status);
+        }
+        } catch (error) {
+            console.error(`Error fetching user ${userId}:`, error);
+        }
+
         console.log("Publishing friend-request via Redis");
 
         await redis.publish('notifications', JSON.stringify({
@@ -44,7 +68,7 @@ export async function friend_request_route(request, reply) {
             payload: {
                 type: 'friend-request',
                 userId: userId,
-                message: `User ${userId} wants to be your friend!`
+                message: `User ${username} wants to be your friend!`
             }
         }));
         
@@ -90,11 +114,15 @@ export async function friend_request_response_route(request, reply) {
                 return reply.code(400).send({ success: false, message: "No pending friend request found" });
             }
         } else {
+            console.log(`User ${userId} is rejecting friend request from ${senderId}`);
             // Delete the request if rejected
-            await app.db.run(`
+            const data = await app.db.run(`
                 DELETE FROM friendships 
-                WHERE user_id = ? AND friend_id = ? AND status = 'pending'
-            `, [senderId, userId]);
+                WHERE (user_id = ? AND friend_id = ? AND status = 'pending')
+                OR (friend_id = ? AND user_id = ? AND status = 'pending')
+            `, [senderId, userId, senderId, userId]);
+            console.log(`Delete operation result:`, data);
+            console.log("Friend request rejected and removed from DB");
         }
         console.log("Publishing notifications via Redis");
 
@@ -405,7 +433,22 @@ export async function add_friend(request, reply) {
 						message: resData.message ||'Failed to send request' 
 					});
 				}
-
+                    const res = await fetch(`https://auth_app:3000/username-id`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({ id: senderId }),
+                    });
+                    if (!res.ok) {
+                        console.log(`Failed to fetch username for user ${senderId}:`, res.status);
+                    }
+                    if (res.ok) {
+                        const userData = await res.json();
+                        console.log(`Username found for user ${senderId}:`, userData.data?.user?.pseudo);
+                        const username = userData.data?.user?.pseudo || `User ${senderId}`;
+                    }
 				const isOnline = await redis.get(`online:${receiverId}`);
 
                 if (isOnline === 'true') {
@@ -415,7 +458,7 @@ export async function add_friend(request, reply) {
                         event: 'friend-request',
                         payload: {
                             senderId,
-                            message: `User ${senderId} wants to be your friend!`
+                            message: `User ${username} wants to be your friend!`
                         }
                     }));
 				} else {

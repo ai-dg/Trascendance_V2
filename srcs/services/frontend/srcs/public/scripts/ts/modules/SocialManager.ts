@@ -176,8 +176,14 @@ export class SocialManager {
         const errorMessageDiv = document.getElementById('error-message-div') as HTMLDivElement;
         const friendInput = document.getElementById('friend-input') as HTMLInputElement;
 
+        const sendFriendBtn = friendInput.nextElementSibling as HTMLButtonElement;
         try {
             if (this.currentUser) {
+                if (sendFriendBtn) {
+                    sendFriendBtn.disabled = true; 
+                    sendFriendBtn.textContent = '';
+                }
+
                 const senderId = this.currentUser.id;
                 const receiverId = await this.getIdByUsername(username);
                 
@@ -196,13 +202,15 @@ export class SocialManager {
                     },
                     body: JSON.stringify({ senderId, receiverId })
                 });
-            
-                if (!res.ok) {
-                    const resData = await res.json();
-                    throw new Error(resData.message || 'Failed to send friend request');
+                let data;
+                const contentType = res.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    data = await res.json();
+                } else {
+                    const text = await res.text();
+                    console.log("RESPOSTA ESTRANHA DO SERVIDOR:", text);
+                    data = { message: text || res.statusText };
                 }
-            
-                const data = await res.json();
                 if (!data.success) {
                     throw new Error(data.message || 'Failed to send friend request');
                 }
@@ -218,6 +226,11 @@ export class SocialManager {
             errorMessageDiv.textContent = "Failed to send request. Please try again.";
             errorMessageDiv.classList.remove('hidden', 'text-green-500');
             errorMessageDiv.classList.add('text-red-500');
+        } finally {
+            if (sendFriendBtn) {
+                sendFriendBtn.disabled = false; 
+                sendFriendBtn.textContent = 'Send';
+            }
         }
     }
 
@@ -281,7 +294,7 @@ export class SocialManager {
             switch (data.type) {
                 case 'friend-request':
                     this.addFriendRequestNotification(
-                        data.senderId,
+                        data.userId,
                         data.message
                     );
                     break;
@@ -341,13 +354,15 @@ export class SocialManager {
         notifMessage.textContent = message;
 
         const notifButtons = this.uiManager.createElement('div', 'flex gap-2');
-        const acceptBtn = this.uiManager.createElement('button', 'px-3 py-1 text-xs bg-green-500 text-black rounded hover:bg-green-400');
+        const acceptBtn = this.uiManager.createElement('button', 'px-3 py-1 text-xs bg-green-500 text-black rounded hover:bg-green-400') as HTMLButtonElement;
         acceptBtn.textContent = 'Accept';
 
-        const rejectBtn = this.uiManager.createElement('button', 'px-3 py-1 text-xs bg-red-500 text-black rounded hover:bg-red-400');
+        const rejectBtn = this.uiManager.createElement('button', 'px-3 py-1 text-xs bg-red-500 text-black rounded hover:bg-red-400') as HTMLButtonElement;
         rejectBtn.textContent = 'Reject';
         
         acceptBtn.addEventListener('click', async () => {
+            acceptBtn.disabled = true;
+            rejectBtn.disabled = true;
             try {
                 const res = await fetch(this.routerManager.getUrl('/live-chat/friend-request-response'), {
                     method: 'POST',
@@ -357,15 +372,19 @@ export class SocialManager {
                     },
                     body: JSON.stringify({ senderId: senderId, action: 'accept' })
                 });
+                if (!res.ok) throw new Error('Failed to accept friend request');
+                this.removeFriendRequestNotification(senderId);
+                this.loadFriendsList();
             } catch (error) {
                 console.error("Error accepting friend request:", error);
+                acceptBtn.disabled = false;
+                rejectBtn.disabled = false;
             }
-            this.removeFriendRequestNotification(senderId);
-            this.loadFriendsList();
         });
 
         rejectBtn.addEventListener('click', async () => {
             try {
+                console.log(`Rejecting friend request from sender ${senderId}`);
                 const res = await fetch(this.routerManager.getUrl('/live-chat/friend-request-response'), {
                     method: 'POST',
                     credentials: 'include',
@@ -374,10 +393,22 @@ export class SocialManager {
                     },
                     body: JSON.stringify({ senderId: senderId, action: 'reject' })
                 });
+                let data;
+                const contentType = res.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    data = await res.json();
+                } else {
+                    data = { message: await res.text() };
+                }
+
+                if (!res.ok || (data && !data.success)) {
+                    throw new Error(data.message || "Failed to reject");
+                }
+                this.removeFriendRequestNotification(senderId);
+                this.syncSocialPanel();
             } catch (error) {
                 console.error("Error rejecting friend request:", error);
             }
-            this.removeFriendRequestNotification(senderId);
         });
         
         notifButtons.appendChild(acceptBtn);
