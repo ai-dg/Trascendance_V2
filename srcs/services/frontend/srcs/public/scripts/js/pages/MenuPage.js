@@ -1,45 +1,37 @@
-import { UIManager } from '../modules/UIManager.js';
 export class MenuPage {
-    uiManager;
-    onPlayGameAI;
-    onPlayGameLocal;
-    onPlayGameOnline;
-    onChatWithFriends;
-    onSettings;
-    onLogout;
-    menuItems = [
-        {
-            icon: 'zap',
-            label: 'AI',
-            action: () => this.onPlayGameAI(),
-            color: '#ff1493',
-        },
-        {
-            icon: 'monitor',
-            label: 'LOCAL',
-            action: () => this.onPlayGameLocal(),
-            color: '#ff1493',
-        },
-        {
-            icon: 'monitor',
-            label: 'ONLINE',
-            action: () => this.onPlayGameOnline(),
-            color: '#ff1493',
-        },
-        {
-            icon: 'chat',
-            label: 'LIVE CHAT',
-            action: () => this.onChatWithFriends(),
-            color: '#00ffff',
-        },
-        {
-            icon: 'settings',
-            label: 'SETTINGS',
-            action: () => this.onSettings(),
-            color: '#9d4edd',
-        }
-    ];
     constructor(uiManager, onPlayGameAI, onPlayGameLocal, onPlayGameOnline, onChatWithFriends, onSettings, onLogout) {
+        this.menuItems = [
+            {
+                icon: 'zap',
+                label: 'AI',
+                action: () => this.onPlayGameAI(),
+                color: '#ff1493',
+            },
+            {
+                icon: 'monitor',
+                label: 'LOCAL',
+                action: () => this.onPlayGameLocal(),
+                color: '#ff1493',
+            },
+            {
+                icon: 'monitor',
+                label: 'ONLINE',
+                action: () => this.onPlayGameOnline(),
+                color: '#ff1493',
+            },
+            {
+                icon: 'chat',
+                label: 'LIVE CHAT',
+                action: () => this.onChatWithFriends(),
+                color: '#00ffff',
+            },
+            {
+                icon: 'settings',
+                label: 'SETTINGS',
+                action: () => this.onSettings(),
+                color: '#9d4edd',
+            }
+        ];
         this.uiManager = uiManager;
         this.onPlayGameAI = onPlayGameAI;
         this.onPlayGameLocal = onPlayGameLocal;
@@ -286,4 +278,3 @@ export class MenuPage {
         this.uiManager.container.appendChild(container);
     }
 }
-//# sourceMappingURL=MenuPage.js.map

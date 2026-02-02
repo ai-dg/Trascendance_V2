@@ -695,8 +695,11 @@ export class RemotePage {
     const winner = isGameOver ? (gameState.player1Score >= 10 ? 'Player 1' : 'Player 2') : null;
     const isPaused = this.gameManager ? this.gameManager.getIsPaused() : false;
 
+    console.log('[GameRemotePage] updateGameState called - gameRunning:', gameState.gameRunning, 'isPaused:', isPaused, 'hasStarted:', this.gameManager?.getHasStarted());
+
     // For waiting screen
     if (this.isSearchingOpponent) {
+      console.log('[GameRemotePage] Showing waiting screen');
       startOverlay?.classList.add('hidden');
       pauseOverlay?.classList.add('hidden');
       gameOverOverlay?.classList.add('hidden');
@@ -706,6 +709,7 @@ export class RemotePage {
     // Screen at the start of the game
     if (!this.gameManager?.getHasStarted())
     {
+      console.log('[GameRemotePage] Showing start overlay (game not started yet)');
       if (startOverlay)
         startOverlay.classList.remove('hidden');
       if (pauseOverlay)
@@ -715,25 +719,33 @@ export class RemotePage {
       return;
     }
 
+    // Screen when the game is paused - CHECK THIS BEFORE gameRunning!
+    else if (isPaused)
+    {
+      console.log('[GameRemotePage] Showing pause overlay');
+      if (pauseOverlay) {
+        pauseOverlay.classList.remove('hidden');
+        pauseOverlay.style.display = ''; // Clear inline style that might be hiding it
+      }
+      if (startOverlay) {
+        startOverlay.classList.add('hidden');
+        startOverlay.style.display = 'none';
+      }
+      if (gameOverOverlay) {
+        gameOverOverlay.classList.add('hidden');
+        gameOverOverlay.style.display = 'none';
+      }
+      return;
+    }
+
     // Screen when the game is running
     else if (gameState.gameRunning)
     {
+      console.log('[GameRemotePage] Game running - hiding all overlays');
       if (startOverlay)
         startOverlay.classList.add('hidden');
       if (pauseOverlay)
         pauseOverlay.classList.add('hidden');
-      if (gameOverOverlay)
-        gameOverOverlay.classList.add('hidden');
-      return;
-    }
-
-    // Screen when the game is paused
-    else if (isPaused)
-    {
-      if (pauseOverlay)
-        pauseOverlay.classList.remove('hidden');
-      if (startOverlay)
-        startOverlay.classList.add('hidden');
       if (gameOverOverlay)
         gameOverOverlay.classList.add('hidden');
       return;

@@ -1,7 +1,5 @@
 import { AuthManager } from "./AuthManager.js";
 export class CheckManager {
-    auth;
-    languageManager;
     // TODO: maybe should get Translations text in the constructor
     constructor(languageManager) {
         this.auth = new AuthManager(() => console.log("To register user or login in someone"));
@@ -96,4 +94,3 @@ export class CheckManager {
         });
     }
 }
-//# sourceMappingURL=CheckManager.js.map

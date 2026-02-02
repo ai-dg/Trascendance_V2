@@ -2,15 +2,12 @@ import { getErrorMessage } from './ErrorManager.js';
 import { RouterManager } from './RouterManager.js';
 import { OTPManagers } from './OTPManager.js';
 export class AuthManager {
-    onBackToCheckOtp;
-    otpManager;
-    currentUser = null;
-    listeners = [];
-    onChangePasswordRequest;
-    otpData = null;
-    router = new RouterManager();
     constructor(onBackToCheckOtp) {
         this.onBackToCheckOtp = onBackToCheckOtp;
+        this.currentUser = null;
+        this.listeners = [];
+        this.otpData = null;
+        this.router = new RouterManager();
         this.loadUserFromStorage();
         this.onBackToCheckOtp = onBackToCheckOtp;
         this.otpManager = new OTPManagers();
@@ -403,4 +400,3 @@ export class AuthManager {
         this.listeners.forEach(callback => callback(this.currentUser));
     }
 }
-//# sourceMappingURL=AuthManager.js.map

@@ -1,39 +1,37 @@
 import { gameSocket } from "../app.js";
 //import { INITIAL_READY_STATE } from "../../../realtime-sockets/app/srcs/Data.js";
 export class GameManager {
-    ctx;
-    gameState;
-    keys = {};
-    animationId = null;
-    listeners = [];
-    gameUID = null;
-    CANVAS_WIDTH = 800;
-    CANVAS_HEIGHT = 400;
-    PADDLE_WIDTH = 10;
-    PADDLE_HEIGHT = 80;
-    hasStarted = false;
-    isReady = false;
-    isPaused = false;
-    intervalId = null;
-    onKeyDown = null;
-    onKeyUp = null;
-    // Remote game properties
-    playerNumber = 1; // 1 or 2 (assigned by matchmaking)
-    opponentId = null;
-    onOpponentFound = null;
-    onOpponentDisconnected = null;
-    onMatchmakingError = null;
-    onOpponentReconnected = null;
-    onReconnectionTimeout = null;
-    onCountdownStart = null;
-    isRemoteGame = false; // Set to true when opponent is found
-    isInCountdown = false; // Prevent draw() from overwriting countdown
-    // A garder ?
-    playersReadyStatus = {
-        player1: false,
-        player2: false
-    };
     constructor(canvas, UUID) {
+        this.keys = {};
+        this.animationId = null;
+        this.listeners = [];
+        this.gameUID = null;
+        this.CANVAS_WIDTH = 800;
+        this.CANVAS_HEIGHT = 400;
+        this.PADDLE_WIDTH = 10;
+        this.PADDLE_HEIGHT = 80;
+        this.hasStarted = false;
+        this.isReady = false;
+        this.isPaused = false;
+        this.intervalId = null;
+        this.onKeyDown = null;
+        this.onKeyUp = null;
+        // Remote game properties
+        this.playerNumber = 1; // 1 or 2 (assigned by matchmaking)
+        this.opponentId = null;
+        this.onOpponentFound = null;
+        this.onOpponentDisconnected = null;
+        this.onMatchmakingError = null;
+        this.onOpponentReconnected = null;
+        this.onReconnectionTimeout = null;
+        this.onCountdownStart = null;
+        this.isRemoteGame = false; // Set to true when opponent is found
+        this.isInCountdown = false; // Prevent draw() from overwriting countdown
+        // A garder ?
+        this.playersReadyStatus = {
+            player1: false,
+            player2: false
+        };
         this.gameUID = UUID;
         this.ctx = canvas.getContext('2d');
         this.gameState = {
@@ -616,4 +614,3 @@ export class GameManager {
         this.ctx.shadowBlur = 0;
     }
 }
-//# sourceMappingURL=GameManager.js.map

@@ -3,4 +3,3 @@ export function getErrorMessage(error) {
         return error.message;
     return String(error);
 }
-//# sourceMappingURL=ErrorManager.js.map

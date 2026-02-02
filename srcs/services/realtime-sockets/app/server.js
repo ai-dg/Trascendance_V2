@@ -477,10 +477,14 @@ function gameHandler(uuid, data, socket){
 	}
 	else if (data.action === "player-ready")
 		game.setPlayerReady(data.player);
-	else if (data.action === "pause-game")
+	else if (data.action === "pause-game") {
+		console.log(`[Game ${uuid}] Received pause-game action from socket ${socket.id}`);
 		game.pauseGame();
-	else if (data.action === "resume-game")
+	}
+	else if (data.action === "resume-game") {
+		console.log(`[Game ${uuid}] Received resume-game action from socket ${socket.id}`);
 		game.resumeGame();
+	}
 	else if (data.action === "reset-game")
 		game.resetGame();
 	else if (data.action === "play-against-random-player") {

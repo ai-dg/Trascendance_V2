@@ -408,6 +408,13 @@ export class Game {
   }
 
   pauseGame() {
+    console.log(`[Game ${this.uuid}] pauseGame() called, gameRunning: ${this.gameRunning}`);
+
+    if (!this.gameRunning) {
+      console.log(`[Game ${this.uuid}] pauseGame() - game not running, cannot pause`);
+      return;
+    }
+
     this.gameRunning = false;
     if (this.gameLoopInterval) {
       clearInterval(this.gameLoopInterval);
@@ -416,16 +423,22 @@ export class Game {
     // For pause, send the current state (mirrored for player 2)
     this.emitGameUpdate(this.getGameState());
     this.emitToPlayers("game-paused", {});
+    console.log(`[Game ${this.uuid}] Game paused successfully`);
   }
 
   resumeGame() {
-    if (this.gameRunning)
+    console.log(`[Game ${this.uuid}] resumeGame() called, gameRunning: ${this.gameRunning}`);
+
+    if (this.gameRunning) {
+      console.log(`[Game ${this.uuid}] resumeGame() - game already running`);
       return;
+    }
 
     this.gameRunning = true;
 
     this.emitToPlayers("game-start", {});
     this.gameLoop();
+    console.log(`[Game ${this.uuid}] Game resumed successfully`);
   }
 
   resetGame() {

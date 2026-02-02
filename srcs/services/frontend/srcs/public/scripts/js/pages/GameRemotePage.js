@@ -1,14 +1,11 @@
-import { UIManager } from '../modules/UIManager.js';
 import { GameManager } from '../modules/GameManager.js';
 export class RemotePage {
-    uiManager;
-    onBack;
-    gameManager = null;
-    canvas = null;
-    user = null;
-    isSearchingOpponent = false;
-    selectedFriendId = null;
     constructor(uiManager, onBack, user) {
+        this.gameManager = null;
+        this.canvas = null;
+        this.user = null;
+        this.isSearchingOpponent = false;
+        this.selectedFriendId = null;
         this.uiManager = uiManager;
         this.onBack = onBack;
         this.user = user ?? null;
@@ -517,8 +514,10 @@ export class RemotePage {
         const isGameOver = gameState.player1Score >= 10 || gameState.player2Score >= 10;
         const winner = isGameOver ? (gameState.player1Score >= 10 ? 'Player 1' : 'Player 2') : null;
         const isPaused = this.gameManager ? this.gameManager.getIsPaused() : false;
+        console.log('[GameRemotePage] updateGameState called - gameRunning:', gameState.gameRunning, 'isPaused:', isPaused, 'hasStarted:', this.gameManager?.getHasStarted());
         // For waiting screen
         if (this.isSearchingOpponent) {
+            console.log('[GameRemotePage] Showing waiting screen');
             startOverlay?.classList.add('hidden');
             pauseOverlay?.classList.add('hidden');
             gameOverOverlay?.classList.add('hidden');
@@ -526,6 +525,7 @@ export class RemotePage {
         }
         // Screen at the start of the game
         if (!this.gameManager?.getHasStarted()) {
+            console.log('[GameRemotePage] Showing start overlay (game not started yet)');
             if (startOverlay)
                 startOverlay.classList.remove('hidden');
             if (pauseOverlay)
@@ -534,22 +534,30 @@ export class RemotePage {
                 gameOverOverlay.classList.add('hidden');
             return;
         }
+        // Screen when the game is paused - CHECK THIS BEFORE gameRunning!
+        else if (isPaused) {
+            console.log('[GameRemotePage] Showing pause overlay');
+            if (pauseOverlay) {
+                pauseOverlay.classList.remove('hidden');
+                pauseOverlay.style.display = ''; // Clear inline style that might be hiding it
+            }
+            if (startOverlay) {
+                startOverlay.classList.add('hidden');
+                startOverlay.style.display = 'none';
+            }
+            if (gameOverOverlay) {
+                gameOverOverlay.classList.add('hidden');
+                gameOverOverlay.style.display = 'none';
+            }
+            return;
+        }
         // Screen when the game is running
         else if (gameState.gameRunning) {
+            console.log('[GameRemotePage] Game running - hiding all overlays');
             if (startOverlay)
                 startOverlay.classList.add('hidden');
             if (pauseOverlay)
                 pauseOverlay.classList.add('hidden');
-            if (gameOverOverlay)
-                gameOverOverlay.classList.add('hidden');
-            return;
-        }
-        // Screen when the game is paused
-        else if (isPaused) {
-            if (pauseOverlay)
-                pauseOverlay.classList.remove('hidden');
-            if (startOverlay)
-                startOverlay.classList.add('hidden');
             if (gameOverOverlay)
                 gameOverOverlay.classList.add('hidden');
             return;
@@ -773,4 +781,3 @@ export class RemotePage {
             this.uiManager.container.appendChild(WaitingScreen);
     }
 }
-//# sourceMappingURL=GameRemotePage.js.map

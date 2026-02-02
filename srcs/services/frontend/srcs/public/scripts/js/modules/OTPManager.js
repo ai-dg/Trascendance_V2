@@ -1,6 +1,5 @@
 import { RouterManager } from "./RouterManager.js";
 export class OTPManagers {
-    router;
     constructor() {
         this.router = new RouterManager();
     }
@@ -55,4 +54,3 @@ export class OTPManagers {
         }
     }
 }
-//# sourceMappingURL=OTPManager.js.map
