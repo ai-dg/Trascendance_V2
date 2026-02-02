@@ -10,7 +10,6 @@ export class GameManager {
         this.CANVAS_HEIGHT = 400;
         this.PADDLE_WIDTH = 10;
         this.PADDLE_HEIGHT = 80;
-        this.PADDLE_SPEED = 8; // Must match server's PADDLE_SPEED
         this.hasStarted = false;
         this.isReady = false;
         this.isPaused = false;
@@ -446,48 +445,20 @@ export class GameManager {
     startInputLoop() {
         if (!this.gameState.gameRunning)
             return;
-        // Apply local paddle movement immediately for responsiveness
-        this.applyLocalPaddleMovement();
         // Send inputs to server
         this.sendPlayerInputs();
-        // Render the current state (local prediction + server ball/opponent)
+        // Render the current state from server
         this.draw();
         this.animationId = requestAnimationFrame(() => this.startInputLoop());
     }
-    /**
-     * Apply paddle movement locally for instant feedback (client-side prediction)
-     * This modifies the display position only, doesn't affect game state
-     */
-    applyLocalPaddleMovement() {
-        // Only do local prediction for remote games
-        if (!this.isRemoteGame)
-            return;
-        // Apply prediction to a temporary render state
-        // Note: This is overridden by server state in updateGame, which is correct
-        // The prediction is just for smoother visual feedback between server updates
-        const paddle = this.gameState.paddle1;
-        // Apply movement based on keys
-        if (this.keys['w']) {
-            paddle.y -= this.PADDLE_SPEED;
-        }
-        if (this.keys['s']) {
-            paddle.y += this.PADDLE_SPEED;
-        }
-        // Clamp to canvas bounds
-        paddle.y = Math.max(0, Math.min(this.CANVAS_HEIGHT - this.PADDLE_HEIGHT, paddle.y));
-    }
     updateGame(data) {
         if (data.state) {
-            // Always use server state as the authoritative source
-            // This ensures collision detection is accurate
+            // Always use server state directly - server is authoritative
+            // This ensures both players see identical positions
             this.gameState = data.state;
-
             if (this.gameState.gameRunning)
                 this.isPaused = false;
-            // Only draw here for non-remote games (remote games draw in startInputLoop)
-            if (!this.isRemoteGame) {
-                this.draw();
-            }
+            this.draw();
             this.notifyListeners();
         }
     }

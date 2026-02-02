@@ -690,9 +690,6 @@ export class RemotePage {
     // Screen when the game is over
     else if (isGameOver && winner)
     {
-      // Get player number before destroying gameManager
-      const playerNum = this.gameManager?.getPlayerNumber() ?? 1;
-
       if (this.gameManager) {
         this.gameManager.destroy();
         this.gameManager = null;
@@ -701,9 +698,10 @@ export class RemotePage {
         // Update game over content to return to lobby instead of playing again
         const winnerText = gameOverOverlay.querySelector('.text-2xl');
         if (winnerText) {
-          winnerText.textContent = winner === 'Player 1' ?
-            (playerNum === 1 ? 'YOU WIN!' : 'YOU LOSE!') :
-            (playerNum === 2 ? 'YOU WIN!' : 'YOU LOSE!');
+          // After server mirroring, player1Score is always YOUR score
+          // and player2Score is always opponent's score for BOTH players
+          // So if player1Score >= 10, YOU won. If player2Score >= 10, opponent won.
+          winnerText.textContent = gameState.player1Score >= 10 ? 'YOU WIN!' : 'YOU LOSE!';
         }
 
         const playAgainBtn = gameOverOverlay.querySelector('button');
