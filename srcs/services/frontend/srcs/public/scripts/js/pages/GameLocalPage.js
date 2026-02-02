@@ -116,7 +116,7 @@ export class GamePageLocal {
         const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-6xl');
         content.appendChild(gameContainer);
         content.appendChild(backButtonContainer);
-        const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
+        const container = this.uiManager.createElement('div', 'retro-container min-h-screen w-full flex flex-col items-center justify-center p-8');
         container.appendChild(content);
         this.uiManager.clear();
         this.uiManager.container.appendChild(container);

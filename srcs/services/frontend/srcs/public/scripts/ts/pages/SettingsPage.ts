@@ -43,7 +43,7 @@ export class SettingsPage {
   }
 
   public render(): void {
-    const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-start p-8');
+    const container = this.uiManager.createElement('div', 'retro-container min-h-screen w-full flex flex-col items-center justify-center p-8');
 
     const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-4xl');
 
@@ -58,7 +58,7 @@ export class SettingsPage {
     // Back Button
     const backButton = this.uiManager.createButton(
       this.t('backtoMenu'),
-      'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mb-8',
+      'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] mt-4 hover:text-black transition-all duration-200 flex items-center justify-center gap-2 mb-8 mx-auto',
       this.onBack
     );
     const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
@@ -67,30 +67,6 @@ export class SettingsPage {
     // Settings Grid
     const settingsGrid = this.uiManager.createElement('div', 'grid md:grid-cols-2 gap-8');
 
-    // Audio Settings
-    const audioCard = this.createSettingsCard(
-      'AUDIO',
-      'volume',
-      '#ff1493',
-      [
-        this.createToggleSetting('SOUND ENABLED', 'soundEnabled'),
-        this.createSliderSetting('MUSIC VOLUME', 'musicVolume', 0, 100, '%'),
-        this.createSliderSetting('EFFECTS VOLUME', 'effectsVolume', 0, 100, '%')
-      ]
-    );
-
-    // Visual Settings
-    const visualCard = this.createSettingsCard(
-      'DISPLAY',
-      'monitor',
-      '#00ffff',
-      [
-        this.createToggleSetting('FULLSCREEN', 'fullscreen'),
-        this.createToggleSetting('SCAN LINES', 'scanLines'),
-        this.createToggleSetting('GLOW EFFECTS', 'glowEffects'),
-        this.createToggleSetting('SHOW FPS', 'showFPS')
-      ]
-    );
 
     // Game Settings
     const gameCard = this.createSettingsCard(
@@ -115,9 +91,6 @@ export class SettingsPage {
       userSettings = this.userSettings();
     }
 
-
-    settingsGrid.appendChild(audioCard);
-    settingsGrid.appendChild(visualCard);
     settingsGrid.appendChild(gameCard);
 
     if (userSettings)
@@ -138,9 +111,9 @@ export class SettingsPage {
     saveNotice.appendChild(noticeText);
 
     content.appendChild(header);
-    content.appendChild(backButton);
     content.appendChild(settingsGrid);
     content.appendChild(resetContainer);
+    content.appendChild(backButton);
     content.appendChild(saveNotice);
 
     container.appendChild(content);
