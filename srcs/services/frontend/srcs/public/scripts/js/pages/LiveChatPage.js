@@ -59,9 +59,9 @@ export class LiveChatPage {
         }
     }
     createProfileColumn() {
-        const profileDiv = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 min-h-[700px] flex-shrink-0 w-60');
-        profileDiv.style.minHeight = '600px';
+        const profileDiv = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 flex-shrink-0 w-60');
         profileDiv.id = 'profile-div';
+        profileDiv.style.minHeight = '350px';
         const avatarSection = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
         const avatarImg = this.uiManager.createElement('img', 'w-12 h-12 rounded-full border-2 border-[#ff1493] cursor-pointer');
         avatarSection.style.width = '100px';
@@ -80,13 +80,13 @@ export class LiveChatPage {
         else
             username.textContent = this.currentSelectedFriend.username;
         const btnDiv = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
-        const deleteBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-red rounded');
+        const deleteBtn = this.uiManager.createElement('button', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
         deleteBtn.id = 'delete-friend-btn';
-        deleteBtn.textContent = "DELETE FRIEND";
+        deleteBtn.textContent = "DELETE";
         deleteBtn.className += ' hidden';
-        const blockBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-red rounded');
+        const blockBtn = this.uiManager.createElement('button', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
         blockBtn.id = 'block-friend-btn';
-        blockBtn.textContent = "BLOCK FRIEND";
+        blockBtn.textContent = "BLOCK";
         blockBtn.className += ' hidden';
         btnDiv.appendChild(deleteBtn);
         btnDiv.appendChild(blockBtn);
@@ -105,15 +105,37 @@ export class LiveChatPage {
         const messagesTitle = this.uiManager.createElement('div', 'text-[#00ffff] text-sm mb-2 opacity-60');
         messagesTitle.textContent = 'Messages';
         // Field of messages
-        const messagesContainer = this.uiManager.createElement('div', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 overflow-y-auto');
+        const messagesContainer = this.uiManager.createElement('div', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4');
+        messagesContainer.style.maxHeight = '500px';
         messagesContainer.style.minHeight = '500px';
+        messagesContainer.style.overflowY = 'auto';
         messagesContainer.id = 'messages-div';
         messagesDiv.appendChild(messagesTitle);
         messagesDiv.appendChild(messagesContainer);
+        const messagesSelectFriendText = this.uiManager.createElement('div', 'text-3xl text-[#ff1493] text-center retro-text');
+        messagesSelectFriendText.textContent = 'SELECT A FRIEND TO CHAT';
+        messagesSelectFriendText.style.marginTop = '200px';
+        messagesContainer.appendChild(messagesSelectFriendText);
+        messagesSelectFriendText.id = 'messages-select-friend-text';
+        messagesSelectFriendText.className += ' hidden';
         const inputDiv = this.uiManager.createElement('div', 'flex gap-2 mt-2 flex-shrink-0');
         const inputField = this.uiManager.createElement('input', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
-        const sendButton = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-black rounded');
+        inputField.id = 'input-field';
+        inputField.className += ' hidden';
+        const sendButton = this.uiManager.createElement('button', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
         sendButton.textContent = 'SEND';
+        sendButton.className += ' hidden';
+        sendButton.id = 'send-button';
+        if (this.currentSelectedFriend) {
+            inputField.classList.remove('hidden');
+            sendButton.classList.remove('hidden');
+            messagesSelectFriendText.classList.add('hidden');
+        }
+        else {
+            inputField.classList.add('hidden');
+            sendButton.classList.add('hidden');
+            messagesSelectFriendText.classList.remove('hidden');
+        }
         inputField.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -159,6 +181,9 @@ export class LiveChatPage {
         this.setupFriendActionButtons();
         const profileDiv = document.getElementById('profile-div');
         profileDiv?.querySelectorAll('button').forEach(btn => btn.classList.remove('hidden'));
+        document.getElementById('send-button')?.classList.remove('hidden');
+        document.getElementById('input-field')?.classList.remove('hidden');
+        document.getElementById('messages-text')?.classList.remove('hidden');
     }
     updateProfileView() {
         const profileDiv = document.getElementById('profile-div');
