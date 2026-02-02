@@ -122,7 +122,7 @@ export class RemotePage {
         gameContainer.appendChild(canvasContainer);
         gameContainer.appendChild(controls);
         gameContainer.appendChild(gameControls);
-        // Main Bloc 
+        // Main Bloc
         const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-6xl');
         content.appendChild(gameContainer);
         content.appendChild(backButtonContainer);
@@ -130,9 +130,106 @@ export class RemotePage {
         container.appendChild(content);
         this.uiManager.clear();
         this.uiManager.container.appendChild(container);
-        // Initialize game manager
-        if (this.canvas)
-            this.requestNewGame();
+        // Check if there's a game to reconnect to
+        this.checkForReconnection();
+    }
+    /**
+     * Check if there's an existing game to reconnect to
+     */
+    checkForReconnection() {
+        GameManager.checkForReconnection((result) => {
+            if (result.hasGame) {
+                console.log("[RemotePage] Found game to reconnect:", result);
+                this.showReconnectionOption(result);
+            }
+            else {
+                console.log("[RemotePage] No game to reconnect to");
+                // Just show the normal lobby (already displayed)
+            }
+        });
+    }
+    /**
+     * Show option to reconnect to an existing game
+     */
+    showReconnectionOption(data) {
+        const startOverlay = document.querySelector('[data-overlay="start-game"]');
+        if (startOverlay) {
+            startOverlay.innerHTML = '';
+            const content = this.uiManager.createElement('div', 'text-center retro-text');
+            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#00ffff]', 'ONGOING GAME FOUND');
+            // Show current score
+            const scoreText = data.gameState ?
+                `Score: ${data.gameState.player1Score} - ${data.gameState.player2Score}` :
+                '';
+            const scoreDisplay = this.uiManager.createElement('div', 'text-lg mb-2 text-[#ff1493]', scoreText);
+            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'You have an ongoing game. Would you like to reconnect?');
+            const buttonsContainer = this.uiManager.createElement('div', 'flex flex-col gap-4 items-center');
+            const reconnectButton = this.uiManager.createButton('RECONNECT', 'retro-button bg-[#00ffff] text-black px-8 py-3 rounded border-2 border-[#00ffff] hover:bg-transparent hover:text-[#00ffff] transition-all duration-200', () => this.handleReconnect(data.gameUUID));
+            const newGameButton = this.uiManager.createButton('START NEW GAME', 'retro-button bg-transparent text-[#ff1493] px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200', () => this.requestNewGame());
+            buttonsContainer.appendChild(reconnectButton);
+            buttonsContainer.appendChild(newGameButton);
+            content.appendChild(title);
+            if (scoreText)
+                content.appendChild(scoreDisplay);
+            content.appendChild(message);
+            content.appendChild(buttonsContainer);
+            startOverlay.appendChild(content);
+            startOverlay.classList.remove('hidden');
+        }
+    }
+    /**
+     * Handle reconnection to existing game
+     */
+    handleReconnect(gameUUID) {
+        console.log("[RemotePage] Attempting to reconnect to game:", gameUUID);
+        GameManager.reconnectToGame(gameUUID, (result) => {
+            if (result.success) {
+                console.log("[RemotePage] Reconnection successful:", result);
+                // Set up the game manager with the reconnected game
+                if (!this.canvas)
+                    throw new Error("canvas is not initialized");
+                this.gameManager = new GameManager(this.canvas, result.gameUUID);
+                this.gameManager.setPlayerNumber(result.playerNumber); // Set correct player number for reconnection
+                this.setupGameListeners();
+                // Show ready screen
+                const startOverlay = document.querySelector('[data-overlay="start-game"]');
+                if (startOverlay) {
+                    startOverlay.innerHTML = '';
+                    const content = this.uiManager.createElement('div', 'text-center retro-text');
+                    const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#00ffff]', 'RECONNECTED!');
+                    const scoreText = result.gameState ?
+                        `Score: ${result.gameState.player1Score} - ${result.gameState.player2Score}` :
+                        '';
+                    const scoreDisplay = this.uiManager.createElement('div', 'text-lg mb-2 text-[#ff1493]', scoreText);
+                    const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', 'Both players click READY to resume the game.');
+                    const readyButton = this.uiManager.createButton('READY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
+                    content.appendChild(title);
+                    if (scoreText)
+                        content.appendChild(scoreDisplay);
+                    content.appendChild(message);
+                    content.appendChild(readyButton);
+                    startOverlay.appendChild(content);
+                    startOverlay.classList.remove('hidden');
+                }
+            }
+            else {
+                console.log("[RemotePage] Reconnection failed:", result);
+                // Show error and return to lobby
+                const startOverlay = document.querySelector('[data-overlay="start-game"]');
+                if (startOverlay) {
+                    startOverlay.innerHTML = '';
+                    const content = this.uiManager.createElement('div', 'text-center retro-text');
+                    const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'RECONNECTION FAILED');
+                    const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', result.message || 'Could not reconnect to the game.');
+                    const backButton = this.uiManager.createButton('BACK TO LOBBY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.requestNewGame());
+                    content.appendChild(title);
+                    content.appendChild(message);
+                    content.appendChild(backButton);
+                    startOverlay.appendChild(content);
+                    startOverlay.classList.remove('hidden');
+                }
+            }
+        });
     }
     //////////////////////////////////////////////
     ///////////// GAME INITIALIZATION ////////////
@@ -143,15 +240,28 @@ export class RemotePage {
             .forEach((el) => el.remove());
     }
     requestNewGame() {
-        // Always clear waiting overlay when returning to initial state
+        // Return to lobby - show game mode selection
         this.removeWaitingScreen();
         const gameOverOverlay = document.querySelector('[data-overlay="game-over"]');
         const startOverlay = document.querySelector('[data-overlay="start-game"]');
         if (gameOverOverlay) {
             gameOverOverlay.classList.add('hidden');
+        }
+        if (startOverlay) {
+            // Restore original lobby content (may have been replaced by error/disconnect screens)
+            startOverlay.innerHTML = '';
+            const startContent = this.uiManager.createElement('div', 'text-center retro-text');
+            const startTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'CHOOSE YOUR OPPONENT');
+            const startButtonRandom = this.uiManager.createButton('PLAY AGAINST RANDOM PLAYER', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.playAgainstRandomPlayer());
+            const startButtonFriend = this.uiManager.createButton('PLAY AGAINST A FRIEND', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200 mt-4', () => this.playAgainstFriend());
+            startContent.appendChild(startTitle);
+            startContent.appendChild(startButtonRandom);
+            startContent.appendChild(this.uiManager.createElement('div', 'h-4'));
+            startContent.appendChild(startButtonFriend);
+            startOverlay.appendChild(startContent);
             startOverlay.classList.remove('hidden');
         }
-        GameManager.requestGameID("remote");
+        // Don't create game yet - wait for user to select mode
     }
     setupGame(data) {
         console.log("should work here in setupGame");
@@ -168,6 +278,176 @@ export class RemotePage {
             this.updateScore(gameState.player1Score, gameState.player2Score);
             this.updateGameState(gameState);
         });
+        // Handle when matchmaking finds an opponent
+        this.gameManager.setOnOpponentFound((data) => {
+            console.log("[RemotePage] Opponent found!", data);
+            this.handleOpponentFound(data);
+        });
+        // Handle when opponent disconnects
+        this.gameManager.setOnOpponentDisconnected((data) => {
+            console.log("[RemotePage] Opponent disconnected!", data);
+            this.handleOpponentDisconnected(data);
+        });
+        // Handle matchmaking errors (e.g., already searching)
+        this.gameManager.setOnMatchmakingError((data) => {
+            console.log("[RemotePage] Matchmaking error!", data);
+            this.handleMatchmakingError(data);
+        });
+        // Handle when opponent reconnects
+        this.gameManager.setOnOpponentReconnected((data) => {
+            console.log("[RemotePage] Opponent reconnected!", data);
+            this.handleOpponentReconnected(data);
+        });
+        // Handle when reconnection times out
+        this.gameManager.setOnReconnectionTimeout((data) => {
+            console.log("[RemotePage] Reconnection timeout!", data);
+            this.handleReconnectionTimeout(data);
+        });
+    }
+    /**
+     * handleOpponentFound - Called when matchmaking finds an opponent
+     * Removes waiting screen and starts the ready phase
+     */
+    handleOpponentFound(data) {
+        this.isSearchingOpponent = false;
+        this.removeWaitingScreen();
+        // Show ready screen (both players need to click ready)
+        const startOverlay = document.querySelector('[data-overlay="start-game"]');
+        if (startOverlay) {
+            // Change the overlay content to show "Opponent found! Click READY"
+            startOverlay.innerHTML = '';
+            const content = this.uiManager.createElement('div', 'text-center retro-text');
+            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#00ffff]', 'OPPONENT FOUND!');
+            const subtitle = this.uiManager.createElement('div', 'text-lg mb-6 text-[#ff1493]', `Playing against: ${data.opponentId}`);
+            const readyButton = this.uiManager.createButton('READY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
+            content.appendChild(title);
+            content.appendChild(subtitle);
+            content.appendChild(readyButton);
+            startOverlay.appendChild(content);
+            startOverlay.classList.remove('hidden');
+        }
+    }
+    /**
+     * handleOpponentDisconnected - Called when opponent leaves the game
+     * Shows options to wait for reconnection or leave
+     */
+    handleOpponentDisconnected(data) {
+        console.log("[RemotePage] Handling opponent disconnect", data);
+        // DON'T destroy gameManager - keep listening for reconnection events
+        // Remove all overlays
+        this.removeWaitingScreen();
+        document.querySelector('[data-overlay="game-over"]')?.classList.add('hidden');
+        document.querySelector('[data-overlay="pause-game"]')?.classList.add('hidden');
+        // Show disconnect notification with wait/leave options
+        const startOverlay = document.querySelector('[data-overlay="start-game"]');
+        if (startOverlay) {
+            startOverlay.innerHTML = '';
+            const content = this.uiManager.createElement('div', 'text-center retro-text');
+            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'OPPONENT DISCONNECTED');
+            // Show current score if available
+            const scoreText = data.gameState ?
+                `Current score: ${data.gameState.player1Score} - ${data.gameState.player2Score}` :
+                '';
+            const scoreDisplay = this.uiManager.createElement('div', 'text-lg mb-2 text-[#00ffff]', scoreText);
+            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.waitingForReconnection ?
+                'Your opponent has disconnected. You can wait for them to reconnect or leave the game.' :
+                data.message || 'Your opponent has left the game.');
+            const buttonsContainer = this.uiManager.createElement('div', 'flex flex-col gap-4 items-center');
+            if (data.waitingForReconnection) {
+                const waitMessage = this.uiManager.createElement('div', 'text-sm mb-4 text-[#9d4edd]', 'Waiting for opponent to reconnect... (2 minute timeout)');
+                content.appendChild(waitMessage);
+            }
+            const leaveButton = this.uiManager.createButton('LEAVE GAME', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.backToLobby());
+            buttonsContainer.appendChild(leaveButton);
+            content.appendChild(title);
+            if (scoreText)
+                content.appendChild(scoreDisplay);
+            content.appendChild(message);
+            content.appendChild(buttonsContainer);
+            startOverlay.appendChild(content);
+            startOverlay.classList.remove('hidden');
+        }
+    }
+    /**
+     * handleOpponentReconnected - Called when disconnected opponent returns
+     * Shows ready screen for both players to resume
+     */
+    handleOpponentReconnected(data) {
+        console.log("[RemotePage] Handling opponent reconnect", data);
+        // Show ready screen
+        const startOverlay = document.querySelector('[data-overlay="start-game"]');
+        if (startOverlay) {
+            startOverlay.innerHTML = '';
+            const content = this.uiManager.createElement('div', 'text-center retro-text');
+            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#00ffff]', 'OPPONENT RECONNECTED!');
+            // Show current score
+            const scoreText = data.gameState ?
+                `Score: ${data.gameState.player1Score} - ${data.gameState.player2Score}` :
+                '';
+            const scoreDisplay = this.uiManager.createElement('div', 'text-lg mb-2 text-[#ff1493]', scoreText);
+            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', 'Both players click READY to resume the game.');
+            const readyButton = this.uiManager.createButton('READY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
+            content.appendChild(title);
+            if (scoreText)
+                content.appendChild(scoreDisplay);
+            content.appendChild(message);
+            content.appendChild(readyButton);
+            startOverlay.appendChild(content);
+            startOverlay.classList.remove('hidden');
+        }
+    }
+    /**
+     * handleReconnectionTimeout - Called when opponent doesn't reconnect in time
+     */
+    handleReconnectionTimeout(data) {
+        console.log("[RemotePage] Handling reconnection timeout", data);
+        // Clean up game manager now
+        if (this.gameManager) {
+            this.gameManager.destroy();
+            this.gameManager = null;
+        }
+        // Show timeout notification
+        const startOverlay = document.querySelector('[data-overlay="start-game"]');
+        if (startOverlay) {
+            startOverlay.innerHTML = '';
+            const content = this.uiManager.createElement('div', 'text-center retro-text');
+            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'RECONNECTION TIMEOUT');
+            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'Opponent did not reconnect in time. The game has ended.');
+            const backButton = this.uiManager.createButton('BACK TO LOBBY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.backToLobby());
+            content.appendChild(title);
+            content.appendChild(message);
+            content.appendChild(backButton);
+            startOverlay.appendChild(content);
+            startOverlay.classList.remove('hidden');
+        }
+    }
+    /**
+     * handleMatchmakingError - Called when matchmaking fails
+     * Shows error message and returns to lobby
+     */
+    handleMatchmakingError(data) {
+        console.log("[RemotePage] Handling matchmaking error", data);
+        this.isSearchingOpponent = false;
+        this.removeWaitingScreen();
+        // Clean up game manager since matchmaking failed
+        if (this.gameManager) {
+            this.gameManager.destroy();
+            this.gameManager = null;
+        }
+        // Show error on start overlay
+        const startOverlay = document.querySelector('[data-overlay="start-game"]');
+        if (startOverlay) {
+            startOverlay.innerHTML = '';
+            const content = this.uiManager.createElement('div', 'text-center retro-text');
+            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'MATCHMAKING ERROR');
+            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'An error occurred while searching for an opponent.');
+            const backButton = this.uiManager.createButton('BACK TO LOBBY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.backToLobby());
+            content.appendChild(title);
+            content.appendChild(message);
+            content.appendChild(backButton);
+            startOverlay.appendChild(content);
+            startOverlay.classList.remove('hidden');
+        }
     }
     //////////////////////////////////////////
     ///////////// UPDATES ////////////////////
@@ -228,10 +508,25 @@ export class RemotePage {
         }
         // Screen when the game is over
         else if (isGameOver && winner) {
-            if (this.gameManager)
+            if (this.gameManager) {
+                this.gameManager.destroy();
                 this.gameManager = null;
-            if (gameOverOverlay)
+            }
+            if (gameOverOverlay) {
+                // Update game over content to return to lobby instead of playing again
+                const winnerText = gameOverOverlay.querySelector('.text-2xl');
+                if (winnerText) {
+                    // After server mirroring, player1Score is always YOUR score
+                    // and player2Score is always opponent's score for BOTH players
+                    // So if player1Score >= 10, YOU won. If player2Score >= 10, opponent won.
+                    winnerText.textContent = gameState.player1Score >= 10 ? 'YOU WIN!' : 'YOU LOSE!';
+                }
+                const playAgainBtn = gameOverOverlay.querySelector('button');
+                if (playAgainBtn) {
+                    playAgainBtn.textContent = 'RETURN TO LOBBY';
+                }
                 gameOverOverlay.classList.remove('hidden');
+            }
             if (startOverlay)
                 startOverlay.classList.add('hidden');
             if (pauseOverlay)
@@ -246,7 +541,8 @@ export class RemotePage {
         if (!this.gameManager)
             return;
         const wasPaused = this.gameManager.getIsPaused();
-        this.gameManager.setReady();
+        // Pass true for remote games - each player marks only themselves ready
+        this.gameManager.setReady(true);
         if (!wasPaused) {
             const startOverlay = document.querySelector('[data-overlay="start-game"]');
             if (startOverlay)
@@ -264,9 +560,31 @@ export class RemotePage {
             this.gameManager.pauseGame();
     }
     backToMenu() {
-        if (this.gameManager)
-            this.gameManager.resetGame();
+        // Cancel matchmaking if searching
+        if (this.isSearchingOpponent && this.gameManager) {
+            this.gameManager.cancelSearch();
+            this.isSearchingOpponent = false;
+        }
+        // Destroy game and return to main menu
+        if (this.gameManager) {
+            this.gameManager.destroy();
+            this.gameManager = null;
+        }
         this.onBack();
+    }
+    backToLobby() {
+        // Cancel matchmaking if searching
+        if (this.isSearchingOpponent && this.gameManager) {
+            this.gameManager.cancelSearch();
+            this.isSearchingOpponent = false;
+        }
+        // Destroy current game
+        if (this.gameManager) {
+            this.gameManager.destroy();
+            this.gameManager = null;
+        }
+        // Return to lobby (show game mode selection)
+        this.requestNewGame();
     }
     resetGame() {
         if (!this.gameManager)
@@ -279,6 +597,20 @@ export class RemotePage {
     ///////////// OPTIONS GAME ///////////////////
     //////////////////////////////////////////////
     playAgainstRandomPlayer() {
+        // Create new game if needed
+        if (!this.gameManager) {
+            GameManager.requestGameID("remote");
+            // Wait for setupGame to be called, then start matchmaking
+            setTimeout(() => {
+                if (!this.gameManager)
+                    return;
+                this.playAgainstRandomPlayer(); // Retry after game is created
+            }, 100);
+            return;
+        }
+        this.startMatchmaking();
+    }
+    startMatchmaking() {
         if (!this.gameManager)
             return;
         this.isSearchingOpponent = true;
@@ -287,9 +619,11 @@ export class RemotePage {
         const WaitingScreen = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg z-10');
         WaitingScreen.setAttribute('data-overlay', 'waiting-screen');
         const WaitingScreenContent = this.uiManager.createElement('div', 'text-center retro-text');
-        const WaitingScreenTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'WAITING FOR AN OPPONENT');
+        const WaitingScreenTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'WAITING FOR AN OPPONENT...');
         WaitingScreenContent.appendChild(WaitingScreenTitle);
         const cancelButton = this.uiManager.createButton('CANCEL', 'retro-button bg-transparent text-[#ff1493] px-6 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200', () => {
+            // Cancel matchmaking search
+            this.gameManager?.cancelSearch();
             this.removeWaitingScreen();
             this.isSearchingOpponent = false;
             document.querySelector('[data-overlay="start-game"]')?.classList.remove('hidden');
@@ -301,10 +635,21 @@ export class RemotePage {
             canvasContainer.appendChild(WaitingScreen);
         else
             this.uiManager.container.appendChild(WaitingScreen);
+        // IMPORTANT: Tell server to start searching for opponent!
+        this.gameManager.searchForRandomOpponent();
     }
     playAgainstFriend() {
-        if (!this.gameManager)
+        // Create new game if needed
+        if (!this.gameManager) {
+            GameManager.requestGameID("remote");
+            // Wait for setupGame to be called, then show friend selection
+            setTimeout(() => {
+                if (!this.gameManager)
+                    return;
+                this.playAgainstFriend(); // Retry after game is created
+            }, 100);
             return;
+        }
         this.isSearchingOpponent = true;
         document.querySelector('[data-overlay="start-game"]')?.classList.add('hidden');
         this.removeWaitingScreen();
@@ -314,7 +659,7 @@ export class RemotePage {
         const WaitingScreenContent = this.uiManager.createElement('div', 'text-center retro-text');
         const WaitingScreenTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'INVITE A FRIEND');
         WaitingScreenContent.appendChild(WaitingScreenTitle);
-        // Friends List 
+        // Friends List
         const friendsList = this.uiManager.createElement('div', 'flex gap-4 justify-center');
         const selectedLabel = this.uiManager.createElement('div', 'retro-text text-xs opacity-60 mb-2', 'Select a friend');
         const friends = [

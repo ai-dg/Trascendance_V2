@@ -199,8 +199,10 @@ export class GamePageLocal {
         }
         // Screen when the game is over
         else if (isGameOver && winner) {
-            if (this.gameManager)
+            if (this.gameManager) {
+                this.gameManager.destroy();
                 this.gameManager = null;
+            }
             if (gameOverOverlay)
                 gameOverOverlay.classList.remove('hidden');
             if (startOverlay)
@@ -235,8 +237,10 @@ export class GamePageLocal {
             this.gameManager.pauseGame();
     }
     backToMenu() {
-        if (this.gameManager)
-            this.gameManager.resetGame();
+        if (this.gameManager) {
+            this.gameManager.destroy();
+            this.gameManager = null;
+        }
         this.onBack();
     }
     resetGame() {

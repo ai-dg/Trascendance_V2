@@ -223,11 +223,8 @@ export class AuthPage {
         // This would typically redirect to Google OAuth or open a popup
     }
     handle42SignIn() {
-        // TODO: Implement 42 OAuth
         console.log('42 Sign In clicked');
-        window.location.href = 'https://localhost/auth/42/login';
-        console.log('42 signin after window change');
-        // This would typically redirect to 42 OAuth or open a popup
+        window.location.href = `${window.location.origin}/auth/42/login`;
     }
     handleForgotPassword() {
         this.showForgotPassword = true;

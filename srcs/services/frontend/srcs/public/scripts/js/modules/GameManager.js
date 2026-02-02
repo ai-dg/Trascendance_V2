@@ -13,8 +13,18 @@ export class GameManager {
         this.hasStarted = false;
         this.isReady = false;
         this.isPaused = false;
+        this.intervalId = null;
         this.onKeyDown = null;
         this.onKeyUp = null;
+        // Remote game properties
+        this.playerNumber = 1; // 1 or 2 (assigned by matchmaking)
+        this.opponentId = null;
+        this.onOpponentFound = null;
+        this.onOpponentDisconnected = null;
+        this.onMatchmakingError = null;
+        this.onOpponentReconnected = null;
+        this.onReconnectionTimeout = null;
+        this.isRemoteGame = false; // Set to true when opponent is found
         // A garder ?
         this.playersReadyStatus = {
             player1: false,
@@ -39,12 +49,38 @@ export class GameManager {
         this.setupEventListeners();
         this.setupSocketListeners();
     }
-    destroy() {
+    /**
+     * Destroy the game manager
+     * @param notifyServer - If true, sends destroy-game to server. Set to false for remote games
+     *                       that should allow reconnection (server handles cleanup on disconnect)
+     */
+    destroy(notifyServer = true) {
+        console.log(`[GameManager] destroy() called for game: ${this.gameUID}, notifyServer: ${notifyServer}`);
         this.stopInputLoop();
         if (this.onKeyDown)
             window.removeEventListener('keydown', this.onKeyDown);
         if (this.onKeyUp)
             window.removeEventListener('keyup', this.onKeyUp);
+        if (gameSocket && this.gameUID) {
+            // Only notify server to destroy if explicitly requested
+            // For remote games in progress, let server handle via disconnect event
+            if (notifyServer) {
+                gameSocket.emit(this.gameUID, { action: "destroy-game" });
+                console.log(`[GameManager] Sent destroy-game to server for: ${this.gameUID}`);
+            }
+            else {
+                console.log(`[GameManager] NOT sending destroy-game (allowing reconnection)`);
+            }
+            // Remove socket listener to prevent memory leaks
+            gameSocket.removeAllListeners(this.gameUID);
+            console.log(`[GameManager] Socket listener removed for: ${this.gameUID}`);
+        }
+    }
+    /**
+     * Check if this is a remote game that has started (for reconnection logic)
+     */
+    isActiveRemoteGame() {
+        return this.isRemoteGame && this.hasStarted;
     }
     //////////////////////////////////////////
     ///////////// GETTERS ////////////////////
@@ -58,6 +94,17 @@ export class GameManager {
     getHasStarted() {
         return this.hasStarted;
     }
+    getPlayerNumber() {
+        return this.playerNumber;
+    }
+    /**
+     * Set the player number (used for reconnection)
+     */
+    setPlayerNumber(num) {
+        this.playerNumber = num;
+        this.isRemoteGame = true;
+        console.log(`[GameManager] Player number set to: ${num}`);
+    }
     //////////////////////////////////////////
     /////// SETUP SOCKET LISTENERS //////////
     /////////////////////////////////////////
@@ -65,6 +112,7 @@ export class GameManager {
         if (!gameSocket || !this.gameUID)
             throw Error("gameSocket is not ready");
         gameSocket.on(this.gameUID, (data) => {
+            console.log(`[GameManager] <<<< RECEIVED EVENT on ${this.gameUID}:`, data?.type || 'NO TYPE', data);
             if (!data?.type)
                 return;
             if (data.type === "ready-status") {
@@ -88,7 +136,147 @@ export class GameManager {
                 this.handleServerPlayAgainstRandomPlayer(data);
             else if (data.type === "play-against-friend")
                 this.handleServerPlayAgainstFriend(data);
+            else if (data.type === "opponent-found")
+                this.handleOpponentFound(data);
+            else if (data.type === "opponent-disconnected") {
+                console.log("[GameManager] OPPONENT DISCONNECTED EVENT RECEIVED", data);
+                this.handleOpponentDisconnected(data);
+            }
+            else if (data.type === "matchmaking-error") {
+                console.log("[GameManager] MATCHMAKING ERROR:", data);
+                this.handleMatchmakingError(data);
+            }
+            else if (data.type === "opponent-reconnected") {
+                console.log("[GameManager] OPPONENT RECONNECTED:", data);
+                this.handleOpponentReconnected(data);
+            }
+            else if (data.type === "reconnection-timeout") {
+                console.log("[GameManager] RECONNECTION TIMEOUT:", data);
+                this.handleReconnectionTimeout(data);
+            }
         });
+    }
+    /**
+     * handleOpponentFound - Called when matchmaking finds an opponent
+     */
+    handleOpponentFound(data) {
+        console.log("[GameManager] Opponent found!", data);
+        this.playerNumber = data.playerNumber; // 1 or 2
+        this.opponentId = data.opponentId;
+        this.isRemoteGame = true; // Mark this as a remote game
+        // If player 2, switch to the matched game UUID
+        if (data.playerNumber === 2 && data.gameUUID) {
+            console.log(`[GameManager] Player 2 switching from ${this.gameUID} to ${data.gameUUID}`);
+            // Remove old socket listener
+            if (gameSocket && this.gameUID) {
+                gameSocket.removeAllListeners(this.gameUID);
+                console.log(`[GameManager] Removed listener for old UUID: ${this.gameUID}`);
+            }
+            // Update to new game UUID
+            this.gameUID = data.gameUUID;
+            // Set up listener for the new game
+            this.setupSocketListeners();
+            console.log(`[GameManager] Now listening on matched game: ${this.gameUID}`);
+            // Confirm to server that we're now listening on the new channel
+            if (gameSocket && this.gameUID) {
+                gameSocket.emit(this.gameUID, { action: "player-2-joined" });
+                console.log(`[GameManager] Sent player-2-joined confirmation`);
+            }
+        }
+        // Notify listeners that opponent was found
+        if (this.onOpponentFound) {
+            this.onOpponentFound(data);
+        }
+    }
+    /**
+     * Set callback for when opponent is found (used by GameRemotePage)
+     */
+    setOnOpponentFound(callback) {
+        this.onOpponentFound = callback;
+    }
+    /**
+     * handleOpponentDisconnected - Called when opponent leaves the game
+     */
+    handleOpponentDisconnected(data) {
+        console.log("[GameManager] handleOpponentDisconnected() called", data);
+        // Stop the game
+        this.hasStarted = false;
+        this.isPaused = false;
+        if (this.intervalId) {
+            clearInterval(this.intervalId);
+            this.intervalId = null;
+        }
+        console.log("[GameManager] Calling onOpponentDisconnected callback");
+        // Notify UI (GameRemotePage will handle this)
+        if (this.onOpponentDisconnected) {
+            this.onOpponentDisconnected(data);
+        }
+        else {
+            console.warn("[GameManager] No onOpponentDisconnected callback set!");
+        }
+    }
+    /**
+     * Set callback for when opponent disconnects
+     */
+    setOnOpponentDisconnected(callback) {
+        this.onOpponentDisconnected = callback;
+    }
+    /**
+     * handleMatchmakingError - Called when matchmaking fails (e.g., already searching)
+     */
+    handleMatchmakingError(data) {
+        console.log("[GameManager] handleMatchmakingError() called", data);
+        if (this.onMatchmakingError) {
+            this.onMatchmakingError(data);
+        }
+        else {
+            console.warn("[GameManager] No onMatchmakingError callback set!");
+        }
+    }
+    /**
+     * Set callback for matchmaking errors
+     */
+    setOnMatchmakingError(callback) {
+        this.onMatchmakingError = callback;
+    }
+    /**
+     * handleOpponentReconnected - Called when disconnected opponent returns
+     */
+    handleOpponentReconnected(data) {
+        console.log("[GameManager] handleOpponentReconnected() called", data);
+        // Reset ready states - both need to click Ready again
+        this.isReady = false;
+        this.hasStarted = true; // Keep hasStarted true so we show ready screen, not start screen
+        if (this.onOpponentReconnected) {
+            this.onOpponentReconnected(data);
+        }
+        else {
+            console.warn("[GameManager] No onOpponentReconnected callback set!");
+        }
+    }
+    /**
+     * Set callback for when opponent reconnects
+     */
+    setOnOpponentReconnected(callback) {
+        this.onOpponentReconnected = callback;
+    }
+    /**
+     * handleReconnectionTimeout - Called when opponent doesn't reconnect in time
+     */
+    handleReconnectionTimeout(data) {
+        console.log("[GameManager] handleReconnectionTimeout() called", data);
+        if (this.onReconnectionTimeout) {
+            this.onReconnectionTimeout(data);
+        }
+        else {
+            console.warn("[GameManager] No onReconnectionTimeout callback set!");
+        }
+    }
+    /**
+     * Set callback for reconnection timeout
+     */
+    setOnReconnectionTimeout(callback) {
+        this.onReconnectionTimeout = callback;
     }
     setupEventListeners() {
         this.onKeyDown = (e) => {
@@ -117,15 +305,53 @@ export class GameManager {
             throw Error("gameSocket is not ready");
         gameSocket.emit("request-game-uid", { type, ...options });
     }
-    setReady() {
+    /**
+     * Check if user has a game waiting for reconnection
+     */
+    static checkForReconnection(onResult) {
+        if (!gameSocket)
+            throw Error("gameSocket is not ready");
+        // Set up one-time listeners for the response
+        gameSocket.once('reconnection-available', (data) => {
+            console.log("[GameManager] Reconnection available:", data);
+            onResult({ hasGame: true, ...data });
+        });
+        gameSocket.once('no-reconnection-available', () => {
+            console.log("[GameManager] No reconnection available");
+            onResult({ hasGame: false });
+        });
+        gameSocket.emit('check-reconnection');
+    }
+    /**
+     * Attempt to reconnect to an existing game
+     */
+    static reconnectToGame(gameUUID, onResult) {
+        if (!gameSocket)
+            throw Error("gameSocket is not ready");
+        // Set up one-time listeners for the response
+        gameSocket.once('reconnection-success', (data) => {
+            console.log("[GameManager] Reconnection success:", data);
+            onResult({ success: true, ...data });
+        });
+        gameSocket.once('reconnection-failed', (data) => {
+            console.log("[GameManager] Reconnection failed:", data);
+            onResult({ success: false, ...data });
+        });
+        gameSocket.emit('reconnect-to-game', { gameUUID });
+    }
+    setReady(isRemoteGame = false) {
         if (this.isReady)
             return;
         this.isReady = true;
         if (!gameSocket || !this.gameUID)
             throw Error("gameSocket is not ready");
+        // For remote games: send individual player number (1 or 2)
+        // For local/AI: send 3 to mark both players ready
+        const playerNum = isRemoteGame ? this.playerNumber : 3;
+        console.log(`[GameManager] setReady - sending player: ${playerNum} (isRemote: ${isRemoteGame})`);
         gameSocket.emit(this.gameUID, {
             action: "player-ready",
-            player: 3 // Pour le mode local et IA, on simule les 2 joueurs prêts // plus tard, pour les jeux a deux, on implémentera le numero du joueur a envoyer en fonction de l'attribution du placement...
+            player: playerNum
         });
         this.hasStarted = true;
     }
@@ -153,6 +379,25 @@ export class GameManager {
         this.stopInputLoop();
         this.notifyListeners();
         gameSocket.emit(this.gameUID, { action: "reset-game" });
+    }
+    /**
+     * searchForRandomOpponent - Tell server to find us an opponent
+     * This triggers the matchmaking system
+     */
+    searchForRandomOpponent() {
+        if (!this.gameUID || !gameSocket)
+            throw Error("Error with game socket!");
+        console.log("[GameManager] Searching for random opponent...");
+        gameSocket.emit(this.gameUID, { action: "play-against-random-player" });
+    }
+    /**
+     * cancelSearch - Cancel matchmaking search
+     */
+    cancelSearch() {
+        if (!this.gameUID || !gameSocket)
+            throw Error("Error with game socket!");
+        console.log("[GameManager] Canceling search...");
+        gameSocket.emit(this.gameUID, { action: "cancel-matchmaking" });
     }
     //////////////////////////////////////////
     ///////HANDLE SERVER EVENTS /////////////
@@ -200,11 +445,16 @@ export class GameManager {
     startInputLoop() {
         if (!this.gameState.gameRunning)
             return;
+        // Send inputs to server
         this.sendPlayerInputs();
+        // Render the current state from server
+        this.draw();
         this.animationId = requestAnimationFrame(() => this.startInputLoop());
     }
     updateGame(data) {
         if (data.state) {
+            // Always use server state directly - server is authoritative
+            // This ensures both players see identical positions
             this.gameState = data.state;
             if (this.gameState.gameRunning)
                 this.isPaused = false;
@@ -217,14 +467,37 @@ export class GameManager {
             throw Error("Error with game socket!");
         let paddle1 = 0;
         let paddle2 = 0;
-        if (this.keys['s'])
-            paddle1 = 1;
-        else if (this.keys['w'])
-            paddle1 = -1;
-        if (this.keys['arrowdown'])
-            paddle2 = 1;
-        else if (this.keys['arrowup'])
-            paddle2 = -1;
+        // For remote games: only send input for your assigned paddle
+        // Both players use W/S keys since the game is mirrored - everyone sees themselves on the left
+        if (this.isRemoteGame) {
+            if (this.playerNumber === 1) {
+                // Player 1 controls paddle1 (W/S keys)
+                if (this.keys['s'])
+                    paddle1 = 1;
+                else if (this.keys['w'])
+                    paddle1 = -1;
+                paddle2 = 0; // Don't send input for opponent's paddle
+            }
+            else if (this.playerNumber === 2) {
+                // Player 2 controls paddle2 (also W/S keys due to mirroring)
+                paddle1 = 0; // Don't send input for opponent's paddle
+                if (this.keys['s'])
+                    paddle2 = 1;
+                else if (this.keys['w'])
+                    paddle2 = -1;
+            }
+        }
+        else {
+            // For local/AI games: send both paddles
+            if (this.keys['s'])
+                paddle1 = 1;
+            else if (this.keys['w'])
+                paddle1 = -1;
+            if (this.keys['arrowdown'])
+                paddle2 = 1;
+            else if (this.keys['arrowup'])
+                paddle2 = -1;
+        }
         const state = {
             paddle1,
             paddle2

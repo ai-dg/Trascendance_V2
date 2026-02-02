@@ -5,27 +5,44 @@ import crypto from 'crypto';
 const { sign, verify } = jwt;
 
 export async function oauth_login_route(request, reply) {
-    console.log(process.env.FORTYTWO_CLIENT_ID);
-    console.log(process.env.FORTYTWO_CLIENT_SECRET);
-    const redirUrl = `https://api.intra.42.fr/oauth/authorize?client_id=${process.env.FORTYTWO_CLIENT_ID}&redirect_uri=${process.env.FORTYTWO_REDIRECT_URI}&response_type=code`;
+    // Build redirect URI dynamically from request host (supports localhost, LAN IP, domain)
+    const protocol = 'https';
+    const host = request.headers['x-forwarded-host'] || request.headers.host || 'localhost';
+    const redirectUri = `${protocol}://${host}/auth/42/callback`;
+
+    // Store the redirect URI in a cookie so the callback can use the same one
+    reply.setCookie('oauth_redirect_uri', redirectUri, {
+        path: '/',
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 300 // 5 minutes - enough for OAuth flow
+    });
+
+    const redirUrl = `https://api.intra.42.fr/oauth/authorize?client_id=${process.env.FORTYTWO_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
     return reply.redirect(redirUrl);
 }
 
 export async function oauth_callback_route(request, reply) {
-    
+
         const { code } = request.query;
         if (!code) return reply.status(400).send('Missing code');
 
-        console.log("code:", code);
+        // Get the redirect URI from cookie (set during login) or construct from request
+        const protocol = 'https';
+        const host = request.headers['x-forwarded-host'] || request.headers.host || 'localhost';
+        const redirectUri = request.cookies.oauth_redirect_uri || `${protocol}://${host}/auth/42/callback`;
+
+        // Clear the OAuth cookie
+        reply.clearCookie('oauth_redirect_uri', { path: '/' });
 
         try {
-            
+
             const params = new URLSearchParams({
                 grant_type: 'authorization_code',
                 client_id: process.env.FORTYTWO_CLIENT_ID,
                 client_secret: process.env.FORTYTWO_CLIENT_SECRET,
                 code,
-                redirect_uri: process.env.FORTYTWO_REDIRECT_URI,
+                redirect_uri: redirectUri,
             });
 
             const tokenRes = await fetch('https://api.intra.42.fr/oauth/token', {

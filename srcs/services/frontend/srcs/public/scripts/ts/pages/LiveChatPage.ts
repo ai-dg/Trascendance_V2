@@ -2,6 +2,7 @@ import { UIManager } from '../modules/UIManager.js';
 import type { User } from '../modules/TypesManager.js';
 import type { LanguageManager } from '../modules/LangManager.js';
 import type { RouterManager } from '../modules/RouterManager.js';
+import type { Socket } from "socket.io-client";
 import type { WebsocketManager } from '../modules/WebsocketManager.js';
 import { SocialManager } from '../modules/SocialManager.js';
 
@@ -142,7 +143,7 @@ export class LiveChatPage {
 
         btnDiv.appendChild(deleteBtn);
         btnDiv.appendChild(blockBtn);
-        
+
         avatarSection.appendChild(avatarImg);
         avatarSection.appendChild(username);
         avatarSection.appendChild(btnDiv);
@@ -161,7 +162,7 @@ export class LiveChatPage {
         // Title
         const messagesTitle = this.uiManager.createElement('div', 'text-[#00ffff] text-sm mb-2 opacity-60');
         messagesTitle.textContent = 'Messages';
-        
+
         // Field of messages
 
         

@@ -9,10 +9,15 @@ import fs from 'fs';
 import { Game } from '../../game-engine/app/srcs/js/Game.js';
 // import { GameManager } from '../../game-engine/app/srcs/js/GameManager.js';
 import path from 'path';
+import { handleMatchmaking, cancelSearch } from './matchmaking.js';
 
 
 const is_prod = process.env.NODE_ENV === "PROD";
 export const base_url = is_prod ? "www.transcendance.com" : "localhost";
+
+// Track active games and which users are in them
+const runningGames = new Map();
+const userGames = new Map(); // userId -> gameUUID mapping
 
 // HTTPS options
 let httpsOptions = null;
@@ -65,8 +70,6 @@ app.get('/', async () => {
 });
 
 const generalConnections = new Map();
-const runningGames = new Map();
-
 
 // Create Socket.IO server
 const io = new Server(app.server, {
@@ -218,7 +221,109 @@ function setupGeneralGameSocket(socket) {
 			userId: userId,
 			position: data.position
 		}));
+	});
 
+	// Handle disconnect - clean up matchmaking and games
+	socket.on('disconnect', async () => {
+		console.log(`[Game Socket] User ${userId} disconnected`);
+
+		// Cancel matchmaking search if they were searching
+		await cancelSearch(redis, userId);
+
+		// Check if this user was in an active game
+		const gameUUID = userGames.get(userId);
+		if (gameUUID) {
+			const game = runningGames.get(gameUUID);
+			if (game) {
+				console.log(`[Game Socket] User ${userId} was in game ${gameUUID}`);
+				console.log(`[Game Socket] Game type: ${game.type}, isRemoteGame: ${game.isRemoteGame}`);
+
+				// If it's a remote game, wait for reconnection instead of destroying
+				if (game.isRemoteGame) {
+					console.log(`[Game Socket] Remote game - waiting for reconnection`);
+					game.handlePlayerDisconnect(userId, (expiredGameUUID) => {
+						// Cleanup callback when reconnection timeout expires
+						console.log(`[Game Socket] Reconnection timeout - cleaning up game ${expiredGameUUID}`);
+						const expiredGame = runningGames.get(expiredGameUUID);
+						if (expiredGame) {
+							expiredGame.destroy();
+							runningGames.delete(expiredGameUUID);
+							if (expiredGame.player1Id) userGames.delete(expiredGame.player1Id);
+							if (expiredGame.player2Id) userGames.delete(expiredGame.player2Id);
+						}
+					});
+					// Don't delete game or user tracking - keep for reconnection
+					return;
+				}
+
+				// For non-remote games, clean up immediately
+				await game.destroy();
+				runningGames.delete(gameUUID);
+
+				// Clean up user tracking for both players
+				if (game.player1Id) userGames.delete(game.player1Id);
+				if (game.player2Id) userGames.delete(game.player2Id);
+
+				console.log(`[Game Socket] Cleaned up game ${gameUUID} for disconnected player`);
+			}
+		}
+	});
+
+	// Check if user has a game waiting for reconnection when they connect
+	socket.on('check-reconnection', () => {
+		console.log(`[Game Socket] User ${userId} checking for reconnection opportunities`);
+
+		// Find any game waiting for this user to reconnect
+		for (const [gameUUID, game] of runningGames.entries()) {
+			if (game.isWaitingForPlayer && game.isWaitingForPlayer(userId)) {
+				console.log(`[Game Socket] Found game ${gameUUID} waiting for user ${userId}`);
+				socket.emit('reconnection-available', {
+					gameUUID: gameUUID,
+					gameState: game.getGameState(),
+					message: 'You have an ongoing game. Would you like to reconnect?'
+				});
+				return;
+			}
+		}
+
+		// No game found
+		socket.emit('no-reconnection-available', {});
+	});
+
+	// Handle reconnection request
+	socket.on('reconnect-to-game', (data) => {
+		const { gameUUID } = data;
+		console.log(`[Game Socket] User ${userId} attempting to reconnect to game ${gameUUID}`);
+
+		const game = runningGames.get(gameUUID);
+		if (!game) {
+			socket.emit('reconnection-failed', { message: 'Game no longer exists' });
+			return;
+		}
+
+		if (!game.isWaitingForPlayer(userId)) {
+			socket.emit('reconnection-failed', { message: 'Game is not waiting for you' });
+			return;
+		}
+
+		// Reconnect the player
+		const success = game.reconnectPlayer(userId, socket);
+		if (success) {
+			// Set up socket listener for this game
+			socket.on(gameUUID, (eventData) => gameHandler(gameUUID, eventData, socket));
+
+			// Update user tracking
+			userGames.set(userId, gameUUID);
+
+			socket.emit('reconnection-success', {
+				gameUUID: gameUUID,
+				gameState: game.getGameState(),
+				playerNumber: userId === game.player1Id ? 1 : 2
+			});
+			console.log(`[Game Socket] User ${userId} reconnected to game ${gameUUID}`);
+		} else {
+			socket.emit('reconnection-failed', { message: 'Reconnection failed' });
+		}
 	});
 }
 
@@ -230,12 +335,19 @@ function requestGameUID(socket, data){
 		console.log("Local activated")
 		console.log("data: ", data, "uuid : ", uuid)
 
-		runningGames[uuid] = new Game(socket, {
+		const game = new Game(socket, {
 			uuid: uuid,
 			type: data.type
 		});
 
-		socket.on(uuid, (eventData) => gameHandler(uuid, eventData));
+		// Set player 1 ID
+		game.player1Id = socket.userId;
+		runningGames.set(uuid, game);
+
+		// Track that this user is in this game
+		userGames.set(socket.userId, uuid);
+
+		socket.on(uuid, (eventData) => gameHandler(uuid, eventData, socket));
 
 		socket.emit("new-game", {UUID: uuid, type: data.type});
 	}
@@ -244,13 +356,20 @@ function requestGameUID(socket, data){
 		console.log("AI Activated")
 		console.log("data: ", data, "uuid : ", uuid)
 
-		runningGames[uuid] = new Game(socket, {
+		const game = new Game(socket, {
 			uuid: uuid,
 			type: data.type,
 			difficulty: data.difficulty || 'medium'
 		}, undefined, redis);
 
-		socket.on(uuid, (eventData) => gameHandler(uuid, eventData));
+		// Set player 1 ID
+		game.player1Id = socket.userId;
+		runningGames.set(uuid, game);
+
+		// Track that this user is in this game
+		userGames.set(socket.userId, uuid);
+
+		socket.on(uuid, (eventData) => gameHandler(uuid, eventData, socket));
 
 		socket.emit("new-game", {UUID: uuid, type: data.type});
 	}
@@ -259,27 +378,86 @@ function requestGameUID(socket, data){
 		console.log("Remote Activated")
 		console.log("data: ", data, "uuid : ", uuid)
 
-		runningGames[uuid] = new Game(socket, {
+		const game = new Game(socket, {
 			uuid: uuid,
 			type: data.type
 		});
 
-		socket.on(uuid, (eventData) => gameHandler(uuid, eventData));
+		// Set player 1 ID immediately
+		game.player1Id = socket.userId;
+		runningGames.set(uuid, game);
+
+		// Track that this user is in this game
+		userGames.set(socket.userId, uuid);
+
+		socket.on(uuid, (eventData) => gameHandler(uuid, eventData, socket));
 
 		socket.emit("new-game", {UUID: uuid, type: data.type});
 	}
 }
 
-function gameHandler(uuid, data){
-	const game = runningGames[uuid];
+/**
+ * onMatchFound - Callback when matchmaking finds two players
+ * Sets up player 2 in the game and notifies both players
+ */
+function onMatchFound(matchData) {
+	const { game, gameUUID, player1Socket, player1UserId, player2Socket, player2UserId, player2GameUUID } = matchData;
+
+	// Add player 2 to the game (we'll implement this in Game.js)
+	game.addPlayer2(player2Socket, player2UserId);
+
+	// Track both players in this game
+	userGames.set(player1UserId, gameUUID);
+	userGames.set(player2UserId, gameUUID);
+	console.log(`[Server] Both players tracked in game ${gameUUID}`)
+
+	// Remove player 2's old game listener (memory leak prevention)
+	player2Socket.removeAllListeners(player2GameUUID);
+	console.log(`[Server] Removed player 2's old listener: ${player2GameUUID}`);
+
+	// Set up socket listener for player 2's inputs on the MATCHED game
+	player2Socket.on(gameUUID, (eventData) => gameHandler(gameUUID, eventData, player2Socket));
+
+	// Notify Player 1: "Opponent found!" (emit on player 1's game channel)
+	player1Socket.emit(gameUUID, {
+		type: "opponent-found",
+		playerNumber: 1,
+		opponentId: player2UserId
+	});
+
+	// Notify Player 2: "Opponent found!"
+	// IMPORTANT: Emit on player 2's ORIGINAL game channel (they're still listening there)
+	// They will then switch to the matched game
+	player2Socket.emit(player2GameUUID, {
+		type: "opponent-found",
+		playerNumber: 2,
+		opponentId: player1UserId,
+		gameUUID: gameUUID  // The game they should switch to
+	});
+
+	console.log(`[Server] Match ready! Game: ${gameUUID}`);
+	console.log(`[Server] Player 2 notified on their channel: ${player2GameUUID}`);
+}
+
+function gameHandler(uuid, data, socket){
+	const game = runningGames.get(uuid);
 
 	if (!game)
 	{
-		console.error(`Game ${uuid} not found!`);
+		// Game may have been destroyed - this is normal after game ends
+		// Only log if it's not a state update (paddle movement)
+		if (!data.state) {
+			console.warn(`[Game ${uuid}] Game not found (may have ended)`);
+		}
 		return;
 	}
 
-	if (data.action === "player-ready")
+	if (data.action === "player-2-joined") {
+		// Player 2 confirms they've switched to this game channel
+		console.log(`[Game ${uuid}] Player 2 joined and ready to receive events`);
+		game.setPlayer2Joined();
+	}
+	else if (data.action === "player-ready")
 		game.setPlayerReady(data.player);
 	else if (data.action === "pause-game")
 		game.pauseGame();
@@ -287,12 +465,40 @@ function gameHandler(uuid, data){
 		game.resumeGame();
 	else if (data.action === "reset-game")
 		game.resetGame();
-	else if (data.action === "play-against-random-player")
-		game.playAgainstRandomPlayer();
+	else if (data.action === "play-against-random-player") {
+		// Call matchmaking system instead of the game method
+		const odileUserId = socket.userId || socket.id; // Use userId if authenticated, else socket.id
+		handleMatchmaking(redis, socket, odileUserId, uuid, runningGames, onMatchFound);
+	}
 	else if (data.action === "play-against-friend")
 		game.playAgainstFriend();
+	else if (data.action === "cancel-matchmaking") {
+		// New action: cancel search
+		const odileUserId = socket.userId || socket.id;
+		cancelSearch(redis, odileUserId);
+	}
+	else if (data.action === "destroy-game") {
+		// Clean up game when frontend destroys it
+		console.log(`[Game ${uuid}] Destroy request received`);
+		const odileUserId = socket.userId || socket.id;
+
+		// Cancel any matchmaking search
+		cancelSearch(redis, odileUserId);
+
+		// Clean up the game
+		if (game) {
+			game.destroy();
+			runningGames.delete(uuid);
+
+			// Clean up user tracking
+			if (game.player1Id) userGames.delete(game.player1Id);
+			if (game.player2Id) userGames.delete(game.player2Id);
+
+			console.log(`[Game ${uuid}] Game destroyed and cleaned up`);
+		}
+	}
 	else if (data.state)
-		game.updatePlayerMove(data.state.paddle1, data.state.paddle2);
+		game.updatePlayerMove(data.state.paddle1, data.state.paddle2, socket.id);
 }
 
 
