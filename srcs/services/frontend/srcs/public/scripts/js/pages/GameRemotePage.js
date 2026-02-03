@@ -112,7 +112,11 @@ export class RemotePage {
         // Buttons Pause & Reset
         const gameControls = this.uiManager.createElement('div', 'flex gap-4');
         const pauseButton = this.uiManager.createButton('PAUSE / RESUME', 'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200', () => this.pauseGame());
-        const resetButton = this.uiManager.createButton('RESTART', 'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200', () => this.resetGame());
+        // const resetButton = this.uiManager.createButton(
+        // 	'RESTART',
+        // 	'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200',
+        // 	() => this.resetGame()
+        // );
         // Back to Menu Button
         const backButtonContainer = this.uiManager.createElement('div', 'text-center mb-8');
         const backButton = this.uiManager.createButton('BACK TO MENU', 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mx-auto mt-4', () => this.backToMenu());
@@ -120,7 +124,7 @@ export class RemotePage {
         backButton.appendChild(backIcon);
         backButtonContainer.appendChild(backButton);
         gameControls.appendChild(pauseButton);
-        gameControls.appendChild(resetButton);
+        //gameControls.appendChild(resetButton);
         // Game Container
         const gameContainer = this.uiManager.createElement('div', 'flex flex-col items-center gap-6');
         gameContainer.appendChild(scoreDisplay);
