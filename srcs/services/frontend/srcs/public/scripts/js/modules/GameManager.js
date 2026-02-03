@@ -18,14 +18,13 @@ export class GameManager {
         this.onKeyUp = null;
         // Remote game properties
         this.playerNumber = 1; // 1 or 2 (assigned by matchmaking)
-        this.opponentId = null;
+        //private opponentId: string | null = null;
         this.onOpponentFound = null;
         this.onOpponentDisconnected = null;
         this.onMatchmakingError = null;
         this.onOpponentReconnected = null;
         this.onReconnectionTimeout = null;
-        this.isRemoteGame = false; // Set to true when opponent is found
-        // A garder ?
+        this.isRemoteGame = false;
         this.playersReadyStatus = {
             player1: false,
             player2: false
@@ -97,6 +96,25 @@ export class GameManager {
     getPlayerNumber() {
         return this.playerNumber;
     }
+    static getStoredGameSettings() {
+        try {
+            const raw = localStorage.getItem(GameManager.SETTINGS_STORAGE_KEY);
+            if (!raw)
+                return null;
+            const parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed !== 'object')
+                return null;
+            const settings = {};
+            if (typeof parsed.ballSpeed === 'number')
+                settings.ballSpeed = parsed.ballSpeed;
+            if (typeof parsed.paddleSpeed === 'number')
+                settings.paddleSpeed = parsed.paddleSpeed;
+            return Object.keys(settings).length ? settings : null;
+        }
+        catch {
+            return null;
+        }
+    }
     /**
      * Set the player number (used for reconnection)
      */
@@ -162,8 +180,8 @@ export class GameManager {
     handleOpponentFound(data) {
         console.log("[GameManager] Opponent found!", data);
         this.playerNumber = data.playerNumber; // 1 or 2
-        this.opponentId = data.opponentId;
-        this.isRemoteGame = true; // Mark this as a remote game
+        //this.opponentId = data.opponentId;
+        this.isRemoteGame = true;
         // If player 2, switch to the matched game UUID
         if (data.playerNumber === 2 && data.gameUUID) {
             console.log(`[GameManager] Player 2 switching from ${this.gameUID} to ${data.gameUUID}`);
@@ -303,7 +321,24 @@ export class GameManager {
     static requestGameID(type, options = {}) {
         if (!gameSocket)
             throw Error("gameSocket is not ready");
-        gameSocket.emit("request-game-uid", { type, ...options });
+        const payload = { type, ...options };
+        // For local games, include saved settings from SettingsPage
+        if (type === 'local') {
+            const storedSettings = GameManager.getStoredGameSettings();
+            const optionSettings = options.settings;
+            if (storedSettings || optionSettings) {
+                payload.settings = {};
+                if (storedSettings)
+                    payload.settings = { ...storedSettings };
+                if (optionSettings) {
+                    payload.settings = {
+                        ...payload.settings,
+                        ...optionSettings
+                    };
+                }
+            }
+        }
+        gameSocket.emit("request-game-uid", payload);
     }
     /**
      * Check if user has a game waiting for reconnection
@@ -571,3 +606,4 @@ export class GameManager {
         this.ctx.shadowBlur = 0;
     }
 }
+GameManager.SETTINGS_STORAGE_KEY = 'arcade_settings';

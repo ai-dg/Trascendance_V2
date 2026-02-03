@@ -208,42 +208,6 @@ export class MenuPage {
       otherButtonsGrid.appendChild(menuItem);
     });
 
-    // this.menuItems.forEach((item) => {
-    //   const menuItem = this.uiManager.createElement('div', 'group bg-black/40 backdrop-blur-sm border-2 border-transparent hover:border-[var(--item-color)] rounded-lg p-8 cursor-pointer transition-all duration-300 hover:shadow-[0_0_30px_var(--item-color)] relative overflow-hidden');
-    //   menuItem.style.setProperty('--item-color', item.color);
-
-    //   // Animated background
-    //   const animatedBg = this.uiManager.createElement('div', 'absolute inset-0 bg-gradient-to-br from-transparent via-[var(--item-color)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300');
-    //   menuItem.appendChild(animatedBg);
-
-      
-    //   // Icon
-    //   const iconContainer = this.uiManager.createElement('div', 'flex justify-center mb-4');
-    //   const icon = this.uiManager.createIcon(item.icon, 'w-12 h-12 transition-all duration-300 group-hover:scale-110');
-    //   icon.style.color = item.color;
-    //   iconContainer.appendChild(icon);
-      
-    //   // Label
-    //   const label = this.uiManager.createElement('h3', 'retro-text text-xl mb-2');
-    //   label.textContent = item.label;
-    //   label.style.color = item.color;
-      
-    //   const content = this.uiManager.createElement('div', 'relative z-10 text-center');
-    //   content.appendChild(iconContainer);
-    //   content.appendChild(label);
-
-    //   // Scan line effect
-    //   const scanLine = this.uiManager.createElement('div', 'absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300');
-    //   const scanLineInner = this.uiManager.createElement('div', 'absolute inset-0 bg-gradient-to-b from-transparent via-[var(--item-color)]/10 to-transparent animate-pulse');
-    //   scanLineInner.style.backgroundSize = '100% 200%';
-    //   scanLine.appendChild(scanLineInner);
-
-
-    //   menuItem.appendChild(content);
-    //   menuItem.appendChild(scanLine);
-    //   menuItem.addEventListener('click', item.action);
-    //});
-
     
     ///////////////////////////////////
     /////////// Main Grid /////////////
@@ -282,35 +246,6 @@ export class MenuPage {
   mainGrid.appendChild(menuGridWrapper);
   mainGrid.appendChild(socialDivWrapper);
 
-    // Stats Panel
-    // const statsPanel = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-6 mb-8');
-
-    // const statsHeader = this.uiManager.createElement('div', 'flex items-center justify-center gap-2 mb-4');
-    // const statsIcon = this.uiManager.createIcon('zap', 'w-5 h-5 text-[#ff1493]');
-    // const statsTitle = this.uiManager.createElement('h3', 'retro-text text-lg text-[#ff1493]', 'ARCADE STATS');
-    // statsHeader.appendChild(statsIcon);
-    // statsHeader.appendChild(statsTitle);
-
-    // const statsGrid = this.uiManager.createElement('div', 'grid grid-cols-3 gap-6 text-center');
-
-    // const stats = [
-    //   { value: '0', label: 'GAMES PLAYED', color: '#00ffff' },
-    //   { value: '0', label: 'WINS', color: '#ff1493' },
-    //   { value: '0', label: 'HIGH SCORE', color: '#9d4edd' }
-    // ];
-
-    // stats.forEach(stat => {
-    //   const statItem = this.uiManager.createElement('div');
-    //   const statValue = this.uiManager.createElement('div', 'retro-text text-2xl mb-1', stat.value);
-    //   statValue.style.color = stat.color;
-    //   const statLabel = this.uiManager.createElement('div', 'retro-text text-xs opacity-60', stat.label);
-    //   statItem.appendChild(statValue);
-    //   statItem.appendChild(statLabel);
-    //   statsGrid.appendChild(statItem);
-    // });
-
-    // statsPanel.appendChild(statsHeader);
-    // statsPanel.appendChild(statsGrid);
 
     //////////////////////////////////
     /////////// Footer ////////////////
@@ -333,7 +268,6 @@ export class MenuPage {
 
     content.appendChild(header);
     content.appendChild(mainGrid);
-    //content.appendChild(statsPanel);
     content.appendChild(footer);
     content.appendChild(versionInfo);
 

@@ -7,16 +7,8 @@ export class SettingsPage {
         this.user = user;
         this.isGuest = isGuest;
         this.settings = {
-            soundEnabled: true,
-            musicVolume: 75,
-            effectsVolume: 60,
-            fullscreen: false,
-            scanLines: true,
-            glowEffects: true,
             ballSpeed: 6,
             paddleSpeed: 8,
-            showFPS: false,
-            colorTheme: 'synthwave'
         };
         this.uiManager = uiManager;
         this.routerManager = routerManager;
@@ -26,15 +18,41 @@ export class SettingsPage {
         this.onBack = onBack;
         this.onUpdateProfile = onUpdateProfile;
     }
+    loadSettingsFromStorage() {
+        try {
+            const raw = localStorage.getItem(SettingsPage.SETTINGS_STORAGE_KEY);
+            if (!raw)
+                return;
+            const parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed !== 'object')
+                return;
+            this.settings = {
+                ...this.settings,
+                ...parsed,
+                ballSpeed: typeof parsed.ballSpeed === 'number' ? parsed.ballSpeed : this.settings.ballSpeed,
+                paddleSpeed: typeof parsed.paddleSpeed === 'number' ? parsed.paddleSpeed : this.settings.paddleSpeed,
+            };
+        }
+        catch {
+            // Ignore storage parse issues
+        }
+    }
+    saveSettingsToStorage() {
+        try {
+            localStorage.setItem(SettingsPage.SETTINGS_STORAGE_KEY, JSON.stringify(this.settings));
+        }
+        catch {
+            // Ignore storage write issues
+        }
+    }
     render() {
+        this.loadSettingsFromStorage();
         const container = this.uiManager.createElement('div', 'retro-container min-h-screen w-full flex flex-col items-center justify-center p-8');
         const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-4xl');
         // Header
         const header = this.uiManager.createElement('div', 'text-center mb-8');
         const title = this.uiManager.createElement('h1', 'retro-title text-3xl mb-4', this.t('options'));
-        //const subtitle = this.uiManager.createElement('p', 'retro-subtitle', this.t('optionsMessage'));
         header.appendChild(title);
-        //header.appendChild(subtitle);
         // Back Button
         const backButton = this.uiManager.createButton(this.t('backtoMenu'), 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] mt-4 hover:text-black transition-all duration-200 flex items-center justify-center gap-2 mb-8 mx-auto', this.onBack);
         const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
@@ -49,11 +67,9 @@ export class SettingsPage {
         // Update profile or sign in with language manager in both
         let userSettings;
         if (this.isGuest) {
-            // create guest settings
             userSettings = this.guestSettings();
         }
         else {
-            // create user settings
             userSettings = this.userSettings();
         }
         settingsGrid.appendChild(gameCard);
@@ -95,25 +111,6 @@ export class SettingsPage {
         card.appendChild(settingsContainer);
         return card;
     }
-    createToggleSetting(label, key) {
-        const container = this.uiManager.createElement('div', 'flex items-center justify-between');
-        const labelElement = this.uiManager.createElement('label', 'retro-text text-sm', label);
-        const toggle = this.uiManager.createElement('button', 'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#ff1493] focus:ring-offset-2');
-        const currentValue = this.settings[key];
-        toggle.style.backgroundColor = currentValue ? '#ff1493' : '#374151';
-        const toggleInner = this.uiManager.createElement('span', 'inline-block h-4 w-4 transform rounded-full bg-white transition-transform');
-        toggleInner.style.transform = currentValue ? 'translateX(6px)' : 'translateX(1px)';
-        toggle.appendChild(toggleInner);
-        toggle.addEventListener('click', () => {
-            this.settings[key] = !currentValue;
-            const newValue = !currentValue;
-            toggle.style.backgroundColor = newValue ? '#ff1493' : '#374151';
-            toggleInner.style.transform = newValue ? 'translateX(6px)' : 'translateX(1px)';
-        });
-        container.appendChild(labelElement);
-        container.appendChild(toggle);
-        return container;
-    }
     createSliderSetting(label, key, min, max, unit) {
         const container = this.uiManager.createElement('div');
         const header = this.uiManager.createElement('div', 'flex items-center justify-between mb-3');
@@ -135,6 +132,7 @@ export class SettingsPage {
             this.settings[key] = value;
             valueElement.textContent = `${value}${unit}`;
             slider.style.background = `linear-gradient(to right, #ff1493 0%, #ff1493 ${((value - min) / (max - min)) * 100}%, #374151 ${((value - min) / (max - min)) * 100}%, #374151 100%)`;
+            this.saveSettingsToStorage();
         });
         container.appendChild(header);
         container.appendChild(slider);
@@ -143,11 +141,6 @@ export class SettingsPage {
     guestSettings() {
         const card = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 rounded-lg p-6');
         card.style.borderColor = '#ff1493';
-        // const header = this.uiManager.createElement(
-        //   "h2",
-        //   "retro-title text-[#ff1493] text-2xl mb-2",
-        //   this.t("welcomeGuest")
-        // );
         const subtitle = this.uiManager.createElement("p", "retro-text text-center text-sm opacity-70", this.t("guestMessage"));
         const buttonsContainer = this.uiManager.createElement("div", "w-full flex flex-col gap-4 mt-4");
         // Sign In Button
@@ -228,17 +221,11 @@ export class SettingsPage {
     }
     resetToDefaults() {
         this.settings = {
-            soundEnabled: true,
-            musicVolume: 75,
-            effectsVolume: 60,
-            fullscreen: false,
-            scanLines: true,
-            glowEffects: true,
             ballSpeed: 6,
             paddleSpeed: 8,
-            showFPS: false,
-            colorTheme: 'synthwave'
         };
+        this.saveSettingsToStorage();
         this.render();
     }
 }
+SettingsPage.SETTINGS_STORAGE_KEY = 'arcade_settings';

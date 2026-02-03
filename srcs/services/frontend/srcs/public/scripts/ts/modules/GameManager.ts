@@ -1,9 +1,10 @@
 import { gameSocket } from "../app.js";
-import type { GameState } from "./TypesManager.js";
+import type { GameState, GameSettings } from "./TypesManager.js";
 //import { INITIAL_READY_STATE } from "../../../realtime-sockets/app/srcs/Data.js";
 
 
 export class GameManager {
+  private static readonly SETTINGS_STORAGE_KEY = 'arcade_settings';
   private ctx: CanvasRenderingContext2D;
   private gameState: GameState;
   private keys: { [key: string]: boolean } = {};
@@ -26,15 +27,14 @@ export class GameManager {
 
   // Remote game properties
   private playerNumber: number = 1; // 1 or 2 (assigned by matchmaking)
-  private opponentId: string | null = null;
+  //private opponentId: string | null = null;
   private onOpponentFound: ((data: any) => void) | null = null;
   private onOpponentDisconnected: ((data: any) => void) | null = null;
   private onMatchmakingError: ((data: any) => void) | null = null;
   private onOpponentReconnected: ((data: any) => void) | null = null;
   private onReconnectionTimeout: ((data: any) => void) | null = null;
-  private isRemoteGame: boolean = false; // Set to true when opponent is found
+  private isRemoteGame: boolean = false;
 
-  // A garder ?
   private playersReadyStatus = {
     player1: false,
     player2: false
@@ -120,6 +120,28 @@ export class GameManager {
     return this.playerNumber;
   }
 
+  private static getStoredGameSettings(): Partial<GameSettings> | null 
+  {
+  try {
+    const raw = localStorage.getItem(GameManager.SETTINGS_STORAGE_KEY);
+    if (!raw) 
+      return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') 
+      return null;
+
+    const settings: Partial<GameSettings> = {};
+    if (typeof parsed.ballSpeed === 'number') 
+      settings.ballSpeed = parsed.ballSpeed;
+    if (typeof parsed.paddleSpeed === 'number') 
+      settings.paddleSpeed = parsed.paddleSpeed;
+    
+    return Object.keys(settings).length ? settings : null;
+  } catch {
+    return null;
+  }
+}
+
   /**
    * Set the player number (used for reconnection)
    */
@@ -189,8 +211,8 @@ export class GameManager {
   private handleOpponentFound(data: any): void {
     console.log("[GameManager] Opponent found!", data);
     this.playerNumber = data.playerNumber; // 1 or 2
-    this.opponentId = data.opponentId;
-    this.isRemoteGame = true; // Mark this as a remote game
+    //this.opponentId = data.opponentId;
+    this.isRemoteGame = true;
 
     // If player 2, switch to the matched game UUID
     if (data.playerNumber === 2 && data.gameUUID) {
@@ -351,10 +373,38 @@ export class GameManager {
   ///// SEND ACTIONS TO THE BACKEND //////
   /////////////////////////////////////////
 
-  static requestGameID(type: "local" | "ai" | "remote", options: { difficulty?: string } = {}) {
+
+  static requestGameID(type: "local" | "ai" | "remote",
+    options: { difficulty?: string; settings?: Partial<GameSettings> } = {})
+  {
     if (!gameSocket)
       throw Error("gameSocket is not ready");
-    gameSocket.emit("request-game-uid", { type, ...options });
+
+    const payload: any = { type, ...options };
+
+    // For local games, include saved settings from SettingsPage
+    if (type === 'local')
+    {
+      const storedSettings = GameManager.getStoredGameSettings();
+      const optionSettings = options.settings;
+
+      if (storedSettings || optionSettings) 
+      {
+        payload.settings = {};
+
+        if (storedSettings)
+          payload.settings = { ...storedSettings };
+
+        if (optionSettings) 
+        {
+          payload.settings = {
+            ...payload.settings,
+            ...optionSettings
+          };
+        }
+      }
+    }
+    gameSocket.emit("request-game-uid", payload);
   }
 
   /**

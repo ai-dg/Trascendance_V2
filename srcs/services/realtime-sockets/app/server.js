@@ -372,17 +372,34 @@ function setupGeneralGameSocket(socket) {
 }
 
 function requestGameUID(socket, data){
+	function clampNumber(value, min, max) {
+		const num = typeof value === 'number' ? value : Number(value);
+		if (!Number.isFinite(num)) return undefined;
+		return Math.min(max, Math.max(min, num));
+	}
+
+	function normalizeGameSettings(raw) {
+		if (!raw || typeof raw !== 'object') return undefined;
+		const settings = {};
+		const ballSpeed = clampNumber(raw.ballSpeed, 3, 12);
+		const paddleSpeed = clampNumber(raw.paddleSpeed, 4, 15);
+		if (ballSpeed !== undefined) settings.ballSpeed = ballSpeed;
+		if (paddleSpeed !== undefined) settings.paddleSpeed = paddleSpeed;
+		return Object.keys(settings).length ? settings : undefined;
+	}
+
 	let uuid = crypto.randomUUID()
 	console.log("Before type")
 	if (data.type === "local")
 	{
 		console.log("Local activated")
 		console.log("data: ", data, "uuid : ", uuid)
+		const settings = normalizeGameSettings(data.settings);
 
 		const game = new Game(socket, {
 			uuid: uuid,
 			type: data.type
-		});
+		}, settings);
 
 		// Set player 1 ID
 		game.player1Id = socket.userId;
@@ -399,12 +416,13 @@ function requestGameUID(socket, data){
 	{
 		console.log("AI Activated")
 		console.log("data: ", data, "uuid : ", uuid)
+		const settings = normalizeGameSettings(data.settings);
 
 		const game = new Game(socket, {
 			uuid: uuid,
 			type: data.type,
 			difficulty: data.difficulty || 'medium'
-		}, undefined, redis);
+		}, settings, redis);
 
 		// Set player 1 ID
 		game.player1Id = socket.userId;
@@ -421,11 +439,12 @@ function requestGameUID(socket, data){
 	{
 		console.log("Remote Activated")
 		console.log("data: ", data, "uuid : ", uuid)
+		const settings = normalizeGameSettings(data.settings);
 
 		const game = new Game(socket, {
 			uuid: uuid,
 			type: data.type
-		});
+		}, settings);
 
 		// Set player 1 ID immediately
 		game.player1Id = socket.userId;
