@@ -60,16 +60,8 @@ export interface OTParams{
 // settings page
 
 export interface Settings {
-  soundEnabled: boolean;
-  musicVolume: number;
-  effectsVolume: number;
-  fullscreen: boolean;
-  scanLines: boolean;
-  glowEffects: boolean;
   ballSpeed: number;
   paddleSpeed: number;
-  showFPS: boolean;
-  colorTheme: string;
 }
 
 export interface ColorTheme {
@@ -78,17 +70,12 @@ export interface ColorTheme {
   colors: string[];
 }
 
-// Final Frontend
-
-// Interfaces from Retro Pong Website 2
-
-
 // Game Interface
 
 export interface GameState {
   player1Score: number;
   player2Score: number;
-  paddle1: any,
+  paddle1: any, 
   paddle2: any,
   ball?: any,
   gameRunning: boolean;
@@ -115,7 +102,7 @@ export interface BallState {
 export interface GameSettings {
   ballSpeed: number;
   paddleSpeed: number;
-  winningScore: number;
+  //winningScore: number;
 }
 
 

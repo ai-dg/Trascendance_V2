@@ -1,9 +1,10 @@
 import { gameSocket } from "../app.js";
-import type { GameState } from "./TypesManager.js";
+import type { GameState, GameSettings } from "./TypesManager.js";
 //import { INITIAL_READY_STATE } from "../../../realtime-sockets/app/srcs/Data.js";
 
 
 export class GameManager {
+  private static readonly SETTINGS_STORAGE_KEY = 'arcade_settings';
   private ctx: CanvasRenderingContext2D;
   private gameState: GameState;
   private keys: { [key: string]: boolean } = {};
@@ -410,10 +411,49 @@ export class GameManager {
   ///// SEND ACTIONS TO THE BACKEND //////
   /////////////////////////////////////////
 
-  static requestGameID(type: "local" | "ai" | "remote", options: { difficulty?: string } = {}) {
+  private static getStoredGameSettings(): Partial<GameSettings> | null {
+    try {
+      const raw = localStorage.getItem(GameManager.SETTINGS_STORAGE_KEY);
+      if (!raw)
+        return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object')
+        return null;
+
+      const settings: Partial<GameSettings> = {};
+      if (typeof parsed.ballSpeed === 'number')
+        settings.ballSpeed = parsed.ballSpeed;
+      if (typeof parsed.paddleSpeed === 'number')
+        settings.paddleSpeed = parsed.paddleSpeed;
+
+      return Object.keys(settings).length ? settings : null;
+    } catch {
+      return null;
+    }
+  }
+
+  static requestGameID(type: "local" | "ai" | "remote", options: { difficulty?: string; settings?: Partial<GameSettings> } = {}) {
     if (!gameSocket)
       throw Error("gameSocket is not ready");
-    gameSocket.emit("request-game-uid", { type, ...options });
+
+    const payload: any = { type, ...options };
+
+    // For local games, include saved settings from SettingsPage
+    if (type === 'local') {
+      const storedSettings = GameManager.getStoredGameSettings();
+      const optionSettings = options.settings;
+
+      if (storedSettings || optionSettings) {
+        payload.settings = {};
+        if (storedSettings)
+          payload.settings = { ...storedSettings };
+        if (optionSettings) {
+          payload.settings = { ...payload.settings, ...optionSettings };
+        }
+      }
+    }
+
+    gameSocket.emit("request-game-uid", payload);
   }
 
   /**

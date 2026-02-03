@@ -42,14 +42,14 @@ export class App {
             this.currentUser = user;
             // this.updateCurrentPage();
         });
-        this.websocketManager = new WebsocketManager();
+        this.websocketManager = WebsocketManager.getInstance();
         // Managers
         this.uiManager = new UIManager(container);
         this.languageManager = new LanguageManager(this.routerManager);
         this.checkManager = new CheckManager(this.languageManager);
         // Initialize pages
         this.authPage = new AuthPage(this.uiManager, this.authManager, this.checkManager, this.languageManager, this.handleLogin.bind(this), this.handleRegister.bind(this), this.appHandleForgotPassword.bind(this), this.handleChangePassword.bind(this), this.handleShowGuestPage.bind(this), this.handleError.bind(this));
-        this.menuPage = new MenuPage(this.uiManager, this.handlePlayGameAI.bind(this), this.handlePlayGameLocal.bind(this), this.handlePlayGameOnline.bind(this), this.handleChatWithFriends.bind(this), this.handleSettings.bind(this), this.handleLogout.bind(this), this.handleShowPrivacyPolicy.bind(this), this.handleShowTermsOfService.bind(this));
+        this.menuPage = new MenuPage(this.uiManager, this.websocketManager, this.routerManager, this.handlePlayGameAI.bind(this), this.handlePlayGameLocal.bind(this), this.handlePlayGameOnline.bind(this), this.handleChatWithFriends.bind(this), this.handleSettings.bind(this), this.handleLogout.bind(this), this.handleShowPrivacyPolicy.bind(this), this.handleShowTermsOfService.bind(this));
         this.privacyPolicyPage = new PrivacyPolicyPage(this.uiManager, this.handleBackToMenu.bind(this));
         this.termsOfServicePage = new TermsOfServicePage(this.uiManager, this.handleBackToMenu.bind(this));
         this.gamePageAI = new AIPage(this.uiManager, this.handleBackToMenu.bind(this), this.currentUser);
@@ -193,6 +193,7 @@ export class App {
                 break;
             case 'menu':
                 requestAnimationFrame(() => {
+                    this.menuPage.setCurrentUser(this.currentUser);
                     this.menuPage.render(this.currentUser);
                 });
                 break;

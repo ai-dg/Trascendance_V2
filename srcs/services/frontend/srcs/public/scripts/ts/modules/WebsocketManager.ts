@@ -24,6 +24,8 @@ export class WebsocketManager {
     this.setupDefaultListeners();
   }
 
+  private chatNotifications = new Map<number, { senderId: number, username: string, message: string }>();
+
   public init(origin: string) {
     const options = {
       path: "/realtime-sockets/socket.io/",
@@ -93,5 +95,17 @@ export class WebsocketManager {
     public disconnectAll() {
       this.generalSocket?.disconnect();
       this.gameSocket?.disconnect();
+    }
+
+    public getPendingNotifications() {
+        return Array.from(this.chatNotifications.values());
+    }
+
+    public saveNotification(senderId: number, username: string, message: string) {
+        this.chatNotifications.set(Number(senderId), { senderId, username, message });
+    }
+
+    public clearNotification(senderId: number) {
+        this.chatNotifications.delete(Number(senderId));
     }
 }

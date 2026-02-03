@@ -1,8 +1,16 @@
 import { UIManager } from '../modules/UIManager.js';
+import { WebsocketManager } from '../modules/WebsocketManager.js';
 import type { User } from '../modules/TypesManager.js';
+import type { RouterManager } from '../modules/RouterManager.js';
+import { SocialManager } from '../modules/SocialManager.js';
 
 export class MenuPage {
   private uiManager: UIManager;
+  private wsManager: WebsocketManager | null = null;
+  private routerManager: RouterManager | null = null;
+  private currentUser: User | null = null;
+  private socialManager: SocialManager | null = null;
+
   private onPlayGameAI: () => void;
   private onPlayGameLocal: () => void;
   private onPlayGameOnline: () => void;
@@ -47,6 +55,8 @@ export class MenuPage {
 
   constructor(
     uiManager: UIManager,
+    wsManager: WebsocketManager,
+    routerManager: RouterManager,
     onPlayGameAI: () => void,
     onPlayGameLocal: () => void,
     onPlayGameOnline: () => void,
@@ -57,6 +67,8 @@ export class MenuPage {
     onShowTermsOfService: () => void
   ) {
     this.uiManager = uiManager;
+    this.wsManager = wsManager;
+    this.routerManager = routerManager;
     this.onPlayGameAI = onPlayGameAI;
     this.onPlayGameLocal = onPlayGameLocal;
     this.onPlayGameOnline = onPlayGameOnline;
@@ -68,6 +80,8 @@ export class MenuPage {
   }
 
   public render(user: User | null): void {
+    this.currentUser = user;
+
     const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
     const content = this.uiManager.createElement('div', 'relative z-10 w-full flex-1 mx-auto flex flex-col items-center');
     content.style.maxWidth = '1400px';
@@ -309,42 +323,29 @@ export class MenuPage {
   // Social Div Wrapper
   const socialDivWrapper = this.uiManager.createElement('div', 'w-80 flex flex-col flex-shrink-0');
   socialDivWrapper.style.justifySelf = 'end';
-  socialDivWrapper.appendChild(socialDiv);
+
+
+  if (this.wsManager && this.routerManager) {
+    this.socialManager = new SocialManager(
+      this.uiManager,
+      this.routerManager,
+      this.wsManager,
+      this.currentUser,
+      () => null,
+      (friendId, username) => {
+        sessionStorage.setItem('selectedFriendId', friendId.toString());
+        sessionStorage.setItem('selectedFriendUsername', username);
+        this.onChatWithFriends();
+      }
+    );
+    this.socialManager.render(socialDivWrapper);
+  }
 
   mainGrid.style.alignItems = 'stretch';
 
   mainGrid.appendChild(menuGridWrapper);
   mainGrid.appendChild(socialDivWrapper);
 
-    // Stats Panel
-    // const statsPanel = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-6 mb-8');
-
-    // const statsHeader = this.uiManager.createElement('div', 'flex items-center justify-center gap-2 mb-4');
-    // const statsIcon = this.uiManager.createIcon('zap', 'w-5 h-5 text-[#ff1493]');
-    // const statsTitle = this.uiManager.createElement('h3', 'retro-text text-lg text-[#ff1493]', 'ARCADE STATS');
-    // statsHeader.appendChild(statsIcon);
-    // statsHeader.appendChild(statsTitle);
-
-    // const statsGrid = this.uiManager.createElement('div', 'grid grid-cols-3 gap-6 text-center');
-
-    // const stats = [
-    //   { value: '0', label: 'GAMES PLAYED', color: '#00ffff' },
-    //   { value: '0', label: 'WINS', color: '#ff1493' },
-    //   { value: '0', label: 'HIGH SCORE', color: '#9d4edd' }
-    // ];
-
-    // stats.forEach(stat => {
-    //   const statItem = this.uiManager.createElement('div');
-    //   const statValue = this.uiManager.createElement('div', 'retro-text text-2xl mb-1', stat.value);
-    //   statValue.style.color = stat.color;
-    //   const statLabel = this.uiManager.createElement('div', 'retro-text text-xs opacity-60', stat.label);
-    //   statItem.appendChild(statValue);
-    //   statItem.appendChild(statLabel);
-    //   statsGrid.appendChild(statItem);
-    // });
-
-    // statsPanel.appendChild(statsHeader);
-    // statsPanel.appendChild(statsGrid);
 
     //////////////////////////////////
     /////////// Footer ////////////////
@@ -377,7 +378,6 @@ export class MenuPage {
 
     content.appendChild(header);
     content.appendChild(mainGrid);
-    //content.appendChild(statsPanel);
     content.appendChild(footer);
     content.appendChild(versionInfo);
 
@@ -385,5 +385,15 @@ export class MenuPage {
 
     this.uiManager.clear();
     this.uiManager.container.appendChild(container);
+
   }
+
+  public setRouterManager(routerManager: RouterManager): void {
+    this.routerManager = routerManager;
+  }
+
+  public setCurrentUser(user: User | null): void {
+    this.currentUser = user;
+  }
+
 }

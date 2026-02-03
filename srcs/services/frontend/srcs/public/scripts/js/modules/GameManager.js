@@ -353,10 +353,43 @@ export class GameManager {
     //////////////////////////////////////////
     ///// SEND ACTIONS TO THE BACKEND //////
     /////////////////////////////////////////
+    static getStoredGameSettings() {
+        try {
+            const raw = localStorage.getItem(GameManager.SETTINGS_STORAGE_KEY);
+            if (!raw)
+                return null;
+            const parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed !== 'object')
+                return null;
+            const settings = {};
+            if (typeof parsed.ballSpeed === 'number')
+                settings.ballSpeed = parsed.ballSpeed;
+            if (typeof parsed.paddleSpeed === 'number')
+                settings.paddleSpeed = parsed.paddleSpeed;
+            return Object.keys(settings).length ? settings : null;
+        }
+        catch {
+            return null;
+        }
+    }
     static requestGameID(type, options = {}) {
         if (!gameSocket)
             throw Error("gameSocket is not ready");
-        gameSocket.emit("request-game-uid", { type, ...options });
+        const payload = { type, ...options };
+        // For local games, include saved settings from SettingsPage
+        if (type === 'local') {
+            const storedSettings = GameManager.getStoredGameSettings();
+            const optionSettings = options.settings;
+            if (storedSettings || optionSettings) {
+                payload.settings = {};
+                if (storedSettings)
+                    payload.settings = { ...storedSettings };
+                if (optionSettings) {
+                    payload.settings = { ...payload.settings, ...optionSettings };
+                }
+            }
+        }
+        gameSocket.emit("request-game-uid", payload);
     }
     /**
      * Check if user has a game waiting for reconnection
@@ -651,3 +684,4 @@ export class GameManager {
         this.ctx.shadowBlur = 0;
     }
 }
+GameManager.SETTINGS_STORAGE_KEY = 'arcade_settings';

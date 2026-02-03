@@ -1,9 +1,10 @@
+import { SocialManager } from '../modules/SocialManager.js';
 export class LiveChatPage {
     constructor(uiManager, routerManager, languageManager, wsManager, onBack, currentUser) {
         this.wsManager = null;
-        this.friendRequests = new Map();
         this.currentUser = null;
         this.currentSelectedFriend = null;
+        this.socialManager = null;
         this.uiManager = uiManager;
         this.routerManager = routerManager;
         this.languageManager = languageManager;
@@ -16,14 +17,11 @@ export class LiveChatPage {
     }
     setWebsocketManager(manager) {
         this.wsManager = manager;
-        const errorMessageDiv = document.getElementById('error-message-div');
-        const friendInput = document.getElementById('friend-input');
-        this.setupSocketListeners(errorMessageDiv, friendInput);
+        this.setupChatSocketListeners();
     }
-    render(user) {
+    async render(user) {
         console.log("live-chat for:", user);
-        if (this.currentSelectedFriend == null && user != null)
-            this.currentSelectedFriend = user;
+        this.checkSessionStorageForRedirect();
         const container = this.uiManager.createElement('div', 'retro-container size-full p-8');
         // Header
         const header = this.uiManager.createElement('div', 'text-center mb-12');
@@ -31,27 +29,64 @@ export class LiveChatPage {
         header.appendChild(title);
         container.appendChild(header);
         // Profile Column
-        const profileDiv = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 min-h-[700px] flex-shrink-0 w-60');
-        profileDiv.style.minHeight = '600px';
+        const profileDiv = this.createProfileColumn();
+        // Chat Column
+        const chatDiv = this.createChatColumn();
+        // Social Div
+        const socialWrapper = this.uiManager.createElement('div', 'w-80 flex flex-col flex-shrink-0');
+        if (this.wsManager) {
+            this.socialManager = new SocialManager(this.uiManager, this.routerManager, this.wsManager, this.currentUser, () => this.currentSelectedFriend ? this.currentSelectedFriend.nbrId : null, (friendId, username, avatar) => this.handleFriendSelection(friendId, username, avatar));
+            this.socialManager.render(socialWrapper);
+        }
+        // Main Grid
+        const mainGrid = this.uiManager.createElement('div', 'flex justify-center gap-2 w-full');
+        mainGrid.style.alignItems = 'start';
+        mainGrid.appendChild(profileDiv);
+        mainGrid.appendChild(chatDiv);
+        mainGrid.appendChild(socialWrapper);
+        const backDiv = this.uiManager.createElement('div', 'flex justify-center items-center h-screen');
+        const backButton = this.uiManager.createButton(this.t('BACK TO MENU'), 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 mt-4', () => {
+            console.log('Back to menu clicked');
+            this.onBack();
+        });
+        backDiv.appendChild(backButton);
+        container.appendChild(mainGrid);
+        container.append(backDiv);
+        this.uiManager.clear();
+        this.uiManager.container.appendChild(container);
+        if (this.currentSelectedFriend) {
+            await this.handleFriendSelection(this.currentSelectedFriend.nbrId, this.currentSelectedFriend.username, this.currentSelectedFriend.avatar);
+        }
+    }
+    createProfileColumn() {
+        const profileDiv = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 flex-shrink-0 w-60');
         profileDiv.id = 'profile-div';
+        profileDiv.style.minHeight = '350px';
         const avatarSection = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
         const avatarImg = this.uiManager.createElement('img', 'w-12 h-12 rounded-full border-2 border-[#ff1493] cursor-pointer');
+        avatarSection.style.width = '100px';
+        avatarSection.style.height = '100px';
+        avatarImg.style.width = '100px';
+        avatarImg.style.height = '100px';
         if (!this.currentSelectedFriend || !this.currentSelectedFriend.avatar)
-            avatarImg.src = 'public/avatars/default.png';
+            avatarImg.src = 'public/avatars/unknownPlayer.jpeg';
         else if (this.currentSelectedFriend.avatar.startsWith('http'))
             avatarImg.src = this.currentSelectedFriend.avatar;
         else
             avatarImg.src = `public/avatars/${this.currentSelectedFriend.avatar}.png`;
         const username = this.uiManager.createElement('p', 'retro-subtitle text-lg text-[#00ffff] font-bold');
-        username.textContent = this.currentSelectedFriend ? this.currentSelectedFriend.username : 'USERNAME';
+        if (!this.currentSelectedFriend || !this.currentSelectedFriend.username)
+            username.textContent = ' ';
+        else
+            username.textContent = this.currentSelectedFriend.username;
         const btnDiv = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
-        const deleteBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-red rounded');
+        const deleteBtn = this.uiManager.createElement('button', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
         deleteBtn.id = 'delete-friend-btn';
-        deleteBtn.textContent = "DELETE FRIEND";
+        deleteBtn.textContent = "DELETE";
         deleteBtn.className += ' hidden';
-        const blockBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-red rounded');
+        const blockBtn = this.uiManager.createElement('button', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
         blockBtn.id = 'block-friend-btn';
-        blockBtn.textContent = "BLOCK FRIEND";
+        blockBtn.textContent = "BLOCK";
         blockBtn.className += ' hidden';
         btnDiv.appendChild(deleteBtn);
         btnDiv.appendChild(blockBtn);
@@ -59,7 +94,9 @@ export class LiveChatPage {
         avatarSection.appendChild(username);
         avatarSection.appendChild(btnDiv);
         profileDiv.appendChild(avatarSection);
-        // Chat Column
+        return profileDiv;
+    }
+    createChatColumn() {
         const chatDiv = this.uiManager.createElement('div', 'flex flex-col flex-grow bg-black/40 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 min-h-[700px] justify-between');
         chatDiv.style.minWidth = '600px';
         // Main container of chat
@@ -68,412 +105,94 @@ export class LiveChatPage {
         const messagesTitle = this.uiManager.createElement('div', 'text-[#00ffff] text-sm mb-2 opacity-60');
         messagesTitle.textContent = 'Messages';
         // Field of messages
-        const messagesContainer = this.uiManager.createElement('div', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 overflow-y-auto');
+        const messagesContainer = this.uiManager.createElement('div', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4');
+        messagesContainer.style.maxHeight = '500px';
         messagesContainer.style.minHeight = '500px';
+        messagesContainer.style.overflowY = 'auto';
         messagesContainer.id = 'messages-div';
         messagesDiv.appendChild(messagesTitle);
         messagesDiv.appendChild(messagesContainer);
+        const messagesSelectFriendText = this.uiManager.createElement('div', 'text-3xl text-[#ff1493] text-center retro-text');
+        messagesSelectFriendText.textContent = 'SELECT A FRIEND TO CHAT';
+        messagesSelectFriendText.style.marginTop = '200px';
+        messagesContainer.appendChild(messagesSelectFriendText);
+        messagesSelectFriendText.id = 'messages-select-friend-text';
+        messagesSelectFriendText.className += ' hidden';
         const inputDiv = this.uiManager.createElement('div', 'flex gap-2 mt-2 flex-shrink-0');
-        const inputField = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black');
-        const sendButton = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-black rounded');
+        const inputField = this.uiManager.createElement('input', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
+        inputField.id = 'input-field';
+        inputField.className += ' hidden';
+        const sendButton = this.uiManager.createElement('button', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
         sendButton.textContent = 'SEND';
-        sendButton.addEventListener('click', () => {
-            const message = inputField.value.trim();
-            if (message === '')
-                return;
-            this.addMessage(message, true);
+        sendButton.className += ' hidden';
+        sendButton.id = 'send-button';
+        if (this.currentSelectedFriend) {
+            inputField.classList.remove('hidden');
+            sendButton.classList.remove('hidden');
+            messagesSelectFriendText.classList.add('hidden');
+        }
+        else {
+            inputField.classList.add('hidden');
+            sendButton.classList.add('hidden');
+            messagesSelectFriendText.classList.remove('hidden');
+        }
+        inputField.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendButton.click();
+            }
         });
+        sendButton.addEventListener('click', async () => this.sendMessage(inputField));
         inputDiv.appendChild(inputField);
         inputDiv.appendChild(sendButton);
         chatDiv.appendChild(messagesDiv);
         chatDiv.appendChild(inputDiv);
-        // Social Div
-        const socialDiv = this.uiManager.createElement('div', 'w-80 bg-black/40 backdrop-blur-sm border-2 border-[#9d4edd] rounded-lg flex flex-col py-6 px-4 min-h-[700px]');
-        // Social Header
-        const socialHeaderWrapper = this.uiManager.createElement('div', 'flex items-center justify-between mb-4');
-        const socialHeader = this.uiManager.createElement('h3', 'retro-text text-xl text-[#00ffff]');
-        socialHeader.textContent = 'SOCIAL';
-        const addFriendBtn = this.uiManager.createElement('button', 'px-2 py-1 text-sm bg-black text-red-500 border border-red-500 rounded');
-        addFriendBtn.innerHTML = 'ADD +';
-        const addFriendDiv = this.uiManager.createElement('div', 'flex flex-col gap-2 mt-2 hidden');
-        const friendInput = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black');
-        friendInput.placeholder = 'Username';
-        friendInput.id = 'friend-input';
-        const sendFriendBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-black rounded');
-        sendFriendBtn.textContent = 'Send';
-        const errorMessageDiv = this.uiManager.createElement('div', 'hidden text-red-500 text-sm mt-2');
-        errorMessageDiv.id = 'error-message-div';
-        addFriendDiv.appendChild(friendInput);
-        addFriendDiv.appendChild(sendFriendBtn);
-        addFriendDiv.appendChild(errorMessageDiv);
-        addFriendBtn.addEventListener('click', () => {
-            addFriendDiv.classList.toggle('hidden');
-        });
-        // Setup socket listeners immediately
-        this.setupSocketListeners(errorMessageDiv, friendInput);
-        sendFriendBtn.addEventListener('click', async () => {
-            const username = friendInput.value.trim();
-            if (!username) {
-                errorMessageDiv.textContent = 'Please enter a username';
-                errorMessageDiv.classList.remove('hidden', 'text-green-500');
-                errorMessageDiv.classList.add('text-red-500');
-                return;
-            }
-            if (user) {
-                try {
-                    const senderId = user.id;
-                    const receiverId = await this.getIdByUsername(username);
-                    if (!receiverId) {
-                        errorMessageDiv.textContent = "User id not found";
-                        errorMessageDiv.classList.remove('hidden', 'text-green-500');
-                        errorMessageDiv.classList.add('text-red-500');
-                        return;
-                    }
-                    const res = await fetch(this.routerManager.getUrl('/live-chat/friend-request'), {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ senderId, receiverId })
-                    });
-                    if (!res.ok) {
-                        const resData = await res.json();
-                        throw new Error(resData.message || 'Failed to send friend request');
-                    }
-                    const data = await res.json();
-                    if (!data.success) {
-                        throw new Error(data.message || 'Failed to send friend request');
-                    }
-                    errorMessageDiv.textContent = "Friend request sent!";
-                    errorMessageDiv.classList.remove('hidden', 'text-red-500');
-                    errorMessageDiv.classList.add('text-green-500');
-                    friendInput.value = '';
-                    console.log("Friend request sent via socket.io!");
-                }
-                catch (error) {
-                    console.error("Error sending friend request:", error);
-                    errorMessageDiv.textContent = "Failed to send request. Please try again.";
-                    errorMessageDiv.classList.remove('hidden', 'text-green-500');
-                    errorMessageDiv.classList.add('text-red-500');
-                }
-            }
-        });
-        socialHeaderWrapper.appendChild(socialHeader);
-        socialHeaderWrapper.appendChild(addFriendBtn);
-        socialDiv.appendChild(socialHeaderWrapper);
-        socialDiv.appendChild(addFriendDiv);
-        // Online list
-        const onlineList = this.uiManager.createElement('div', 'w-full mb-6');
-        onlineList.id = 'friends-container';
-        const onlineTitle = this.uiManager.createElement('h4', 'retro-text text-lg text-[#00ffff] mb-2');
-        onlineTitle.textContent = 'Friends';
-        const onlineContent = this.uiManager.createElement('div', 'text-[#00ffff] opacity-80');
-        onlineContent.textContent = 'List of friends goes here...';
-        onlineList.appendChild(onlineTitle);
-        onlineList.appendChild(onlineContent);
-        socialDiv.appendChild(onlineList);
-        // Notifications section
-        const notifList = this.uiManager.createElement('div', 'w-full');
-        const notifTitle = this.uiManager.createElement('h4', 'retro-text text-lg text-[#00ffff] mb-2');
-        notifTitle.textContent = 'Notifications';
-        // Container for all friend request notifications
-        const notificationsContainer = this.uiManager.createElement('div', 'flex flex-col gap-2 mt-2 max-h-96 overflow-y-auto');
-        notificationsContainer.id = 'notifications-container';
-        notifList.appendChild(notifTitle);
-        notifList.appendChild(notificationsContainer);
-        socialDiv.appendChild(notifList);
-        // Main Grid
-        const mainGrid = this.uiManager.createElement('div', 'flex justify-center gap-2 w-full');
-        mainGrid.style.alignItems = 'start';
-        mainGrid.appendChild(profileDiv);
-        mainGrid.appendChild(chatDiv);
-        mainGrid.appendChild(socialDiv);
-        const backDiv = this.uiManager.createElement('div', 'flex justify-center items-center h-screen');
-        const backButton = this.uiManager.createButton(this.t('backToSettings'), 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 mt-4', () => {
-            console.log('Back to settings clicked');
-            this.onBack();
-        });
-        backDiv.appendChild(backButton);
-        container.appendChild(mainGrid);
-        container.append(backDiv);
-        this.uiManager.clear();
-        this.uiManager.container.appendChild(container);
-        if (user) {
-            this.loadFriendsList(user.id);
-            this.loadPendingFriendRequests(user.id);
+        return chatDiv;
+    }
+    async checkSessionStorageForRedirect() {
+        const storedId = sessionStorage.getItem('selectedFriendId');
+        const storedUsername = sessionStorage.getItem('selectedFriendUsername');
+        // const res = await this.getUsernameById(storedId || '');
+        // const avatar = res.json
+        // PEGAR AVATAR AQUIIIIII
+        if (storedId && storedUsername) {
+            this.currentSelectedFriend = {
+                id: storedId,
+                username: storedUsername,
+                avatar: '',
+                isGuest: false,
+                nbrId: Number(storedId)
+            };
+            sessionStorage.removeItem('selectedFriendId');
+            sessionStorage.removeItem('selectedFriendUsername');
         }
     }
-    async getIdByUsername(username) {
-        try {
-            const res = await fetch(this.routerManager.getUrl('/auth/id-username'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username })
-            });
-            if (!res.ok) {
-                console.error('Error fetching user data');
-                return;
-            }
-            const data = await res.json();
-            if (!data.success) {
-                console.error('Couldn\'t find username');
-                return;
-            }
-            else {
-                const userId = data.data.user.user_id;
-                console.log('User ID found for friend request: ', userId);
-                return userId;
-            }
-        }
-        catch (error) {
-            console.error("Error:", error);
-        }
-    }
-    async getUsernameById(id) {
-        try {
-            const res = await fetch(this.routerManager.getUrl('/auth/username-id'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id })
-            });
-            if (!res.ok) {
-                console.error('Error fetching user data');
-                return;
-            }
-            const data = await res.json();
-            if (!data.success) {
-                console.error('Couldn\'t find username');
-                return;
-            }
-            else {
-                const userId = data.data.user.user_id;
-                console.log('User ID found for friend request: ', userId);
-                return userId;
-            }
-        }
-        catch (error) {
-            console.error("Error:", error);
-        }
-    }
-    async setupSocketListeners(errorMessageDiv, friendInput) {
-        if (!this.wsManager) {
-            console.log("No generalSocket available");
-            return;
-        }
-        const requests = await fetch(this.routerManager.getUrl('/live-chat/pending-requests'), {
-            method: 'GET',
-            credentials: 'include'
-        });
-        const data = await requests.json();
-        if (data.success && data.requests) {
-            data.requests.forEach((request) => {
-                this.addFriendRequestNotification(request.senderId, request.message);
-            });
-            console.log(`Loaded ${data.requests.length} pending friend requests on socket setup`);
-        }
-        this.wsManager.offGeneral('notifications');
-        this.wsManager.onGeneral('notifications', (data) => {
-            console.log("Received notification:", data);
-            switch (data.type) {
-                case 'friend-request':
-                    this.addFriendRequestNotification(data.senderId, data.message);
-                    break;
-                case 'friend-request-accepted':
-                    if (this.currentUser) {
-                        this.loadFriendsList(this.currentUser.id);
-                    }
-                    break;
-                case 'friend-removed':
-                    if (this.currentUser) {
-                        this.loadFriendsList(this.currentUser.id);
-                    }
-                    break;
-                case 'clear-notification':
-                    this.removeFriendRequestNotification(data.senderId);
-                    break;
-                default:
-                    console.warn("Unknown notification type:", data.type);
-                    break;
-            }
-        });
-    }
-    async addFriendRequestNotification(senderId, message) {
-        if (this.friendRequests.has(senderId)) {
-            console.log("Notification already exists for sender:", senderId);
-            return;
-        }
-        const container = document.getElementById('notifications-container');
-        if (!container) {
-            console.error("Notifications container not found");
-            return;
-        }
-        const notifCard = this.uiManager.createElement('div', 'p-3 bg-black/80 border border-[#ff1493] rounded');
-        const notifMessage = this.uiManager.createElement('p', 'text-[#00ffff] text-sm mb-2');
-        notifMessage.textContent = message;
-        const notifButtons = this.uiManager.createElement('div', 'flex gap-2');
-        const acceptBtn = this.uiManager.createElement('button', 'px-3 py-1 text-xs bg-green-500 text-black rounded hover:bg-green-400');
-        acceptBtn.textContent = 'Accept';
-        const rejectBtn = this.uiManager.createElement('button', 'px-3 py-1 text-xs bg-red-500 text-black rounded hover:bg-red-400');
-        rejectBtn.textContent = 'Reject';
-        acceptBtn.addEventListener('click', async () => {
-            try {
-                const res = await fetch(this.routerManager.getUrl('/live-chat/friend-request-response'), {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ senderId: senderId, action: 'accept' })
-                });
-            }
-            catch (error) {
-                console.error("Error accepting friend request:", error);
-            }
-            this.removeFriendRequestNotification(senderId);
-            this.loadFriendsList(this.currentUser?.id);
-        });
-        rejectBtn.addEventListener('click', async () => {
-            try {
-                const res = await fetch(this.routerManager.getUrl('/live-chat/friend-request-response'), {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ senderId: senderId, action: 'reject' })
-                });
-            }
-            catch (error) {
-                console.error("Error rejecting friend request:", error);
-            }
-            this.removeFriendRequestNotification(senderId);
-        });
-        notifButtons.appendChild(acceptBtn);
-        notifButtons.appendChild(rejectBtn);
-        notifCard.appendChild(notifMessage);
-        notifCard.appendChild(notifButtons);
-        container.appendChild(notifCard);
-        this.friendRequests.set(senderId, { senderId, message, element: notifCard });
-        console.log(`Added notification for sender ${senderId}. Total notifications: ${this.friendRequests.size}`);
-    }
-    removeFriendRequestNotification(senderId) {
-        const notification = this.friendRequests.get(senderId);
-        if (!notification) {
-            console.log("No notification found for sender:", senderId);
-            return;
-        }
-        notification.element.remove();
-        this.friendRequests.delete(senderId);
-        console.log(`Removed notification for sender ${senderId}. Remaining: ${this.friendRequests.size}`);
-    }
-    async loadPendingFriendRequests(userId) {
-        try {
-            console.log("Loading pending friend requests for user:", userId);
-            const res = await fetch(this.routerManager.getUrl('/live-chat/pending-requests'), {
-                method: 'GET',
-                credentials: 'include'
-            });
-            if (!res.ok) {
-                console.error('Failed to load pending requests:', res.status);
-                const resData = await res.json();
-                console.error('Response data:', resData);
-                return;
-            }
-            const data = await res.json();
-            console.log("Pending requests response:", data);
-            if (data.success && data.requests && data.requests.length > 0) {
-                data.requests.forEach((request) => {
-                    this.addFriendRequestNotification(request.senderId, request.message);
-                });
-                console.log(`Loaded ${data.requests.length} pending friend requests`);
-            }
-            else {
-                console.log("No pending friend requests found");
-            }
-        }
-        catch (error) {
-            console.error("Error loading pending friend requests:", error);
-        }
-    }
-    async loadFriendsList(userId) {
-        try {
-            console.log("Loading friends list for user:", userId);
-            const res = await fetch(this.routerManager.getUrl('/live-chat/get-friends'), {
-                method: 'GET',
-                credentials: 'include'
-            });
-            if (!res.ok) {
-                console.error('Failed to load friends:', res.status);
-                return;
-            }
-            const data = await res.json();
-            console.log("Friends list response:", data);
-            if (data.success && data.friends && data.friends.length > 0) {
-                this.displayFriends(data.friends);
-                console.log(`Loaded ${data.friends.length} friends`);
-            }
-            else {
-                console.log("No friends found");
-                this.displayNoFriends();
-            }
-        }
-        catch (error) {
-            console.error("Error loading friends:", error);
-        }
-    }
-    async displayFriends(friends) {
-        const container = document.getElementById('friends-container');
-        if (!container) {
-            console.error("Friends container not found");
-            return;
-        }
-        const profileDiv = document.getElementById('profile-div');
-        if (!profileDiv) {
-            console.error("Profile Div not found");
-            return;
-        }
-        container.innerHTML = '';
-        for (const friend of friends) {
-            const username = friend.username;
-            const friendItem = this.uiManager.createElement('div', 'p-2 bg-black/40 border border-[#00ffff]/30 rounded hover:bg-black/60 cursor-pointer transition-colors');
-            const friendName = this.uiManager.createElement('p', 'text-[#00ffff] text-sm');
-            friendName.textContent = username || `User ${username}`;
-            friendItem.addEventListener('click', async () => {
-                this.currentSelectedFriend = {
-                    username: friend.username,
-                    id: friend.id,
-                    avatar: friend.avatar,
-                    isGuest: false,
-                    nbrId: friend.id
-                };
-                console.log("Selected friend:", friend);
-                this.updateProfileView();
-                profileDiv.querySelectorAll('button').forEach(btn => {
-                    btn.classList.remove('hidden');
-                });
-            });
-            friendItem.appendChild(friendName);
-            container.appendChild(friendItem);
-        }
-        ;
+    async handleFriendSelection(friendId, username, avatar) {
+        console.log("Handling friend selection:", username);
+        this.currentSelectedFriend = {
+            username: username,
+            id: friendId,
+            avatar: avatar ?? '',
+            isGuest: false,
+            nbrId: Number(friendId)
+        };
+        this.updateProfileView();
+        await this.loadChatHistory(friendId);
         this.setupFriendActionButtons();
+        const profileDiv = document.getElementById('profile-div');
+        profileDiv?.querySelectorAll('button').forEach(btn => btn.classList.remove('hidden'));
+        document.getElementById('send-button')?.classList.remove('hidden');
+        document.getElementById('input-field')?.classList.remove('hidden');
+        document.getElementById('messages-text')?.classList.remove('hidden');
     }
-    ;
     updateProfileView() {
         const profileDiv = document.getElementById('profile-div');
-        if (!profileDiv)
+        if (!profileDiv || !this.currentSelectedFriend)
             return;
         const friendImg = profileDiv.querySelector('img');
         const friendPseudo = profileDiv.querySelector('p');
-        console.log("Updating profile view for friend:", this.currentSelectedFriend);
-        let friend = this.currentSelectedFriend;
-        if (!friend) {
-            friend = this.currentUser;
-            this.currentSelectedFriend = this.currentUser;
-        }
-        console.log("Using friend for profile view:", this.currentSelectedFriend);
-        if (friend && friendImg) {
+        const friend = this.currentSelectedFriend;
+        if (friendImg) {
             if (!friend.avatar)
                 friendImg.src = 'public/avatars/default.png';
             else if (friend.avatar.startsWith('http'))
@@ -481,17 +200,83 @@ export class LiveChatPage {
             else
                 friendImg.src = `public/avatars/${friend.avatar}.png`;
         }
-        if (friend && friendPseudo) {
+        if (friendPseudo) {
             friendPseudo.textContent = friend.username;
         }
-        const deleteBtn = document.getElementById('delete-friend-btn');
-        const blockBtn = document.getElementById('block-friend-btn');
-        if (this.currentSelectedFriend && this.currentUser && this.currentSelectedFriend.id === this.currentUser.id) {
-            if (deleteBtn)
-                deleteBtn.classList.add('hidden');
-            if (blockBtn)
-                blockBtn.classList.add('hidden');
+    }
+    async sendMessage(inputField) {
+        const message = inputField.value.trim();
+        if (message === '' || !this.currentSelectedFriend)
+            return;
+        try {
+            const res = await fetch(this.routerManager.getUrl('/live-chat/send-message'), {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ receiverId: this.currentSelectedFriend.id, message: message })
+            });
+            if (!res.ok) {
+                console.error('Failed to send message:', res.status);
+                return;
+            }
+            if (res.ok) {
+                this.addMessage(message, true);
+                inputField.value = '';
+                inputField.focus();
+            }
         }
+        catch (error) {
+            console.error("Error sending message:", error);
+        }
+    }
+    addMessage(text, isMine) {
+        const messagesContainer = document.getElementById('messages-div');
+        if (!messagesContainer)
+            return;
+        const wrapper = this.uiManager.createElement('div', `flex mb-2 w-full ${isMine ? 'justify-end' : 'justify-start'}`);
+        const bubble = this.uiManager.createElement('div', isMine
+            ? 'bg-black text-[#ff1493] border border-[#ff1493]/40 px-3 py-2 rounded-lg max-w-[70%]'
+            : 'bg-white/70 text-[#ffffff] border border-[#00ffff]/40 px-3 py-2 rounded-lg max-w-[70%]');
+        bubble.textContent = text;
+        wrapper.appendChild(bubble);
+        messagesContainer.appendChild(wrapper);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    async loadChatHistory(friendId) {
+        const messagesContainer = document.getElementById('messages-div');
+        if (messagesContainer)
+            messagesContainer.innerHTML = '';
+        if (!friendId || friendId === this.currentUser?.id)
+            return;
+        try {
+            const res = await fetch(this.routerManager.getUrl(`/live-chat/get-messages?friendId=${friendId}`), {
+                credentials: 'include'
+            });
+            const data = await res.json();
+            if (data.success && data.messages) {
+                data.messages.forEach((msg) => {
+                    const isMine = msg.sender_id === this.currentUser?.id;
+                    this.addMessage(msg.content, isMine);
+                });
+            }
+        }
+        catch (err) {
+            console.error("Error loading chat history:", err);
+        }
+    }
+    setupChatSocketListeners() {
+        if (!this.wsManager)
+            return;
+        this.wsManager.onGeneral('notifications', (data) => {
+            if (data.type === 'new-message') {
+                const sId = Number(data.senderId);
+                if (this.currentSelectedFriend && sId === this.currentSelectedFriend.nbrId) {
+                    this.addMessage(data.message, false);
+                }
+            }
+        });
     }
     setupFriendActionButtons() {
         const blockBtn = document.getElementById('block-friend-btn');
@@ -499,95 +284,61 @@ export class LiveChatPage {
         if (blockBtn) {
             const newBlockBtn = blockBtn.cloneNode(true);
             blockBtn.replaceWith(newBlockBtn);
-            newBlockBtn.addEventListener('click', () => {
-                if (!this.currentSelectedFriend)
-                    return;
-                console.log("Blocking friend:", this.currentSelectedFriend.id);
-                const resBlock = fetch(this.routerManager.getUrl('/live-chat/block-friend'), {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ friendId: this.currentSelectedFriend.id })
-                }).then(async (response) => {
-                    if (!response.ok) {
-                        console.error('Failed to block friend:', response.status);
-                        return;
-                    }
-                    const data = await response.json();
-                    if (data.success) {
-                        console.log("Friend blocked successfully");
-                        if (this.currentUser) {
-                            this.loadFriendsList(this.currentUser.id);
-                        }
-                    }
-                    else {
-                        console.error("Failed to block friend:", data.message);
-                    }
-                });
-                this.currentSelectedFriend = null;
-                this.updateProfileView();
-            });
+            newBlockBtn.addEventListener('click', () => this.handleBlockFriend());
         }
         if (deleteBtn) {
             const newDeleteBtn = deleteBtn.cloneNode(true);
             deleteBtn.replaceWith(newDeleteBtn);
-            newDeleteBtn.addEventListener('click', () => {
-                if (!this.currentSelectedFriend)
-                    return;
-                console.log("Removing friend:", this.currentSelectedFriend.id);
-                const res = fetch(this.routerManager.getUrl('/live-chat/remove-friend'), {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ friendId: this.currentSelectedFriend.id })
-                }).then(async (response) => {
-                    if (!response.ok) {
-                        console.error('Failed to remove friend:', response.status);
-                        return;
-                    }
-                    const data = await response.json();
-                    if (data.success) {
-                        console.log("Friend removed successfully");
-                        if (this.currentUser) {
-                            this.loadFriendsList(this.currentUser.id);
-                        }
-                    }
-                    else {
-                        console.error("Failed to remove friend:", data.message);
-                    }
-                });
-                this.currentSelectedFriend = null;
-                this.updateProfileView();
-            });
+            newDeleteBtn.addEventListener('click', () => this.handleDeleteFriend());
         }
     }
-    displayNoFriends() {
-        const container = document.getElementById('friends-container');
-        if (!container)
+    async handleBlockFriend() {
+        if (!this.currentSelectedFriend)
             return;
-        container.innerHTML = '';
-        const emptyMessage = this.uiManager.createElement('p', 'text-[#00ffff]/50 text-sm italic');
-        emptyMessage.textContent = 'No friends yet. Add some!';
-        container.appendChild(emptyMessage);
+        console.log("Blocking friend:", this.currentSelectedFriend.nbrId);
+        try {
+            const res = await fetch(this.routerManager.getUrl('/live-chat/block-friend'), {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ friendId: this.currentSelectedFriend.nbrId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                console.log("Friend blocked successfully");
+                this.socialManager?.loadFriendsList();
+                this.currentSelectedFriend = null;
+                this.updateProfileView();
+            }
+            else {
+                console.error("Failed to block friend:", data.message);
+            }
+        }
+        catch (err) {
+            console.error("Error blocking friend:", err);
+        }
     }
-    /**********************************************************************************************/
-    /**************************************** LIVE-CHAT **************************************/
-    /**********************************************************************************************/
-    addMessage(text, isMine) {
-        const messagesContainer = document.getElementById('messages-div');
-        if (!messagesContainer)
+    async handleDeleteFriend() {
+        if (!this.currentSelectedFriend)
             return;
-        const wrapper = this.uiManager.createElement('div', `flex mb-2 ${isMine ? 'justify-end' : 'justify-start'}`);
-        const bubble = this.uiManager.createElement('div', isMine
-            ? 'bg-[#ffffff] text-white px-3 py-2 rounded-lg max-w-[70%]'
-            : 'bg-white/70 text-[#ffffff] border border-[#00ffff]/40 px-3 py-2 rounded-lg max-w-[70%]');
-        bubble.textContent = text;
-        wrapper.appendChild(bubble);
-        messagesContainer.appendChild(wrapper);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        console.log("Removing friend:", this.currentSelectedFriend.nbrId);
+        try {
+            const res = await fetch(this.routerManager.getUrl('/live-chat/remove-friend'), {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ friendId: this.currentSelectedFriend.nbrId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                console.log("Friend removed");
+                this.socialManager?.loadFriendsList();
+                this.currentSelectedFriend = null;
+                this.updateProfileView();
+            }
+        }
+        catch (err) {
+            console.error("Error removing friend:", err);
+        }
     }
 }

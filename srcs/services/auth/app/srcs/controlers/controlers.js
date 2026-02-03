@@ -9,7 +9,13 @@ import { get_error_message, get_success_message, get_message, e, } from '../mess
 import { is_auth, signCSRFToken, generateCSRFToken, generateOTP, is_valid_path, is_valid_password  } from '../auth.js';
 import { mail_queue } from '../services/message-broker.js';
 import { update_avatar_route } from './updateProfileControlers.js';
+// import { Agent } from 'undici';
 
+// const agent = new Agent({
+//   connect: {
+//     rejectUnauthorized: false
+//   }
+// });
 
 ///
 /// https://localhost/confirm-email/e90401a3-0356-4292-bc36-14ace9a3611b
@@ -588,11 +594,18 @@ export async function signup_otp_validation_route(request, reply)
 			console.log("insert: ", insert);
 		const userId = insert.lastID;
 		console.log("userId: " + userId);
-		const langRes = await fetch('http://language-manager:3001/create-lang', {
+		const langRes = await fetch('https://language-manager:3001/create-lang', {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ user_id: userId, lang: "en" })
+			// agent:
+			// {
+			// 	dispatcher: new (await import('undici')).Agent({ connect: { rejectUnauthorized: false } })
+			// }
 		});
+		if (!langRes.ok) {
+			console.error("Failed to create user language entry", langRes.status, langRes.statusText);
+		}
 		const lang = await langRes.json();
 		if (!lang.success) {
 			return { succes: false, message: "Couldn't reache lang database" };
@@ -848,6 +861,5 @@ export async function get_username_by_id_route(request, reply) {
     return reply.code(500).send({ success: false, message: "Internal app error" });
   }
 }
-
 
 

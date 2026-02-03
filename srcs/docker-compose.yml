@@ -105,6 +105,7 @@ services:
       - 3000
     environment:
       - NODE_ENV=${NODE_ENV}
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
@@ -138,6 +139,7 @@ services:
     expose:
       - 3001
     environment:
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
       - NODE_ENV=${NODE_ENV}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - REDIS_HOST=${REDIS_HOST}
@@ -183,6 +185,7 @@ services:
       - 3003
     environment:
       - NODE_ENV=${NODE_ENV}
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}

@@ -15,6 +15,50 @@ import { handleMatchmaking, cancelSearch } from './matchmaking.js';
 const is_prod = process.env.NODE_ENV === "PROD";
 export const base_url = is_prod ? "www.transcendance.com" : "localhost";
 
+const AUTH_INTERNAL_URL = process.env.AUTH_INTERNAL_URL || 'https://auth_app:3000';
+
+function isNumericUserId(userId) {
+	if (userId === null || userId === undefined) return false;
+	if (typeof userId === 'number') return Number.isFinite(userId);
+	if (typeof userId !== 'string') return false;
+	return /^\d+$/.test(userId);
+}
+
+async function fetchAuthUserById(userId) {
+	if (!isNumericUserId(userId)) {
+		return { username: null, avatar: null };
+	}
+
+	try {
+		const serviceToken = jwt.sign(
+			{ service: 'realtime-sockets' },
+			process.env.JWT_SECRET,
+			{ expiresIn: '5m' }
+		);
+
+		const res = await fetch(`${AUTH_INTERNAL_URL}/username-id`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${serviceToken}`
+			},
+			body: JSON.stringify({ id: String(userId) })
+		});
+
+		if (!res.ok) {
+			return { username: null, avatar: null };
+		}
+		const data = await res.json();
+		return {
+			username: data?.data?.user?.pseudo ?? null,
+			avatar: data?.data?.user?.avatar ?? null
+		};
+	} catch (err) {
+		console.warn('[realtime-sockets] Failed to fetch user from auth:', err?.message || err);
+		return { username: null, avatar: null };
+	}
+}
+
 // Track active games and which users are in them
 const runningGames = new Map();
 const userGames = new Map(); // userId -> gameUUID mapping
@@ -225,6 +269,8 @@ function setupGeneralGameSocket(socket) {
 		}));
 	});
 
+
+
 	// Handle disconnect - clean up matchmaking and games
 	socket.on('disconnect', async () => {
 		console.log(`[Game Socket] ========== DISCONNECT EVENT ==========`);
@@ -344,17 +390,41 @@ function setupGeneralGameSocket(socket) {
 async function requestGameUID(socket, data){
 	const userId = socket.userId;
 
+	function clampNumber(value, min, max) {
+		const num = typeof value === 'number' ? value : Number(value);
+		if (!Number.isFinite(num)) return undefined;
+		return Math.min(max, Math.max(min, num));
+	}
+
+	function normalizeGameSettings(raw) {
+		if (!raw || typeof raw !== 'object') return undefined;
+		const settings = {};
+		const ballSpeed = clampNumber(raw.ballSpeed, 3, 12);
+		const paddleSpeed = clampNumber(raw.paddleSpeed, 4, 15);
+		if (ballSpeed !== undefined) settings.ballSpeed = ballSpeed;
+		if (paddleSpeed !== undefined) settings.paddleSpeed = paddleSpeed;
+		return Object.keys(settings).length ? settings : undefined;
+	}
+
 	let uuid = crypto.randomUUID()
 	console.log("Before type")
 	if (data.type === "local")
 	{
 		console.log("Local activated")
 		console.log("data: ", data, "uuid : ", uuid)
+		const settings = normalizeGameSettings(data.settings);
 
 		const game = new Game(socket, {
 			uuid: uuid,
 			type: data.type
-		});
+		}, settings);
+
+		// Set player 1 ID
+		game.player1Id = socket.userId;
+		runningGames.set(uuid, game);
+
+		// Track that this user is in this game
+		userGames.set(socket.userId, uuid);
 
 		// Set player 1 ID
 		game.player1Id = socket.userId;
@@ -371,12 +441,20 @@ async function requestGameUID(socket, data){
 	{
 		console.log("AI Activated")
 		console.log("data: ", data, "uuid : ", uuid)
+		const settings = normalizeGameSettings(data.settings);
 
 		const game = new Game(socket, {
 			uuid: uuid,
 			type: data.type,
 			difficulty: data.difficulty || 'medium'
-		}, undefined, redis);
+		}, settings, redis);
+
+		// Set player 1 ID
+		game.player1Id = socket.userId;
+		runningGames.set(uuid, game);
+
+		// Track that this user is in this game
+		userGames.set(socket.userId, uuid);
 
 		// Set player 1 ID
 		game.player1Id = socket.userId;
@@ -393,11 +471,19 @@ async function requestGameUID(socket, data){
 	{
 		console.log("Remote Activated")
 		console.log("data: ", data, "uuid : ", uuid)
+		const settings = normalizeGameSettings(data.settings);
 
 		const game = new Game(socket, {
 			uuid: uuid,
 			type: data.type
-		});
+		}, settings);
+
+		// Set player 1 ID immediately
+		game.player1Id = socket.userId;
+		runningGames.set(uuid, game);
+
+		// Track that this user is in this game
+		userGames.set(socket.userId, uuid);
 
 		// Set player 1 ID immediately
 		game.player1Id = socket.userId;
@@ -419,10 +505,10 @@ async function requestGameUID(socket, data){
 function onMatchFound(matchData) {
 	const { game, gameUUID, player1Socket, player1UserId, player2Socket, player2UserId, player2GameUUID } = matchData;
 
-	console.log(`[Server] ========== MATCH FOUND ==========`);
-	console.log(`[Server] Game UUID: ${gameUUID}`);
-	console.log(`[Server] Player 1: ${player1UserId} (socket: ${player1Socket.id})`);
-	console.log(`[Server] Player 2: ${player2UserId} (socket: ${player2Socket.id})`);
+	Promise.all([
+		fetchAuthUserById(player1UserId),
+		fetchAuthUserById(player2UserId)
+	]).then(([player1Info, player2Info]) => {
 
 	// Add player 2 to the game (we'll implement this in Game.js)
 	game.addPlayer2(player2Socket, player2UserId);
@@ -430,8 +516,7 @@ function onMatchFound(matchData) {
 	// Track both players in this game
 	userGames.set(player1UserId, gameUUID);
 	userGames.set(player2UserId, gameUUID);
-	console.log(`[Server] Both players tracked in game ${gameUUID}`);
-	console.log(`[Server] userGames after match:`, [...userGames.entries()]);
+	console.log(`[Server] Both players tracked in game ${gameUUID}`)
 
 	// Remove player 2's old game listener (memory leak prevention)
 	player2Socket.removeAllListeners(player2GameUUID);
@@ -444,7 +529,9 @@ function onMatchFound(matchData) {
 	player1Socket.emit(gameUUID, {
 		type: "opponent-found",
 		playerNumber: 1,
-		opponentId: player2UserId
+		opponentId: player2UserId,
+		opponentUsername: player2Info?.username ?? null,
+		opponentAvatar: player2Info?.avatar ?? null
 	});
 
 	// Notify Player 2: "Opponent found!"
@@ -454,11 +541,29 @@ function onMatchFound(matchData) {
 		type: "opponent-found",
 		playerNumber: 2,
 		opponentId: player1UserId,
+		opponentUsername: player1Info?.username ?? null,
+		opponentAvatar: player1Info?.avatar ?? null,
 		gameUUID: gameUUID  // The game they should switch to
 	});
 
 	console.log(`[Server] Match ready! Game: ${gameUUID}`);
 	console.log(`[Server] Player 2 notified on their channel: ${player2GameUUID}`);
+	}).catch((err) => {
+		console.warn('[Server] Failed to enrich opponent-found payload:', err?.message || err);
+
+		// Fallback: send minimal payload
+		player1Socket.emit(gameUUID, {
+			type: "opponent-found",
+			playerNumber: 1,
+			opponentId: player2UserId
+		});
+		player2Socket.emit(player2GameUUID, {
+			type: "opponent-found",
+			playerNumber: 2,
+			opponentId: player1UserId,
+			gameUUID: gameUUID
+		});
+	});
 }
 
 async function gameHandler(uuid, data, socket){

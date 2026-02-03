@@ -4,6 +4,7 @@ export class WebsocketManager {
         this.gameSocket = null;
         this.onGameReconnectCallback = null;
         this.gameSocketWasConnected = false;
+        this.chatNotifications = new Map();
     }
     static getInstance() {
         if (!WebsocketManager.instance) {
@@ -71,5 +72,14 @@ export class WebsocketManager {
     disconnectAll() {
         this.generalSocket?.disconnect();
         this.gameSocket?.disconnect();
+    }
+    getPendingNotifications() {
+        return Array.from(this.chatNotifications.values());
+    }
+    saveNotification(senderId, username, message) {
+        this.chatNotifications.set(Number(senderId), { senderId, username, message });
+    }
+    clearNotification(senderId) {
+        this.chatNotifications.delete(Number(senderId));
     }
 }
