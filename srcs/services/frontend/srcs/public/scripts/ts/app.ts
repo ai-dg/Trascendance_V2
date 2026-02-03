@@ -256,6 +256,18 @@ export class App {
    * Get the currently connected user from server or localStorage
    */
   private async getConnectedUser(): Promise<User | null> {
+    // Check for guest user in localStorage first to avoid unnecessary API calls
+    const guestNickname = localStorage.getItem("guestNickname");
+    const guestAvatar = localStorage.getItem("guestAvatar");
+    if (guestAvatar && guestNickname) {
+      return {
+        username: guestNickname,
+        avatar: guestAvatar,
+        isGuest: true
+      };
+    }
+
+    // Try to fetch authenticated user
     try {
       const res = await fetch(this.routerManager.getUrl('auth/me'), {
         method: 'GET',
@@ -271,24 +283,11 @@ export class App {
           isGuest: false
         };
         return user;
-        // get localStorage data;
       }
+      // Silent handling of 401 - user is not authenticated
       if (res.status === 401) {
       } else {
         console.warn(`getConnectedUser: unexpected status ${res.status}`);
-      }
-      let guestUser: User | null = null;
-
-      let guestNickname = localStorage.getItem("guestNickname");
-      let guestAvatar = localStorage.getItem("guestAvatar");
-
-      if (guestAvatar && guestNickname) {
-        guestUser = {
-          username: guestNickname,
-          avatar: guestAvatar,
-          isGuest: true
-        };
-        return guestUser;
       }
       return null;
     }

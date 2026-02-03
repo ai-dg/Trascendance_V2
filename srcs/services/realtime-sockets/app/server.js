@@ -26,6 +26,8 @@ function isNumericUserId(userId) {
 
 async function fetchAuthUserById(userId) {
 	if (!isNumericUserId(userId)) {
+		// For guest users, return null for both so that fallback logic
+		// picks up socket.user (the chosen nickname) and socket.avatar
 		return { username: null, avatar: null };
 	}
 
@@ -155,19 +157,27 @@ async function socketAuthMiddleware(socket, next) {
   try {
     const cookies = socket.handshake.headers.cookie;
 
+    // Get persistent guest ID and info from handshake auth (sent by client)
+    const persistentGuestId = socket.handshake.auth?.guestId;
+    const guestNickname = socket.handshake.auth?.guestNickname;
+    const guestAvatar = socket.handshake.auth?.guestAvatar;
+
     // Allow guests for game sockets
     if (!cookies) {
-      socket.userId = `guest:${socket.id}`;
-      socket.user = "Guest";
+      // Use persistent guest ID if available, otherwise fall back to socket.id
+      socket.userId = persistentGuestId || `guest:${socket.id}`;
+      socket.user = guestNickname || "Guest";
+      socket.avatar = guestAvatar || null;
       return next();
     }
 
     const token = parseCookie(cookies, 'token');
 
     if (!token) {
-      // Allow guests for game sockets
-      socket.userId = `guest:${socket.id}`;
-      socket.user = "Guest";
+      // Allow guests for game sockets with persistent ID
+      socket.userId = persistentGuestId || `guest:${socket.id}`;
+      socket.user = guestNickname || "Guest";
+      socket.avatar = guestAvatar || null;
       return next();
     }
 
@@ -189,6 +199,7 @@ async function socketAuthMiddleware(socket, next) {
 
     socket.userId = payload.user_id || payload.id;
     socket.user = payload.pseudo || payload;
+    socket.avatar = null; // Will be fetched from auth service when needed
     console.log("payload : ", payload)
     console.log("A")
     next();
@@ -375,10 +386,57 @@ function setupGeneralGameSocket(socket) {
 			// Update user tracking
 			userGames.set(userId, gameUUID);
 
-			socket.emit('reconnection-success', {
-				gameUUID: gameUUID,
-				gameState: game.getGameState(),
-				playerNumber: userId === game.player1Id ? 1 : 2
+			// Determine which player is reconnecting and get opponent info
+			const isPlayer1 = userId === game.player1Id;
+			const opponentId = isPlayer1 ? game.player2Id : game.player1Id;
+			const opponentSocket = isPlayer1 ? game.player2Socket : game.player1Socket;
+
+			// Fetch opponent info
+			Promise.resolve().then(async () => {
+				const opponentInfo = await fetchAuthUserById(opponentId);
+				const opponentUsername = opponentInfo?.username || opponentSocket?.user || 'Player ' + (isPlayer1 ? 2 : 1);
+				const opponentAvatar = opponentInfo?.avatar || opponentSocket?.avatar || null;
+
+				console.log(`[Reconnect] Reconnecting player ${userId}, opponent ${opponentId}`);
+				console.log(`[Reconnect] Opponent info from auth:`, opponentInfo);
+				console.log(`[Reconnect] Opponent socket user:`, opponentSocket?.user);
+				console.log(`[Reconnect] Opponent socket avatar:`, opponentSocket?.avatar);
+				console.log(`[Reconnect] Final opponent username:`, opponentUsername);
+				console.log(`[Reconnect] Final opponent avatar:`, opponentAvatar);
+
+				// Notify reconnecting player
+				const response = {
+					gameUUID: gameUUID,
+					gameState: game.getGameState(),
+					playerNumber: isPlayer1 ? 1 : 2,
+					opponentId: opponentId,
+					opponentUsername: opponentUsername,
+					opponentAvatar: opponentAvatar
+				};
+				console.log(`[Reconnect] Sending response to reconnecting player:`, response);
+				socket.emit('reconnection-success', response);
+
+				// Notify opponent that player has reconnected
+				// Get reconnecting player's info
+				const reconnectingPlayerInfo = await fetchAuthUserById(userId);
+				const reconnectingPlayerUsername = reconnectingPlayerInfo?.username || socket?.user || 'Player ' + (isPlayer1 ? 1 : 2);
+				const reconnectingPlayerAvatar = reconnectingPlayerInfo?.avatar || socket?.avatar || null;
+
+				opponentSocket?.emit(gameUUID, {
+					type: 'opponent-reconnected',
+					opponentUsername: reconnectingPlayerUsername,
+					opponentAvatar: reconnectingPlayerAvatar
+				});
+
+				console.log(`[Game Socket] Notified opponent ${opponentId} that player ${userId} reconnected`);
+			}).catch((err) => {
+				console.warn('[Game Socket] Failed to fetch opponent info on reconnection:', err?.message || err);
+				// Fallback: emit without opponent info
+				socket.emit('reconnection-success', {
+					gameUUID: gameUUID,
+					gameState: game.getGameState(),
+					playerNumber: userId === game.player1Id ? 1 : 2
+				});
 			});
 			console.log(`[Game Socket] User ${userId} reconnected to game ${gameUUID}`);
 		} else {
@@ -510,6 +568,15 @@ function onMatchFound(matchData) {
 		fetchAuthUserById(player2UserId)
 	]).then(([player1Info, player2Info]) => {
 
+	// Use socket.user if available (for guests, this is their chosen nickname or "Guest")
+	// For authenticated users, prefer fetched data, but fallback to socket if fetch fails
+	const player1Username = player1Info?.username || player1Socket.user || 'Player 1';
+	const player2Username = player2Info?.username || player2Socket.user || 'Player 2';
+
+	// For avatars: use fetched data for auth users, socket.avatar for guests
+	const player1Avatar = player1Info?.avatar || player1Socket.avatar || null;
+	const player2Avatar = player2Info?.avatar || player2Socket.avatar || null;
+
 	// Add player 2 to the game (we'll implement this in Game.js)
 	game.addPlayer2(player2Socket, player2UserId);
 
@@ -530,8 +597,8 @@ function onMatchFound(matchData) {
 		type: "opponent-found",
 		playerNumber: 1,
 		opponentId: player2UserId,
-		opponentUsername: player2Info?.username ?? null,
-		opponentAvatar: player2Info?.avatar ?? null
+		opponentUsername: player2Username,
+		opponentAvatar: player2Avatar
 	});
 
 	// Notify Player 2: "Opponent found!"
@@ -541,26 +608,31 @@ function onMatchFound(matchData) {
 		type: "opponent-found",
 		playerNumber: 2,
 		opponentId: player1UserId,
-		opponentUsername: player1Info?.username ?? null,
-		opponentAvatar: player1Info?.avatar ?? null,
+		opponentUsername: player1Username,
+		opponentAvatar: player1Avatar,
 		gameUUID: gameUUID  // The game they should switch to
 	});
 
 	console.log(`[Server] Match ready! Game: ${gameUUID}`);
+	console.log(`[Server] Player 1 (${player1Username}) vs Player 2 (${player2Username})`);
 	console.log(`[Server] Player 2 notified on their channel: ${player2GameUUID}`);
 	}).catch((err) => {
 		console.warn('[Server] Failed to enrich opponent-found payload:', err?.message || err);
 
-		// Fallback: send minimal payload
+		// Fallback: send minimal payload with socket info
 		player1Socket.emit(gameUUID, {
 			type: "opponent-found",
 			playerNumber: 1,
-			opponentId: player2UserId
+			opponentId: player2UserId,
+			opponentUsername: player2Socket.user || 'Player 2',
+			opponentAvatar: player2Socket.avatar || null
 		});
 		player2Socket.emit(player2GameUUID, {
 			type: "opponent-found",
 			playerNumber: 2,
 			opponentId: player1UserId,
+			opponentUsername: player1Socket.user || 'Player 1',
+			opponentAvatar: player1Socket.avatar || null,
 			gameUUID: gameUUID
 		});
 	});
