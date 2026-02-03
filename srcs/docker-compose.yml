@@ -148,7 +148,7 @@ services:
       - COOKIE_SECRET=${COOKIE_SECRET}
     volumes:
       - ./services/language-manager:/data
-      - /data/node_modules
+      - language-manager-node-modules:/data/node_modules
       - ./certs:/certs:ro
     networks:
       - internal
@@ -398,3 +398,4 @@ networks:
 
 volumes:
   rabbitmq_data:
+  language-manager-node-modules:
