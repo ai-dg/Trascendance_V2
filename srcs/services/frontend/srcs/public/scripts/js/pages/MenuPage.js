@@ -1,5 +1,5 @@
 export class MenuPage {
-    constructor(uiManager, onPlayGameAI, onPlayGameLocal, onPlayGameOnline, onChatWithFriends, onSettings, onLogout) {
+    constructor(uiManager, onPlayGameAI, onPlayGameLocal, onPlayGameOnline, onChatWithFriends, onSettings, onLogout, onShowPrivacyPolicy, onShowTermsOfService) {
         this.menuItems = [
             {
                 icon: 'zap',
@@ -39,6 +39,8 @@ export class MenuPage {
         this.onChatWithFriends = onChatWithFriends;
         this.onSettings = onSettings;
         this.onLogout = onLogout;
+        this.onShowPrivacyPolicy = onShowPrivacyPolicy;
+        this.onShowTermsOfService = onShowTermsOfService;
     }
     render(user) {
         const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
@@ -265,9 +267,19 @@ export class MenuPage {
         logoutButton.appendChild(logoutIcon);
         footer.appendChild(logoutButton);
         // Version Info
-        const versionInfo = this.uiManager.createElement('div', 'text-center mt-8 retro-text text-xs opacity-40');
-        const versionText = this.uiManager.createElement('p', '', 'MADE BY DIEGO, CHRISTOPHE, NATHALIA, MARI AND RALPH');
+        const versionInfo = this.uiManager.createElement('div', 'text-center mt-8 retro-text text-xs');
+        const versionText = this.uiManager.createElement('div', 'opacity-40', 'MADE BY DIEGO, CHRISTOPHE, NATHALIA, MARI AND RALPH');
+        const linksRow = this.uiManager.createElement('div', 'mt-8 mb-8 flex justify-center gap-4');
+        const privacyLink = this.uiManager.createElement('span', 'text-[#00ffff] cursor-pointer hover:text-[#ff1493] transition-colors duration-200 underline');
+        privacyLink.textContent = 'Privacy Policy';
+        privacyLink.addEventListener('click', () => this.onShowPrivacyPolicy());
+        const termsLink = this.uiManager.createElement('span', 'text-[#00ffff] cursor-pointer hover:text-[#ff1493] transition-colors duration-200 underline');
+        termsLink.textContent = 'Terms of Service';
+        termsLink.addEventListener('click', () => this.onShowTermsOfService());
         versionInfo.appendChild(versionText);
+        linksRow.appendChild(privacyLink);
+        linksRow.appendChild(termsLink);
+        versionInfo.appendChild(linksRow);
         content.appendChild(header);
         content.appendChild(mainGrid);
         //content.appendChild(statsPanel);
