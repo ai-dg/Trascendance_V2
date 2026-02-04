@@ -12,8 +12,9 @@ SERVICES=(
   auth_app
   language-manager_app
   live-chat_app
-  remote-players_app
-  match-maker_app
+  realtime-sockets_app
+  backend-ai_app
+  game-engine_app
   gt_mailpit
   mail
   rabbit

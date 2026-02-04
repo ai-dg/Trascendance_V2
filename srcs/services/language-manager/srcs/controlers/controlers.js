@@ -81,6 +81,7 @@ export async function set_user_lang_route(request, reply) {
 
 export async function create_user_lang_route(request, reply) {
     try {
+      console.log("create_user_lang_route called with body:", request.body);
     const { user_id, lang } = request.body;
 
     if (!user_id || !lang) {
@@ -93,7 +94,7 @@ export async function create_user_lang_route(request, reply) {
       return reply.send({ success: true, message: "Language updated", lang });
     } catch (err) {
       console.error("Lang database error:", err);
-      return reply.code(500).send({ success: false, message: "Lang database error" });
+      return reply.code(500).send({ success: false, message: "Lang database error" + err });
     }
 }
 

@@ -9,7 +9,13 @@ import { get_error_message, get_success_message, get_message, e, } from '../mess
 import { is_auth, signCSRFToken, generateCSRFToken, generateOTP, is_valid_path, is_valid_password  } from '../auth.js';
 import { mail_queue } from '../services/message-broker.js';
 import { update_avatar_route } from './updateProfileControlers.js';
+// import { Agent } from 'undici';
 
+// const agent = new Agent({
+//   connect: {
+//     rejectUnauthorized: false
+//   }
+// });
 
 ///
 /// https://localhost/confirm-email/e90401a3-0356-4292-bc36-14ace9a3611b
@@ -384,7 +390,7 @@ export async function login_otp_validation_route(request, reply)
 		let userLang = 'en';
 		console.log("USER_ID:", data.user_id);
 		try {
-			const langRes = await fetch(`http://language-manager:3001/get-lang?user_id=${data.user_id}`);
+			const langRes = await fetch(`https://language-manager:3001/get-lang?user_id=${data.user_id}`);
 			const langData = await langRes.json();
 			userLang = langData.lang || 'en';
 		} catch (err) {
@@ -588,11 +594,18 @@ export async function signup_otp_validation_route(request, reply)
 			console.log("insert: ", insert);
 		const userId = insert.lastID;
 		console.log("userId: " + userId);
-		const langRes = await fetch('http://language-manager:3001/create-lang', {
+		const langRes = await fetch('https://language-manager:3001/create-lang', {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ user_id: userId, lang: "en" })
+			// agent:
+			// {
+			// 	dispatcher: new (await import('undici')).Agent({ connect: { rejectUnauthorized: false } })
+			// }
 		});
+		if (!langRes.ok) {
+			console.error("Failed to create user language entry", langRes.status, langRes.statusText);
+		}
 		const lang = await langRes.json();
 		if (!lang.success) {
 			return { succes: false, message: "Couldn't reache lang database" };
@@ -808,5 +821,45 @@ export async function get_id_by_username_route(request, reply) {
   }
 }
 
+
+export async function get_username_by_id_route(request, reply) {
+  try {
+    // const token = request.cookies.token;
+
+	const authHeader = request.headers.authorization;
+	const token =
+	  request.cookies.token ||
+	  authHeader?.replace('Bearer ', '');
+    if (!token) return reply.code(401).send({ success: false, message: "Not authenticated" });
+
+    let payload;
+    try {
+      payload = verify(token, process.env.JWT_SECRET);
+    } catch {
+      return reply.code(401).send({ success: false, message: "Invalid or expired token" });
+    }
+	const isProduction = process.env.NODE_ENV === 'PROD';
+    if (isProduction && payload.jti) {
+      const isRevoked = await redis.get(`jwt:${payload.jti}`);
+      if (isRevoked) {
+        return reply.code(401).send({ success: false, message: "Token revoked" });
+      }
+    }
+
+	const { id } = request.body;
+
+    const user = await app.db.get(
+      "SELECT pseudo, avatar FROM users WHERE user_id = ?",
+      [id]
+    );
+    if (!user) return reply.code(404).send({ success: false, message: "User not found" });
+
+    return reply.send({ success: true, data: { user } });
+
+  } catch (err) {
+    console.error("auth/me error:", err);
+    return reply.code(500).send({ success: false, message: "Internal app error" });
+  }
+}
 
 

@@ -9,6 +9,8 @@ import cookie from '@fastify/cookie';
 import { createClient } from 'redis';
 import { setupMessageQueues } from './srcs/services/message-broker.js';
 import { routes } from './srcs/routes/routes.js';
+import fs from 'fs';
+import path from 'path';
 
 
 /************************************************************************************************* */
@@ -16,9 +18,25 @@ import { routes } from './srcs/routes/routes.js';
 /************************************************************************************************* */
 
 
-export const app = Fastify({trustProxy: true});
 const is_prod = process.env.NODE_ENV === "PROD"
 export const base_url = is_prod ? "www.transcendance.com" : "localhost"
+
+// HTTPS options
+let httpsOptions = {};
+try {
+	const certPath = path.join('/certs', 'cert.pem');
+	const keyPath = path.join('/certs', 'key.pem');
+	if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+		httpsOptions = {
+			key: fs.readFileSync(keyPath),
+			cert: fs.readFileSync(certPath)
+		};
+	}
+} catch (err) {
+	console.log('HTTPS certs not found, running on HTTP');
+}
+
+export const app = Fastify({trustProxy: true, https: httpsOptions});
 
 export const redis = createClient({
 	socket: {
@@ -49,20 +67,14 @@ async function setupDatabase() {
 			filename: '/data/auth.sqlite',
 			driver: sqlite3.Database
 		})
-	
+
 		await db.exec(`
 			CREATE TABLE IF NOT EXISTS users (
 			user_id INTEGER PRIMARY KEY AUTOINCREMENT,
 			user_mail TEXT NOT NULL UNIQUE,
 			pseudo TEXT NOT NULL UNIQUE,
-			user_password TEXT NOT NULL,
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+			user_password TEXT NOT NULL,		avatar TEXT,			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 			);`);
-			// CREATE TABLE IF NOT EXISTS auth (
-			// id INTEGER PRIMARY KEY AUTOINCREMENT,
-			// context TEXT NOT NULL,
-			// created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-			// )
 		return db;
 	}
 	catch(err){
