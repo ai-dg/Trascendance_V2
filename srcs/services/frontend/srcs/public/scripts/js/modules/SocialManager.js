@@ -274,6 +274,11 @@ export class SocialManager {
                     if (this.currentUser) {
                         this.loadFriendsList();
                     }
+                    const removerId = Number(data.userId);
+                    if (this.isChatOpenWith(removerId)) {
+                        if (this.onNewMessage)
+                            this.onNewMessage(removerId, "🚫 You have been blocked or unfriended.");
+                    }
                     break;
                 case 'clear-notification':
                     this.removeFriendRequestNotification(data.senderId);
@@ -292,6 +297,23 @@ export class SocialManager {
                             this.wsManager.saveNotification(sId, username, data.message);
                         this.syncSocialPanel();
                     }
+                    break;
+                case 'friend-blocked':
+                    if (this.currentUser) {
+                        this.loadFriendsList();
+                    }
+                    console.log("User blocked notification for user:", data.friendId);
+                    const blockedId = Number(data.friendId);
+                    if (this.isChatOpenWith(blockedId)) {
+                        if (this.onNewMessage)
+                            this.onNewMessage(blockedId, "🚫 You blocked this user.");
+                    }
+                    break;
+                case 'unblocked':
+                    if (this.currentUser) {
+                        this.loadFriendsList();
+                    }
+                    console.log("User unblocked notification for user:", data.friendId);
                     break;
                 default:
                     console.warn("Unknown notification type:", data.type);

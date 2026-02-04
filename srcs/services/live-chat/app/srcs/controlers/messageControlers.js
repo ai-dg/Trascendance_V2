@@ -17,6 +17,27 @@ export async function send_message_route(request, reply) {
     const senderId = payload.user_id;
 
     try {
+        const relation = await app.db.get(`
+            SELECT status, requester_id 
+            FROM friendships 
+            WHERE (user_id = ? AND friend_id = ?) 
+               OR (user_id = ? AND friend_id = ?)
+        `, [senderId, receiverId, receiverId, senderId]);
+
+        if (!relation || relation.status !== 'accepted') {
+            
+            if (relation && relation.status === 'blocked') {
+                if (relation.requester_id === senderId) {
+                    return reply.code(403).send({ success: false, message: "You blocked this user. Unblock to send messages." });
+                } 
+                else {
+                    return reply.code(403).send({ success: false, message: "You cannot send messages to this user." });
+                }
+            }
+            
+            return reply.code(403).send({ success: false, message: "You are not friends with this user." });
+        }
+        
         await app.db.run(`
             INSERT INTO messages (sender_id, receiver_id, content)
             VALUES (?, ?, ?)
