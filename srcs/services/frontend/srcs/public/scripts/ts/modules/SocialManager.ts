@@ -13,6 +13,7 @@ export class SocialManager {
     private chatNotifications: Map<number, { senderId: number, element: HTMLElement }> = new Map();
     private getCurrentSelectedFriendId: () => number | null;
     private onFriendSelected: (friendId: number, friendUsername: string, friendAvatar?: string | null) => void;
+    private onNewMessage: (senderId: number, message: string) => void;
 
     constructor(
         uiManager: UIManager,
@@ -20,18 +21,22 @@ export class SocialManager {
         wsManager: WebsocketManager,
         currentUser: User | null,
         getCurrentSelectedFriendId: () => any | null,
-        onFriendSelect: (friendId: number, friendUsername: string, friendAvatar?: string | null) => void
+        onFriendSelect: (friendId: number, friendUsername: string, friendAvatar?: string | null) => void,
+        onNewMessage: (senderId: number, message: string) => void
+    
     ) {
         this.uiManager = uiManager;
         this.routerManager = routerManager;
         this.wsManager = wsManager;
         this.currentUser = currentUser;
         this.getCurrentSelectedFriendId = getCurrentSelectedFriendId;
+        this.onNewMessage = onNewMessage;
         this.onFriendSelected = onFriendSelect;
     }
 
     private isChatOpenWith(sId: number): boolean {
-        return this.getCurrentSelectedFriendId() === sId;
+        const currentId = this.getCurrentSelectedFriendId();
+        return Number(currentId) === sId;
     }
 
     public render(parentElement: HTMLElement): void {
@@ -342,12 +347,14 @@ export class SocialManager {
 
                 case 'new-message':
                     const sId = Number(data.senderId);
-                    if (this.wsManager) {
-                        // Use provided username or fetch it
-                        const username = data.username || await this.getUsernameById(data.senderId.toString());
-                        this.wsManager.saveNotification(sId, username, data.message);
-                    }
-                    if (!this.isChatOpenWith(sId)) {
+                    const username = data.username || await this.getUsernameById(data.senderId.toString());
+                    if (this.isChatOpenWith(sId)) {
+                        console.log("New message from open chat:", data.message);
+                        if (this.onNewMessage) this.onNewMessage(sId, data.message);
+                    } else {
+                        console.log("New message notification for closed chat from user:", sId);
+                        if (this.wsManager)
+                            this.wsManager.saveNotification(sId, username, data.message);
                         this.syncSocialPanel();
                     }
                     break;

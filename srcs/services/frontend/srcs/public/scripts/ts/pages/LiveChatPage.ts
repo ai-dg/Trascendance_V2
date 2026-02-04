@@ -40,7 +40,6 @@ export class LiveChatPage {
     public setWebsocketManager(manager: WebsocketManager) : void {
         this.wsManager = manager;
         
-        this.setupChatSocketListeners();
     }
 
     public async render(user: User | null): Promise<void> {
@@ -71,7 +70,13 @@ export class LiveChatPage {
                 this.wsManager,
                 this.currentUser,
                 () => this.currentSelectedFriend ? this.currentSelectedFriend.nbrId : null,
-                (friendId, username, avatar) => this.handleFriendSelection(friendId, username, avatar)
+                (friendId, username, avatar) => this.handleFriendSelection(friendId, username, avatar),
+                (senderId, message) => {
+                    if (this.currentSelectedFriend && senderId === this.currentSelectedFriend.nbrId) {
+                        this.addMessage(message, false);
+                    }
+                }
+            
             );
             this.socialManager.render(socialWrapper);
         }
@@ -353,20 +358,6 @@ export class LiveChatPage {
         } catch (err) {
             console.error("Error loading chat history:", err);
         }
-    }
-
-    private setupChatSocketListeners(): void {
-        if (!this.wsManager) return;
-
-        this.wsManager.onGeneral('notifications', (data) => {
-            if (data.type === 'new-message') {
-                const sId = Number(data.senderId);
-
-                if (this.currentSelectedFriend && sId === this.currentSelectedFriend.nbrId) {
-                    this.addMessage(data.message, false);
-                }
-            }
-        });
     }
 
     private setupFriendActionButtons(): void {

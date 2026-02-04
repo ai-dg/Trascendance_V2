@@ -1,5 +1,5 @@
 export class SocialManager {
-    constructor(uiManager, routerManager, wsManager, currentUser, getCurrentSelectedFriendId, onFriendSelect) {
+    constructor(uiManager, routerManager, wsManager, currentUser, getCurrentSelectedFriendId, onFriendSelect, onNewMessage) {
         this.currentUser = null;
         this.friendRequests = new Map();
         this.chatNotifications = new Map();
@@ -8,10 +8,12 @@ export class SocialManager {
         this.wsManager = wsManager;
         this.currentUser = currentUser;
         this.getCurrentSelectedFriendId = getCurrentSelectedFriendId;
+        this.onNewMessage = onNewMessage;
         this.onFriendSelected = onFriendSelect;
     }
     isChatOpenWith(sId) {
-        return this.getCurrentSelectedFriendId() === sId;
+        const currentId = this.getCurrentSelectedFriendId();
+        return Number(currentId) === sId;
     }
     render(parentElement) {
         // Social Div
@@ -278,12 +280,16 @@ export class SocialManager {
                     break;
                 case 'new-message':
                     const sId = Number(data.senderId);
-                    if (this.wsManager) {
-                        // Use provided username or fetch it
-                        const username = data.username || await this.getUsernameById(data.senderId.toString());
-                        this.wsManager.saveNotification(sId, username, data.message);
+                    const username = data.username || await this.getUsernameById(data.senderId.toString());
+                    if (this.isChatOpenWith(sId)) {
+                        console.log("New message from open chat:", data.message);
+                        if (this.onNewMessage)
+                            this.onNewMessage(sId, data.message);
                     }
-                    if (!this.isChatOpenWith(sId)) {
+                    else {
+                        console.log("New message notification for closed chat from user:", sId);
+                        if (this.wsManager)
+                            this.wsManager.saveNotification(sId, username, data.message);
                         this.syncSocialPanel();
                     }
                     break;
