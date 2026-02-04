@@ -10,6 +10,7 @@ import { ethers } from 'ethers';
 import { randomTournamentResult } from './srcs/scores.js';
 import fs from 'fs';
 import path from 'path';
+import contractABI from './srcs/contract-abi.json' assert { type: 'json' };
 
 
 

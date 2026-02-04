@@ -10,7 +10,7 @@ services:
     container_name: modsecurity
     build:
       context: .
-      dockerfile: ./services/security/temp/Dockerfile
+      dockerfile: ./services/security/modsecurity/Dockerfile
       args:
         HOME: ${HOME}
         NODE_ENV: ${NODE_ENV}
