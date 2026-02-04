@@ -33,15 +33,15 @@ export class Ball {
 
   addRandomYVelocity() {
     this.velocityY += (Math.random() - 0.5) * 2;
-    // Limite la vélocité Y
+    // Limit max Y velocity
     this.velocityY = Math.max(-8, Math.min(8, this.velocityY));
   }
 
   checkOutOfBounds() {
     if (this.x < 0) {
-      return 'left'; // Player 2 marque
+      return 'left'; // Player 2 has scored
     } else if (this.x > CANVAS_WIDTH) {
-      return 'right'; // Player 1 marque
+      return 'right'; // Player 1 has scored
     }
     return null;
   }

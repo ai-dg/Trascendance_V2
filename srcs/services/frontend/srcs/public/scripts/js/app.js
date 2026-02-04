@@ -19,6 +19,8 @@ import { SettingsPage } from './pages/SettingsPage.js';
 import { UpdateProfilePage } from './pages/UpdateProfilePage.js';
 import { LiveChatPage } from './pages/LiveChatPage.js';
 import { GuestPage } from './pages/GuestPage.js';
+import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage.js';
+import { TermsOfServicePage } from './pages/TermsOfServicePage.js';
 export let gameSocket = null;
 /**********************************************************************************************/
 /**************************************** MAIN APP CLASS *************************************/
@@ -47,7 +49,9 @@ export class App {
         this.checkManager = new CheckManager(this.languageManager);
         // Initialize pages
         this.authPage = new AuthPage(this.uiManager, this.authManager, this.checkManager, this.languageManager, this.handleLogin.bind(this), this.handleRegister.bind(this), this.appHandleForgotPassword.bind(this), this.handleChangePassword.bind(this), this.handleShowGuestPage.bind(this), this.handleError.bind(this));
-        this.menuPage = new MenuPage(this.uiManager, this.websocketManager, this.routerManager, this.handlePlayGameAI.bind(this), this.handlePlayGameLocal.bind(this), this.handlePlayGameOnline.bind(this), this.handleChatWithFriends.bind(this), this.handleSettings.bind(this), this.handleLogout.bind(this));
+        this.menuPage = new MenuPage(this.uiManager, this.websocketManager, this.routerManager, this.handlePlayGameAI.bind(this), this.handlePlayGameLocal.bind(this), this.handlePlayGameOnline.bind(this), this.handleChatWithFriends.bind(this), this.handleSettings.bind(this), this.handleLogout.bind(this), this.handleShowPrivacyPolicy.bind(this), this.handleShowTermsOfService.bind(this));
+        this.privacyPolicyPage = new PrivacyPolicyPage(this.uiManager, this.handleBackToMenu.bind(this));
+        this.termsOfServicePage = new TermsOfServicePage(this.uiManager, this.handleBackToMenu.bind(this));
         this.gamePageAI = new AIPage(this.uiManager, this.handleBackToMenu.bind(this), this.currentUser);
         this.gamePageLocal = new GamePageLocal(this.uiManager, this.handleBackToMenu.bind(this));
         this.gamePageOnline = new RemotePage(this.uiManager, this.handleBackToMenu.bind(this), this.currentUser);
@@ -224,6 +228,12 @@ export class App {
                 this.liveChatPage = new LiveChatPage(this.uiManager, this.routerManager, this.languageManager, this.websocketManager, this.handleBackToMenu.bind(this), this.currentUser);
                 this.liveChatPage.render(this.currentUser);
                 break;
+            case 'privacy-policy':
+                this.privacyPolicyPage.render();
+                break;
+            case 'terms-of-service':
+                this.termsOfServicePage.render();
+                break;
         }
     }
     /**********************************************************************************************/
@@ -368,6 +378,12 @@ export class App {
     }
     handleShowGuestPage() {
         this.routerManager.navigateTo('guest');
+    }
+    handleShowPrivacyPolicy() {
+        this.routerManager.navigateTo('privacy-policy');
+    }
+    handleShowTermsOfService() {
+        this.routerManager.navigateTo('terms-of-service');
     }
     handleSettings() {
         this.routerManager.navigateTo('settings');

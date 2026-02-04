@@ -1,6 +1,6 @@
 import { SocialManager } from '../modules/SocialManager.js';
 export class MenuPage {
-    constructor(uiManager, wsManager, routerManager, onPlayGameAI, onPlayGameLocal, onPlayGameOnline, onChatWithFriends, onSettings, onLogout) {
+    constructor(uiManager, wsManager, routerManager, onPlayGameAI, onPlayGameLocal, onPlayGameOnline, onChatWithFriends, onSettings, onLogout, onShowPrivacyPolicy, onShowTermsOfService) {
         this.wsManager = null;
         this.routerManager = null;
         this.currentUser = null;
@@ -46,6 +46,8 @@ export class MenuPage {
         this.onChatWithFriends = onChatWithFriends;
         this.onSettings = onSettings;
         this.onLogout = onLogout;
+        this.onShowPrivacyPolicy = onShowPrivacyPolicy;
+        this.onShowTermsOfService = onShowTermsOfService;
     }
     render(user) {
         this.currentUser = user;
@@ -181,6 +183,49 @@ export class MenuPage {
         //   menuItem.appendChild(scanLine);
         //   menuItem.addEventListener('click', item.action);
         //});
+        ////////////////////////////////////////////////
+        ////////// SOCIAL HEADER + ADD FRIEND //////////
+        ////////////////////////////////////////////////
+        // div lateral social
+        const socialDiv = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-6');
+        socialDiv.style.minHeight = '480px';
+        const socialHeaderWrapper = this.uiManager.createElement('div', 'flex items-center justify-between mb-4');
+        const socialHeader = this.uiManager.createElement('h3', 'retro-text text-xl text-[#00ffff]');
+        socialHeader.textContent = 'SOCIAL';
+        const addFriendBtn = this.uiManager.createElement('button', 'px-2 py-1 text-sm bg-black text-red-500 border border-red-500 rounded');
+        addFriendBtn.innerHTML = '+';
+        const addFriendDiv = this.uiManager.createElement('div', 'flex gap-2 mt-2 hidden');
+        const friendInput = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black');
+        friendInput.placeholder = 'Username';
+        const sendFriendBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-black rounded');
+        sendFriendBtn.textContent = 'Send';
+        addFriendDiv.appendChild(friendInput);
+        addFriendDiv.appendChild(sendFriendBtn);
+        addFriendBtn.addEventListener('click', () => {
+            addFriendDiv.classList.toggle('hidden');
+        });
+        socialHeaderWrapper.appendChild(socialHeader);
+        socialHeaderWrapper.appendChild(addFriendBtn);
+        socialDiv.appendChild(socialHeaderWrapper);
+        socialDiv.appendChild(addFriendDiv);
+        // Online List
+        const onlineList = this.uiManager.createElement('div', 'w-full mb-6');
+        const onlineTitle = this.uiManager.createElement('h4', 'retro-text text-lg text-[#00ffff] mb-2');
+        onlineTitle.textContent = 'Online';
+        const onlineListContent = this.uiManager.createElement('div', 'text-[#00ffff] opacity-80');
+        onlineListContent.textContent = 'List of online users goes here...';
+        onlineList.appendChild(onlineTitle);
+        onlineList.appendChild(onlineListContent);
+        socialDiv.appendChild(onlineList);
+        // Notifications
+        const notifications = this.uiManager.createElement('div', 'w-full');
+        const notificationsTitle = this.uiManager.createElement('h4', 'retro-text text-lg text-[#00ffff] mb-2');
+        notificationsTitle.textContent = 'Notifications';
+        const notificationsContent = this.uiManager.createElement('div', 'text-[#00ffff] opacity-80');
+        notificationsContent.textContent = 'Notifications list goes here...';
+        notifications.appendChild(notificationsTitle);
+        notifications.appendChild(notificationsContent);
+        socialDiv.appendChild(notifications);
         ///////////////////////////////////
         /////////// Main Grid /////////////
         ///////////////////////////////////
@@ -204,30 +249,6 @@ export class MenuPage {
         mainGrid.style.alignItems = 'stretch';
         mainGrid.appendChild(menuGridWrapper);
         mainGrid.appendChild(socialDivWrapper);
-        // Stats Panel
-        // const statsPanel = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-6 mb-8');
-        // const statsHeader = this.uiManager.createElement('div', 'flex items-center justify-center gap-2 mb-4');
-        // const statsIcon = this.uiManager.createIcon('zap', 'w-5 h-5 text-[#ff1493]');
-        // const statsTitle = this.uiManager.createElement('h3', 'retro-text text-lg text-[#ff1493]', 'ARCADE STATS');
-        // statsHeader.appendChild(statsIcon);
-        // statsHeader.appendChild(statsTitle);
-        // const statsGrid = this.uiManager.createElement('div', 'grid grid-cols-3 gap-6 text-center');
-        // const stats = [
-        //   { value: '0', label: 'GAMES PLAYED', color: '#00ffff' },
-        //   { value: '0', label: 'WINS', color: '#ff1493' },
-        //   { value: '0', label: 'HIGH SCORE', color: '#9d4edd' }
-        // ];
-        // stats.forEach(stat => {
-        //   const statItem = this.uiManager.createElement('div');
-        //   const statValue = this.uiManager.createElement('div', 'retro-text text-2xl mb-1', stat.value);
-        //   statValue.style.color = stat.color;
-        //   const statLabel = this.uiManager.createElement('div', 'retro-text text-xs opacity-60', stat.label);
-        //   statItem.appendChild(statValue);
-        //   statItem.appendChild(statLabel);
-        //   statsGrid.appendChild(statItem);
-        // });
-        // statsPanel.appendChild(statsHeader);
-        // statsPanel.appendChild(statsGrid);
         //////////////////////////////////
         /////////// Footer ////////////////
         //////////////////////////////////
@@ -237,12 +258,21 @@ export class MenuPage {
         logoutButton.appendChild(logoutIcon);
         footer.appendChild(logoutButton);
         // Version Info
-        const versionInfo = this.uiManager.createElement('div', 'text-center mt-8 retro-text text-xs opacity-40');
-        const versionText = this.uiManager.createElement('p', '', 'MADE BY DIEGO, CHRISTOPHE, NATHALIA, MARI AND RALPH');
+        const versionInfo = this.uiManager.createElement('div', 'text-center mt-8 retro-text text-xs');
+        const versionText = this.uiManager.createElement('div', 'opacity-40', 'MADE BY DIEGO, CHRISTOPHE, NATHALIA, MARI AND RALPH');
+        const linksRow = this.uiManager.createElement('div', 'mt-8 mb-8 flex justify-center gap-4');
+        const privacyLink = this.uiManager.createElement('span', 'text-[#00ffff] cursor-pointer hover:text-[#ff1493] transition-colors duration-200 underline');
+        privacyLink.textContent = 'Privacy Policy';
+        privacyLink.addEventListener('click', () => this.onShowPrivacyPolicy());
+        const termsLink = this.uiManager.createElement('span', 'text-[#00ffff] cursor-pointer hover:text-[#ff1493] transition-colors duration-200 underline');
+        termsLink.textContent = 'Terms of Service';
+        termsLink.addEventListener('click', () => this.onShowTermsOfService());
         versionInfo.appendChild(versionText);
+        linksRow.appendChild(privacyLink);
+        linksRow.appendChild(termsLink);
+        versionInfo.appendChild(linksRow);
         content.appendChild(header);
         content.appendChild(mainGrid);
-        //content.appendChild(statsPanel);
         content.appendChild(footer);
         content.appendChild(versionInfo);
         container.appendChild(content);

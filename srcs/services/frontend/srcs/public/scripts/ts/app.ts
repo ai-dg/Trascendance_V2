@@ -26,6 +26,8 @@ import { SettingsPage } from './pages/SettingsPage.js';
 import { UpdateProfilePage } from './pages/UpdateProfilePage.js';
 import { LiveChatPage } from './pages/LiveChatPage.js';
 import { GuestPage } from './pages/GuestPage.js';
+import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage.js';
+import { TermsOfServicePage } from './pages/TermsOfServicePage.js';
 
 
 // Socket.io
@@ -69,6 +71,8 @@ export class App {
   private updateProfilePage: UpdateProfilePage;
   private liveChatPage: LiveChatPage;
   private guestPage: GuestPage;
+  private privacyPolicyPage: PrivacyPolicyPage;
+  private termsOfServicePage: TermsOfServicePage;
 
   /**********************************************************************************************/
   /**************************************** CONSTRUCTOR ****************************************/
@@ -76,7 +80,7 @@ export class App {
 
   constructor(container: HTMLElement) {
     //this.container = container;
-    
+
     this.authManager = new AuthManager(
       this.handleBackToCheckOtp.bind(this)
     );
@@ -95,14 +99,14 @@ export class App {
 
     // Initialize pages
     this.authPage = new AuthPage(
-      this.uiManager, 
-      this.authManager, 
-      this.checkManager, 
-      this.languageManager, 
-      this.handleLogin.bind(this), 
-      this.handleRegister.bind(this), 
-      this.appHandleForgotPassword.bind(this), 
-      this.handleChangePassword.bind(this), 
+      this.uiManager,
+      this.authManager,
+      this.checkManager,
+      this.languageManager,
+      this.handleLogin.bind(this),
+      this.handleRegister.bind(this),
+      this.appHandleForgotPassword.bind(this),
+      this.handleChangePassword.bind(this),
       this.handleShowGuestPage.bind(this),
       this.handleError.bind(this)
     );
@@ -110,19 +114,30 @@ export class App {
       this.uiManager,
       this.websocketManager,
       this.routerManager,
-      this.handlePlayGameAI.bind(this), 
-      this.handlePlayGameLocal.bind(this), 
-      this.handlePlayGameOnline.bind(this),  
-      this.handleChatWithFriends.bind(this), 
-      this.handleSettings.bind(this), 
-      this.handleLogout.bind(this));
+      this.handlePlayGameAI.bind(this),
+      this.handlePlayGameLocal.bind(this),
+      this.handlePlayGameOnline.bind(this),
+      this.handleChatWithFriends.bind(this),
+      this.handleSettings.bind(this),
+      this.handleLogout.bind(this),
+      this.handleShowPrivacyPolicy.bind(this),
+      this.handleShowTermsOfService.bind(this)
+    );
+    this.privacyPolicyPage = new PrivacyPolicyPage(
+      this.uiManager,
+      this.handleBackToMenu.bind(this)
+    );
+    this.termsOfServicePage = new TermsOfServicePage(
+      this.uiManager,
+      this.handleBackToMenu.bind(this)
+    );
     this.gamePageAI = new AIPage(
-      this.uiManager, 
+      this.uiManager,
       this.handleBackToMenu.bind(this),
       this.currentUser
     );
     this.gamePageLocal = new GamePageLocal(
-      this.uiManager, 
+      this.uiManager,
       this.handleBackToMenu.bind(this)
     );
     this.gamePageOnline = new RemotePage(
@@ -136,37 +151,37 @@ export class App {
       this.handleConnectAsGuest.bind(this)
     );
     this.checkOtpPage = new CheckOtp(
-      this.uiManager, 
-      this.languageManager, 
-      this.handleOtpVerificationComplete.bind(this), 
-      this.handleNewChangePassword.bind(this), 
-      this.handleBackToUpdateProfile.bind(this), 
+      this.uiManager,
+      this.languageManager,
+      this.handleOtpVerificationComplete.bind(this),
+      this.handleNewChangePassword.bind(this),
+      this.handleBackToUpdateProfile.bind(this),
       this.handleBackToAuth.bind(this)
     );
     this.updateProfilePage = new UpdateProfilePage(
-      this.uiManager, this.routerManager, 
-      this.authManager, this.languageManager, 
-      this.handleSettings.bind(this), 
-      this.handleBackToUpdateProfile.bind(this), 
+      this.uiManager, this.routerManager,
+      this.authManager, this.languageManager,
+      this.handleSettings.bind(this),
+      this.handleBackToUpdateProfile.bind(this),
       this.currentUser
     );
     if (this.currentUser)
       this.settingsPage = new SettingsPage(
-        this.uiManager, 
-        this.routerManager, 
-        this.authManager, 
-        this.languageManager, 
-        this.authPage, 
-        this.handleBackToMenu.bind(this), 
-        this.handleBackToUpdateProfile.bind(this), 
-        this.currentUser ?? null, 
+        this.uiManager,
+        this.routerManager,
+        this.authManager,
+        this.languageManager,
+        this.authPage,
+        this.handleBackToMenu.bind(this),
+        this.handleBackToUpdateProfile.bind(this),
+        this.currentUser ?? null,
         this.currentUser?.isGuest ?? true
       );
     this.liveChatPage = new LiveChatPage(
-      this.uiManager, 
-      this.routerManager, 
-      this.languageManager, 
-      this.websocketManager, 
+      this.uiManager,
+      this.routerManager,
+      this.languageManager,
+      this.websocketManager,
       this.handleBackToMenu.bind(this),
       this.currentUser ?? null
     );
@@ -206,7 +221,7 @@ export class App {
 
       if (this.currentUser) {
         this.currentPage = 'menu';
-      
+
         const wsManager = WebsocketManager.getInstance();
         wsManager.init(window.location.origin);
 
@@ -223,7 +238,7 @@ export class App {
             this.gamePageOnline.setupGame(data);
           }
         });
-        
+
         if (this.currentUser && !this.currentUser.isGuest) {
           // this.menuPage.setWebsocketManager(wsManager);
           this.liveChatPage.setWebsocketManager(wsManager);
@@ -234,7 +249,7 @@ export class App {
       this.render();
   }
 
-    
+
 
 
   /**
@@ -263,10 +278,10 @@ export class App {
         console.warn(`getConnectedUser: unexpected status ${res.status}`);
       }
       let guestUser: User | null = null;
-      
+
       let guestNickname = localStorage.getItem("guestNickname");
       let guestAvatar = localStorage.getItem("guestAvatar");
-      
+
       if (guestAvatar && guestNickname) {
         guestUser = {
           username: guestNickname,
@@ -358,6 +373,12 @@ export class App {
       case 'live-chat':
         this.liveChatPage = new LiveChatPage(this.uiManager, this.routerManager, this.languageManager, this.websocketManager, this.handleBackToMenu.bind(this), this.currentUser);
         this.liveChatPage.render(this.currentUser);
+        break;
+      case 'privacy-policy':
+        this.privacyPolicyPage.render();
+        break;
+      case 'terms-of-service':
+        this.termsOfServicePage.render();
         break;
     }
   }
@@ -480,7 +501,7 @@ export class App {
 
     localStorage.setItem('guestNickname', nickname);
     localStorage.setItem('guestAvatar', avatar);
-    
+
     // Init sockets for guests too (needed for local/ai games)
     const wsManager = WebsocketManager.getInstance();
     wsManager.init(window.location.origin);
@@ -513,6 +534,14 @@ export class App {
 
   private handleShowGuestPage(): void {
     this.routerManager.navigateTo('guest');
+  }
+
+  private handleShowPrivacyPolicy(): void {
+    this.routerManager.navigateTo('privacy-policy');
+  }
+
+  private handleShowTermsOfService(): void {
+    this.routerManager.navigateTo('terms-of-service');
   }
 
   private handleSettings(): void {

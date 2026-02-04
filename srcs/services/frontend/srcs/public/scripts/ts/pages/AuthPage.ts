@@ -32,7 +32,7 @@ export class AuthPage {
   private errors: string[] = [];
   private text: Translations = {} as Translations;
   private boundHandleSubmit: (e: Event) => void;
- 
+
 
   constructor(
     uiManager: UIManager,
@@ -44,7 +44,7 @@ export class AuthPage {
     onForgotPassword: (email: string) => void,
     onChangePassword: (email:string, password: string, confirmPassword: string) => void,
     onPlayAsGuest: () => void,
-    onError?: (error: string) => void
+    onError: (error: string) => void
   ) {
     this.uiManager = uiManager;
     this.authManager = authManager;
@@ -256,10 +256,10 @@ export class AuthPage {
 
   private createField(label: string, type: string, name: keyof typeof this.formData, placeholder: string): HTMLElement {
     const fieldContainer = this.uiManager.createElement('div');
-    
+
     const labelElement = this.uiManager.createElement('label', 'retro-text text-sm block mb-2', label);
     fieldContainer.appendChild(labelElement);
-    
+
     const input = this.uiManager.createInput(type, placeholder, 'w-full px-6 py-4 bg-black/60 border-[#00ffff] text-[#00ffff] placeholder:text-[#00ffff]/50 focus:border-[#ff1493] focus:ring-[#ff1493] retro-text') as HTMLInputElement;
     input.value = this.formData[name];
     input.addEventListener('input', (e) => {
@@ -270,7 +270,7 @@ export class AuthPage {
         this.render();
       }
     });
-    
+
     fieldContainer.appendChild(input);
     return fieldContainer;
   }
@@ -329,11 +329,8 @@ export class AuthPage {
   }
 
   public handle42SignIn(): void {
-    // TODO: Implement 42 OAuth
     console.log('42 Sign In clicked');
-    window.location.href = 'https://localhost/auth/42/login';
-    console.log('42 signin after window change');
-    // This would typically redirect to 42 OAuth or open a popup
+    window.location.href = `${window.location.origin}/auth/42/login`;
   }
 
   private handleForgotPassword(): void {
@@ -396,7 +393,7 @@ export class AuthPage {
         this.render();
         return;
       }
-      
+
       console.log("strings matched");
       this.onChangePassword(this.formData.email, this.formData.password, this.formData.confirmPassword);
       return ;
@@ -410,7 +407,7 @@ export class AuthPage {
       return ;
     } else {
       const newErrors: string[] = [];
-      
+
       if (!this.formData.username || !this.formData.email || !this.formData.password || !this.formData.confirmPassword) {
         newErrors.push('Please fill in all fields');
       }

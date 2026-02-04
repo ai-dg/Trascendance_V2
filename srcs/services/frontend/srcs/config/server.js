@@ -2,6 +2,8 @@ import Fastify from 'fastify';
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import fastifyStatic from "@fastify/static";
+import fastifyView from "@fastify/view";
+import ejs from "ejs";
 
 const server = Fastify();
 
@@ -21,6 +23,17 @@ server.register(fastifyStatic, {
   prefix: "/public/",
 });
 
+server.register(fastifyView, {
+  engine: {
+    ejs: ejs,
+  },
+  root: join(__dirname, "../views"),
+});
+
+
+server.get("/", async (request, reply) => {
+  return reply.view("index.ejs", { base_url: process.env.BASE_URL || "localhost" });
+});
 
 server.get("/api/hello", async () => {
   return { msg: "Hello from Fastify + TS + Tailwind!" };

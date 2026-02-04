@@ -17,6 +17,8 @@ export class MenuPage {
   private onChatWithFriends: () => void;
   private onSettings: () => void;
   private onLogout: () => void;
+  private onShowPrivacyPolicy: () => void;
+  private onShowTermsOfService: () => void;
 
   private menuItems = [
     {
@@ -60,7 +62,9 @@ export class MenuPage {
     onPlayGameOnline: () => void,
     onChatWithFriends: () => void,
     onSettings: () => void,
-    onLogout: () => void
+    onLogout: () => void,
+    onShowPrivacyPolicy: () => void,
+    onShowTermsOfService: () => void
   ) {
     this.uiManager = uiManager;
     this.wsManager = wsManager;
@@ -71,6 +75,8 @@ export class MenuPage {
     this.onChatWithFriends = onChatWithFriends;
     this.onSettings = onSettings;
     this.onLogout = onLogout;
+    this.onShowPrivacyPolicy = onShowPrivacyPolicy;
+    this.onShowTermsOfService = onShowTermsOfService;
   }
 
   public render(user: User | null): void {
@@ -90,7 +96,7 @@ export class MenuPage {
 
     header.appendChild(title);
     header.appendChild(subtitle);
-  
+
     if (user) {
       const userWelcome = this.uiManager.createElement('div', 'mt-6 flex items-center justify-center gap-3 retro-text');
       const userText = this.uiManager.createElement('span', 'text-[#00ffff]', `PLAYER: ${user.username.toUpperCase()}`);
@@ -116,20 +122,20 @@ export class MenuPage {
       userWelcome.appendChild(userText);
       header.appendChild(userWelcome);
     }
-  
+
     /////////////////////////////////
     /////////// Menu Grid ///////////
     /////////////////////////////////
-  
+
     // Modes Rectangle Selection
     const playRectangle = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-6');
     playRectangle.style.boxShadow = '0 0 30px rgba(255, 20, 147, 0.3)';
     playRectangle.style.minWidth = '700px';
-    
+
     const playTitle = this.uiManager.createElement('h3', 'retro-text text-2xl text-[#ff1493] text-center mb-6');
     playTitle.textContent = 'GAME MODES';
     playRectangle.appendChild(playTitle);
-    
+
     const playGrid = this.uiManager.createElement('div', 'grid md:grid-cols-3 gap-6');
 
     this.menuItems.slice(0, 3).forEach((item) => {
@@ -139,18 +145,18 @@ export class MenuPage {
       // Animated background
       const animatedBg = this.uiManager.createElement('div', 'absolute inset-0 bg-gradient-to-br from-transparent via-[var(--item-color)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300');
       menuItem.appendChild(animatedBg);
-      
+
       // Icon
       const iconContainer = this.uiManager.createElement('div', 'flex justify-center mb-4');
       const icon = this.uiManager.createIcon(item.icon, 'w-12 h-12 transition-all duration-300 group-hover:scale-110');
       icon.style.color = item.color;
       iconContainer.appendChild(icon);
-      
+
       // Label
       const label = this.uiManager.createElement('h3', 'retro-text text-lg mb-2');
       label.textContent = item.label;
       label.style.color = item.color;
-      
+
       const content = this.uiManager.createElement('div', 'relative z-10 text-center');
       content.appendChild(iconContainer);
       content.appendChild(label);
@@ -167,7 +173,7 @@ export class MenuPage {
 
       playGrid.appendChild(menuItem);
     });
-    
+
     playRectangle.appendChild(playGrid);
 
     const otherButtonsGrid = this.uiManager.createElement('div', 'grid md:grid-cols-2 gap-6 mb-8');
@@ -179,18 +185,18 @@ export class MenuPage {
       // Animated background
       const animatedBg = this.uiManager.createElement('div', 'absolute inset-0 bg-gradient-to-br from-transparent via-[var(--item-color)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300');
       menuItem.appendChild(animatedBg);
-      
+
       // Icon
       const iconContainer = this.uiManager.createElement('div', 'flex justify-center mb-4');
       const icon = this.uiManager.createIcon(item.icon, 'w-12 h-12 transition-all duration-300 group-hover:scale-110');
       icon.style.color = item.color;
       iconContainer.appendChild(icon);
-      
+
       // Label
       const label = this.uiManager.createElement('h3', 'retro-text text-xl mb-2');
       label.textContent = item.label;
       label.style.color = item.color;
-      
+
       const content = this.uiManager.createElement('div', 'relative z-10 text-center');
       content.appendChild(iconContainer);
       content.appendChild(label);
@@ -216,18 +222,18 @@ export class MenuPage {
     //   const animatedBg = this.uiManager.createElement('div', 'absolute inset-0 bg-gradient-to-br from-transparent via-[var(--item-color)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300');
     //   menuItem.appendChild(animatedBg);
 
-      
+
     //   // Icon
     //   const iconContainer = this.uiManager.createElement('div', 'flex justify-center mb-4');
     //   const icon = this.uiManager.createIcon(item.icon, 'w-12 h-12 transition-all duration-300 group-hover:scale-110');
     //   icon.style.color = item.color;
     //   iconContainer.appendChild(icon);
-      
+
     //   // Label
     //   const label = this.uiManager.createElement('h3', 'retro-text text-xl mb-2');
     //   label.textContent = item.label;
     //   label.style.color = item.color;
-      
+
     //   const content = this.uiManager.createElement('div', 'relative z-10 text-center');
     //   content.appendChild(iconContainer);
     //   content.appendChild(label);
@@ -244,7 +250,65 @@ export class MenuPage {
     //   menuItem.addEventListener('click', item.action);
     //});
 
-    
+
+    ////////////////////////////////////////////////
+    ////////// SOCIAL HEADER + ADD FRIEND //////////
+    ////////////////////////////////////////////////
+
+    // div lateral social
+    const socialDiv = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-6');
+    socialDiv.style.minHeight = '480px';
+
+    const socialHeaderWrapper = this.uiManager.createElement('div', 'flex items-center justify-between mb-4');
+
+    const socialHeader = this.uiManager.createElement('h3', 'retro-text text-xl text-[#00ffff]');
+    socialHeader.textContent = 'SOCIAL';
+
+    const addFriendBtn = this.uiManager.createElement('button', 'px-2 py-1 text-sm bg-black text-red-500 border border-red-500 rounded');
+    addFriendBtn.innerHTML = '+';
+
+    const addFriendDiv = this.uiManager.createElement('div', 'flex gap-2 mt-2 hidden');
+    const friendInput = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black') as HTMLInputElement;
+    friendInput.placeholder = 'Username';
+    const sendFriendBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-black rounded');
+    sendFriendBtn.textContent = 'Send';
+
+    addFriendDiv.appendChild(friendInput);
+    addFriendDiv.appendChild(sendFriendBtn);
+
+    addFriendBtn.addEventListener('click', () => {
+        addFriendDiv.classList.toggle('hidden');
+    });
+
+    socialHeaderWrapper.appendChild(socialHeader);
+    socialHeaderWrapper.appendChild(addFriendBtn);
+    socialDiv.appendChild(socialHeaderWrapper);
+    socialDiv.appendChild(addFriendDiv);
+
+    // Online List
+    const onlineList = this.uiManager.createElement('div', 'w-full mb-6');
+    const onlineTitle = this.uiManager.createElement('h4', 'retro-text text-lg text-[#00ffff] mb-2');
+    onlineTitle.textContent = 'Online';
+
+    const onlineListContent = this.uiManager.createElement('div', 'text-[#00ffff] opacity-80');
+    onlineListContent.textContent = 'List of online users goes here...';
+
+    onlineList.appendChild(onlineTitle);
+    onlineList.appendChild(onlineListContent);
+    socialDiv.appendChild(onlineList);
+
+    // Notifications
+    const notifications = this.uiManager.createElement('div', 'w-full');
+    const notificationsTitle = this.uiManager.createElement('h4', 'retro-text text-lg text-[#00ffff] mb-2');
+    notificationsTitle.textContent = 'Notifications';
+
+    const notificationsContent = this.uiManager.createElement('div', 'text-[#00ffff] opacity-80');
+    notificationsContent.textContent = 'Notifications list goes here...';
+
+    notifications.appendChild(notificationsTitle);
+    notifications.appendChild(notificationsContent);
+    socialDiv.appendChild(notifications);
+
     ///////////////////////////////////
     /////////// Main Grid /////////////
     ///////////////////////////////////
@@ -259,8 +323,8 @@ export class MenuPage {
   // Social Div Wrapper
   const socialDivWrapper = this.uiManager.createElement('div', 'w-80 flex flex-col flex-shrink-0');
   socialDivWrapper.style.justifySelf = 'end';
-  
-  
+
+
   if (this.wsManager && this.routerManager) {
     this.socialManager = new SocialManager(
       this.uiManager,
@@ -282,40 +346,11 @@ export class MenuPage {
   mainGrid.appendChild(menuGridWrapper);
   mainGrid.appendChild(socialDivWrapper);
 
-    // Stats Panel
-    // const statsPanel = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-6 mb-8');
-
-    // const statsHeader = this.uiManager.createElement('div', 'flex items-center justify-center gap-2 mb-4');
-    // const statsIcon = this.uiManager.createIcon('zap', 'w-5 h-5 text-[#ff1493]');
-    // const statsTitle = this.uiManager.createElement('h3', 'retro-text text-lg text-[#ff1493]', 'ARCADE STATS');
-    // statsHeader.appendChild(statsIcon);
-    // statsHeader.appendChild(statsTitle);
-
-    // const statsGrid = this.uiManager.createElement('div', 'grid grid-cols-3 gap-6 text-center');
-
-    // const stats = [
-    //   { value: '0', label: 'GAMES PLAYED', color: '#00ffff' },
-    //   { value: '0', label: 'WINS', color: '#ff1493' },
-    //   { value: '0', label: 'HIGH SCORE', color: '#9d4edd' }
-    // ];
-
-    // stats.forEach(stat => {
-    //   const statItem = this.uiManager.createElement('div');
-    //   const statValue = this.uiManager.createElement('div', 'retro-text text-2xl mb-1', stat.value);
-    //   statValue.style.color = stat.color;
-    //   const statLabel = this.uiManager.createElement('div', 'retro-text text-xs opacity-60', stat.label);
-    //   statItem.appendChild(statValue);
-    //   statItem.appendChild(statLabel);
-    //   statsGrid.appendChild(statItem);
-    // });
-
-    // statsPanel.appendChild(statsHeader);
-    // statsPanel.appendChild(statsGrid);
 
     //////////////////////////////////
     /////////// Footer ////////////////
     //////////////////////////////////
-  
+
     const footer = this.uiManager.createElement('div', 'flex justify-center gap-6 mt-12');
     const logoutButton = this.uiManager.createButton(
       'LOGOUT',
@@ -327,13 +362,22 @@ export class MenuPage {
     footer.appendChild(logoutButton);
 
     // Version Info
-    const versionInfo = this.uiManager.createElement('div', 'text-center mt-8 retro-text text-xs opacity-40');
-    const versionText = this.uiManager.createElement('p', '', 'MADE BY DIEGO, CHRISTOPHE, NATHALIA, MARI AND RALPH');
+    const versionInfo = this.uiManager.createElement('div', 'text-center mt-8 retro-text text-xs');
+    const versionText = this.uiManager.createElement('div', 'opacity-40', 'MADE BY DIEGO, CHRISTOPHE, NATHALIA, MARI AND RALPH');
+    const linksRow = this.uiManager.createElement('div', 'mt-8 mb-8 flex justify-center gap-4');
+    const privacyLink = this.uiManager.createElement('span', 'text-[#00ffff] cursor-pointer hover:text-[#ff1493] transition-colors duration-200 underline');
+    privacyLink.textContent = 'Privacy Policy';
+    privacyLink.addEventListener('click', () => this.onShowPrivacyPolicy());
+    const termsLink = this.uiManager.createElement('span', 'text-[#00ffff] cursor-pointer hover:text-[#ff1493] transition-colors duration-200 underline');
+    termsLink.textContent = 'Terms of Service';
+    termsLink.addEventListener('click', () => this.onShowTermsOfService());
     versionInfo.appendChild(versionText);
+    linksRow.appendChild(privacyLink);
+    linksRow.appendChild(termsLink);
+    versionInfo.appendChild(linksRow);
 
     content.appendChild(header);
     content.appendChild(mainGrid);
-    //content.appendChild(statsPanel);
     content.appendChild(footer);
     content.appendChild(versionInfo);
 

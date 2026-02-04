@@ -2,6 +2,7 @@ import { UIManager } from '../modules/UIManager.js';
 import type { User } from '../modules/TypesManager.js';
 import type { LanguageManager } from '../modules/LangManager.js';
 import type { RouterManager } from '../modules/RouterManager.js';
+import type { Socket } from "socket.io-client";
 import type { WebsocketManager } from '../modules/WebsocketManager.js';
 import { SocialManager } from '../modules/SocialManager.js';
 
@@ -47,9 +48,6 @@ export class LiveChatPage {
 
         this.checkSessionStorageForRedirect();
 
-        if (this.currentSelectedFriend == null && user != null)
-            this.currentSelectedFriend = user;
-
         const container = this.uiManager.createElement('div', 'retro-container size-full p-8');
 
         // Header
@@ -73,7 +71,7 @@ export class LiveChatPage {
                 this.wsManager,
                 this.currentUser,
                 () => this.currentSelectedFriend ? this.currentSelectedFriend.nbrId : null,
-                (friendId, username) => this.handleFriendSelection(friendId, username)
+                (friendId, username, avatar) => this.handleFriendSelection(friendId, username, avatar)
             );
             this.socialManager.render(socialWrapper);
         }
@@ -88,10 +86,10 @@ export class LiveChatPage {
         const backDiv = this.uiManager.createElement('div', 'flex justify-center items-center h-screen');
 
         const backButton = this.uiManager.createButton(
-            this.t('backToSettings'),
+            this.t('BACK TO MENU'),
             'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 mt-4',
             () => {
-                console.log('Back to settings clicked');
+                console.log('Back to menu clicked');
                 this.onBack();
             }
         );
@@ -104,41 +102,48 @@ export class LiveChatPage {
         this.uiManager.container.appendChild(container);
 
         if (this.currentSelectedFriend) {
-            await this.handleFriendSelection(this.currentSelectedFriend.nbrId, this.currentSelectedFriend.username);
+            await this.handleFriendSelection(this.currentSelectedFriend.nbrId, this.currentSelectedFriend.username, this.currentSelectedFriend.avatar);
         }
     }
 
     private createProfileColumn(): HTMLElement {
-        const profileDiv = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 min-h-[700px] flex-shrink-0 w-60');
-        profileDiv.style.minHeight = '600px';
+        const profileDiv = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 flex-shrink-0 w-60');
         profileDiv.id = 'profile-div';
+        profileDiv.style.minHeight = '350px';
 
         const avatarSection = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
         const avatarImg = this.uiManager.createElement('img', 'w-12 h-12 rounded-full border-2 border-[#ff1493] cursor-pointer') as HTMLImageElement;
+        avatarSection.style.width = '100px';
+        avatarSection.style.height = '100px';
+        avatarImg.style.width = '100px';
+        avatarImg.style.height = '100px';
         
         if (!this.currentSelectedFriend || !this.currentSelectedFriend.avatar)
-            avatarImg.src = 'public/avatars/default.png';
+            avatarImg.src = 'public/avatars/unknownPlayer.jpeg';
         else if (this.currentSelectedFriend.avatar.startsWith('http'))
             avatarImg.src = this.currentSelectedFriend.avatar;
         else
             avatarImg.src = `public/avatars/${this.currentSelectedFriend.avatar}.png`;
 
         const username = this.uiManager.createElement('p', 'retro-subtitle text-lg text-[#00ffff] font-bold');
-        username.textContent = this.currentSelectedFriend ? this.currentSelectedFriend.username : 'USERNAME';
+        if (!this.currentSelectedFriend || !this.currentSelectedFriend.username)
+            username.textContent = ' ';
+        else
+            username.textContent = this.currentSelectedFriend.username;
 
         const btnDiv = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
-        const deleteBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-red rounded');
+        const deleteBtn = this.uiManager.createElement('button', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
         deleteBtn.id = 'delete-friend-btn';
-        deleteBtn.textContent = "DELETE FRIEND";
+        deleteBtn.textContent = "DELETE";
         deleteBtn.className += ' hidden';
-        const blockBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-red rounded');
+        const blockBtn = this.uiManager.createElement('button', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
         blockBtn.id = 'block-friend-btn';
-        blockBtn.textContent = "BLOCK FRIEND";
+        blockBtn.textContent = "BLOCK";
         blockBtn.className += ' hidden';
 
         btnDiv.appendChild(deleteBtn);
         btnDiv.appendChild(blockBtn);
-        
+
         avatarSection.appendChild(avatarImg);
         avatarSection.appendChild(username);
         avatarSection.appendChild(btnDiv);
@@ -157,29 +162,56 @@ export class LiveChatPage {
         // Title
         const messagesTitle = this.uiManager.createElement('div', 'text-[#00ffff] text-sm mb-2 opacity-60');
         messagesTitle.textContent = 'Messages';
-        
+
         // Field of messages
-        const messagesContainer = this.uiManager.createElement('div', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 overflow-y-auto');
+
+        
+        const messagesContainer = this.uiManager.createElement('div', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4');
+        messagesContainer.style.maxHeight = '500px';
         messagesContainer.style.minHeight = '500px';
+        messagesContainer.style.overflowY = 'auto';
         messagesContainer.id = 'messages-div';        
         
         messagesDiv.appendChild(messagesTitle);
         messagesDiv.appendChild(messagesContainer);
+        
+        const messagesSelectFriendText = this.uiManager.createElement('div', 'text-3xl text-[#ff1493] text-center retro-text');
+        messagesSelectFriendText.textContent = 'SELECT A FRIEND TO CHAT';
+        messagesSelectFriendText.style.marginTop = '200px';
+        messagesContainer.appendChild(messagesSelectFriendText);
+        messagesSelectFriendText.id = 'messages-select-friend-text';
+        messagesSelectFriendText.className += ' hidden';
 
         const inputDiv = this.uiManager.createElement('div', 'flex gap-2 mt-2 flex-shrink-0');
-        const inputField = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black');
-        const sendButton = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-black rounded');
+        const inputField = this.uiManager.createElement('input', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
+        inputField.id = 'input-field';
+        inputField.className += ' hidden';
+        const sendButton = this.uiManager.createElement('button', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
         sendButton.textContent = 'SEND';
+        sendButton.className += ' hidden';
+        sendButton.id = 'send-button';
+        if (this.currentSelectedFriend)
+        {   
+            inputField.classList.remove('hidden');
+            sendButton.classList.remove('hidden');
+            messagesSelectFriendText.classList.add('hidden');
+        }
+        else
+        {
+            inputField.classList.add('hidden');
+            sendButton.classList.add('hidden');
+            messagesSelectFriendText.classList.remove('hidden');
+        }
 
         inputField.addEventListener('keydown', (e: KeyboardEvent) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter'){
                 e.preventDefault();
                 sendButton.click();
             }
         });
 
         sendButton.addEventListener('click', async () => this.sendMessage(inputField as HTMLInputElement));
-
+        
         inputDiv.appendChild(inputField);
         inputDiv.appendChild(sendButton);
         chatDiv.appendChild(messagesDiv);
@@ -209,13 +241,13 @@ export class LiveChatPage {
         }
     }
 
-    private async handleFriendSelection(friendId: any, username: string) {
+    private async handleFriendSelection(friendId: any, username: string, avatar?: string | null) {
         console.log("Handling friend selection:", username);
         
         this.currentSelectedFriend = {
             username: username,
             id: friendId,
-            avatar: '',
+            avatar: avatar ?? '',
             isGuest: false,
             nbrId: Number(friendId)
         };
@@ -227,6 +259,9 @@ export class LiveChatPage {
 
         const profileDiv = document.getElementById('profile-div');
         profileDiv?.querySelectorAll('button').forEach(btn => btn.classList.remove('hidden'));
+        document.getElementById('send-button')?.classList.remove('hidden');
+        document.getElementById('input-field')?.classList.remove('hidden');
+        document.getElementById('messages-text')?.classList.remove('hidden');
     }
 
     private updateProfileView(): void {
@@ -281,13 +316,13 @@ export class LiveChatPage {
 
         const wrapper = this.uiManager.createElement(
             'div',
-            `flex mb-2 ${isMine ? 'justify-end' : 'justify-start'}`
+            `flex mb-2 w-full ${isMine ? 'justify-end' : 'justify-start'}`
         );
         
         const bubble = this.uiManager.createElement(
             'div',
             isMine
-            ? 'bg-[#ffffff] text-white px-3 py-2 rounded-lg max-w-[70%]'
+            ? 'bg-black text-[#ff1493] border border-[#ff1493]/40 px-3 py-2 rounded-lg max-w-[70%]'
             : 'bg-white/70 text-[#ffffff] border border-[#00ffff]/40 px-3 py-2 rounded-lg max-w-[70%]'
         );
         
