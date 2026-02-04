@@ -26,6 +26,20 @@ services:
     depends_on:
       - gateway
 
+  vault:
+    image: hashicorp/vault:latest
+    ports:
+      - "8200:8200"
+    volumes:
+      - ./services/vault/config:/vault/config
+      - ./services/vault/data:/vault/data
+      - ./services/vault/logs:/vault/logs
+    environment:
+      VAULT_ADDR: 'http://0.0.0.0:8200'
+    cap_add:
+      - IPC_LOCK
+    command: server
+
 
   gateway:
     container_name: gateway
