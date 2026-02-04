@@ -216,8 +216,13 @@ export class App {
 
 
   private async initialize(): Promise<void> {
-      this.currentUser = await this.getConnectedUser();
-      await this.languageManager.init();
+      // Check user status and language in parallel for faster initialization
+      const [user, _] = await Promise.all([
+          this.getConnectedUser(),
+          this.languageManager.init()
+      ]);
+
+      this.currentUser = user;
 
       if (this.currentUser) {
         this.currentPage = 'menu';
@@ -329,7 +334,7 @@ export class App {
    */
   private async render(): Promise<void> {
     this.uiManager.clear();
-    this.currentUser = await this.getConnectedUser();
+    // Don't refetch user on every render - use cached currentUser
     console.log("CURRENT USER RENDER: ", this.currentUser);
 
     switch (this.currentPage) {
@@ -380,6 +385,14 @@ export class App {
         this.termsOfServicePage.render();
         break;
     }
+
+    // After first render, just hide loading screen (app is already visible for SEO)
+    requestAnimationFrame(() => {
+      const loadingScreen = document.getElementById('app-loading');
+      if (loadingScreen) {
+        loadingScreen.remove();
+      }
+    });
   }
 
   /**********************************************************************************************/

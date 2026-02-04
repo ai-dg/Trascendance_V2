@@ -12,7 +12,7 @@
     </head>
 
     <body class="size-full m-0 p-0">
-        <!-- Server-rendered initial content for SEO and performance -->
+        <!-- Server-rendered initial content for SEO - visible to search engines -->
         <div id="app">
             <header class="bg-black/80 p-4 border-b border-cyan-400">
                 <h1 class="text-4xl font-bold text-center text-cyan-400">
@@ -59,9 +59,20 @@
             </footer>
         </div>
 
+        <!-- Inline script to show loading screen ASAP (before modules load) -->
+        <script>
+            (function() {
+                const loadingScreen = document.createElement('div');
+                loadingScreen.id = 'app-loading';
+                loadingScreen.style.cssText = 'position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;z-index:9999;';
+                loadingScreen.innerHTML = '<div style="text-align:center;"><div style="font-size:3rem;color:#00ffff;font-family:monospace;font-weight:bold;margin-bottom:2rem;">RETRO PONG</div><div style="font-size:1.2rem;color:#ff1493;font-family:monospace;">Loading...</div></div>';
+                document.body.appendChild(loadingScreen);
+            })();
+        </script>
+
         <!-- Client-side JavaScript will hydrate this content -->
         <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+" crossorigin="anonymous"></script>
-        <script type="module" src="../public/scripts/js/main.js" defer></script>
+        <script type="module" src="../public/scripts/js/main.js"></script>
     </body>
 </html>
 
