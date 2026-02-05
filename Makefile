@@ -13,6 +13,7 @@ RESET = "\033[0m"
 #********************** ▌ START & DEPLOYMENT ▌***********************#
 ######################################################################
 
+
 up: build
 	docker compose -f $(COMPOSE) create
 	docker compose -f $(COMPOSE) up --remove-orphans
@@ -112,3 +113,15 @@ update-static:
 		cd /app/data && \
 		rm -rf /app/data/staticfiles/* && \
 		python manage.py collectstatic --noinput"
+
+
+vault:
+	mkdir -p srcs/services/vault/data
+	mkdir -p srcs/services/vault/logs
+	docker compose -f $(COMPOSE) up -d vault
+	sleep 2
+	docker cp vaultInit.sh vault:/
+	docker cp srcs/.env vault:/
+	docker exec vault sh ./vaultInit.sh
+	docker exec vault rm /vaultInit.sh
+	docker exec vault rm /.env

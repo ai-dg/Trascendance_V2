@@ -12,5 +12,6 @@ srcs/logs/
 srcs/logs/pids.txt
 srcs/services/auth/app/auth.sqlite
 srcs/volumes/
-
+**/vault/data/**
+**/vault/logs/**
 unseal.md
