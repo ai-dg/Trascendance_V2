@@ -31,6 +31,7 @@ services:
     ports:
       - "8200:8200"
     volumes:
+      - ./services/vault/init:/
       - ./services/vault/config:/vault/config
       - ./services/vault/data:/vault/data
       - ./services/vault/logs:/vault/logs

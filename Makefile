@@ -4,6 +4,7 @@ COMPOSE = srcs/docker-compose.yml
 # ■ Cleanup Targets
 MIGRATIONS_DIRECTORIES= srcs/app/accounts/migrations srcs/app/livechat/migrations srcs/app/pong/migrations
 DATABASE_DIRECTORIES = ${HOME}/data/database ${HOME}/data/logsdata
+VAULT_DIRECTORIES= srcs/services/vault/data srcs/services/vault/logs
 
 # ■ Terminal Colors
 GREEN = "\033[32m"
@@ -70,6 +71,7 @@ downv:
 	@echo $(GREEN)Done.$(RESET)
 	@echo $(GREEN)Removing migrations directories...$(RESET)
 	@sudo rm -rf $(MIGRATIONS_DIRECTORIES)
+	@sudo rm -rf $(VAULT_DIRECTORIES)
 	@echo $(GREEN)Done.$(RESET)
 
 clean:
@@ -120,8 +122,6 @@ vault:
 	mkdir -p srcs/services/vault/logs
 	docker compose -f $(COMPOSE) up -d vault
 	sleep 2
-	docker cp vaultInit.sh vault:/
 	docker cp srcs/.env vault:/
 	docker exec vault sh ./vaultInit.sh
-	docker exec vault rm /vaultInit.sh
 	docker exec vault rm /.env

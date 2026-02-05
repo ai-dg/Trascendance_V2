@@ -8,7 +8,7 @@ import fs from 'fs';
 import { routes } from './routes.js';
 import amqp from 'amqplib'
 import path from 'path';
-import { vaultClient } from '../../auth/app/srcs/services/vault.js';
+import { vaultClient } from './vault.js';
 
 export const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
