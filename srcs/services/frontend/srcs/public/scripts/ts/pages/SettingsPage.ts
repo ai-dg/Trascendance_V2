@@ -22,6 +22,8 @@ export class SettingsPage {
     paddleSpeed: 8,
   };
 
+  private isViewBlockedUsers: boolean = false;
+
   private t(key: string): string {
     return this.languageManager.t(key);
   }
@@ -69,6 +71,17 @@ export class SettingsPage {
 
     const container = this.uiManager.createElement('div', 'retro-container min-h-screen w-full flex flex-col items-center justify-center p-8');
 
+    if (this.isViewBlockedUsers) {
+      this.showBlockedUsers(container);
+    } else {
+      this.renderSettingsPage(container);
+    }
+    
+    this.uiManager.clear();
+    this.uiManager.container.appendChild(container);
+  }
+
+  private renderSettingsPage(container: HTMLElement): void {
     const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-4xl');
 
     // Header
@@ -137,9 +150,6 @@ export class SettingsPage {
     content.appendChild(saveNotice);
 
     container.appendChild(content);
-
-    this.uiManager.clear();
-    this.uiManager.container.appendChild(container);
   }
 
   private createSettingsCard(title: string, iconName: string, color: string, settings: HTMLElement[]): HTMLElement {
@@ -295,7 +305,18 @@ export class SettingsPage {
       updateProfilePage.render();
     });
 
+  const button2 = this.uiManager.createButton(
+    this.t('blocked_users') || "Blocked Users",
+    'retro-button bg-transparent text-[#ff1493] px-4 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200',
+    () => { 
+      this.isViewBlockedUsers = true;
+      this.render();
+     }
+  );
+
+
   buttonsContainer.appendChild(button1);
+  buttonsContainer.appendChild(button2);
 
   card.appendChild(header);
   card.appendChild(buttonsContainer);
@@ -348,6 +369,122 @@ export class SettingsPage {
     };
     this.saveSettingsToStorage();
     this.render();
+  }
+
+  private async showBlockedUsers(container: HTMLElement): Promise<void> {
+      const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-2xl flex flex-col items-center');
+
+          const header = this.uiManager.createElement('div', 'text-center mb-8');
+          const title = this.uiManager.createElement('h1', 'retro-title text-3xl mb-4 text-red-500', this.t('blocked_users') || 'BLOCKED USERS');
+          header.appendChild(title);
+
+          const backButton = this.uiManager.createButton(
+            this.t('back'),
+            'retro-button bg-transparent text-[#00ffff] px-6 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 mb-6',
+            () => {
+              this.isViewBlockedUsers = false;
+              this.render();
+            }
+          );
+        
+          const listCard = this.uiManager.createElement('div', 'w-full bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-6 min-h-[300px]');
+          const listContainer = this.uiManager.createElement('div', 'flex flex-col gap-3 max-h-[50vh] overflow-y-auto pr-2');
+          listContainer.innerHTML = '<div class="text-[#00ffff] text-center animate-pulse mt-10">Loading...</div>';
+        
+          listCard.appendChild(listContainer);
+          content.appendChild(header);
+          content.appendChild(backButton);
+          content.appendChild(listCard);
+          container.appendChild(content);
+        
+          this.fetchBlockedUsers(listContainer);
+  }
+
+  private async fetchBlockedUsers(listContainer: HTMLElement): Promise<void> {
+    try {
+      const res = await fetch(this.routerManager.getUrl('/live-chat/blocked-users'), {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (!res.ok) throw new Error('Failed to fetch');
+      
+      const data = await res.json();
+      listContainer.innerHTML = '';
+
+      if (!data.blockedUsers || data.blockedUsers.length === 0) {
+        const emptyMsg = this.uiManager.createElement('p', 'text-gray-500 text-center italic', this.t('no_blocked_users') || 'No blocked users found.');
+        listContainer.appendChild(emptyMsg);
+      } else {
+        data.blockedUsers.forEach((blockedUser: any) => {
+          const row = this.createBlockedUserRow(blockedUser, listContainer);
+          listContainer.appendChild(row);
+        });
+      }
+
+    } catch (error) {
+      console.error(error);
+      listContainer.innerHTML = '<p class="text-red-500 text-center">Error loading list.</p>';
+    }
+  }
+
+  private createBlockedUserRow(user: any, parentContainer: HTMLElement): HTMLElement {
+    const row = this.uiManager.createElement('div', 'flex items-center justify-between bg-white/5 p-3 rounded border border-white/10transition-all duration-300');
+    
+    const nameInfo = this.uiManager.createElement('div', 'flex items-center gap-3');
+    
+    const avatar = this.uiManager.createElement('img', 'w-8 h-8 rounded-full object-cover bg-gray-700') as HTMLImageElement;
+    if (!user.avatar) {
+        avatar.src = 'public/avatars/default.png';
+    } else if (user.avatar.startsWith('http')) {
+        avatar.src = user.avatar;
+    } else {
+        avatar.src = `public/avatars/${user.avatar}.png`;
+    }
+    
+    const name = this.uiManager.createElement('span', 'text-[#00ffff] font-bold tracking-wider', user.username);
+    
+    nameInfo.appendChild(avatar);
+    nameInfo.appendChild(name);
+
+    const unblockBtn = this.uiManager.createButton(
+      'UNBLOCK',
+      'text-xs bg-red-500/20 text-red-400 border border-red-500 px-3 py-1 rounded hover:bg-red-500 hover:text-black transition-colors',
+      async () => {
+        const btn = unblockBtn as HTMLButtonElement;
+        btn.disabled = true;
+        btn.textContent = '...';
+        await this.unblockUser(user.id, row);
+      }
+    );
+
+    row.appendChild(nameInfo);
+    row.appendChild(unblockBtn);
+
+    return row;
+  }
+
+  private async unblockUser(userIdToUnblock: number, rowElement: HTMLElement): Promise<void> {
+  try {
+      const res = await fetch(this.routerManager.getUrl('/live-chat/unblock'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ blockedId: userIdToUnblock })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        rowElement.style.opacity = '0';
+        rowElement.style.transform = 'translateX(20px)';
+        setTimeout(() => rowElement.remove(), 300);
+      } else {
+        console.log('Failed to unblock user');
+      }
+    } catch (error) {
+      console.error('Error unblocking user:', error);
+    }
   }
 }
 

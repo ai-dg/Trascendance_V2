@@ -1,5 +1,5 @@
 export class SocialManager {
-    constructor(uiManager, routerManager, wsManager, currentUser, getCurrentSelectedFriendId, onFriendSelect) {
+    constructor(uiManager, routerManager, wsManager, currentUser, getCurrentSelectedFriendId, onFriendSelect, onNewMessage) {
         this.currentUser = null;
         this.friendRequests = new Map();
         this.chatNotifications = new Map();
@@ -8,10 +8,12 @@ export class SocialManager {
         this.wsManager = wsManager;
         this.currentUser = currentUser;
         this.getCurrentSelectedFriendId = getCurrentSelectedFriendId;
+        this.onNewMessage = onNewMessage;
         this.onFriendSelected = onFriendSelect;
     }
     isChatOpenWith(sId) {
-        return this.getCurrentSelectedFriendId() === sId;
+        const currentId = this.getCurrentSelectedFriendId();
+        return Number(currentId) === sId;
     }
     render(parentElement) {
         // Social Div
@@ -139,8 +141,13 @@ export class SocialManager {
     async addFriend(username) {
         const errorMessageDiv = document.getElementById('error-message-div');
         const friendInput = document.getElementById('friend-input');
+        const sendFriendBtn = friendInput.nextElementSibling;
         try {
             if (this.currentUser) {
+                if (sendFriendBtn) {
+                    sendFriendBtn.disabled = true;
+                    sendFriendBtn.textContent = '';
+                }
                 const senderId = this.currentUser.id;
                 const receiverId = await this.getIdByUsername(username);
                 if (!receiverId) {
@@ -157,11 +164,16 @@ export class SocialManager {
                     },
                     body: JSON.stringify({ senderId, receiverId })
                 });
-                if (!res.ok) {
-                    const resData = await res.json();
-                    throw new Error(resData.message || 'Failed to send friend request');
+                let data;
+                const contentType = res.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    data = await res.json();
                 }
-                const data = await res.json();
+                else {
+                    const text = await res.text();
+                    console.log("RESPOSTA ESTRANHA DO SERVIDOR:", text);
+                    data = { message: text || res.statusText };
+                }
                 if (!data.success) {
                     throw new Error(data.message || 'Failed to send friend request');
                 }
@@ -177,6 +189,12 @@ export class SocialManager {
             errorMessageDiv.textContent = "Failed to send request. Please try again.";
             errorMessageDiv.classList.remove('hidden', 'text-green-500');
             errorMessageDiv.classList.add('text-red-500');
+        }
+        finally {
+            if (sendFriendBtn) {
+                sendFriendBtn.disabled = false;
+                sendFriendBtn.textContent = 'Send';
+            }
         }
     }
     syncSocialPanel() {
@@ -245,7 +263,7 @@ export class SocialManager {
             console.log("Received notification:", data);
             switch (data.type) {
                 case 'friend-request':
-                    this.addFriendRequestNotification(data.senderId, data.message);
+                    this.addFriendRequestNotification(data.userId, data.message);
                     break;
                 case 'friend-request-accepted':
                     if (this.currentUser) {
@@ -256,20 +274,46 @@ export class SocialManager {
                     if (this.currentUser) {
                         this.loadFriendsList();
                     }
+                    const removerId = Number(data.userId);
+                    if (this.isChatOpenWith(removerId)) {
+                        if (this.onNewMessage)
+                            this.onNewMessage(removerId, "🚫 You have been blocked or unfriended.");
+                    }
                     break;
                 case 'clear-notification':
                     this.removeFriendRequestNotification(data.senderId);
                     break;
                 case 'new-message':
                     const sId = Number(data.senderId);
-                    if (this.wsManager) {
-                        // Use provided username or fetch it
-                        const username = data.username || await this.getUsernameById(data.senderId.toString());
-                        this.wsManager.saveNotification(sId, username, data.message);
+                    const username = data.username || await this.getUsernameById(data.senderId.toString());
+                    if (this.isChatOpenWith(sId)) {
+                        console.log("New message from open chat:", data.message);
+                        if (this.onNewMessage)
+                            this.onNewMessage(sId, data.message);
                     }
-                    if (!this.isChatOpenWith(sId)) {
+                    else {
+                        console.log("New message notification for closed chat from user:", sId);
+                        if (this.wsManager)
+                            this.wsManager.saveNotification(sId, username, data.message);
                         this.syncSocialPanel();
                     }
+                    break;
+                case 'friend-blocked':
+                    if (this.currentUser) {
+                        this.loadFriendsList();
+                    }
+                    console.log("User blocked notification for user:", data.friendId);
+                    const blockedId = Number(data.friendId);
+                    if (this.isChatOpenWith(blockedId)) {
+                        if (this.onNewMessage)
+                            this.onNewMessage(blockedId, "🚫 You blocked this user.");
+                    }
+                    break;
+                case 'unblocked':
+                    if (this.currentUser) {
+                        this.loadFriendsList();
+                    }
+                    console.log("User unblocked notification for user:", data.friendId);
                     break;
                 default:
                     console.warn("Unknown notification type:", data.type);
@@ -296,6 +340,8 @@ export class SocialManager {
         const rejectBtn = this.uiManager.createElement('button', 'px-3 py-1 text-xs bg-red-500 text-black rounded hover:bg-red-400');
         rejectBtn.textContent = 'Reject';
         acceptBtn.addEventListener('click', async () => {
+            acceptBtn.disabled = true;
+            rejectBtn.disabled = true;
             try {
                 const res = await fetch(this.routerManager.getUrl('/live-chat/friend-request-response'), {
                     method: 'POST',
@@ -305,15 +351,20 @@ export class SocialManager {
                     },
                     body: JSON.stringify({ senderId: senderId, action: 'accept' })
                 });
+                if (!res.ok)
+                    throw new Error('Failed to accept friend request');
+                this.removeFriendRequestNotification(senderId);
+                this.loadFriendsList();
             }
             catch (error) {
                 console.error("Error accepting friend request:", error);
+                acceptBtn.disabled = false;
+                rejectBtn.disabled = false;
             }
-            this.removeFriendRequestNotification(senderId);
-            this.loadFriendsList();
         });
         rejectBtn.addEventListener('click', async () => {
             try {
+                console.log(`Rejecting friend request from sender ${senderId}`);
                 const res = await fetch(this.routerManager.getUrl('/live-chat/friend-request-response'), {
                     method: 'POST',
                     credentials: 'include',
@@ -322,11 +373,23 @@ export class SocialManager {
                     },
                     body: JSON.stringify({ senderId: senderId, action: 'reject' })
                 });
+                let data;
+                const contentType = res.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    data = await res.json();
+                }
+                else {
+                    data = { message: await res.text() };
+                }
+                if (!res.ok || (data && !data.success)) {
+                    throw new Error(data.message || "Failed to reject");
+                }
+                this.removeFriendRequestNotification(senderId);
+                this.syncSocialPanel();
             }
             catch (error) {
                 console.error("Error rejecting friend request:", error);
             }
-            this.removeFriendRequestNotification(senderId);
         });
         notifButtons.appendChild(acceptBtn);
         notifButtons.appendChild(rejectBtn);

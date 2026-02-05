@@ -17,7 +17,6 @@ export class LiveChatPage {
     }
     setWebsocketManager(manager) {
         this.wsManager = manager;
-        this.setupChatSocketListeners();
     }
     async render(user) {
         console.log("live-chat for:", user);
@@ -35,7 +34,11 @@ export class LiveChatPage {
         // Social Div
         const socialWrapper = this.uiManager.createElement('div', 'w-80 flex flex-col flex-shrink-0');
         if (this.wsManager) {
-            this.socialManager = new SocialManager(this.uiManager, this.routerManager, this.wsManager, this.currentUser, () => this.currentSelectedFriend ? this.currentSelectedFriend.nbrId : null, (friendId, username, avatar) => this.handleFriendSelection(friendId, username, avatar));
+            this.socialManager = new SocialManager(this.uiManager, this.routerManager, this.wsManager, this.currentUser, () => this.currentSelectedFriend ? this.currentSelectedFriend.nbrId : null, (friendId, username, avatar) => this.handleFriendSelection(friendId, username, avatar), (senderId, message) => {
+                if (this.currentSelectedFriend && senderId === this.currentSelectedFriend.nbrId) {
+                    this.addMessage(message, false);
+                }
+            });
             this.socialManager.render(socialWrapper);
         }
         // Main Grid
@@ -265,18 +268,6 @@ export class LiveChatPage {
         catch (err) {
             console.error("Error loading chat history:", err);
         }
-    }
-    setupChatSocketListeners() {
-        if (!this.wsManager)
-            return;
-        this.wsManager.onGeneral('notifications', (data) => {
-            if (data.type === 'new-message') {
-                const sId = Number(data.senderId);
-                if (this.currentSelectedFriend && sId === this.currentSelectedFriend.nbrId) {
-                    this.addMessage(data.message, false);
-                }
-            }
-        });
     }
     setupFriendActionButtons() {
         const blockBtn = document.getElementById('block-friend-btn');
