@@ -19,6 +19,7 @@ services:
       - 443:443
     networks:
       - internal
+      - transcendence
     expose:
       - 443
     env_file:
@@ -38,10 +39,13 @@ services:
     - internal
     ports:
       - 8080:8080
+      # - 443:443  # Uncomment for evaluation/production with HTTPS
     expose:
       - 8080
+      - 443
     volumes:
       - ./services/gateway/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./certs:/certs:ro
     user: "0:0"
     restart: unless-stopped
     environment: {}

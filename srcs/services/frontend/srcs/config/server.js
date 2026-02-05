@@ -32,11 +32,22 @@ server.register(fastifyView, {
 
 
 server.get("/", async (request, reply) => {
-  return reply.view("index.ejs", { base_url: process.env.BASE_URL || "localhost" });
+  const host = request.headers['x-forwarded-host'] || request.headers.host || process.env.BASE_URL || "localhost";
+  return reply.view("index.ejs", { base_url: host });
 });
 
 server.get("/api/hello", async () => {
   return { msg: "Hello from Fastify + TS + Tailwind!" };
+});
+
+server.get("/api/debug/host", async (request, reply) => {
+  const host = request.headers['x-forwarded-host'] || request.headers.host || process.env.BASE_URL || "localhost";
+  return {
+    host: host,
+    'x-forwarded-host': request.headers['x-forwarded-host'],
+    'host-header': request.headers.host,
+    'BASE_URL': process.env.BASE_URL
+  };
 });
 
 server.listen({ port: 3006, host: "0.0.0.0" })

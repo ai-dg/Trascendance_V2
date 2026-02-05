@@ -6,9 +6,16 @@ const { sign, verify } = jwt;
 
 export async function oauth_login_route(request, reply) {
     // Build redirect URI dynamically from request host (supports localhost, LAN IP, domain)
-    const protocol = 'https';
+    const protocol = request.headers['x-forwarded-proto'] || 'http';
     const host = request.headers['x-forwarded-host'] || request.headers.host || 'localhost';
     const redirectUri = `${protocol}://${host}/auth/42/callback`;
+
+    console.log('42 OAuth Login - Redirect URI:', redirectUri);
+    console.log('Headers:', {
+        'x-forwarded-proto': request.headers['x-forwarded-proto'],
+        'x-forwarded-host': request.headers['x-forwarded-host'],
+        'host': request.headers.host
+    });
 
     // Store the redirect URI in a cookie so the callback can use the same one
     reply.setCookie('oauth_redirect_uri', redirectUri, {
@@ -28,7 +35,7 @@ export async function oauth_callback_route(request, reply) {
         if (!code) return reply.status(400).send('Missing code');
 
         // Get the redirect URI from cookie (set during login) or construct from request
-        const protocol = 'https';
+        const protocol = request.headers['x-forwarded-proto'] || 'http';
         const host = request.headers['x-forwarded-host'] || request.headers.host || 'localhost';
         const redirectUri = request.cookies.oauth_redirect_uri || `${protocol}://${host}/auth/42/callback`;
 
@@ -63,7 +70,7 @@ export async function oauth_callback_route(request, reply) {
             // console.log(userData);
 
             const db = request.server.db;
-            
+
             let userId;
             const existingUser = await db.get(
                 `SELECT * FROM users WHERE user_mail = ?`,
@@ -93,17 +100,20 @@ export async function oauth_callback_route(request, reply) {
 		    await redis.set(`jwt:${jti}`, 'valid', { EX: 3600 });
 
             const sessionId = crypto.randomUUID();
-            
+
             await redis.set(`session:user:${userId}`, sessionId, { EX: 3600 });
 
-            reply.setCookie('token', token, { 
-                path: '/' , 
-                httpOnly: true, 
-                sameSite: 'lax' 
+            const protocol = request.headers['x-forwarded-proto'] || (request.headers['x-forwarded-host']?.includes('443') ? 'https' : 'http');
+            const isSecure = protocol === 'https';
+
+            reply.setCookie('token', token, {
+                path: '/' ,
+                httpOnly: true,
+                sameSite: 'lax'
             }).setCookie('sessionId', sessionId, {
                 httpOnly: true,
-                sameSite: 'none',
-                secure: true,
+                sameSite: isSecure ? 'none' : 'lax',
+                secure: isSecure,
                 path: '/',
                 maxAge: 3600});
 

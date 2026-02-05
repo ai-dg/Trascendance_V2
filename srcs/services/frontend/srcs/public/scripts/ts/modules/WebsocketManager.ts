@@ -53,7 +53,7 @@ export class WebsocketManager {
 
     const generalOptions = {
       path: "/realtime-sockets/socket.io/",
-      transports: ['polling', 'websocket'],
+      transports: ['websocket', 'polling'],  // WebSocket first for better performance
       withCredentials: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
@@ -62,7 +62,7 @@ export class WebsocketManager {
 
     const gameOptions = {
       path: "/remote-players/socket.io/",
-      transports: ['polling', 'websocket'],
+      transports: ['websocket', 'polling'],  // WebSocket first - critical for real-time games
       withCredentials: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,

@@ -42,7 +42,6 @@ This section details the distribution of modules and tasks among team members.
 - Major: Implement a complete web-based game where users can play against each other.
 - Major: Remote players — Enable two players on separate computers to play the same game in real-time.
 - Major: Multiplayer game (more than two players).
-- Minor: Implement a tournament system..
 - Minor: Game customization options.
 
 ### ■ mmiilpal
@@ -53,7 +52,6 @@ This section details the distribution of modules and tasks among team members.
 - Major: Implement a complete web-based game where users can play against each other.
 - Major: Remote players — Enable two players on separate computers to play the same game in real-time.
 - Major: Multiplayer game (more than two players).
-- Minor: Implement a tournament system.
 - Minor: Game customization options.
 
 ### ■ Collaborative Work
@@ -71,8 +69,8 @@ This section details the distribution of modules and tasks among team members.
 - Minor: Use a frontend framework (React, Vue, Angular, Svelte, etc.).
 
 
-**TOTAL MAJOR MODULES** = 11 = 22 points    
-**TOTAL MINOR MODULES** = 9 = 9 points  
+**TOTAL MAJOR MODULES** = 11 = 22 points
+**TOTAL MINOR MODULES** = 9 = 9 points
 **TOTAL POINTS** = 31 points
 **BONUS?** = 17 points
 
