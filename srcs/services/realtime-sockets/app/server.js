@@ -11,9 +11,15 @@ import { Game } from '../../game-engine/app/srcs/js/Game.js';
 import path from 'path';
 import { handleMatchmaking, cancelSearch } from './matchmaking.js';
 
+import { vaultClient } from './vault.js';
 
 const is_prod = process.env.NODE_ENV === "PROD";
 export const base_url = is_prod ? "www.transcendance.com" : "localhost";
+
+await vaultClient.loadSecrets()
+export const authData = vaultClient.get('auth')
+export const redisAuth = vaultClient.get('redis')
+
 
 const AUTH_INTERNAL_URL = process.env.AUTH_INTERNAL_URL || 'https://auth_app:3000';
 
@@ -32,7 +38,7 @@ async function fetchAuthUserById(userId) {
 	try {
 		const serviceToken = jwt.sign(
 			{ service: 'realtime-sockets' },
-			process.env.JWT_SECRET,
+			authData.jwt,
 			{ expiresIn: '5m' }
 		);
 
@@ -92,10 +98,10 @@ let socketio = null;
 /* Redis Client Setup */
 export const redis = createClient({
     socket: {
-        host: process.env.REDIS_HOST,
-        port: process.env.REDIS_PORT
+        host: redisAuth.host,
+        port: redisAuth.port
     },
-    password: process.env.REDIS_PASSWORD
+    password: redisAuth.password
 });
 
 export const subscriber = redis.duplicate();
@@ -105,7 +111,7 @@ await subscriber.connect();
 /* End Redis Client Setup */
 
 await app.register(cookie, {
-    secret: process.env.COOKIE_SECRET,
+    secret: authData.cookie,
     parseOptions: {}
 });
 
@@ -171,7 +177,7 @@ async function socketAuthMiddleware(socket, next) {
       return next();
     }
 
-    const val = jwt.decode(token, process.env.JWT_SECRET);
+    const val = jwt.decode(token, authData.jwt);
 
     if (!val || !val.jti) {
       console.log("C")
@@ -185,7 +191,7 @@ async function socketAuthMiddleware(socket, next) {
       return next(new Error('Token not valid in Redis'));
     }
 
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const payload = jwt.verify(token, authData.jwt);
 
     socket.userId = payload.user_id || payload.id;
     socket.user = payload.pseudo || payload;

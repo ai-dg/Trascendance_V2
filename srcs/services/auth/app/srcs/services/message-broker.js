@@ -1,5 +1,5 @@
 import amqp from 'amqplib';
-import { app } from '../../server.js';
+import { app, rabbitmqAuth } from '../../server.js';
 import { confirm_email_token } from '../auth.js';
 
 
@@ -7,8 +7,8 @@ export const mail_queue = 'send-mail-queue';
 export const validation_queue = "email-validation-queue"
 
 export async function connect_message_queue() {
-  const user = process.env.RABBITMQ_DEFAULT_USER;
-  const password = process.env.RABBITMQ_DEFAULT_PASSWORD;
+  const user = rabbitmqAuth.user;
+  const password = rabbitmqAuth.password;
   const connection = await amqp.connect(`amqp://${user}:${password}@rabbitmq:5672`);
   
   // Canal pour les emails (rapide)

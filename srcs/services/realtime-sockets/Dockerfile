@@ -57,7 +57,8 @@ RUN npm install --package-lock \
  xss \
  validator \
  nodemailer \
- socket.io
+ socket.io \
+ node-vault
 
 COPY . .
 

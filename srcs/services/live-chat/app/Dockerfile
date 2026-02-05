@@ -5,6 +5,7 @@ WORKDIR /data
 COPY . .
 COPY package*.json ./
 
+RUN npm install node-vault
 RUN npm install --production
 
 COPY . .

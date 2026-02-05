@@ -1,4 +1,4 @@
-import { app } from "../../server.js";
+import { app, authData } from "../../server.js";
 
 
 
@@ -29,7 +29,7 @@ export async function get_user_lang_route(request, reply) {
 
 //         let payload;
 //         try {
-//             payload = verify(token, process.env.JWT_SECRET);
+//             payload = verify(token, authData.jwt);
 //         } catch {
 //             return reply.code(401).send({ success: false, message: "Invalid token" });
 //         }
@@ -106,7 +106,7 @@ export async function delete_user_lang_route(request, reply) {
 
         let payload;
         try {
-            payload = verify(token, process.env.JWT_SECRET);
+            payload = verify(token, authData.jwt);
         } catch {
             return reply.code(401).send({ success: false, message: "Invalid token" });
         }

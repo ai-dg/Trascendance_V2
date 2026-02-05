@@ -21,3 +21,9 @@
         - views     // ejs tout court
 
 
+# Vault:
+	vault operator init -key-shares=1 -key-threshold=1
+	or
+	vault operator init
+
+

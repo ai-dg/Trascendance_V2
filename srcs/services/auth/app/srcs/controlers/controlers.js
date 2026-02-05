@@ -1,4 +1,4 @@
-import { app, redis, base_url} from '../../server.js';
+import { app, redis, base_url, authData} from '../../server.js';
 import pkg from 'jsonwebtoken';
 const { sign, verify } = pkg;
 import { compare, hash } from 'bcryptjs';
@@ -129,7 +129,7 @@ export async function verify_otp_email_route(request, reply) {
 
 	let payload;
 	try {
-	    payload = verify(token, process.env.JWT_SECRET);
+	    payload = verify(token, authData.jwt);
 		console.log(payload.user_id);
 	} catch {
 	    return reply.code(401).send({ success: false, message: "Invalid or expired token" });
@@ -213,7 +213,7 @@ async function validateSession(request, reply) {
   }
 
   try {
-    const payload = verify(token, process.env.JWT_SECRET);
+    const payload = verify(token, authData.jwt);
 
     const validSession = await redis.get(`session:user:${payload.user_id}`);
 
@@ -383,7 +383,7 @@ export async function login_otp_validation_route(request, reply)
 			pseudo: data.pseudo,
 			jti
 		};
-		const secretKey = process.env.JWT_SECRET;	
+		const secretKey = authData.jwt;	
 		const token = sign(payload, secretKey, { expiresIn: '1h' });
 		await redis.set(`jwt:${jti}`, 'valid', { EX: 3600 });
 
@@ -452,7 +452,7 @@ export async function logout_route(request, reply) {
     }
 	let payload;
 	try {
-		payload = verify(token, process.env.JWT_SECRET);
+		payload = verify(token, authData.jwt);
 	}
 	catch {
 		payload = null;
@@ -759,7 +759,7 @@ export async function auth_me_route(request, reply) {
 
     let payload;
     try {
-      payload = verify(token, process.env.JWT_SECRET);
+      payload = verify(token, authData.jwt);
     } catch {
       return reply.code(401).send({ success: false, message: "Invalid or expired token" });
     }
@@ -793,7 +793,7 @@ export async function get_id_by_username_route(request, reply) {
 
     let payload;
     try {
-      payload = verify(token, process.env.JWT_SECRET);
+      payload = verify(token, authData.jwt);
     } catch {
       return reply.code(401).send({ success: false, message: "Invalid or expired token" });
     }
@@ -834,7 +834,7 @@ export async function get_username_by_id_route(request, reply) {
 
     let payload;
     try {
-      payload = verify(token, process.env.JWT_SECRET);
+      payload = verify(token, authData.jwt);
     } catch {
       return reply.code(401).send({ success: false, message: "Invalid or expired token" });
     }

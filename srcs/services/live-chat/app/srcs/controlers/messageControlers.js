@@ -1,4 +1,4 @@
-import { app, redis } from '../../server.js';
+import { app, authData, redis } from '../../server.js';
 import jwt from 'jsonwebtoken';
 
 export async function send_message_route(request, reply) {
@@ -9,7 +9,7 @@ export async function send_message_route(request, reply) {
 
     let payload;
         try {
-            payload = jwt.verify(token, process.env.JWT_SECRET);
+            payload = jwt.verify(token, authData.jwt);
         } catch (err) {
             console.log("payload live-chat error:", err);
             return reply.code(401).send({ success: false, message: "Invalid or expired token" });
@@ -49,7 +49,7 @@ export async function get_messages_route(request, reply) {
         return reply.code(401).send({ success: false, message: "Not authenticated" });
     let payload;
         try {
-            payload = jwt.verify(token, process.env.JWT_SECRET);
+            payload = jwt.verify(token, authData.jwt);
         } catch (err) {
             console.log("payload live-chat error:", err);
             return reply.code(401).send({ success: false, message: "Invalid or expired token" });

@@ -1,4 +1,4 @@
-import { redis, app } from '../server.js'
+import { redis, app, authData } from '../server.js'
 import crypto, { getCurves } from 'crypto';
 import jwt from 'jsonwebtoken';
 import { e } from './messages.js';
@@ -41,7 +41,7 @@ export function signCSRFToken(token) {
 	if (!token || typeof token !== 'string') {
 		throw new Error('Token must be a non-empty string');
 	}	
-	const secret = process.env.CSRF_SECRET;
+	const secret = authData.csrf;
 	if (!secret) {
 		throw new Error('CSRF_SECRET environment variable is not defined');
 	}		
@@ -85,7 +85,7 @@ export async function is_auth(request){
 	if (!token)
 		return {success:false, jwt:{}}
 	try{
-		is_valid = verify(token, process.env.JWT_SECRET)
+		is_valid = verify(token, authData.jwt)
 		if (!is_valid)
 			return {success:false, jwt:{}, message: e.AUTH_INVALID_TOKEN}
 	}
@@ -97,7 +97,7 @@ export async function is_auth(request){
 
 	try
 	{
-		val = jwt.decode(token, process.env.JWT_SECRET);
+		val = jwt.decode(token, authData.jwt);
 		exists = await redis.get(`jwt:${val.jti}`)
 	}
 	catch(err)

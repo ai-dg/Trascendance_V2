@@ -14,7 +14,6 @@ services:
       args:
         HOME: ${HOME}
         NODE_ENV: ${NODE_ENV}
-
     ports:
       - 443:443
     networks:
@@ -27,6 +26,7 @@ services:
       - gateway
 
   vault:
+    container_name: vault
     image: hashicorp/vault:latest
     ports:
       - "8200:8200"
@@ -39,6 +39,8 @@ services:
     cap_add:
       - IPC_LOCK
     command: server
+    networks:
+      - internal
 
 
   gateway:
@@ -95,15 +97,9 @@ services:
     networks:
       - internal
     environment:
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-      - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
       - NODE_ENV=${NODE_ENV}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - JWT_SECRET=${JWT_SECRET}
-      - COOKIE_SECRET=${COOKIE_SECRET}
-      - CSRF_SECRET=${CSRF_SECRET}
+      - VAULT_ADDR=${VAULT_ADDR}
+      - VAULT_TOKEN=${VAULT_ROOT_TOKEN}
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -119,18 +115,9 @@ services:
       - 3000
     environment:
       - NODE_ENV=${NODE_ENV}
+      - VAULT_ADDR=${VAULT_ADDR}
+      - VAULT_TOKEN=${VAULT_ROOT_TOKEN}
       - NODE_TLS_REJECT_UNAUTHORIZED=0
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - JWT_SECRET=${JWT_SECRET}
-      - COOKIE_SECRET=${COOKIE_SECRET}
-      - CSRF_SECRET=${CSRF_SECRET}
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-      - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
-      - FORTYTWO_CLIENT_ID=${FORTYTWO_CLIENT_ID}
-      - FORTYTWO_CLIENT_SECRET=${FORTYTWO_CLIENT_SECRET}
-      - FORTYTWO_REDIRECT_URI=${FORTYTWO_REDIRECT_URI}
     volumes:
       - /data/node_modules
       # - sqlite_data:/data/sqlite
@@ -154,12 +141,9 @@ services:
       - 3001
     environment:
       - NODE_TLS_REJECT_UNAUTHORIZED=0
+        - VAULT_ADDR=${VAULT_ADDR}
+      - VAULT_TOKEN=${VAULT_ROOT_TOKEN}
       - NODE_ENV=${NODE_ENV}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - JWT_SECRET=${JWT_SECRET}
-      - COOKIE_SECRET=${COOKIE_SECRET}
     volumes:
       - ./services/language-manager:/data
       - /data/node_modules
@@ -175,11 +159,8 @@ services:
       - 3002
     environment:
       - NODE_ENV=${NODE_ENV}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - JWT_SECRET=${JWT_SECRET}
-      - COOKIE_SECRET=${COOKIE_SECRET}
+      - VAULT_ADDR=${VAULT_ADDR}
+      - VAULT_TOKEN=${VAULT_ROOT_TOKEN}
     volumes:
       - ./services/live-chat/app:/data
       - /data/node_modules
@@ -200,17 +181,8 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV}
       - NODE_TLS_REJECT_UNAUTHORIZED=0
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - JWT_SECRET=${JWT_SECRET}
-      - COOKIE_SECRET=${COOKIE_SECRET}
-      - CSRF_SECRET=${CSRF_SECRET}
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-      - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
-      - FORTYTWO_CLIENT_ID=${FORTYTWO_CLIENT_ID}
-      - FORTYTWO_CLIENT_SECRET=${FORTYTWO_CLIENT_SECRET}
-      - FORTYTWO_REDIRECT_URI=${FORTYTWO_REDIRECT_URI}
+      - VAULT_ADDR=${VAULT_ADDR}
+      - VAULT_TOKEN=${VAULT_ROOT_TOKEN}
     networks:
       - internal
     volumes:
@@ -221,39 +193,6 @@ services:
       - ./services/game-engine/app/srcs:/game-engine/app/srcs:ro
       - ./certs:/certs:ro
 
-  blockchain:
-    container_name: blockchain
-    build:
-      context: ./services/blockchain/app
-    expose:
-      - 4000
-    environment:
-      - NODE_ENV=${NODE_ENV}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - JWT_SECRET=${JWT_SECRET}
-      - COOKIE_SECRET=${COOKIE_SECRET}
-      - CSRF_SECRET=${CSRF_SECRET}
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-      - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
-      - FORTYTWO_CLIENT_ID=${FORTYTWO_CLIENT_ID}
-      - FORTYTWO_CLIENT_SECRET=${FORTYTWO_CLIENT_SECRET}
-      - FORTYTWO_REDIRECT_URI=${FORTYTWO_REDIRECT_URI}
-      - BC_WALLET=${BC_WALLET}
-      - BC_PK=${BC_PK}
-      - RPC_URL=${RPC_URL}
-      - CONTRACT_ADDRESS=${CONTRACT_ADDRESS}
-    networks:
-      - internal
-    volumes:
-      - /data/node_modules
-      # - sqlite_data:/data/sqlite
-      # - ./volume/redis_data:/data
-      - ./services/blockchain/app:/data
-      - ./certs:/certs:ro
-
-
 
   game-engine_app:
     container_name: game-engine_app
@@ -263,17 +202,6 @@ services:
       - 3007
     environment:
       - NODE_ENV=${NODE_ENV}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - JWT_SECRET=${JWT_SECRET}
-      - COOKIE_SECRET=${COOKIE_SECRET}
-      - CSRF_SECRET=${CSRF_SECRET}
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-      - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
-      # - FORTYTWO_CLIENT_ID=${FORTYTWO_CLIENT_ID}
-      # - FORTYTWO_CLIENT_SECRET=${FORTYTWO_CLIENT_SECRET}
-      # - FORTYTWO_REDIRECT_URI=${FORTYTWO_REDIRECT_URI}
     networks:
       - internal
     volumes:
@@ -291,17 +219,9 @@ services:
       - 3004
     environment:
       - NODE_ENV=${NODE_ENV}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - JWT_SECRET=${JWT_SECRET}
-      - COOKIE_SECRET=${COOKIE_SECRET}
-      - CSRF_SECRET=${CSRF_SECRET}
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-      - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
-      # - FORTYTWO_CLIENT_ID=${FORTYTWO_CLIENT_ID}
-      # - FORTYTWO_CLIENT_SECRET=${FORTYTWO_CLIENT_SECRET}
-      # - FORTYTWO_REDIRECT_URI=${FORTYTWO_REDIRECT_URI}
+      - VAULT_ADDR=${VAULT_ADDR}
+      - VAULT_TOKEN=${VAULT_ROOT_TOKEN}
+
     volumes:
       - /data/node_modules
       # - sqlite_data:/data/sqlite
@@ -335,8 +255,8 @@ services:
       - 3300:3300
     environment:
       - NODE_ENV=${NODE_ENV}
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-      - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
+      - VAULT_ADDR=${VAULT_ADDR}
+      - VAULT_TOKEN=${VAULT_ROOT_TOKEN}
     volumes:
       - ./services/mail/app:/data
       - /data/node_modules
@@ -414,3 +334,4 @@ networks:
 
 volumes:
   rabbitmq_data:
+  

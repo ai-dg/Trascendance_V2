@@ -1,4 +1,4 @@
-import { app, redis, base_url} from '../../server.js';
+import { app, redis, base_url, authData} from '../../server.js';
 import pkg from 'jsonwebtoken';
 const { sign, verify } = pkg;
 import { compare, hash } from 'bcryptjs';
@@ -30,7 +30,7 @@ export async function update_avatar_route(request, reply) {
         
         let payload;
         try {
-            payload = verify(token, process.env.JWT_SECRET);
+            payload = verify(token, authData.jwt);
         } catch {
             return reply.code(401).send({ success: false, message: "Invalid or expired token" });
         }
@@ -64,7 +64,7 @@ export async function update_username_route(request, reply) {
 
         let payload;
         try {
-            payload = verify(token, process.env.JWT_SECRET);
+            payload = verify(token, authData.jwt);
         } catch {
             return reply.code(401).send({ success: false, message: "Invalid or expired token" });
         }
@@ -108,7 +108,7 @@ export async function update_email_route(request, reply) {
 
         let payload;
         try {
-            payload = verify(token, process.env.JWT_SECRET);
+            payload = verify(token, authData.jwt);
         } catch {
             return reply.code(401).send({ success: false, message: "Invalid or expired token" });
         }
@@ -152,7 +152,7 @@ export async function verify_update_email_route(request, reply) {
 
         let payload;
         try {
-            payload = verify(token, process.env.JWT_SECRET);
+            payload = verify(token, authData.jwt);
         } catch {
             return reply.code(401).send({ success: false, message: "Invalid or expired token" });
         }
@@ -195,7 +195,7 @@ export async function verify_email_route(request, reply) {
         return reply.code(401).send({ success: false, message: "Not authenticated" });
     let payload;
     try {
-        payload = verify(token, process.env.JWT_SECRET);
+        payload = verify(token, authData.jwt);
     } catch {
         return reply.code(401).send({ success: false, message: "Invalid or expired token" });
     }
@@ -221,7 +221,7 @@ export async function update_password_route(request, reply) {
 
         let payload;
         try {
-            payload = verify(token, process.env.JWT_SECRET);
+            payload = verify(token, authData.jwt);
         } catch {
             return reply.code(401).send({ success: false, message: "Invalid or expired token" });
         }

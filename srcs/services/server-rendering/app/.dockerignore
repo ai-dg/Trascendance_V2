@@ -1,5 +1,7 @@
+**/vault/data/**
+**/vault/logs/**
+**/.git
+**/node_modules
 node_modules
 dist
 npm-debug.log
-.dockerignore
-Dockerfile
