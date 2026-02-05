@@ -1,9 +1,11 @@
+.PHONY: up d dev build no-cache re watch fclean down downv clean find-logs kill-logs logs npm-install
+
 # ■ Path Configuration
 COMPOSE = srcs/docker-compose.yml
 
 # ■ Cleanup Targets
-MIGRATIONS_DIRECTORIES= srcs/app/accounts/migrations srcs/app/livechat/migrations srcs/app/pong/migrations
-DATABASE_DIRECTORIES = ${HOME}/data/database ${HOME}/data/logsdata
+LOGS = srcs/logs
+PIDS = $(LOGS)/pids.txt
 
 # ■ Terminal Colors
 GREEN = "\033[32m"
@@ -66,24 +68,15 @@ down:
 downv:
 	@$(MAKE) kill-logs
 	docker compose -f $(COMPOSE) down -v
-	@echo $(GREEN)Removing database volume folder...$(RESET)
-	@sudo rm -rf ${DATABASE_DIRECTORIES}
-	@sudo rm -rf srcs/app/venv
-	@echo $(GREEN)Done.$(RESET)
-	@echo $(GREEN)Removing migrations directories...$(RESET)
-	@sudo rm -rf $(MIGRATIONS_DIRECTORIES)
-	@echo $(GREEN)Done.$(RESET)
+	@echo $(GREEN)Volumes removed.$(RESET)
 
 clean:
 	@echo $(GREEN)Stopping and killing log processes...$(RESET)
 	@$(MAKE) kill-logs
-	@echo $(GREEN)Cleaning Docker images...$(RESET)
-	@docker images -q > IMAGES
-	@cat IMAGES | while IFS= read -r line; do \
-		docker rmi -f "$$line"; \
-	done
-	@rm IMAGES
-	@echo ${GREEN}Images deleted${RESET}
+	@echo $(GREEN)Cleaning project Docker images...$(RESET)
+	@docker images --filter=reference='*trascendance*' -q | xargs -r docker rmi -f 2>/dev/null || true
+	@docker images --filter=reference='*transcendance*' -q | xargs -r docker rmi -f 2>/dev/null || true
+	@echo ${GREEN}Project images deleted${RESET}
 	@docker builder prune --all --force
 	@echo ${GREEN}Cache cleaned${RESET}
 	@echo $(GREEN)Removing log files...$(RESET)
@@ -136,12 +129,3 @@ npm-install:
 	@cd srcs/services/realtime-sockets/app && npm install
 	@cd srcs/services/server-rendering/app && npm install
 	@echo $(GREEN)All npm dependencies installed!$(RESET)
-
-update-static:
-	docker compose -f $(COMPOSE) exec gunicorn bash -c "\
-		cd /app/data/static/ts && \
-		npm install && \
-		npm run build && \
-		cd /app/data && \
-		rm -rf /app/data/staticfiles/* && \
-		python manage.py collectstatic --noinput"

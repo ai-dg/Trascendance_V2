@@ -5,10 +5,10 @@ import fastifyStatic from "@fastify/static";
 import fastifyView from "@fastify/view";
 import ejs from "ejs";
 
-const server = Fastify();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+const server = Fastify();
 
 
 console.log(join(process.cwd(), "locales"));
