@@ -296,11 +296,15 @@ export class App {
         };
         return user;
       }
-      // Silent handling of 401 - user is not authenticated
+
+      // Handle 401 - user is not authenticated or session expired
       if (res.status === 401) {
-      } else {
-        console.warn(`getConnectedUser: unexpected status ${res.status}`);
+        console.debug("getConnectedUser: 401 Unauthorized - user not authenticated");
+        return null;
       }
+
+      // Handle other unexpected status codes
+      console.warn(`getConnectedUser: unexpected status ${res.status}`);
       return null;
     }
     catch (err) {
