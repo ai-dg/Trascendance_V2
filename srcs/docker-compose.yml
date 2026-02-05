@@ -49,6 +49,7 @@ services:
       - auth_app
       - live-chat_app
       - realtime-sockets_app
+      - remote-players_app
       - frontend_app
 
 
@@ -201,9 +202,31 @@ services:
       - internal
     volumes:
       - /data/node_modules
-      # - sqlite_data:/data/sqlite
-      # - ./volume/redis_data:/data
       - ./services/realtime-sockets/app:/data
+      - ./certs:/certs:ro
+
+  remote-players_app:
+    container_name: remote-players_app
+    build:
+      context: ./services/remote-players/app
+    depends_on: [redis]
+    expose:
+      - 3004
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
+      - CSRF_SECRET=${CSRF_SECRET}
+      - AUTH_INTERNAL_URL=https://auth_app:3000
+    networks:
+      - internal
+    volumes:
+      - /data/node_modules
+      - ./services/remote-players/app:/data
       - ./services/game-engine/app/srcs:/game-engine/app/srcs:ro
       - ./certs:/certs:ro
 

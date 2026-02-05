@@ -51,9 +51,18 @@ export class WebsocketManager {
     const guestNickname = localStorage.getItem('guestNickname');
     const guestAvatar = localStorage.getItem('guestAvatar');
 
-    const options = {
+    const generalOptions = {
       path: "/realtime-sockets/socket.io/",
-      transports: ['polling', 'websocket'], // Try polling first to avoid initial WS errors
+      transports: ['polling', 'websocket'],
+      withCredentials: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      timeout: 10000
+    };
+
+    const gameOptions = {
+      path: "/remote-players/socket.io/",
+      transports: ['polling', 'websocket'],
       withCredentials: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
@@ -65,8 +74,8 @@ export class WebsocketManager {
       }
     };
 
-    this.generalSocket = io(origin, options);
-    this.gameSocket = io(`${origin}/game`, options);
+    this.generalSocket = io(origin, generalOptions);
+    this.gameSocket = io(origin, gameOptions);
     this.setupDefaultListeners();
   }
 

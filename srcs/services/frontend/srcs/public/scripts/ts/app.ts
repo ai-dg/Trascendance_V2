@@ -219,9 +219,9 @@ export class App {
       this.currentUser = await this.getConnectedUser();
       await this.languageManager.init();
 
-      if (this.currentUser) {
-        this.currentPage = 'menu';
+      let didNavigate = false;
 
+      if (this.currentUser) {
         const wsManager = WebsocketManager.getInstance();
         wsManager.init(window.location.origin);
 
@@ -245,8 +245,15 @@ export class App {
         }
 
         // this.gamePageOnline.setWebsocketManager(wsManager);
+        if (this.routerManager.getCurrentPage() === 'auth') {
+          this.routerManager.navigateTo('menu', undefined, { replace: true });
+          didNavigate = true;
+        }
       }
-      this.render();
+
+      if (!didNavigate) {
+        this.render();
+      }
   }
 
 

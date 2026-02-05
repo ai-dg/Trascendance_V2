@@ -1,7 +1,7 @@
 import { AuthManager } from "./AuthManager.js";
 import type { User } from "./TypesManager";
 
-export type Page = 'auth' | 'guest' | 'menu' | 'game-ai' | 'game-local' | 'game-online' | 'leaderboard' | 'tournament' | 'settings' | 'check-otp' | 'update-profile' | 'live-chat' | 'multiplayer' | 'privacy-policy' | 'terms-of-service';
+export type Page = 'auth' | 'guest' | 'menu' | 'game-ai' | 'game-local' | 'game-online' | 'leaderboard' | 'settings' | 'check-otp' | 'update-profile' | 'live-chat' | 'multiplayer' | 'privacy-policy' | 'terms-of-service';
 
 export interface RouteData {
   [key: string]: any;
@@ -11,15 +11,27 @@ export class RouterManager {
   private currentPage: Page = 'auth';
   private listeners: ((page: Page, data?: RouteData) => void)[] = [];
   private updateUserCallback?: (user: User | null) => void;
+  private readonly pageQueryKey = 'page';
 
   constructor(updateUserCallback?: (user: User | null) => void) {
     this.updateUserCallback = updateUserCallback;
     this.loadInitialRoute();
+    window.addEventListener('popstate', (event: PopStateEvent) => {
+      const pageFromState = this.getPageFromState(event.state);
+      const pageFromUrl = this.getPageFromUrl();
+      const nextPage = pageFromState ?? pageFromUrl;
+
+      if (nextPage && nextPage !== this.currentPage) {
+        this.currentPage = nextPage;
+        this.notifyListeners();
+      }
+    });
   }
 
   private loadInitialRoute(): void {
-    // Could implement URL-based routing here if needed
-    this.currentPage = 'auth';
+    const pageFromUrl = this.getPageFromUrl();
+    this.currentPage = pageFromUrl ?? 'auth';
+    this.updateHistory(this.currentPage, true);
   }
 
   public getCurrentPage(): Page {
@@ -30,10 +42,10 @@ export class RouterManager {
     this.updateUserCallback?.(user);
   }
 
-  public navigateTo(page: Page, data?: RouteData): void {
-
+  public navigateTo(page: Page, data?: RouteData, options?: { replace?: boolean }): void {
     if (this.currentPage !== page) {
       this.currentPage = page;
+      this.updateHistory(page, options?.replace ?? false);
       this.notifyListeners(data);
     }
   }
@@ -47,6 +59,55 @@ export class RouterManager {
 
   private notifyListeners(data?: RouteData): void {
     this.listeners.forEach(callback => callback(this.currentPage, data));
+  }
+
+  private getPageFromState(state: any): Page | null {
+    if (state && typeof state.page === 'string' && this.isValidPage(state.page)) {
+      return state.page as Page;
+    }
+    return null;
+  }
+
+  private getPageFromUrl(): Page | null {
+    const url = new URL(window.location.href);
+    const paramValue = url.searchParams.get(this.pageQueryKey);
+    if (paramValue && this.isValidPage(paramValue)) {
+      return paramValue as Page;
+    }
+
+    const hashValue = url.hash.replace(/^#\/?/, '');
+    if (hashValue && this.isValidPage(hashValue)) {
+      return hashValue as Page;
+    }
+
+    return null;
+  }
+
+  private updateHistory(page: Page, replace: boolean): void {
+    const url = new URL(window.location.href);
+    url.searchParams.set(this.pageQueryKey, page);
+    const method = replace ? 'replaceState' : 'pushState';
+    window.history[method]({ page }, '', url.toString());
+  }
+
+  private isValidPage(page: string): page is Page {
+    const pages: Page[] = [
+      'auth',
+      'guest',
+      'menu',
+      'game-ai',
+      'game-local',
+      'game-online',
+      'leaderboard',
+      'settings',
+      'check-otp',
+      'update-profile',
+      'live-chat',
+      'multiplayer',
+      'privacy-policy',
+      'terms-of-service'
+    ];
+    return pages.includes(page as Page);
   }
 
   private getBaseUrl(): string {

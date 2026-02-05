@@ -14,11 +14,14 @@ RESET = "\033[0m"
 ######################################################################
 
 up: build
-	docker compose -f $(COMPOSE) create
 	docker compose -f $(COMPOSE) up --remove-orphans
 
 d: build
-	docker compose -f $(COMPOSE) create
+	docker compose -f $(COMPOSE) up --remove-orphans -d
+	@$(MAKE) find-logs
+
+# Fast start without rebuilding (use when code hasn't changed)
+start:
 	docker compose -f $(COMPOSE) up --remove-orphans -d
 	@$(MAKE) find-logs
 
