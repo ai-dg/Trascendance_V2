@@ -122,6 +122,11 @@ vault:
 	mkdir -p srcs/services/vault/logs
 	docker compose -f $(COMPOSE) up -d vault
 	sleep 2
-	docker cp srcs/.env vault:/
-	docker exec vault sh ./vaultInit.sh
-	docker exec vault rm /.env
+	docker cp srcs/services/vault/init/vaultInit.sh vault:/vault/config
+	docker cp srcs/.env vault:/vault/config/.env
+	docker exec vault sh ./vault/config/vaultInit.sh
+	docker exec vault rm /vault/config/vaultInit.sh
+	docker exec vault rm /vault/config/.env
+
+reset-vault:
+	@sudo rm -rf $(VAULT_DIRECTORIES)

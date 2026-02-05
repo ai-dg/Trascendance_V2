@@ -3,11 +3,13 @@
 export VAULT_ADDR='http://localhost:8200'
 
 # Charge les variables depuis .env
-if [ ! -f .env ]; then
+if [ ! -f /vault/config/.env ]; then
     echo "❌ Fichier .env manquant"
     echo "Copiez .env.vault.example vers .env.vault et remplissez les valeurs"
     exit 1
 fi
+
+source /vault/config/.env
 
 chown 100:1000 vault/data
 
@@ -31,12 +33,12 @@ vault kv put kv/auth \
 
 vault kv put kv/redis \
   password=$REDIS_PASSWORD \
-  host=redis \
-  port=6379
+  host=$REDIS_HOST \
+  port=$REDIS_PORT
 
 vault kv put kv/rabbitmq \
-  password=$RABBITMQ_DEFAULT_USER \
-  user=gt_rabbit_admin \
+  password=$RABBITMQ_DEFAULT_PASS \
+  user=$RABBITMQ_DEFAULT_USER \
 
 vault kv put kv/fortytwo \
   clientSecret=$FORTYTWO_CLIENT_SECRET \
@@ -46,3 +48,6 @@ vault kv put kv/fortytwo \
 echo "✅ Secrets Vault initialisés"
 echo add vault root token to .env file :
 echo $ROOT_TOKEN
+
+echo "please keep unseal key ! it won't be revealed again :"
+echo $UNSEAL_KEY
