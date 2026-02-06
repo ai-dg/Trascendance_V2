@@ -21,9 +21,6 @@ claude/
 .claude/
 
 
-
-
-
 # Ignore compiled/transpiled JS files from TypeScript in frontend
 srcs/services/frontend/srcs/public/scripts/js/
 srcs/services/frontend/dist/

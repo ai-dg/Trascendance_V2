@@ -282,7 +282,8 @@ export class App {
 
     // Check if we just came back from OAuth - clear the not_authenticated flag
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('oauth_success') === '1') {
+    const hasOAuthSuccess = urlParams.get('oauth_success') === '1';
+    if (hasOAuthSuccess) {
       sessionStorage.removeItem("not_authenticated");
       // Clean up the URL
       urlParams.delete('oauth_success');
@@ -295,6 +296,17 @@ export class App {
     const notAuthFlag = sessionStorage.getItem("not_authenticated");
     if (notAuthFlag === "true") {
       Logger.debug("getConnectedUser: skipping check - user not authenticated in this session");
+      return null;
+    }
+
+    // Skip auth check if we're on auth page and have no prior session indicators
+    // This prevents unnecessary 401 errors in fresh sessions (e.g., incognito tabs)
+    const isAuthPage = this.routerManager.getCurrentPage() === 'auth';
+    const hasSessionIndicator = hasOAuthSuccess || sessionStorage.length > 0 || document.cookie.includes('session');
+
+    if (isAuthPage && !hasSessionIndicator) {
+      Logger.debug("getConnectedUser: skipping check - fresh session on auth page");
+      sessionStorage.setItem("not_authenticated", "true");
       return null;
     }
 
