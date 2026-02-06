@@ -243,13 +243,6 @@ export class SettingsPage {
     () => console.log("to handle signup")
   );
 
-  // Google Sign In Button
-  const googleBtn = this.uiManager.createButton(
-    this.t("sign_in_with_google"),
-    "w-full retro-button bg-white text-black hover:bg-gray-100 border-2 border-white py-3 flex items-center justify-center gap-3",
-    () => this.authPage.handleGoogleSignIn()
-  );
-
   // 42Auth Button
   const auth42Btn = this.uiManager.createButton(
     "this",
@@ -259,7 +252,6 @@ export class SettingsPage {
 
   buttonsContainer.appendChild(signInBtn);
   buttonsContainer.appendChild(signUpBtn);
-  buttonsContainer.appendChild(googleBtn);
   buttonsContainer.appendChild(auth42Btn);
 
   //card.appendChild(header);

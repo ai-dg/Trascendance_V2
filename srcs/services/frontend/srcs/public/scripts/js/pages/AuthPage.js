@@ -141,10 +141,8 @@ export class AuthPage {
             divider.appendChild(dividerLine);
             divider.appendChild(this.uiManager.createElement('div', 'flex-1 h-px bg-gradient-to-r from-transparent via-[#ff1493] to-transparent'));
             // Register buttons
-            const googleBtn = this.uiManager.createButton(this.t('sign_in_with_google'), 'retro-button auth-btn auth-btn-google', () => this.handleGoogleSignIn());
             const auth42Btn = this.uiManager.createButton(this.t('sign_in_with_42'), 'retro-button auth-btn auth-btn-42', () => this.handle42SignIn());
             oauthContainer.appendChild(divider);
-            oauthContainer.appendChild(googleBtn);
             oauthContainer.appendChild(auth42Btn);
             const playAsGuestBtn = this.uiManager.createButton(this.t('play_as_guest'), 'retro-button auth-btn auth-btn-guest', this.onPlayAsGuest);
             oauthContainer.appendChild(playAsGuestBtn);
@@ -217,11 +215,6 @@ export class AuthPage {
     //////////////////////////////////////////////
     ///////////// HANDLERS ///////////////////////
     //////////////////////////////////////////////
-    handleGoogleSignIn() {
-        // TODO: Implement Google OAuth
-        console.log('Google Sign In clicked');
-        // This would typically redirect to Google OAuth or open a popup
-    }
     handle42SignIn() {
         console.log('42 Sign In clicked');
         window.location.href = `${window.location.origin}/auth/42/login`;

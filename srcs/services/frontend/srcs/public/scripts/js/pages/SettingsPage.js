@@ -156,13 +156,10 @@ export class SettingsPage {
         const signInBtn = this.uiManager.createButton(this.t("signin"), "w-full retro-button bg-[#00ffff] text-black hover:bg-[#00ffff]/80 border-2 border-[#00ffff] py-3", () => console.log("to handle signin"));
         // Sign Up Button
         const signUpBtn = this.uiManager.createButton(this.t("signup"), "w-full retro-button bg-transparent text-[#ff1493] border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black py-3", () => console.log("to handle signup"));
-        // Google Sign In Button
-        const googleBtn = this.uiManager.createButton(this.t("sign_in_with_google"), "w-full retro-button bg-white text-black hover:bg-gray-100 border-2 border-white py-3 flex items-center justify-center gap-3", () => this.authPage.handleGoogleSignIn());
         // 42Auth Button
         const auth42Btn = this.uiManager.createButton("this", "w-full retro-button bg-[#00babc] text-white hover:bg-[#00a0a2] border-2 border-[#00babc] py-3 flex items-center justify-center gap-3", () => this.authPage.handle42SignIn());
         buttonsContainer.appendChild(signInBtn);
         buttonsContainer.appendChild(signUpBtn);
-        buttonsContainer.appendChild(googleBtn);
         buttonsContainer.appendChild(auth42Btn);
         //card.appendChild(header);
         card.appendChild(subtitle);
