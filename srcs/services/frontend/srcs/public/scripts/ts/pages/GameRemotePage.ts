@@ -2,6 +2,7 @@ import { UIManager } from '../modules/UIManager.js';
 import { GameManager } from '../modules/GameManager.js';
 import type { User } from '../modules/TypesManager.js';
 import { gameSocket } from '../app.js';
+import { Logger } from '../modules/Logger.js';
 
 export class RemotePage {
   private uiManager: UIManager;
@@ -205,10 +206,10 @@ export class RemotePage {
   private checkForReconnection(): void {
 	GameManager.checkForReconnection((result) => {
 	  if (result.hasGame) {
-		console.log("[RemotePage] Found game to reconnect:", result);
+		Logger.log("[RemotePage] Found game to reconnect:", result);
 		this.showReconnectionOption(result);
 	  } else {
-		console.log("[RemotePage] No game to reconnect to");
+		Logger.log("[RemotePage] No game to reconnect to");
 		// Just show the normal lobby (already displayed)
 	  }
 	});
@@ -264,11 +265,11 @@ export class RemotePage {
    * Handle reconnection to existing game
    */
   private handleReconnect(gameUUID: string): void {
-	console.log("[RemotePage] Attempting to reconnect to game:", gameUUID);
+	Logger.log("[RemotePage] Attempting to reconnect to game:", gameUUID);
 
 	GameManager.reconnectToGame(gameUUID, (result) => {
 	  if (result.success) {
-		console.log("[RemotePage] Reconnection successful:", result);
+		Logger.log("[RemotePage] Reconnection successful:", result);
 
 		// Set up the game manager with the reconnected game
 		if (!this.canvas)
@@ -277,6 +278,35 @@ export class RemotePage {
 		this.gameManager = new GameManager(this.canvas, result.gameUUID);
 		this.gameManager.setPlayerNumber(result.playerNumber); // Set correct player number for reconnection
 		this.setupGameListeners();
+
+		// Update opponent display with info from reconnection response
+		// The opponent info is always displayed on the right side (player 2 labels)
+		Logger.log("[RemotePage] Reconnection result:", result);
+		Logger.log("[RemotePage] opponentUsername:", result.opponentUsername, "opponentAvatar:", result.opponentAvatar);
+
+		if (result.opponentUsername || result.opponentAvatar) {
+		  const opponentUsername = result.opponentUsername || 'Player 2';
+		  const opponentAvatarSrc = this.resolveAvatarSrc(result.opponentAvatar || null);
+
+		  Logger.log("[RemotePage] Setting opponent display - username:", opponentUsername, "avatar:", opponentAvatarSrc);
+		  Logger.log("[RemotePage] player2LabelEl exists:", !!this.player2LabelEl, "avatarPlayer2ImgEl exists:", !!this.avatarPlayer2ImgEl);
+
+		  if (this.player2LabelEl) {
+		  	this.player2LabelEl.textContent = opponentUsername;
+		  	Logger.log("[RemotePage] Updated player2Label");
+		  } else {
+		  	Logger.warn("[RemotePage] player2LabelEl not found!");
+		  }
+
+		  if (this.avatarPlayer2ImgEl) {
+		  	this.avatarPlayer2ImgEl.src = opponentAvatarSrc;
+		  	Logger.log("[RemotePage] Updated avatarPlayer2Img");
+		  } else {
+		  	Logger.warn("[RemotePage] avatarPlayer2ImgEl not found!");
+		  }
+		} else {
+		  Logger.warn("[RemotePage] No opponent info in reconnection response!");
+		}
 
 		// Show ready screen
 		const startOverlay = document.querySelector<HTMLElement>('[data-overlay="start-game"]');
@@ -308,7 +338,7 @@ export class RemotePage {
 		  startOverlay.classList.remove('hidden');
 		}
 	  } else {
-		console.log("[RemotePage] Reconnection failed:", result);
+		Logger.log("[RemotePage] Reconnection failed:", result);
 		// Show error and return to lobby
 		const startOverlay = document.querySelector<HTMLElement>('[data-overlay="start-game"]');
 		if (startOverlay) {
@@ -348,7 +378,7 @@ export class RemotePage {
    * Reject reconnection and notify server so other player is informed
    */
   private rejectReconnection(gameUID: string): void {
-	console.log("[RemotePage] User rejected reconnection, notifying server for game:", gameUID);
+	Logger.log("[RemotePage] User rejected reconnection, notifying server for game:", gameUID);
 
 	// Notify server that this player is rejecting reconnection
 	if (gameSocket) {
@@ -397,18 +427,18 @@ export class RemotePage {
   }
 
   public setupGame(data:any){
-	console.log("should work here in setupGame")
+	Logger.log("should work here in setupGame")
 	if (!this.canvas)
 		throw new Error("canvas is not initialised");
 	this.gameManager = new GameManager(this.canvas, data.UUID);
 	this.setupGameListeners()
-	console.log(data.UUID, this.gameManager)
+	Logger.log(data.UUID, this.gameManager)
   }
 
   private setupGameListeners(): void {
 	if (!this.gameManager) return;
 
-	console.log("[RemotePage] Setting up game listeners");
+	Logger.log("[RemotePage] Setting up game listeners");
 
 	this.gameManager.addListener((gameState) => {
 	  this.updateScore(gameState.player1Score, gameState.player2Score);
@@ -417,43 +447,43 @@ export class RemotePage {
 
 	// Handle when matchmaking finds an opponent
 	this.gameManager.setOnOpponentFound((data) => {
-	  console.log("[RemotePage] Opponent found callback triggered!", data);
+	  Logger.log("[RemotePage] Opponent found callback triggered!", data);
 	  this.handleOpponentFound(data);
 	});
 
 	// Handle when opponent disconnects
 	this.gameManager.setOnOpponentDisconnected((data) => {
-	  console.log("[RemotePage] Opponent disconnected callback triggered!", data);
+	  Logger.log("[RemotePage] Opponent disconnected callback triggered!", data);
 	  this.handleOpponentDisconnected(data);
 	});
 
 	// Handle matchmaking errors (e.g., already searching)
 	this.gameManager.setOnMatchmakingError((data) => {
-	  console.log("[RemotePage] Matchmaking error!", data);
+	  Logger.log("[RemotePage] Matchmaking error!", data);
 	  this.handleMatchmakingError(data);
 	});
 
 	// Handle when opponent reconnects
 	this.gameManager.setOnOpponentReconnected((data) => {
-	  console.log("[RemotePage] Opponent reconnected!", data);
+	  Logger.log("[RemotePage] Opponent reconnected!", data);
 	  this.handleOpponentReconnected(data);
 	});
 
 	// Handle when reconnection times out
 	this.gameManager.setOnReconnectionTimeout((data) => {
-	  console.log("[RemotePage] Reconnection timeout!", data);
+	  Logger.log("[RemotePage] Reconnection timeout!", data);
 	  this.handleReconnectionTimeout(data);
 	});
 
 	// Handle when opponent abandons the game (starts new game instead of reconnecting)
 	this.gameManager.setOnOpponentAbandoned((data) => {
-	  console.log("[RemotePage] Opponent abandoned!", data);
+	  Logger.log("[RemotePage] Opponent abandoned!", data);
 	  this.handleOpponentAbandoned(data);
 	});
 
 	// Handle countdown start - hide overlays so countdown is visible
 	this.gameManager.setOnCountdownStart(() => {
-	  console.log("[RemotePage] Countdown started - FORCE hiding ALL overlays");
+	  Logger.log("[RemotePage] Countdown started - FORCE hiding ALL overlays");
 
 	  // Remove waiting screen if any
 	  this.removeWaitingScreen();
@@ -465,16 +495,16 @@ export class RemotePage {
 
 	  // Log all overlays for debugging
 	  const allOverlays = document.querySelectorAll('[data-overlay]');
-	  console.log("[RemotePage] All overlays found:", allOverlays.length);
+	  Logger.log("[RemotePage] All overlays found:", allOverlays.length);
 	  allOverlays.forEach((el, i) => {
 		const htmlEl = el as HTMLElement;
-		console.log(`[RemotePage] Overlay ${i}: ${htmlEl.getAttribute('data-overlay')}, display: ${getComputedStyle(htmlEl).display}`);
+		Logger.log(`[RemotePage] Overlay ${i}: ${htmlEl.getAttribute('data-overlay')}, display: ${getComputedStyle(htmlEl).display}`);
 	  });
 
 	  if (startOverlay) {
 		startOverlay.classList.add('hidden');
 		startOverlay.style.display = 'none';
-		console.log("[RemotePage] startOverlay hidden with display:none");
+		Logger.log("[RemotePage] startOverlay hidden with display:none");
 	  }
 	  if (pauseOverlay) {
 		pauseOverlay.classList.add('hidden');
@@ -503,8 +533,8 @@ export class RemotePage {
 	this.removeWaitingScreen();
 
 	// Update avatars and usernames
-	const myUsername = this.user?.username ?? 'PLAYER 1';
-	const opponentUsername = data?.opponentUsername ?? (data?.opponentId !== undefined ? String(data.opponentId) : 'PLAYER 2');
+	const myUsername = this.user?.username ?? 'Guest';
+	const opponentUsername = data?.opponentUsername ?? 'Player 2';
 	const myAvatarSrc = this.resolveAvatarSrc(this.user?.avatar ?? null);
 	const opponentAvatarSrc = this.resolveAvatarSrc(data?.opponentAvatar ?? null);
 
@@ -553,7 +583,7 @@ export class RemotePage {
    * Shows options to wait for reconnection or leave
    */
   private handleOpponentDisconnected(data: any): void {
-	console.log("[RemotePage] Handling opponent disconnect", data);
+	Logger.log("[RemotePage] Handling opponent disconnect", data);
 
 	// DON'T destroy gameManager - keep listening for reconnection events
 
@@ -605,7 +635,7 @@ export class RemotePage {
 	  // Show overlay - clear any inline styles and remove hidden class
 	  startOverlay.style.display = '';
 	  startOverlay.classList.remove('hidden');
-	  console.log("[RemotePage] Showing disconnect overlay");
+	  Logger.log("[RemotePage] Showing disconnect overlay");
 	}
   }
 
@@ -614,7 +644,18 @@ export class RemotePage {
    * Shows ready screen for both players to resume
    */
   private handleOpponentReconnected(data: any): void {
-	console.log("[RemotePage] Handling opponent reconnect", data);
+	Logger.log("[RemotePage] Handling opponent reconnect", data);
+
+	// Update opponent display with their info
+	if (data.opponentUsername || data.opponentAvatar) {
+	  const opponentUsername = data.opponentUsername || 'Player 2';
+	  const opponentAvatarSrc = this.resolveAvatarSrc(data.opponentAvatar || null);
+
+	  // Update opponent info (player 2 is always on the right side visually)
+	  if (this.player2LabelEl) this.player2LabelEl.textContent = opponentUsername;
+	  if (this.avatarPlayer2ImgEl) this.avatarPlayer2ImgEl.src = opponentAvatarSrc;
+	  Logger.log("[RemotePage] Updated opponent display:", opponentUsername);
+	}
 
 	// Show ready screen
 	const startOverlay = document.querySelector<HTMLElement>('[data-overlay="start-game"]');
@@ -647,7 +688,7 @@ export class RemotePage {
 	  // Show overlay - clear any inline styles and remove hidden class
 	  startOverlay.style.display = '';
 	  startOverlay.classList.remove('hidden');
-	  console.log("[RemotePage] Showing reconnect overlay with Ready button");
+	  Logger.log("[RemotePage] Showing reconnect overlay with Ready button");
 	}
   }
 
@@ -655,7 +696,7 @@ export class RemotePage {
    * handleReconnectionTimeout - Called when opponent doesn't reconnect in time
    */
   private handleReconnectionTimeout(data: any): void {
-	console.log("[RemotePage] Handling reconnection timeout", data);
+	Logger.log("[RemotePage] Handling reconnection timeout", data);
 
 	// Clean up game manager now
 	if (this.gameManager) {
@@ -689,7 +730,7 @@ export class RemotePage {
    * handleOpponentAbandoned - Called when opponent starts new game instead of reconnecting
    */
   private handleOpponentAbandoned(data: any): void {
-	console.log("[RemotePage] Handling opponent abandoned", data);
+	Logger.log("[RemotePage] Handling opponent abandoned", data);
 
 	// Clean up game manager now
 	if (this.gameManager) {
@@ -724,7 +765,7 @@ export class RemotePage {
    * Shows error message and returns to lobby
    */
   private handleMatchmakingError(data: any): void {
-	console.log("[RemotePage] Handling matchmaking error", data);
+	Logger.log("[RemotePage] Handling matchmaking error", data);
 
 	this.isSearchingOpponent = false;
 	this.removeWaitingScreen();
@@ -785,11 +826,11 @@ export class RemotePage {
 	const isGameOver = !!winner;
     const isPaused = this.gameManager ? this.gameManager.getIsPaused() : false;
 
-    console.log('[GameRemotePage] updateGameState called - gameRunning:', gameState.gameRunning, 'isPaused:', isPaused, 'hasStarted:', this.gameManager?.getHasStarted());
+    Logger.log('[GameRemotePage] updateGameState called - gameRunning:', gameState.gameRunning, 'isPaused:', isPaused, 'hasStarted:', this.gameManager?.getHasStarted());
 
     // For waiting screen
     if (this.isSearchingOpponent) {
-      console.log('[GameRemotePage] Showing waiting screen');
+      Logger.log('[GameRemotePage] Showing waiting screen');
       startOverlay?.classList.add('hidden');
       pauseOverlay?.classList.add('hidden');
       gameOverOverlay?.classList.add('hidden');
@@ -799,7 +840,7 @@ export class RemotePage {
     // Screen at the start of the game
     if (!this.gameManager?.getHasStarted())
     {
-      console.log('[GameRemotePage] Showing start overlay (game not started yet)');
+      Logger.log('[GameRemotePage] Showing start overlay (game not started yet)');
       if (startOverlay)
         startOverlay.classList.remove('hidden');
       if (pauseOverlay)
@@ -846,7 +887,7 @@ export class RemotePage {
 		// Screen when the game is paused - CHECK THIS BEFORE gameRunning!
 		else if (isPaused)
 		{
-			console.log('[GameRemotePage] Showing pause overlay');
+			Logger.log('[GameRemotePage] Showing pause overlay');
 			if (pauseOverlay) {
 				pauseOverlay.classList.remove('hidden');
 				pauseOverlay.style.display = ''; // Clear inline style that might be hiding it
@@ -865,7 +906,7 @@ export class RemotePage {
 		// Screen when the game is running
 		else if (gameState.gameRunning)
 		{
-			console.log('[GameRemotePage] Game running - hiding all overlays');
+			Logger.log('[GameRemotePage] Game running - hiding all overlays');
 			if (startOverlay)
 				startOverlay.classList.add('hidden');
 			if (pauseOverlay)

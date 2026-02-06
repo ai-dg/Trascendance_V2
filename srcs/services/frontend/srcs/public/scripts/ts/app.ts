@@ -28,6 +28,7 @@ import { LiveChatPage } from './pages/LiveChatPage.js';
 import { GuestPage } from './pages/GuestPage.js';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage.js';
 import { TermsOfServicePage } from './pages/TermsOfServicePage.js';
+import { Logger } from './modules/Logger.js';
 
 
 // Socket.io
@@ -216,12 +217,17 @@ export class App {
 
 
   private async initialize(): Promise<void> {
-      this.currentUser = await this.getConnectedUser();
-      await this.languageManager.init();
+      // Check user status and language in parallel for faster initialization
+      const [user, _] = await Promise.all([
+          this.getConnectedUser(),
+          this.languageManager.init()
+      ]);
+
+      this.currentUser = user;
+
+      let didNavigate = false;
 
       if (this.currentUser) {
-        this.currentPage = 'menu';
-
         const wsManager = WebsocketManager.getInstance();
         wsManager.init(window.location.origin);
 
@@ -245,8 +251,15 @@ export class App {
         }
 
         // this.gamePageOnline.setWebsocketManager(wsManager);
+        if (this.routerManager.getCurrentPage() === 'auth') {
+          this.routerManager.navigateTo('menu', undefined, { replace: true });
+          didNavigate = true;
+        }
       }
-      this.render();
+
+      if (!didNavigate) {
+        this.render();
+      }
   }
 
 
@@ -256,12 +269,58 @@ export class App {
    * Get the currently connected user from server or localStorage
    */
   private async getConnectedUser(): Promise<User | null> {
+    // Check for guest user in localStorage first to avoid unnecessary API calls
+    const guestNickname = localStorage.getItem("guestNickname");
+    const guestAvatar = localStorage.getItem("guestAvatar");
+    if (guestAvatar && guestNickname) {
+      return {
+        username: guestNickname,
+        avatar: guestAvatar,
+        isGuest: true
+      };
+    }
+
+    // Check if we just came back from OAuth - clear the not_authenticated flag
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasOAuthSuccess = urlParams.get('oauth_success') === '1';
+    if (hasOAuthSuccess) {
+      sessionStorage.removeItem("not_authenticated");
+      // Clean up the URL
+      urlParams.delete('oauth_success');
+      const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+      window.history.replaceState({}, '', newUrl);
+    }
+
+    // Check if we've recently determined user is not authenticated
+    // This avoids repeated 401 errors in console during the same session
+    const notAuthFlag = sessionStorage.getItem("not_authenticated");
+    if (notAuthFlag === "true") {
+      Logger.debug("getConnectedUser: skipping check - user not authenticated in this session");
+      return null;
+    }
+
+    // Skip auth check if we're on auth page and have no prior session indicators
+    // This prevents unnecessary 401 errors in fresh sessions (e.g., incognito tabs)
+    const isAuthPage = this.routerManager.getCurrentPage() === 'auth';
+    const hasSessionIndicator = hasOAuthSuccess || sessionStorage.length > 0 || document.cookie.includes('session');
+
+    if (isAuthPage && !hasSessionIndicator) {
+      Logger.debug("getConnectedUser: skipping check - fresh session on auth page");
+      sessionStorage.setItem("not_authenticated", "true");
+      return null;
+    }
+
+    // Try to fetch authenticated user
+    // Note: httpOnly cookies cannot be checked from JavaScript, so we always try
     try {
       const res = await fetch(this.routerManager.getUrl('auth/me'), {
         method: 'GET',
-        credentials: 'include'
+        credentials: 'include',
+        signal: AbortSignal.timeout(5000)
       });
       if (res.ok) {
+        // Clear not-authenticated flag on successful authentication
+        sessionStorage.removeItem("not_authenticated");
         const result = await res.json();
         const user = {
           id: result.data.user.user_id,
@@ -271,32 +330,25 @@ export class App {
           isGuest: false
         };
         return user;
-        // get localStorage data;
       }
+
+      // Handle 401 - user is not authenticated or session expired
       if (res.status === 401) {
-      } else {
-        console.warn(`getConnectedUser: unexpected status ${res.status}`);
+        // Set flag to prevent repeated checks in this session
+        sessionStorage.setItem("not_authenticated", "true");
+        Logger.debug("getConnectedUser: 401 Unauthorized - user not authenticated");
+        return null;
       }
-      let guestUser: User | null = null;
 
-      let guestNickname = localStorage.getItem("guestNickname");
-      let guestAvatar = localStorage.getItem("guestAvatar");
-
-      if (guestAvatar && guestNickname) {
-        guestUser = {
-          username: guestNickname,
-          avatar: guestAvatar,
-          isGuest: true
-        };
-        return guestUser;
-      }
+      // Handle other unexpected status codes
+      Logger.warn(`getConnectedUser: unexpected status ${res.status}`);
       return null;
     }
     catch (err) {
       if (err instanceof TypeError && err.message.includes("NetworkError")) {
-        console.debug("getConnectedUser: server internal error");
+        Logger.debug("getConnectedUser: server internal error");
       } else {
-        console.error("getConnectedUser: unexpected error →", err);
+        Logger.error("getConnectedUser: unexpected error →", err);
       }
     }
     return null;
@@ -330,8 +382,8 @@ export class App {
    */
   private async render(): Promise<void> {
     this.uiManager.clear();
-    this.currentUser = await this.getConnectedUser();
-    console.log("CURRENT USER RENDER: ", this.currentUser);
+    // Don't refetch user on every render - use cached currentUser
+    Logger.log("CURRENT USER RENDER: ", this.currentUser);
 
     switch (this.currentPage) {
       case 'auth':
@@ -358,8 +410,8 @@ export class App {
       case 'check-otp':
         // TODO: Get translations from languageManager
         const text = {} as Translations; // Placeholder
-        this.authManager.otpData ?? { otp_id: 'temp_otp_id', context: 'signup', handler: () => console.log('Default handler called') };
-        console.log("Using OTP params:", this.authManager.otpData);
+        this.authManager.otpData ?? { otp_id: 'temp_otp_id', context: 'signup', handler: () => Logger.log('Default handler called') };
+        Logger.log("Using OTP params:", this.authManager.otpData);
         this.checkOtpPage.render(text, this.authManager.otpData);
         break;
       case 'settings':
@@ -381,6 +433,14 @@ export class App {
         this.termsOfServicePage.render();
         break;
     }
+
+    // After first render, just hide loading screen (app is already visible for SEO)
+    requestAnimationFrame(() => {
+      const loadingScreen = document.getElementById('app-loading');
+      if (loadingScreen) {
+        loadingScreen.remove();
+      }
+    });
   }
 
   /**********************************************************************************************/
@@ -395,13 +455,15 @@ export class App {
     const result = await this.authManager.login({ username, password }, text);
 
     if (!result.success) {
-      console.error('Login failed:', result.error);
+      Logger.error('Login failed:', result.error);
       this.authPage.showError(result.error || 'Login failed');
     } else if (result.needsVerification) {
-      console.log('Login successful, verification page should be shown by showVerificationCode');
+      Logger.log('Login successful, verification page should be shown by showVerificationCode');
       // The verification page will be shown by logUser via showVerificationCode
     } else {
-      console.log('Login successful without verification');
+      Logger.log('Login successful without verification');
+      // Clear the not-authenticated flag on successful login
+      sessionStorage.removeItem("not_authenticated");
       // Navigate to menu after successful login
       this.currentUser = {
         id: 'guest_' + Date.now(),
@@ -411,7 +473,7 @@ export class App {
         isGuest: false
       };
 
-      console.log('Playing as user:', username, 'with avatar:', 'default.png');
+      Logger.log('Playing as user:', username, 'with avatar:', 'default.png');
       this.routerManager.navigateTo('menu');
     }
   }
@@ -421,62 +483,62 @@ export class App {
     const result = await this.authManager.register({ username, email, password, confirmPassword }, text);
 
     if (!result.success) {
-      console.error('Registration failed:', result.error);
+      Logger.error('Registration failed:', result.error);
       this.authPage.showError(result.error || 'Registration failed');
     } else if (result.needsVerification) {
-      console.log('Registration successful, verification page should be shown by showVerificationCode');
+      Logger.log('Registration successful, verification page should be shown by showVerificationCode');
       // The verification page will be shown by registerUser via showVerificationCode
     } else {
-      console.log('Registration successful without verification');
+      Logger.log('Registration successful without verification');
       // TODO: Handle successful registration without verification
     }
   }
 
   private async appHandleForgotPassword(email: string): Promise<void> {
-    console.log('Forgot password requested for:', email);
+    Logger.log('Forgot password requested for:', email);
     const response = await this.authManager.forgotPassword(email);
-    console.log('Response ', response);
+    Logger.log('Response ', response);
     if (response.success && response.needsVerification) {
       this.routerManager.navigateTo('check-otp', response.verificationData);
     } else if (!response.success) {
-      console.error(response.error);
+      Logger.error(response.error);
     }
   }
 
   private async handleChangePassword(email: string, password: string): Promise<void> {
-    console.log('Change password requested for:', email);
+    Logger.log('Change password requested for:', email);
     const otpId = this.authManager.otpData?.otp_id;
-    if (!otpId) return console.error("OTP ID missing");
+    if (!otpId) return Logger.error("OTP ID missing");
 
     const response = await this.authManager.changePassword(email, password, otpId);
     if (response.success) {
-      console.log("Password changed succesfully");
+      Logger.log("Password changed succesfully");
       this.authManager.otpData = null;
       this.authPage.showLogin();
     } else {
-      console.error(response.error);
+      Logger.error(response.error);
     }
   }
 
   private handleNewChangePassword(success: boolean): void {
     if (success) {
-      console.log('OTP verification successful, redirecting to change password');
+      Logger.log('OTP verification successful, redirecting to change password');
       this.authPage.handleChangePassword;
     } else {
-      console.log('OTP verification failed');
+      Logger.log('OTP verification failed');
       // Stay on check-otp page to retry
     }
   }
 
   private handleOtpVerificationComplete(success: boolean): void {
     if (success) {
-      console.log('OTP verification successful, redirecting to menu');
+      Logger.log('OTP verification successful, redirecting to menu');
       this.authManager.otpData = null;
       // Update current user and navigate to menu
       this.currentUser = this.authManager.getCurrentUser();
       this.routerManager.navigateTo('menu');
     } else {
-      console.log('OTP verification failed');
+      Logger.log('OTP verification failed');
       // Stay on check-otp page to retry
     }
   }
@@ -516,7 +578,7 @@ export class App {
       }
     });
 
-    console.log('Playing as guest:', nickname, 'with avatar:', avatar);
+    Logger.log('Playing as guest:', nickname, 'with avatar:', avatar);
     this.routerManager.navigateTo('menu');
   }
 
@@ -555,10 +617,10 @@ export class App {
 
   private handleBackToUpdateProfile(success: boolean): void {
     if (success) {
-      console.log("Email updated successfully!");
+      Logger.log("Email updated successfully!");
       this.routerManager.navigateTo('update-profile');
     } else {
-      console.log("Problem to update e-mail");
+      Logger.log("Problem to update e-mail");
       // this.routerManager.navigateTo('update-profile');
     }
   }
@@ -569,7 +631,7 @@ export class App {
 
   private handlePlayGameAI(): void {
     // TODO: Implement AI game logic
-    console.log('Starting AI game...');
+    Logger.log('Starting AI game...');
     if (this.gamePageAI) {
       this.gamePageAI.render(this.currentUser);
     }
@@ -578,13 +640,13 @@ export class App {
 
   private handlePlayGameLocal(): void {
     // TODO: Implement local multiplayer logic
-    console.log('Starting local multiplayer game...');
+    Logger.log('Starting local multiplayer game...');
     this.routerManager.navigateTo('game-local');
   }
 
   private handlePlayGameOnline(): void {
     // TODO: Implement online multiplayer logic
-    console.log('Starting online multiplayer game...');
+    Logger.log('Starting online multiplayer game...');
     this.routerManager.navigateTo('game-online');
   }
 
@@ -595,10 +657,10 @@ export class App {
 
   private handleChatWithFriends(): void {
     // TODO: Implement chat functionality
-    console.log('Chat with friends functionality not yet implemented');
+    Logger.log('Chat with friends functionality not yet implemented');
     if (this.currentUser && this.currentUser.isGuest == false)
       this.routerManager.navigateTo('live-chat');
     else
-      console.log('Connect to chat wih friends');
+      Logger.log('Connect to chat wih friends');
   }
 }

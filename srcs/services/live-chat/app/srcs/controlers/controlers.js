@@ -36,6 +36,30 @@ export async function friend_request_route(request, reply) {
             ON CONFLICT(user_id, friend_id) DO NOTHING
         `, [userId, receiverId, userId]);
 
+        let username = `User ${userId}`;
+        try {
+        const res = await fetch(`https://auth_app:3000/username-id`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ id: userId }),
+        });
+        if (res.ok) {
+            const userData = await res.json();
+            console.log(`Username found for user ${userId}:`, userData.data?.user?.pseudo);
+            if (userData.data?.user?.pseudo) {
+                username = userData.data.user.pseudo;
+            }
+        }
+        else {
+            console.log(`Failed to fetch username for user ${userId}:`, res.status);
+        }
+        } catch (error) {
+            console.error(`Error fetching user ${userId}:`, error);
+        }
+
         console.log("Publishing friend-request via Redis");
 
         await redis.publish('notifications', JSON.stringify({
@@ -44,7 +68,7 @@ export async function friend_request_route(request, reply) {
             payload: {
                 type: 'friend-request',
                 userId: userId,
-                message: `User ${userId} wants to be your friend!`
+                message: `User ${username} wants to be your friend!`
             }
         }));
         
@@ -90,11 +114,15 @@ export async function friend_request_response_route(request, reply) {
                 return reply.code(400).send({ success: false, message: "No pending friend request found" });
             }
         } else {
+            console.log(`User ${userId} is rejecting friend request from ${senderId}`);
             // Delete the request if rejected
-            await app.db.run(`
+            const data = await app.db.run(`
                 DELETE FROM friendships 
-                WHERE user_id = ? AND friend_id = ? AND status = 'pending'
-            `, [senderId, userId]);
+                WHERE (user_id = ? AND friend_id = ? AND status = 'pending')
+                OR (friend_id = ? AND user_id = ? AND status = 'pending')
+            `, [senderId, userId, senderId, userId]);
+            console.log(`Delete operation result:`, data);
+            console.log("Friend request rejected and removed from DB");
         }
         console.log("Publishing notifications via Redis");
 
@@ -147,7 +175,7 @@ export async function get_friends_route(request, reply) {
     
     try {
         const friendships = await app.db.all(`
-            SELECT 
+            SELECT DISTINCT
                 CASE 
                     WHEN user_id = ? THEN friend_id 
                     ELSE user_id 
@@ -310,8 +338,37 @@ export async function block_friend_route(request, reply) {
     }
     
     const userId = payload.user_id;
+    console.log(`User ${userId} is trying to block friend ${friendId}`);
     
     try {
+
+        const currentRelation = await app.db.get(`
+            SELECT status, requester_id
+            FROM friendships 
+            WHERE (user_id = ? AND friend_id = ?)
+               OR (user_id = ? AND friend_id = ?)
+        `, [userId, friendId, friendId, userId]);
+
+        console.log("Current relation fetched:", currentRelation);
+
+        if (!currentRelation) {
+            return reply.code(400).send({ success: false, message: "No existing friendship to block" });
+        }
+
+        if (currentRelation.status === 'blocked') {
+            if (currentRelation.requester_id === userId) {
+                return reply.code(400).send({ success: false, message: "User is already blocked" });
+            } else {
+                return reply.code(400).send({ success: false, message: "You have been blocked by this user" });
+            }
+        }
+
+        if (currentRelation.status === 'pending') {
+            return reply.code(400).send({ success: false, message: "Cannot block a pending friend request" });
+        }
+
+
+        console.log(`Blocking friendship between ${userId} and ${friendId}`);
             const friendship = await app.db.run(`
                 UPDATE friendships 
                 SET status = 'blocked', requester_id = ?
@@ -319,14 +376,15 @@ export async function block_friend_route(request, reply) {
                 OR (user_id = ? AND friend_id = ?)
             `, [userId, userId, friendId, friendId, userId]);
         
+            if (friendship.changes === 0) {
+                return reply.code(400).send({ success: false, message: "No active friendship to block" });
+            }
             
-            if (!friendship.changes == 0) {
                 await app.db.run(`
                     INSERT INTO friendships (user_id, friend_id, status, requester_id)
                     VALUES (?, ?, 'blocked', ?)
                     ON CONFLICT(user_id, friend_id) DO UPDATE SET status = 'blocked', requester_id = ?
                 `, [userId, friendId, userId, userId]);
-            }
 
             await redis.publish('notifications', JSON.stringify({
                 targetUserId: userId,
@@ -405,7 +463,22 @@ export async function add_friend(request, reply) {
 						message: resData.message ||'Failed to send request' 
 					});
 				}
-
+                    const res = await fetch(`https://auth_app:3000/username-id`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({ id: senderId }),
+                    });
+                    if (!res.ok) {
+                        console.log(`Failed to fetch username for user ${senderId}:`, res.status);
+                    }
+                    if (res.ok) {
+                        const userData = await res.json();
+                        console.log(`Username found for user ${senderId}:`, userData.data?.user?.pseudo);
+                        const username = userData.data?.user?.pseudo || `User ${senderId}`;
+                    }
 				const isOnline = await redis.get(`online:${receiverId}`);
 
                 if (isOnline === 'true') {
@@ -415,7 +488,7 @@ export async function add_friend(request, reply) {
                         event: 'friend-request',
                         payload: {
                             senderId,
-                            message: `User ${senderId} wants to be your friend!`
+                            message: `User ${username} wants to be your friend!`
                         }
                     }));
 				} else {
@@ -436,6 +509,115 @@ export async function add_friend(request, reply) {
                     message: 'Server error' 
                 });
 			}
+
+        }
+        
+export async function get_blocked_users_route(request, reply) {
+    const token = request.cookies.token || request.body.token;
+    if (!token) {
+        return reply.code(401).send({ success: false, message: "Not authenticated" });
+    }
+
+    let payload;
+    try {
+        payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+        return reply.code(401).send({ success: false, message: "Invalid or expired token" });
+    }
+    
+    const userId = payload.user_id;
+    
+    try {
+        const blockedUsers = await app.db.all(`
+            SELECT DISTINCT
+                CASE 
+                    WHEN user_id = ? THEN friend_id 
+                    ELSE user_id 
+                END as blocked_user_id
+            FROM friendships 
+            WHERE (user_id = ? OR friend_id = ?) 
+              AND status = 'blocked'
+              AND requester_id = ?
+        `, [userId, userId, userId, userId]);
+
+        const blockedUsersDetails = [];
+
+        for (const row of blockedUsers) {
+            const BId = row.blocked_user_id;
+            try {
+                const res = await fetch(`https://auth_app:3000/username-id`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ id: BId }),
+                });
+                if (res.ok) {
+                    const userData = await res.json();
+                    blockedUsersDetails.push({
+                        id: BId,
+                        username: userData.data?.user?.pseudo || `User ${BId}`,
+                        avatar: userData.data?.user?.avatar || null
+                    });
+                }
+            } catch (error) {
+                console.error(`Error fetching user ${BId}:`, error);
+            }
+        }
+
+        return reply.send({ success: true, blockedUsers: blockedUsersDetails });
+    } catch (err) {
+        console.error("DB error:", err);
+        return reply.code(500).send({ success: false, message: "Database error" });
+    }
 }
 
+export async function unblock_user_route(request, reply) {
+    const { blockedId } = request.body;
+    const token = request.cookies.token || request.body.token;
+    
+    if (!token) {
+        return reply.code(401).send({ success: false, message: "Not authenticated" });
+    }
+
+    let payload;
+    try {
+        payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+        return reply.code(401).send({ success: false, message: "Invalid or expired token" });
+    }
+    
+    const userId = payload.user_id;
+    
+    try {
+            const res = await app.db.run(`
+                UPDATE friendships 
+                SET status = 'accepted'
+                WHERE ((user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?))
+                      AND status = 'blocked'
+                      AND requester_id = ?
+                `, [userId, blockedId, blockedId, userId, userId]);
+            
+            if (res.changes === 0) {
+                return reply.code(400).send({ success: false, message: "No blocked user to unblock" });
+            }
+
+            await redis.publish('notifications', JSON.stringify({
+            targetUserId: userId,
+                event: 'notifications', 
+                payload: { 
+                    type: 'unblocked',
+                    message: `User unblocked.` 
+                }
+            }));
+            return reply.code(200).send({ 
+                success: true, 
+                message: "User unblocked"
+            });
+    } catch (dbErr) {
+        console.error('DB error:', dbErr);
+        return reply.code(500).send({ success: false, message: "Database error" });
+    }
+}
 

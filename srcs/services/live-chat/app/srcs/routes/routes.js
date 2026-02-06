@@ -4,7 +4,9 @@ import { friend_request_route,
          get_pending_requests_route,
          add_friend,
          block_friend_route,
-         remove_friend
+         remove_friend,
+         get_blocked_users_route,
+         unblock_user_route
  } from "../controlers/controlers.js";
 
  import {
@@ -25,4 +27,7 @@ export function routes(app, options)
 
     app.post('/send-message', async (request, reply) => send_message_route(request, reply));
     app.get('/get-messages', async (request, reply) => get_messages_route(request, reply));
+
+    app.get('/blocked-users', async (request, reply) => get_blocked_users_route(request, reply));
+    app.post('/unblock', async (request, reply) => unblock_user_route(request, reply));
 }

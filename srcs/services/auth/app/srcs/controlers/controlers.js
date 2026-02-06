@@ -238,10 +238,10 @@ async function validateSession(request, reply) {
 
 
 export async function login_route(request, reply){
-	
 
 
-		let user = null;	
+
+		let user = null;
 		const {pseudo, password} = request.body;
 		console.log(pseudo, password)
 		if (!pseudo || ! password)
@@ -253,11 +253,11 @@ export async function login_route(request, reply){
 		{
 			return reply.send(get_error_message(e.SQL_ERROR, 500));
 		}
-		 
+
 		if (!user)
 			return reply.send(get_error_message(e.AUTH_INVALID_CREDENTIALS, 401));
-	
-		let isValidPassword = await compare(request.body.password, user.user_password);	
+
+		let isValidPassword = await compare(request.body.password, user.user_password);
 		if (isValidPassword)
 		{
 			const otp = generateOTP();
@@ -265,7 +265,7 @@ export async function login_route(request, reply){
 			const user_agent = request.headers["user-agent"];
 			const id = crypto.randomUUID();
 			const expire_at = Date.now() + 5 * 60 * 1000;
-	
+
 			const validate = {
 				email: user.user_mail,
 				otp_hashed : otp_hashed,
@@ -280,7 +280,7 @@ export async function login_route(request, reply){
 			const mailOptions = {
 			from: '"Transcendance 42" <no-reply@transcendance.42.com>',
 			to: `${user.user_mail}`,
-			subject: "Tentative de connexion",  
+			subject: "Tentative de connexion",
 			text: `Votre code de connexion est : ${otp}`,
 			html: `<p>Votre code de connexion est : ${otp}</p>`
 			};
@@ -289,15 +289,15 @@ export async function login_route(request, reply){
 			app.mailChannel.sendToQueue(mail_queue, Buffer.from(JSON.stringify(mailOptions)), {
 					persistent: true,
 				});
-			return reply.send({success:true, status:"otp-validation", otp_id: id, expire_at})		
+			return reply.send({success:true, status:"otp-validation", otp_id: id, expire_at})
 		}
-		else 
+		else
 			return reply.send(get_error_message(e.AUTH_INVALID_CREDENTIALS, 401));
 	}
 
 
 /**
- * 
+ *
  * Controller for the /csrf-token route
  *
  * Checks whether the user is authenticated.
@@ -318,7 +318,7 @@ export async function login_route(request, reply){
  *     csrfToken: "..."
  *   }
  * }
- * 
+ *
  * @param {import('fastify').FastifyRequest<{ Body: { email: string } }>} request
  * @param {import('fastify').FastifyReply} reply
  * @returns {Promise<void>}
@@ -326,7 +326,7 @@ export async function login_route(request, reply){
 
 
 export async function get_csrf_route(request, reply){
-		
+
 		const { success, jwt } = await is_auth(request);
 
 		let signed_token = null;
@@ -356,7 +356,7 @@ export async function is_connected(request, reply) {
 	if (! success)
 		return reply.send({success:false, message : "User is not authenticated"}, 401);
 	return reply.send({success:true, message: "user is connected", pseudo:jwt.pseudo});
-	
+
 }
 
 
@@ -383,7 +383,11 @@ export async function login_otp_validation_route(request, reply)
 			pseudo: data.pseudo,
 			jti
 		};
+<<<<<<< HEAD
 		const secretKey = authData.jwt;	
+=======
+		const secretKey = process.env.JWT_SECRET;
+>>>>>>> origin/dev
 		const token = sign(payload, secretKey, { expiresIn: '1h' });
 		await redis.set(`jwt:${jti}`, 'valid', { EX: 3600 });
 
@@ -423,7 +427,7 @@ export async function login_otp_validation_route(request, reply)
 		}).send({...get_success_message(data.email, data.pseudo)}, 200)
 	} catch(err) {
 		return reply.send(get_error_message(e.app_ERROR, 500))
-	}	
+	}
 }
 
 
@@ -459,16 +463,19 @@ export async function logout_route(request, reply) {
 	}
 
 	if (payload?.jti)
-    	await redis.set(`jwt:${payload.jti}`, "revoked"); 
+    	await redis.set(`jwt:${payload.jti}`, "revoked");
 
 
 	const user_id = payload?.user_id;
 	if (user_id)
 		await redis.del(`session:user:${user_id}`);
 
-    reply.clearCookie('token', { path: '/', httpOnly: true, secure: true, sameSite: 'None' });
-	reply.clearCookie('csrf', { path: '/', httpOnly: true, secure: true, sameSite: 'None' });
-	reply.clearCookie('sessionId', { path: '/', httpOnly: true, secure: true, sameSite: 'none' });
+    const protocol = request.headers['x-forwarded-proto'] || 'http';
+    const isSecure = protocol === 'https';
+
+    reply.clearCookie('token', { path: '/', httpOnly: true, secure: isSecure, sameSite: isSecure ? 'None' : 'Lax' });
+	reply.clearCookie('csrf', { path: '/', httpOnly: true, secure: isSecure, sameSite: isSecure ? 'None' : 'Lax' });
+	reply.clearCookie('sessionId', { path: '/', httpOnly: true, secure: isSecure, sameSite: isSecure ? 'none' : 'lax' });
 
     return reply.send({ success: true, message: "User logged out" });
 
@@ -513,14 +520,14 @@ export async function signup_route(request, reply)
 			message += " !";
 			return reply.send({success: false, message})
 		}
-		
+
 		console.log(email)
 		const is_mail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
-	
+
 		email = validator.normalizeEmail(email);
 		pseudo = xss(pseudo);
 		if (!email.match(is_mail))
-			return reply.send({success: false, message:"Oops ! Seems your email is not valid" }, 400)	
+			return reply.send({success: false, message:"Oops ! Seems your email is not valid" }, 400)
 		const m = await app.db.get(`SELECT * FROM users WHERE user_mail= ?` , [email])
 		if (m)
 			return reply.send({success: false, message:"Oops! Your mail seems to be already used. Please try to reset your password"}, 400);
@@ -528,14 +535,14 @@ export async function signup_route(request, reply)
 		console.log("check pseudo : ",u)
 		if (u)
 			return reply.send({success: false, message:"Oops! pseudo already used... "}, 400);
-		
+
 		const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{12,64}$/
 		if (!password.match(regex))
 			return reply.send({success: false, message:"Your password is not safe. Should have at least digits, uppercase, lowercase and special caracters."}, 400);
-		
+
 		if (password.length < 12)
 			return reply.send({success: false, message:"Oops! Your password needs to be at least 12 characters long."}, 400);
-		
+
 		let passwordHash = await hash(password, 10);
 		const otp = generateOTP();
 		const otp_id = crypto.randomUUID();
@@ -556,7 +563,7 @@ export async function signup_route(request, reply)
 		const mailOptions = {
 				from: '"Transcendance 42" <no-reply@transcendance.42.com>',
 				to: `${email}`,
-				subject: "Bienvenue ! Confirme ton adresse email ✨", 
+				subject: "Bienvenue ! Confirme ton adresse email ✨",
 				text: `Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  ${otp} .`,
 				html: `	<p>Bienvenue sur <strong>Transcendance 42</strong> !</p>
 				<p>Pour finaliser ton inscription, il te suffit de confirmer ton adresse email en entrant le code de connextion :  ${otp} .</p>
@@ -589,7 +596,7 @@ export async function signup_otp_validation_route(request, reply)
 		if (!is_valid)
 			return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
 		const insert = await app.db.run('INSERT INTO "users" ("user_mail", "pseudo", "user_password", "avatar") VALUES (?, ?, ?, ?)', [data.email, data.pseudo, data.passwordHash, data.avatar])
-		
+
 		if (insert && insert.changes > 0) {
 			console.log("insert: ", insert);
 		const userId = insert.lastID;
@@ -612,7 +619,7 @@ export async function signup_otp_validation_route(request, reply)
 		}
 		console.log("SUCESSSSSSS");
 		}
-		
+
 		return reply.send({...get_success_message(data.email, data.pseudo), message: 'user created'}, 200)
 	}
 	catch(err)
@@ -629,7 +636,7 @@ export async function signup_otp_validation_route(request, reply)
 
 export async function reset_forgotten_password_route(request, reply) {
 
-	
+
 
   const { otp_id, password } = request.body;
   console.log("Body got:", { otp_id, password });
@@ -683,7 +690,7 @@ export async function reset_forgotten_password_route(request, reply) {
 
 
 /**
- * 
+ *
  * @param {import('fastify').FastifyRequest<{ Body: { email: string } }>} request
  * @param {import('fastify').FastifyReply} reply
  * @returns {Promise<void>}
@@ -730,7 +737,7 @@ export async function reset_password_request_route(request, reply)  {
 			const mailOptions = {
 			from: '"Transcendance 42" <no-reply@transcendance.42.com>',
 			to: `${user.user_mail}`,
-			subject: "Mise a jour du mot de passe",  
+			subject: "Mise a jour du mot de passe",
 			text: `Votre code est : ${otp}`,
 			html: `<p>Votre code est : ${otp}</p>`
 			};
@@ -739,9 +746,9 @@ export async function reset_password_request_route(request, reply)  {
 			app.mailChannel.sendToQueue(mail_queue, Buffer.from(JSON.stringify(mailOptions)), {
 					persistent: true,
 				});
-			return reply.send({success:true, status:"otp-validation", otp_id: id, expire_at})		
+			return reply.send({success:true, status:"otp-validation", otp_id: id, expire_at})
 		}
-		else 
+		else
 			return reply.send(get_error_message(e.AUTH_INVALID_CREDENTIALS, 401));
 	}
 

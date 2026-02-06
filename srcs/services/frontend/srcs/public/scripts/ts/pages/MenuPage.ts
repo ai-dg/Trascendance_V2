@@ -34,7 +34,7 @@ export class MenuPage {
       color: '#ff1493',
     },
     {
-      icon: 'monitor',
+      icon: 'multiplayer',
       label: 'ONLINE',
       action: () => this.onPlayGameOnline(),
       color: '#ff1493',
@@ -336,7 +336,8 @@ export class MenuPage {
         sessionStorage.setItem('selectedFriendId', friendId.toString());
         sessionStorage.setItem('selectedFriendUsername', username);
         this.onChatWithFriends();
-      }
+      },
+      () => {}
     );
     this.socialManager.render(socialDivWrapper);
   }

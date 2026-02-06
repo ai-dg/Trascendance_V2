@@ -5,6 +5,7 @@ import type { RouterManager } from '../modules/RouterManager.js';
 import type { Socket } from "socket.io-client";
 import type { WebsocketManager } from '../modules/WebsocketManager.js';
 import { SocialManager } from '../modules/SocialManager.js';
+import { Logger } from '../modules/Logger.js';
 
 export class LiveChatPage {
     private uiManager: UIManager;
@@ -40,11 +41,10 @@ export class LiveChatPage {
     public setWebsocketManager(manager: WebsocketManager) : void {
         this.wsManager = manager;
         
-        this.setupChatSocketListeners();
     }
 
     public async render(user: User | null): Promise<void> {
-        console.log("live-chat for:", user);
+        Logger.log("live-chat for:", user);
 
         this.checkSessionStorageForRedirect();
 
@@ -71,7 +71,13 @@ export class LiveChatPage {
                 this.wsManager,
                 this.currentUser,
                 () => this.currentSelectedFriend ? this.currentSelectedFriend.nbrId : null,
-                (friendId, username, avatar) => this.handleFriendSelection(friendId, username, avatar)
+                (friendId, username, avatar) => this.handleFriendSelection(friendId, username, avatar),
+                (senderId, message) => {
+                    if (this.currentSelectedFriend && senderId === this.currentSelectedFriend.nbrId) {
+                        this.addMessage(message, false);
+                    }
+                }
+            
             );
             this.socialManager.render(socialWrapper);
         }
@@ -89,7 +95,7 @@ export class LiveChatPage {
             this.t('BACK TO MENU'),
             'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 mt-4',
             () => {
-                console.log('Back to menu clicked');
+                Logger.log('Back to menu clicked');
                 this.onBack();
             }
         );
@@ -242,7 +248,7 @@ export class LiveChatPage {
     }
 
     private async handleFriendSelection(friendId: any, username: string, avatar?: string | null) {
-        console.log("Handling friend selection:", username);
+        Logger.log("Handling friend selection:", username);
         
         this.currentSelectedFriend = {
             username: username,
@@ -297,7 +303,7 @@ export class LiveChatPage {
                 body: JSON.stringify({ receiverId: this.currentSelectedFriend.id, message: message })
             });
             if (!res.ok) {
-                console.error('Failed to send message:', res.status);
+                Logger.error('Failed to send message:', res.status);
                 return;
             }
             if (res.ok) {
@@ -306,7 +312,7 @@ export class LiveChatPage {
                 inputField.focus();
             }
         } catch (error) {
-            console.error("Error sending message:", error);
+            Logger.error("Error sending message:", error);
         }
     }
 
@@ -351,22 +357,8 @@ export class LiveChatPage {
                 });
             }
         } catch (err) {
-            console.error("Error loading chat history:", err);
+            Logger.error("Error loading chat history:", err);
         }
-    }
-
-    private setupChatSocketListeners(): void {
-        if (!this.wsManager) return;
-
-        this.wsManager.onGeneral('notifications', (data) => {
-            if (data.type === 'new-message') {
-                const sId = Number(data.senderId);
-
-                if (this.currentSelectedFriend && sId === this.currentSelectedFriend.nbrId) {
-                    this.addMessage(data.message, false);
-                }
-            }
-        });
     }
 
     private setupFriendActionButtons(): void {
@@ -391,7 +383,7 @@ export class LiveChatPage {
     private async handleBlockFriend() {
         if (!this.currentSelectedFriend) return;
 
-        console.log("Blocking friend:", this.currentSelectedFriend.nbrId);
+        Logger.log("Blocking friend:", this.currentSelectedFriend.nbrId);
         
         try {
             const res = await fetch(this.routerManager.getUrl('/live-chat/block-friend'), {
@@ -403,22 +395,22 @@ export class LiveChatPage {
 
             const data = await res.json();
             if (data.success) {
-                console.log("Friend blocked successfully");
+                Logger.log("Friend blocked successfully");
                 this.socialManager?.loadFriendsList(); 
                 this.currentSelectedFriend = null;
                 this.updateProfileView();
             } else {
-                console.error("Failed to block friend:", data.message);
+                Logger.error("Failed to block friend:", data.message);
             }
         } catch (err) {
-            console.error("Error blocking friend:", err);
+            Logger.error("Error blocking friend:", err);
         }
     }
 
     private async handleDeleteFriend() {
         if (!this.currentSelectedFriend) return;
 
-        console.log("Removing friend:", this.currentSelectedFriend.nbrId);
+        Logger.log("Removing friend:", this.currentSelectedFriend.nbrId);
         try {
             const res = await fetch(this.routerManager.getUrl('/live-chat/remove-friend'), {
                 method: 'POST',
@@ -428,7 +420,7 @@ export class LiveChatPage {
             });
             const data = await res.json();
             if (data.success) {
-                console.log("Friend removed");
+                Logger.log("Friend removed");
                 
                 this.socialManager?.loadFriendsList(); 
                 
@@ -436,7 +428,7 @@ export class LiveChatPage {
                 this.updateProfileView();
             }
         } catch (err) {
-            console.error("Error removing friend:", err);
+            Logger.error("Error removing friend:", err);
         }
     }
 }

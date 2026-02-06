@@ -28,7 +28,7 @@ export async function reset_password_route (request, reply){
 
 	if (data.success)
 	  return reply.view('reset-password.ejs', {base_url});
-	else 
+	else
 	  return reply.view('reset-error.ejs', { message: data.message, base_url });
   } catch (err) {
 
@@ -42,7 +42,8 @@ export async function root_route(req, reply)
 {
 	const lang = req.query.lang || 'en';
 	const text = loadTranslations(lang);
-	return reply.view('index.ejs', { text, lang, base_url });
+	const host = req.headers['x-forwarded-host'] || req.headers.host || process.env.BASE_URL || "localhost";
+	return reply.view('index.ejs', { text, lang, base_url: host });
 }
 
 
@@ -61,7 +62,7 @@ export async function root_route(req, reply)
 
 export async function confirm_email(request, reply)
 {
-	
+
 	let replyQueue = null
 	const { token } = request.params;
 	if (!token)
@@ -78,7 +79,7 @@ export async function confirm_email(request, reply)
 		console.log("ERRROOOOOR : ", err)
 		return reply.view('index.ejs', { message: "unkown server problem, please try again later", base_url }, 500);
 	}
-	
+
 	const waitForResponse = async () => {
 		return new Promise(async (resolve, reject) => {
 			let consumerTag;
@@ -86,7 +87,7 @@ export async function confirm_email(request, reply)
 			try {
 				// Création du consumer
 				const { consumerTag: tag } = await server.channel.consume(
-					replyQueue.queue, 
+					replyQueue.queue,
 					async (msg) => {
 						if (msg && msg.properties.correlationId === correlationId) {
 							if (timeout)
@@ -98,7 +99,7 @@ export async function confirm_email(request, reply)
 								reject(new Error('Erreur lors du parsing de la réponse'));
 							}
 						}
-					}, 
+					},
 					{ noAck: true }
 				);
 				consumerTag = tag;
@@ -138,7 +139,7 @@ export async function confirm_email(request, reply)
 		}
 	} catch (err) {
 		console.error('Erreur lors de la confirmation email:', err);
-		return reply.view('index.ejs', { 
+		return reply.view('index.ejs', {
 			message: "Une erreur est survenue ou le serveur n'a pas répondu à temps." ,
 			base_url: base_url
 		});
@@ -158,4 +159,3 @@ export async function translate_route(req, reply){
   		const text = loadTranslations(lang);
   		reply.send({ text, lang });
 }
-	
