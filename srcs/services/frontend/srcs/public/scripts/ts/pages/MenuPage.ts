@@ -34,7 +34,7 @@ export class MenuPage {
       color: '#ff1493',
     },
     {
-      icon: 'monitor',
+      icon: 'multiplayer',
       label: 'ONLINE',
       action: () => this.onPlayGameOnline(),
       color: '#ff1493',
