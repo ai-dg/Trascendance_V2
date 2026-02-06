@@ -4,14 +4,11 @@
 COMPOSE = srcs/docker-compose.yml
 
 # ■ Cleanup Targets
-<<<<<<< HEAD
 MIGRATIONS_DIRECTORIES= srcs/app/accounts/migrations srcs/app/livechat/migrations srcs/app/pong/migrations
 DATABASE_DIRECTORIES = ${HOME}/data/database ${HOME}/data/logsdata
 VAULT_DIRECTORIES= srcs/services/vault/data srcs/services/vault/logs
-=======
 LOGS = srcs/logs
 PIDS = $(LOGS)/pids.txt
->>>>>>> origin/dev
 
 # ■ Terminal Colors
 GREEN = "\033[32m"
@@ -75,7 +72,6 @@ down:
 downv:
 	@$(MAKE) kill-logs
 	docker compose -f $(COMPOSE) down -v
-<<<<<<< HEAD
 	@echo $(GREEN)Removing database volume folder...$(RESET)
 	@sudo rm -rf ${DATABASE_DIRECTORIES}
 	@sudo rm -rf srcs/app/venv
@@ -84,9 +80,7 @@ downv:
 	@sudo rm -rf $(MIGRATIONS_DIRECTORIES)
 	@sudo rm -rf $(VAULT_DIRECTORIES)
 	@echo $(GREEN)Done.$(RESET)
-=======
 	@echo $(GREEN)Volumes removed.$(RESET)
->>>>>>> origin/dev
 
 clean:
 	@echo $(GREEN)Stopping and killing log processes...$(RESET)

@@ -383,11 +383,7 @@ export async function login_otp_validation_route(request, reply)
 			pseudo: data.pseudo,
 			jti
 		};
-<<<<<<< HEAD
 		const secretKey = authData.jwt;	
-=======
-		const secretKey = process.env.JWT_SECRET;
->>>>>>> origin/dev
 		const token = sign(payload, secretKey, { expiresIn: '1h' });
 		await redis.set(`jwt:${jti}`, 'valid', { EX: 3600 });
 
