@@ -1,14 +1,24 @@
 redis_data/
 node_modules/
 .env
+srcs/.env
 srcs/logs/
 *.log
 *.sqlite
 *.map
-*.js
-!srcs/services/realtime-sockets/**/*.js
-!srcs/services/game-engine/**/*.js
+
+# Ignore compiled/transpiled JS files from TypeScript in frontend
+srcs/services/frontend/srcs/public/scripts/js/
+srcs/services/frontend/dist/
+srcs/services/frontend/build/
+
+# Keep all backend service source JS files
+!srcs/services/**/app/**/*.js
+!srcs/services/**/srcs/**/*.js
+
+# Ignore TypeScript declaration files
 *.d.ts
+
 srcs/logs/pids.txt
 srcs/services/auth/app/auth.sqlite
 srcs/volumes/

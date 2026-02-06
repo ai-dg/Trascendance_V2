@@ -278,6 +278,35 @@ export class RemotePage {
 		this.gameManager.setPlayerNumber(result.playerNumber); // Set correct player number for reconnection
 		this.setupGameListeners();
 
+		// Update opponent display with info from reconnection response
+		// The opponent info is always displayed on the right side (player 2 labels)
+		console.log("[RemotePage] Reconnection result:", result);
+		console.log("[RemotePage] opponentUsername:", result.opponentUsername, "opponentAvatar:", result.opponentAvatar);
+
+		if (result.opponentUsername || result.opponentAvatar) {
+		  const opponentUsername = result.opponentUsername || 'Player 2';
+		  const opponentAvatarSrc = this.resolveAvatarSrc(result.opponentAvatar || null);
+
+		  console.log("[RemotePage] Setting opponent display - username:", opponentUsername, "avatar:", opponentAvatarSrc);
+		  console.log("[RemotePage] player2LabelEl exists:", !!this.player2LabelEl, "avatarPlayer2ImgEl exists:", !!this.avatarPlayer2ImgEl);
+
+		  if (this.player2LabelEl) {
+		  	this.player2LabelEl.textContent = opponentUsername;
+		  	console.log("[RemotePage] Updated player2Label");
+		  } else {
+		  	console.warn("[RemotePage] player2LabelEl not found!");
+		  }
+
+		  if (this.avatarPlayer2ImgEl) {
+		  	this.avatarPlayer2ImgEl.src = opponentAvatarSrc;
+		  	console.log("[RemotePage] Updated avatarPlayer2Img");
+		  } else {
+		  	console.warn("[RemotePage] avatarPlayer2ImgEl not found!");
+		  }
+		} else {
+		  console.warn("[RemotePage] No opponent info in reconnection response!");
+		}
+
 		// Show ready screen
 		const startOverlay = document.querySelector<HTMLElement>('[data-overlay="start-game"]');
 		if (startOverlay) {
@@ -503,8 +532,8 @@ export class RemotePage {
 	this.removeWaitingScreen();
 
 	// Update avatars and usernames
-	const myUsername = this.user?.username ?? 'PLAYER 1';
-	const opponentUsername = data?.opponentUsername ?? (data?.opponentId !== undefined ? String(data.opponentId) : 'PLAYER 2');
+	const myUsername = this.user?.username ?? 'Guest';
+	const opponentUsername = data?.opponentUsername ?? 'Player 2';
 	const myAvatarSrc = this.resolveAvatarSrc(this.user?.avatar ?? null);
 	const opponentAvatarSrc = this.resolveAvatarSrc(data?.opponentAvatar ?? null);
 
@@ -615,6 +644,17 @@ export class RemotePage {
    */
   private handleOpponentReconnected(data: any): void {
 	console.log("[RemotePage] Handling opponent reconnect", data);
+
+	// Update opponent display with their info
+	if (data.opponentUsername || data.opponentAvatar) {
+	  const opponentUsername = data.opponentUsername || 'Player 2';
+	  const opponentAvatarSrc = this.resolveAvatarSrc(data.opponentAvatar || null);
+
+	  // Update opponent info (player 2 is always on the right side visually)
+	  if (this.player2LabelEl) this.player2LabelEl.textContent = opponentUsername;
+	  if (this.avatarPlayer2ImgEl) this.avatarPlayer2ImgEl.src = opponentAvatarSrc;
+	  console.log("[RemotePage] Updated opponent display:", opponentUsername);
+	}
 
 	// Show ready screen
 	const startOverlay = document.querySelector<HTMLElement>('[data-overlay="start-game"]');

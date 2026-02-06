@@ -1,23 +1,79 @@
 <!DOCTYPE html>
-<html lang="en" class="size-full">
+<html lang="<%= lang || 'en' %>" class="size-full">
     <head>
         <meta charset="UTF-8" />
-		<meta name="api-base-url" content="<%= base_url %>">
+        <meta name="api-base-url" content="<%= base_url %>">
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Retro Pong</title>
+        <meta name="description" content="Play Retro Pong - Classic arcade game with local, AI, and remote multiplayer modes. Challenge friends or compete online!">
+        <meta name="keywords" content="pong, retro game, multiplayer, arcade, online game">
+        <title>Retro Pong - Classic Arcade Multiplayer Game</title>
         <link rel="icon" href="/public/favicon.ico" type="image/x-icon">
-        <!-- link to Tailwind CSS -->
-         <link href="../public/styles/input.css" rel="stylesheet" />
+        <link href="../public/styles/input.css" rel="stylesheet" />
     </head>
 
     <body class="size-full m-0 p-0">
-        <div id="app"></div>
+        <!-- Server-rendered initial content for SEO - visible to search engines -->
+        <div id="app">
+            <header class="bg-black/80 p-4 border-b border-cyan-400">
+                <h1 class="text-4xl font-bold text-center text-cyan-400">
+                    <%= text && text.title ? text.title : 'RETRO PONG' %>
+                </h1>
+            </header>
+
+            <main class="flex flex-col items-center justify-center min-h-screen p-8">
+                <section class="max-w-4xl mx-auto text-center">
+                    <h2 class="text-3xl font-bold text-cyan-400 mb-6">
+                        <%= text && text.welcome ? text.welcome : 'Welcome to Retro Pong' %>
+                    </h2>
+                    <p class="text-xl text-white mb-8">
+                        <%= text && text.description ? text.description : 'Classic arcade gaming experience with modern multiplayer features' %>
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+                        <article class="bg-black/60 border border-cyan-400 p-6 rounded-lg">
+                            <h3 class="text-xl font-bold text-pink-500 mb-3">Local Play</h3>
+                            <p class="text-white">Play against a friend on the same device</p>
+                        </article>
+
+                        <article class="bg-black/60 border border-cyan-400 p-6 rounded-lg">
+                            <h3 class="text-xl font-bold text-pink-500 mb-3">AI Opponent</h3>
+                            <p class="text-white">Challenge our intelligent AI player</p>
+                        </article>
+
+                        <article class="bg-black/60 border border-cyan-400 p-6 rounded-lg">
+                            <h3 class="text-xl font-bold text-pink-500 mb-3">Online Multiplayer</h3>
+                            <p class="text-white">Compete with players worldwide</p>
+                        </article>
+                    </div>
+
+                    <noscript>
+                        <div class="mt-8 p-4 bg-red-900/50 border border-red-400 rounded">
+                            <p class="text-white">Please enable JavaScript to play Retro Pong</p>
+                        </div>
+                    </noscript>
+                </section>
+            </main>
+
+            <footer class="bg-black/80 p-4 border-t border-cyan-400 text-center text-white">
+                <p>&copy; 2026 Retro Pong. Built with ❤️ for the arcade era.</p>
+            </footer>
+        </div>
+
+        <!-- Inline script to show loading screen ASAP (before modules load) -->
+        <script>
+            (function() {
+                const loadingScreen = document.createElement('div');
+                loadingScreen.id = 'app-loading';
+                loadingScreen.style.cssText = 'position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;z-index:9999;';
+                loadingScreen.innerHTML = '<div style="text-align:center;"><div style="font-size:3rem;color:#00ffff;font-family:monospace;font-weight:bold;margin-bottom:2rem;">RETRO PONG</div><div style="font-size:1.2rem;color:#ff1493;font-family:monospace;">Loading...</div></div>';
+                document.body.appendChild(loadingScreen);
+            })();
+        </script>
+
+        <!-- Client-side JavaScript will hydrate this content -->
         <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+" crossorigin="anonymous"></script>
-        <script type="module" src="../public/scripts/js/main.js" defer></script>
+        <script type="module" src="../public/scripts/js/main.js"></script>
     </body>
-    <footer>
-        
-    </footer>
 </html>
 
 

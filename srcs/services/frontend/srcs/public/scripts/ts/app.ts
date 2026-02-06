@@ -216,12 +216,17 @@ export class App {
 
 
   private async initialize(): Promise<void> {
-      this.currentUser = await this.getConnectedUser();
-      await this.languageManager.init();
+      // Check user status and language in parallel for faster initialization
+      const [user, _] = await Promise.all([
+          this.getConnectedUser(),
+          this.languageManager.init()
+      ]);
+
+      this.currentUser = user;
+
+      let didNavigate = false;
 
       if (this.currentUser) {
-        this.currentPage = 'menu';
-
         const wsManager = WebsocketManager.getInstance();
         wsManager.init(window.location.origin);
 
@@ -245,8 +250,15 @@ export class App {
         }
 
         // this.gamePageOnline.setWebsocketManager(wsManager);
+        if (this.routerManager.getCurrentPage() === 'auth') {
+          this.routerManager.navigateTo('menu', undefined, { replace: true });
+          didNavigate = true;
+        }
       }
-      this.render();
+
+      if (!didNavigate) {
+        this.render();
+      }
   }
 
 
@@ -256,6 +268,18 @@ export class App {
    * Get the currently connected user from server or localStorage
    */
   private async getConnectedUser(): Promise<User | null> {
+    // Check for guest user in localStorage first to avoid unnecessary API calls
+    const guestNickname = localStorage.getItem("guestNickname");
+    const guestAvatar = localStorage.getItem("guestAvatar");
+    if (guestAvatar && guestNickname) {
+      return {
+        username: guestNickname,
+        avatar: guestAvatar,
+        isGuest: true
+      };
+    }
+
+    // Try to fetch authenticated user
     try {
       const res = await fetch(this.routerManager.getUrl('auth/me'), {
         method: 'GET',
@@ -271,25 +295,16 @@ export class App {
           isGuest: false
         };
         return user;
-        // get localStorage data;
       }
+
+      // Handle 401 - user is not authenticated or session expired
       if (res.status === 401) {
-      } else {
-        console.warn(`getConnectedUser: unexpected status ${res.status}`);
+        console.debug("getConnectedUser: 401 Unauthorized - user not authenticated");
+        return null;
       }
-      let guestUser: User | null = null;
 
-      let guestNickname = localStorage.getItem("guestNickname");
-      let guestAvatar = localStorage.getItem("guestAvatar");
-
-      if (guestAvatar && guestNickname) {
-        guestUser = {
-          username: guestNickname,
-          avatar: guestAvatar,
-          isGuest: true
-        };
-        return guestUser;
-      }
+      // Handle other unexpected status codes
+      console.warn(`getConnectedUser: unexpected status ${res.status}`);
       return null;
     }
     catch (err) {
@@ -330,7 +345,7 @@ export class App {
    */
   private async render(): Promise<void> {
     this.uiManager.clear();
-    this.currentUser = await this.getConnectedUser();
+    // Don't refetch user on every render - use cached currentUser
     console.log("CURRENT USER RENDER: ", this.currentUser);
 
     switch (this.currentPage) {
@@ -381,6 +396,14 @@ export class App {
         this.termsOfServicePage.render();
         break;
     }
+
+    // After first render, just hide loading screen (app is already visible for SEO)
+    requestAnimationFrame(() => {
+      const loadingScreen = document.getElementById('app-loading');
+      if (loadingScreen) {
+        loadingScreen.remove();
+      }
+    });
   }
 
   /**********************************************************************************************/
