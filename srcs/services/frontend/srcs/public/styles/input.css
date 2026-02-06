@@ -76,17 +76,6 @@
   box-shadow: 0 0 26px rgba(255, 20, 147, 0.45);
 }
 
-.auth-btn-google {
-  background-color: #00ffff28;
-  border: 1px solid #00ffff;
-  color: #00ffff;
-}
-.auth-btn-google:hover {
-  background-color: #00ffff;
-  color: #000000;
-  box-shadow: 0 0 16px rgba(0, 255, 255, 0.25);
-}
-
 .auth-btn-42 {
   background-color: #00ffff28;
   border: 1px solid #00ffff;
