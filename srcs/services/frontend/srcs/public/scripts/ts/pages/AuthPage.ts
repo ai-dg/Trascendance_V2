@@ -3,6 +3,7 @@ import type { Translations } from '../modules/TypesManager.js';
 import type { AuthManager } from '../modules/AuthManager.js';
 import { CheckManager } from '../modules/CheckManager.js';
 import type { LanguageManager } from '../modules/LangManager.js';
+import { Logger } from '../modules/Logger.js';
 
 export class AuthPage {
   private uiManager: UIManager;
@@ -73,7 +74,7 @@ export class AuthPage {
   //////////////////////////////////////////////
 
    public render(): void {
-    console.log("render: ", this.showChangePassword);
+    Logger.log("render: ", this.showChangePassword);
     const container = this.uiManager.createElement('div', 'retro-container size-full flex items-center justify-center p-8');
     const content = this.uiManager.createElement('div', 'relative z-10');
     content.style.width = '600px';
@@ -256,6 +257,20 @@ export class AuthPage {
 
     const input = this.uiManager.createInput(type, placeholder, 'w-full px-6 py-4 bg-black/60 border-[#00ffff] text-[#00ffff] placeholder:text-[#00ffff]/50 focus:border-[#ff1493] focus:ring-[#ff1493] retro-text') as HTMLInputElement;
     input.value = this.formData[name];
+
+    // Add autocomplete attribute for password fields
+    if (type === 'password') {
+      if (this.isLogin && name === 'password') {
+        input.setAttribute('autocomplete', 'current-password');
+      } else if (!this.isLogin || this.showChangePassword || this.showForgotPassword) {
+        input.setAttribute('autocomplete', 'new-password');
+      }
+    } else if (type === 'email') {
+      input.setAttribute('autocomplete', 'email');
+    } else if (name === 'username') {
+      input.setAttribute('autocomplete', 'username');
+    }
+
     input.addEventListener('input', (e) => {
       const target = e.target as HTMLInputElement;
       this.formData[name] = target.value;
@@ -296,7 +311,7 @@ export class AuthPage {
         await this.languageManager.loadTranslations();
         this.render();
       } catch (err) {
-        console.error("Error changing language:", err);
+        Logger.error("Error changing language:", err);
       }
     });
 
@@ -317,7 +332,7 @@ export class AuthPage {
   //////////////////////////////////////////////
 
   public handle42SignIn(): void {
-    console.log('42 Sign In clicked');
+    Logger.log('42 Sign In clicked');
     window.location.href = `${window.location.origin}/auth/42/login`;
   }
 
@@ -348,7 +363,7 @@ export class AuthPage {
   }
 
   private handleSubmit(e: Event): void {
-    console.log("handleSubmit called");
+    Logger.log("handleSubmit called");
     e.preventDefault();
     this.errors = [];
 
@@ -366,9 +381,9 @@ export class AuthPage {
         this.render();
         return ;
       }
-      console.log(this.formData.password, " ", this.formData.confirmPassword);
+      Logger.log(this.formData.password, " ", this.formData.confirmPassword);
       if (this.formData.password !== this.formData.confirmPassword) {
-        console.log("strings dont match");
+        Logger.log("strings dont match");
         const newErrors: string[] = [];
         newErrors.push('Password do not match');
         this.errors = newErrors;
@@ -382,7 +397,7 @@ export class AuthPage {
         return;
       }
 
-      console.log("strings matched");
+      Logger.log("strings matched");
       this.onChangePassword(this.formData.email, this.formData.password, this.formData.confirmPassword);
       return ;
     } else if (this.isLogin) {

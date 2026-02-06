@@ -4,6 +4,7 @@ import type { OTParams } from './TypesManager.js';
 import { getErrorMessage } from './ErrorManager.js';
 import { RouterManager } from './RouterManager.js';
 import { OTPManagers } from './OTPManager.js';
+import { Logger } from './Logger.js';
 
 
 export class AuthManager {
@@ -32,7 +33,7 @@ export class AuthManager {
       try {
         this.currentUser = JSON.parse(stored);
       } catch (error) {
-        console.error('Error loading user from storage:', error);
+        Logger.error('Error loading user from storage:', error);
         localStorage.removeItem('arcade_user');
       }
     }
@@ -53,14 +54,14 @@ export class AuthManager {
         {
           method:"POST",
           headers:  {
-            "content-type": "application/json"		
+            "content-type": "application/json"
           },
           credentials: "include",
           body: JSON.stringify({})
       })
       if (!res.ok)
       {
-        console.log("failed")
+        Logger.log("failed")
         return false;
       }
       const result =  await res.json()
@@ -72,7 +73,7 @@ export class AuthManager {
     }
     catch(err)
     {
-      console.log(err);
+      Logger.log(err);
       return false;
     }
   }
@@ -91,20 +92,20 @@ export class AuthManager {
         }
         if (res.status === 401) {
         } else {
-            console.warn(`getConnectedUser: unexpected response (${res.status})`);
+            Logger.warn(`getConnectedUser: unexpected response (${res.status})`);
         }
     } catch (err) {
         if (err instanceof TypeError && err.message.includes("NetworkError")) {
-            console.debug("getConnectedUser: server internal error");
+            Logger.debug("getConnectedUser: server internal error");
         } else {
-            console.error("getConnectedUser: unexpected error →", err);
+            Logger.error("getConnectedUser: unexpected error →", err);
         }
     }
     return null;
   }
 
   public getCurrentUser(): User | null {
-    console.log("current user:", this.currentUser);
+    Logger.log("current user:", this.currentUser);
     return this.currentUser;
   }
 
@@ -112,8 +113,8 @@ export class AuthManager {
     return this.currentUser !== null;
   }
 
-  public async login(credentials: LoginCredentials, text: Translations): 
-      Promise<{ success: boolean; error?: string; needsVerification?: boolean; 
+  public async login(credentials: LoginCredentials, text: Translations):
+      Promise<{ success: boolean; error?: string; needsVerification?: boolean;
       verificationData?: any }> {
     const loginInput = credentials.username;
     if (!loginInput.trim()) {
@@ -129,19 +130,19 @@ export class AuthManager {
       const result = await this.logUser(loginInput, passwdInput, text, view);
       return result;
     } catch (error) {
-      console.error('Login failed:', error);
+      Logger.error('Login failed:', error);
       return { success: false, error: 'Login failed. Please try again.' };
     }
   }
 
-  public async logUser(pseudo: string, password: string, text: Translations, 
-      view: string): Promise<{ success: boolean; error?: string; 
+  public async logUser(pseudo: string, password: string, text: Translations,
+      view: string): Promise<{ success: boolean; error?: string;
       needsVerification?: boolean; verificationData?: any }> {
     const form = {
       pseudo,
       password
     };
-  
+
     try {
       const res = await fetch(this.router.getUrl('auth/login'), {
         method: 'POST',
@@ -150,17 +151,17 @@ export class AuthManager {
         },
         body: JSON.stringify(form)
       });
-      
+
       const texttext = await res.text();
-      console.log("DEBUG RESPONSE:", texttext);
+      Logger.log("DEBUG RESPONSE:", texttext);
       const result = JSON.parse(texttext);
-      
+
       if (!result) {
         return { success: false, error: "Server error" };
       }
-      
+
       if (!result.success) {
-        const errorMessage = result.error?.message || result.error 
+        const errorMessage = result.error?.message || result.error
           || result.message || 'Unknown error';
         return { success: false, error: errorMessage };
       } else {
@@ -170,10 +171,10 @@ export class AuthManager {
           context: "login",
           handler: this.otpManager.signupSuccessHandler
         };
-        
-        console.log("OTP data stored:", this.otpData);
+
+        Logger.log("OTP data stored:", this.otpData);
         this.onBackToCheckOtp();
-        
+
         // Return success with verification data
         return {
           success: true,
@@ -186,14 +187,14 @@ export class AuthManager {
         };
       }
     } catch (error) {
-      console.error('Login error:', error);
+      Logger.error('Login error:', error);
       return { success: false, error: "Network error. Please try again." };
     }
   }
 
-  public async register(form: { username: string, email: string, 
-      password: string, confirmPassword: string }, text: Translations): 
-      Promise<{ success: boolean; error?: string; needsVerification?: boolean; 
+  public async register(form: { username: string, email: string,
+      password: string, confirmPassword: string }, text: Translations):
+      Promise<{ success: boolean; error?: string; needsVerification?: boolean;
       verificationData?: any }> {
     const errors: string[] = [];
 
@@ -212,20 +213,20 @@ export class AuthManager {
     if (errors.length > 0) {
       return { success: false, error: errors.join(', ') };
     }
-    
+
     try {
       // Use the existing registerUser function which handles verification internally
       const result = await this.registerUser(login, passwd, email, 'signup');
       return result;
     } catch (error) {
-      console.error('Registration failed:', error);
+      Logger.error('Registration failed:', error);
       return { success: false, error: 'Registration failed. Please try again.' };
     }
   }
 
-  public async registerUser(pseudo: string, password: string, 
-      email: string, view:string): 
-      Promise<{ success: boolean; error?: string; needsVerification?: 
+  public async registerUser(pseudo: string, password: string,
+      email: string, view:string):
+      Promise<{ success: boolean; error?: string; needsVerification?:
       boolean; verificationData?: any }>{
     const errorDiv = document.getElementById('formErrors') as HTMLElement;
     const avatar = "default.png";
@@ -236,7 +237,7 @@ export class AuthManager {
       password,
       avatar
     }
-  
+
     try{
       const res = await fetch(this.router.getUrl('auth/signup'),{
         method:'POST',
@@ -244,7 +245,7 @@ export class AuthManager {
           'content-type' : 'application/json'
         },
         body: JSON.stringify(form)
-  
+
       })
       const result = await res.json();
       if (! result)
@@ -266,21 +267,21 @@ export class AuthManager {
       {
         //window.location.href ="/";
         // checkVerificationCode(text, view, {otp_id: result.otp_id, context:"signup", handler: signupSuccessHandler})
-        
+
         // Store OTP data for the CheckOtp page
         this.otpData = {
           otp_id: result.otp_id,
           context: "signup",
           handler: this.otpManager.signupSuccessHandler
         };
-        
-        console.log("OTP data stored:", this.otpData);
+
+        Logger.log("OTP data stored:", this.otpData);
         this.onBackToCheckOtp();
         if (errorDiv) {
           errorDiv.textContent = result.message;
         }
-        console.log("a confirmation mail has been sended");
-        
+        Logger.log("a confirmation mail has been sended");
+
         // Return success with verification data
         return {
           success: true,
@@ -293,7 +294,7 @@ export class AuthManager {
         };
       }
       // http://auth/signup
-  
+
     }catch(err){
       const errorMessage = getErrorMessage(err);
       if (errorDiv) {
@@ -312,7 +313,7 @@ export class AuthManager {
         credentials:'include'
       })
       if(!res)
-        console.error("can't connect to server, please try again later")
+        Logger.error("can't connect to server, please try again later")
       const result = await res.json();
       if (result.success)
       {
@@ -324,12 +325,12 @@ export class AuthManager {
       }
       else
       {
-        console.error("Not authenticated...")
+        Logger.error("Not authenticated...")
       }
     }
     catch(err)
     {
-      console.error(getErrorMessage(err));
+      Logger.error(getErrorMessage(err));
     }
   };
 
@@ -352,11 +353,14 @@ export class AuthManager {
         credentials: 'include'
       });
       if (!res.ok)
-        console.log("Somethig went wrong here");
+        Logger.log("Somethig went wrong here");
       const result = await res.json()
 
       localStorage.removeItem("guestNickname");
       localStorage.removeItem("guestAvatar");
+
+      // Set flag to prevent auth check after logout
+      sessionStorage.setItem("not_authenticated", "true");
 
       this.currentUser = null;
       this.saveUserToStorage();
@@ -365,11 +369,13 @@ export class AuthManager {
     }
     catch(err)
     {
-      console.log(err)
+      Logger.log(err)
+      // Set flag even if logout fails
+      sessionStorage.setItem("not_authenticated", "true");
       window.location.href = '/';
     }
   }
-  
+
 
   public async forgotPassword(email: string): Promise<{
     success: boolean;
@@ -378,30 +384,30 @@ export class AuthManager {
     verificationData?: { otp_id: string; context: string; handler: any };
   }> {
     try {
-      console.log("in authmanager: otpdata: ", this.otpData);
+      Logger.log("in authmanager: otpdata: ", this.otpData);
       const res = await fetch(this.router.getUrl('auth/reset-password'), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email })
     });
-    
+
     if (!res.ok) return { success: false, error: "Failed to request password reset" };
-    
+
     const result = await res.json();
     if (!result.success) return { success: false, error: result.message || "Unknown error" };
-    
+
     this.otpData = {
       otp_id: result.otp_id,
       context: "verify",
       handler: () => {
-          console.log("OTP verified, triggering Change Password UI first");
+          Logger.log("OTP verified, triggering Change Password UI first");
           this.onChangePasswordRequest?.();
         }
     };
-    
-    console.log("OTP data stored HERE:", this.otpData); // TODO: remove this line
+
+    Logger.log("OTP data stored HERE:", this.otpData); // TODO: remove this line
     this.onBackToCheckOtp();
-    console.log("AQUI DPS DE onbacktocheckotp"); // TODO: remove this line
+    Logger.log("AQUI DPS DE onbacktocheckotp"); // TODO: remove this line
     // Return success with verification data
     return {
       success: true,
@@ -410,14 +416,14 @@ export class AuthManager {
         otp_id: result.otp_id || 'temp_otp_id',
         context: "verify",
         handler: () => {
-          console.log("OTP verified, triggering Change Password UI");
+          Logger.log("OTP verified, triggering Change Password UI");
           // this.onChangePasswordRequest?.();
         }
       }
     };
 
     } catch (err) {
-      console.error("forgotPassword error:", err);
+      Logger.error("forgotPassword error:", err);
       return { success: false, error: "Network error" };
     }
 }
@@ -440,7 +446,7 @@ public async changePassword(email: string, password: string, otpId: string): Pro
 
     return { success: true };
   } catch (err) {
-    console.error("changePassword error:", err);
+    Logger.error("changePassword error:", err);
     return { success: false, error: "Network error" };
   }
 }

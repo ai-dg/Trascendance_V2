@@ -3,6 +3,7 @@ import type { Translations } from '../modules/TypesManager.js';
 import { CheckManager } from '../modules/CheckManager.js';
 import { OTPManagers } from '../modules/OTPManager.js';
 import type { LanguageManager } from '../modules/LangManager.js';
+import { Logger } from '../modules/Logger.js';
 
 export class CheckOtp {
   private uiManager: UIManager;
@@ -108,7 +109,7 @@ export class CheckOtp {
     const inputs = document.querySelectorAll<HTMLInputElement>('#codeContainer input');
 
     if (!inputs) {
-      console.error("Failed to find inputs element");
+      Logger.error("Failed to find inputs element");
       return;
     }
 
@@ -129,14 +130,14 @@ export class CheckOtp {
       if (!result.success) {
         this.showError(result.error || this.t("otpError"));  // Use translation for error message
       }
-      console.log("Params context: ", params.context);
+      Logger.log("Params context: ", params.context);
       if (params.context === 'verify') {
         // this.onChangePassword(result.success);
-        console.log("Skipping params.handler()");
+        Logger.log("Skipping params.handler()");
         return ;
       }
       else if (params.context === 'update-email') {
-        console.log("Going to update profile");
+        Logger.log("Going to update profile");
         this.onUpdateProfile(result.success);
       }
       this.onVerificationComplete(result.success);

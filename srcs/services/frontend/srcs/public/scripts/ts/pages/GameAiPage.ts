@@ -1,6 +1,7 @@
 import { UIManager } from '../modules/UIManager.js';
 import { GameManager } from '../modules/GameManager.js';
 import type { User } from '../modules/TypesManager.js';
+import { Logger } from '../modules/Logger.js';
 
 export class AIPage {
   private uiManager: UIManager;
@@ -233,7 +234,7 @@ export class AIPage {
   }
 
   public setupGame(data:any){
-	console.log("Setting up AI game with UUID:", data.UUID)
+	Logger.log("Setting up AI game with UUID:", data.UUID)
 	if (!this.canvas)
 		throw new Error("canvas is not initialised");
 	this.gameManager = new GameManager(this.canvas, data.UUID);

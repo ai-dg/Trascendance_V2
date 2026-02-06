@@ -1,6 +1,7 @@
 import { AuthManager } from "./AuthManager.js";
 import type { LanguageManager } from "./LangManager.js";
 import type { Translations } from "./TypesManager.js";
+import { Logger } from './Logger.js';
 
 
 export class CheckManager {
@@ -9,8 +10,8 @@ export class CheckManager {
 
     // TODO: maybe should get Translations text in the constructor
     constructor(languageManager: LanguageManager) {
-        this.auth = new AuthManager(() => 
-            console.log("To register user or login in someone"));
+        this.auth = new AuthManager(() =>
+            Logger.log("To register user or login in someone"));
         this.languageManager = languageManager;
     }
     
@@ -84,13 +85,13 @@ export class CheckManager {
         const errors = this.checkForm(login, email, passwd);
 
         if (passwd != passwdConfirm)
-            errors.concat("Passwords dont match!");
-    
+            errors.push("Passwords dont match!");
+
         if (errors.length > 0) {
           errorDiv.innerHTML = errors.map(err => `<p>- ${err}</p>`).join('');
           return;
         }
-    
+
         errorDiv.innerHTML = '';
         this.auth.registerUser(login, passwd, email, 'signup');
       });
@@ -114,7 +115,7 @@ export class CheckManager {
                 }
 
                 if (passwd != passwdConfirm)
-                    errors.concat("Passwords dont match!");
+                    errors.push("Passwords dont match!");
 
                 errors = errors.concat(this.checkPassword(passwd));
 
