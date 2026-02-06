@@ -117,7 +117,8 @@ export async function oauth_callback_route(request, reply) {
                 path: '/',
                 maxAge: 3600});
 
-            return reply.redirect('/');
+            // Redirect with oauth_success flag to clear session storage checking
+            return reply.redirect('/?oauth_success=1');
         } catch (err) {
             console.error('42 auth error:', err);
             return reply.status(500).send('42 auth failed');

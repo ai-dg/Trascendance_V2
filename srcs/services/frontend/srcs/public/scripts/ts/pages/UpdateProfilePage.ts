@@ -4,6 +4,7 @@ import type { RouterManager } from '../modules/RouterManager.js';
 import { AuthManager } from '../modules/AuthManager.js';
 import { CheckManager } from '../modules/CheckManager.js';
 import type { LanguageManager } from '../modules/LangManager.js';
+import { Logger } from '../modules/Logger.js';
 
 export class UpdateProfilePage {
     private uiManager: UIManager;
@@ -40,14 +41,14 @@ export class UpdateProfilePage {
         const container = this.uiManager.createElement(
           'div',
           'retro-container size-full flex flex-col items-center justify-start p-8',
-        );  
+        );
         const card = this.uiManager.createElement(
           'div',
           'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-8 shadow-[0_0_30px_#ff1493] w-full max-w-md flex flex-col items-center gap-8 mt-16'
         );
 
         // Avatar Section
-  
+
         const avatarSection = this.uiManager.createElement('div', 'flex flex-col items-center gap-2');
         const avatarImg = this.uiManager.createElement('img', 'rounded-full border-2 border-[#ff1493] cursor-pointer') as HTMLImageElement;
         avatarImg.style.width = '200px';
@@ -62,7 +63,7 @@ export class UpdateProfilePage {
         avatarImg.alt = this.t('avatarAlt');
         avatarImg.title = this.t('avatarTitle');
         avatarImg.addEventListener('click', () => {
-          console.log('Change avatar clicked');
+          Logger.log('Change avatar clicked');
           this.renderAvatarSelector();
         });
 
@@ -78,11 +79,11 @@ export class UpdateProfilePage {
           withConfirm = false,
           currentValue?: string,
         ) => {
-          const fieldContainer = this.uiManager.createElement('div', 'flex flex-col gap-2 w-full'); 
-        
-          const label = this.uiManager.createElement('label', 'retro-text text-sm text-[#00ffff]', labelText);  
+          const fieldContainer = this.uiManager.createElement('div', 'flex flex-col gap-2 w-full');
+
+          const label = this.uiManager.createElement('label', 'retro-text text-sm text-[#00ffff]', labelText);
           fieldContainer.appendChild(label);
-        
+
           if (currentValue) {
             const currentValueText = this.uiManager.createElement(
               'p',
@@ -91,7 +92,7 @@ export class UpdateProfilePage {
             );
             fieldContainer.appendChild(currentValueText);
           }
-      
+
             const inputWrapper = this.uiManager.createElement('div', 'relative w-full');
             const input = this.uiManager.createElement(
               'input',
@@ -100,8 +101,18 @@ export class UpdateProfilePage {
             ) as HTMLInputElement;
             input.type = inputType;
             input.placeholder = placeholder;
+
+            // Add autocomplete attributes
+            if (inputType === 'password') {
+              input.setAttribute('autocomplete', 'new-password');
+            } else if (inputType === 'email') {
+              input.setAttribute('autocomplete', 'email');
+            } else if (labelText.toLowerCase().includes('username')) {
+              input.setAttribute('autocomplete', 'username');
+            }
+
             inputWrapper.appendChild(input);
-        
+
             if (inputType === 'password') {
               const toggleBtn = this.uiManager.createElement('button', `
                 absolute right-2 text-[#ff1493] bg-black rounded
@@ -116,9 +127,9 @@ export class UpdateProfilePage {
               });
               inputWrapper.appendChild(toggleBtn);
             }
-        
+
             fieldContainer.appendChild(inputWrapper);
-      
+
             let confirmInput: HTMLInputElement | undefined;
             if (withConfirm) {
               const confirmWrapper = this.uiManager.createElement('div', 'relative w-full');
@@ -128,8 +139,14 @@ export class UpdateProfilePage {
               ) as HTMLInputElement;
               confirmInput.type = inputType;
               confirmInput.placeholder = `${this.t('confirm')} ${placeholder.toLowerCase()}`;
+
+              // Add autocomplete attribute for confirm password
+              if (inputType === 'password') {
+                confirmInput.setAttribute('autocomplete', 'new-password');
+              }
+
               confirmWrapper.appendChild(confirmInput);
-          
+
               const confirmToggle = this.uiManager.createElement('button', `
                 absolute right-2 text-[#ff1493] bg-black rounded
                 hover:text-black hover:bg-[#ff1493]
@@ -142,28 +159,28 @@ export class UpdateProfilePage {
                 confirmInput!.type = confirmInput!.type === 'password' ? 'text' : 'password';
               });
               confirmWrapper.appendChild(confirmToggle);
-          
+
               fieldContainer.appendChild(confirmWrapper);
             }
 
           const errorDiv = this.uiManager.createElement('div', 'text-red-500 text-sm mt-1');
           fieldContainer.appendChild(errorDiv);
-      
+
           const button = this.uiManager.createButton(
             this.t('change'),
             'retro-button bg-transparent text-[#ff1493] px-4 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200 self-end',
             async () => {
-              console.log(`${labelText} changed to:`, input.value, withConfirm ? confirmInput?.value : '');
+              Logger.log(`${labelText} changed to:`, input.value, withConfirm ? confirmInput?.value : '');
               errorDiv.innerHTML = '';
               try {
-                await changeHandler(input.value, confirmInput?.value);                
+                await changeHandler(input.value, confirmInput?.value);
               } catch (err: any) {
                 errorDiv.textContent = err.message || 'Error updating field';
               }
             }
-          );    
+          );
           fieldContainer.appendChild(button);
-      
+
           return { fieldContainer, errorDiv };
         };
 
@@ -183,8 +200,8 @@ export class UpdateProfilePage {
                 const errorMessage = this.uiManager.createElement('p', '', error);
                 usernameErrorDiv?.appendChild(errorMessage);
               });
-              console.log("usernameErrors:", usernameErrors);
-              console.log(usernameErrorDiv);
+              Logger.log("usernameErrors:", usernameErrors);
+              Logger.log(usernameErrorDiv);
               return ;
             }
             const res = await fetch(this.routerManager.getUrl('auth/update-username'), {
@@ -221,12 +238,12 @@ export class UpdateProfilePage {
                 const errorMessage = this.uiManager.createElement('p', '', error);
                 emailErrorDiv?.appendChild(errorMessage);
               });
-              console.log("emailErrors:", emailErrors);
-              console.log(emailErrorDiv);
+              Logger.log("emailErrors:", emailErrors);
+              Logger.log(emailErrorDiv);
               return ;
             }
             try {
-              const res = await fetch(this.routerManager.getUrl('/auth/verify-email-valid'), { 
+              const res = await fetch(this.routerManager.getUrl('/auth/verify-email-valid'), {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   credentials: "include",
@@ -237,11 +254,11 @@ export class UpdateProfilePage {
                   throw new Error(message.message || this.t('failedRequestOTP'));
                 }
               const data1 = await res.json();
-              console.log("OTP sent:", data1);
+              Logger.log("OTP sent:", data1);
               if (!data1.success)
                 throw new Error(data1.message || this.t('failedUpdateEmail'));
-              
-              const res3 = await fetch(this.routerManager.getUrl('/auth/verify-email'), { 
+
+              const res3 = await fetch(this.routerManager.getUrl('/auth/verify-email'), {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   credentials: "include",
@@ -253,7 +270,7 @@ export class UpdateProfilePage {
                 }
               const data = await res3.json();
               this.routerManager.navigateTo('check-otp', data.otp_id);
-              
+
 
               this.authManager.otpData = {
                   otp_id: data.otp_id,
@@ -318,8 +335,8 @@ export class UpdateProfilePage {
                 const errorMessage = this.uiManager.createElement('p', '', error);
                 passwordErrorDiv?.appendChild(errorMessage);
               });
-              console.log("passwordErrors:", passwordErrors);
-              console.log(passwordErrorDiv);
+              Logger.log("passwordErrors:", passwordErrors);
+              Logger.log(passwordErrorDiv);
               return ;
             }
             const res = await fetch(this.routerManager.getUrl('auth/update-password'), {
@@ -342,13 +359,13 @@ export class UpdateProfilePage {
         card.appendChild(usernameField);
         card.appendChild(emailField);
         card.appendChild(passwordField);
-        
+
         // delete account
         const deleteButton = this.uiManager.createButton(
           this.t('deleteAccount'),
           'retro-button bg-[#ff0000] text-red px-6 py-2 rounded border-2 border-[#ff0000] hover:bg-[#ff3333] hover:text-white shadow-[0_0_10px_#ff0000] hover:shadow-[0_0_20px_#ff0000] transition-all duration-200',
           () => {
-            console.log('DELETE ACCOUNT clicked');
+            Logger.log('DELETE ACCOUNT clicked');
             this.handlerDeleteAccount();
         });
 
@@ -361,10 +378,10 @@ export class UpdateProfilePage {
             this.onBack();
           }
         );
-        
+
         card.appendChild(deleteButton);
         card.appendChild(backButton);
-        container.appendChild(card);    
+        container.appendChild(card);
         return container;
     }
 
@@ -411,7 +428,7 @@ export class UpdateProfilePage {
 
             this.render();
           } catch (err) {
-            console.error('Error updating avatar:', err);
+            Logger.error('Error updating avatar:', err);
           }
         },
         this.user?.avatar
@@ -425,7 +442,7 @@ export class UpdateProfilePage {
 
       const titleWrapper = this.uiManager.createElement('div', 'w-full flex justify-center');
       titleWrapper.style.width = '300%';
-    
+
       titleWrapper.appendChild(title);
       inner.appendChild(titleWrapper);
       inner.appendChild(avatarContainer);
@@ -441,7 +458,7 @@ export class UpdateProfilePage {
 
 
   private handlerDeleteAccount() {
-      console.log("Opening delete confirmation screen");
+      Logger.log("Opening delete confirmation screen");
 
       const container = this.uiManager.createElement(
         'div',
@@ -470,20 +487,20 @@ export class UpdateProfilePage {
       'relative w-full'
     );
 
-    const passwordInput = this.uiManager.createElement('input', 
-          'w-full px-6 py-4 pr-10 bg-black/60 border-[#00ffff] text-[#00ffff] placeholder:text-[#00ffff]/50 focus:border-[#ff1493] focus:ring-[#ff1493] retro-text', 
+    const passwordInput = this.uiManager.createElement('input',
+          'w-full px-6 py-4 pr-10 bg-black/60 border-[#00ffff] text-[#00ffff] placeholder:text-[#00ffff]/50 focus:border-[#ff1493] focus:ring-[#ff1493] retro-text',
         ) as HTMLInputElement;
     passwordInput.type = 'password';
     passwordInput.placeholder = this.t('enterYourPassword');
     passwordWrapper.appendChild(passwordInput);
-      
+
     const toggleButton = this.uiManager.createElement('button', `
                 absolute top-1/2 right-2 transform -translate-y-1/2 z-10
                 text-[#ff1493] bg-black rounded
                 focus:outline-none transition-all duration-150
                 p-1
               `) as HTMLButtonElement;
-        
+
     toggleButton.type = 'button';
     toggleButton.innerHTML = '👁️';
     toggleButton.addEventListener('click', () => {
@@ -527,7 +544,7 @@ export class UpdateProfilePage {
           alert(this.t('accountDeleteSuccess'));
           window.location.href = '/';
         } catch (err) {
-          console.error('Error deleting account:', err);
+          Logger.error('Error deleting account:', err);
           alert(this.t('errorDeletingAccount'));
         }
       }

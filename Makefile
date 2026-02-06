@@ -1,4 +1,4 @@
-.PHONY: up d dev build no-cache re watch fclean down downv clean find-logs kill-logs logs npm-install
+.PHONY: up d dev build no-cache re watch fclean down downv clean find-logs kill-logs logs npm-install debug
 
 # ■ Path Configuration
 COMPOSE = srcs/docker-compose.yml
@@ -111,6 +111,16 @@ kill-logs:
 
 logs:
 	docker compose -f $(COMPOSE) logs nginx
+
+######################################################################
+#*********************** ▌ DEBUG MODE ▌ *****************************#
+######################################################################
+
+# Launch with browser console logging enabled (add ?debug to URL)
+debug:
+	@echo $(GREEN)Starting in DEBUG mode...$(RESET)
+	@echo $(GREEN)Add ?debug to URL to enable console logs$(RESET)
+	@$(MAKE) up
 
 ######################################################################
 #*********************** ▌ UPDATE DATA ▌ ****************************#

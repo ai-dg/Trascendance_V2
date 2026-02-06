@@ -1,4 +1,5 @@
 import { App } from './app.js';
+import { Logger } from './modules/Logger.js';
 
 // Initialize app without showing it until ready
 function initializeApp() {
@@ -10,7 +11,7 @@ function initializeApp() {
         // App will handle showing itself and hiding loading screen
         new App(appContainer);
     } else {
-        console.error('App container not found');
+        Logger.error('App container not found');
     }
 }
 

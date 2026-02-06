@@ -7,6 +7,23 @@ srcs/logs/
 *.sqlite
 *.map
 
+# Python virtual environments
+.venv/
+venv/
+ENV/
+env/
+*.pyc
+__pycache__/
+
+.vscode/
+vscode/
+claude/
+.claude/
+
+
+
+
+
 # Ignore compiled/transpiled JS files from TypeScript in frontend
 srcs/services/frontend/srcs/public/scripts/js/
 srcs/services/frontend/dist/
