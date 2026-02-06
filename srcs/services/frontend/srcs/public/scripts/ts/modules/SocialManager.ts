@@ -233,7 +233,7 @@ export class SocialManager {
                     data = await res.json();
                 } else {
                     const text = await res.text();
-                    console.log("RESPOSTA ESTRANHA DO SERVIDOR:", text);
+                    Logger.warn("Unexpected server response:", text);
                     data = { message: text || res.statusText };
                 }
                 if (!data.success) {
@@ -381,10 +381,10 @@ export class SocialManager {
                     const sId = Number(data.senderId);
                     const username = data.username || await this.getUsernameById(data.senderId.toString());
                     if (this.isChatOpenWith(sId)) {
-                        console.log("New message from open chat:", data.message);
+                        Logger.debug("New message from open chat:", data.message);
                         if (this.onNewMessage) this.onNewMessage(sId, data.message);
                     } else {
-                        console.log("New message notification for closed chat from user:", sId);
+                        Logger.debug("New message notification for closed chat from user:", sId);
                         if (this.wsManager)
                             this.wsManager.saveNotification(sId, username, data.message);
                         this.syncSocialPanel();
@@ -395,7 +395,7 @@ export class SocialManager {
                     if (this.currentUser) {
                         this.loadFriendsList();
                     }
-                    console.log("User blocked notification for user:", data.friendId);
+                    Logger.debug("User blocked notification for user:", data.friendId);
                     const blockedId = Number(data.friendId);
                     if (this.isChatOpenWith(blockedId)) {
                         if (this.onNewMessage) this.onNewMessage(blockedId, "🚫 You blocked this user.");
@@ -406,7 +406,7 @@ export class SocialManager {
                     if (this.currentUser) {
                         this.loadFriendsList();
                     }
-                    console.log("User unblocked notification for user:", data.friendId);
+                    Logger.debug("User unblocked notification for user:", data.friendId);
                     break;
 
                 default:
@@ -466,7 +466,7 @@ export class SocialManager {
 
         rejectBtn.addEventListener('click', async () => {
             try {
-                console.log(`Rejecting friend request from sender ${senderId}`);
+                Logger.debug(`Rejecting friend request from sender ${senderId}`);
                 const res = await fetch(this.routerManager.getUrl('/live-chat/friend-request-response'), {
                     method: 'POST',
                     credentials: 'include',

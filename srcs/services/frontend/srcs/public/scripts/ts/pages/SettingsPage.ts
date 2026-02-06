@@ -45,7 +45,7 @@ export class SettingsPage {
       if (!raw)
         return;
       const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== 'object') 
+      if (!parsed || typeof parsed !== 'object')
         return;
 
       this.settings = {
@@ -77,7 +77,7 @@ export class SettingsPage {
     } else {
       this.renderSettingsPage(container);
     }
-    
+
     this.uiManager.clear();
     this.uiManager.container.appendChild(container);
   }
@@ -198,7 +198,7 @@ export class SettingsPage {
     slider.value = currentValue.toString();
     slider.style.background = `linear-gradient(to right, #ff1493 0%, #ff1493 ${((currentValue - min) / (max - min)) * 100}%, #374151 ${((currentValue - min) / (max - min)) * 100}%, #374151 100%)`;
 
-    slider.addEventListener('input', (e) => 
+    slider.addEventListener('input', (e) =>
     {
       const target = e.target as HTMLInputElement;
       const value = parseInt(target.value);
@@ -301,7 +301,7 @@ export class SettingsPage {
   const button2 = this.uiManager.createButton(
     this.t('blocked_users') || "Blocked Users",
     'retro-button bg-transparent text-[#ff1493] px-4 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200',
-    () => { 
+    () => {
       this.isViewBlockedUsers = true;
       this.render();
      }
@@ -379,17 +379,17 @@ export class SettingsPage {
               this.render();
             }
           );
-        
+
           const listCard = this.uiManager.createElement('div', 'w-full bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-6 min-h-[300px]');
           const listContainer = this.uiManager.createElement('div', 'flex flex-col gap-3 max-h-[50vh] overflow-y-auto pr-2');
           listContainer.innerHTML = '<div class="text-[#00ffff] text-center animate-pulse mt-10">Loading...</div>';
-        
+
           listCard.appendChild(listContainer);
           content.appendChild(header);
           content.appendChild(backButton);
           content.appendChild(listCard);
           container.appendChild(content);
-        
+
           this.fetchBlockedUsers(listContainer);
   }
 
@@ -399,9 +399,9 @@ export class SettingsPage {
         method: 'GET',
         credentials: 'include'
       });
-      
+
       if (!res.ok) throw new Error('Failed to fetch');
-      
+
       const data = await res.json();
       listContainer.innerHTML = '';
 
@@ -416,16 +416,16 @@ export class SettingsPage {
       }
 
     } catch (error) {
-      console.error(error);
+      Logger.error(error);
       listContainer.innerHTML = '<p class="text-red-500 text-center">Error loading list.</p>';
     }
   }
 
   private createBlockedUserRow(user: any, parentContainer: HTMLElement): HTMLElement {
     const row = this.uiManager.createElement('div', 'flex items-center justify-between bg-white/5 p-3 rounded border border-white/10transition-all duration-300');
-    
+
     const nameInfo = this.uiManager.createElement('div', 'flex items-center gap-3');
-    
+
     const avatar = this.uiManager.createElement('img', 'w-8 h-8 rounded-full object-cover bg-gray-700') as HTMLImageElement;
     if (!user.avatar) {
         avatar.src = 'public/avatars/default.png';
@@ -434,9 +434,9 @@ export class SettingsPage {
     } else {
         avatar.src = `public/avatars/${user.avatar}.png`;
     }
-    
+
     const name = this.uiManager.createElement('span', 'text-[#00ffff] font-bold tracking-wider', user.username);
-    
+
     nameInfo.appendChild(avatar);
     nameInfo.appendChild(name);
 
@@ -473,10 +473,10 @@ export class SettingsPage {
         rowElement.style.transform = 'translateX(20px)';
         setTimeout(() => rowElement.remove(), 300);
       } else {
-        console.log('Failed to unblock user');
+        Logger.warn('Failed to unblock user');
       }
     } catch (error) {
-      console.error('Error unblocking user:', error);
+      Logger.error('Error unblocking user:', error);
     }
   }
 }
