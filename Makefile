@@ -11,6 +11,8 @@ PIDS = $(LOGS)/pids.txt
 GREEN = "\033[32m"
 RESET = "\033[0m"
 
+
+
 ######################################################################
 #********************** ▌ START & DEPLOYMENT ▌***********************#
 ######################################################################
@@ -18,9 +20,18 @@ RESET = "\033[0m"
 up: build
 	docker compose -f $(COMPOSE) up --remove-orphans
 
+
 d: build
-	docker compose -f $(COMPOSE) up --remove-orphans -d
-	@$(MAKE) find-logs
+	@bash -lc 'source ./srcs/.env && \
+		if [ "$$NODE_ENV" = "PROD" ]; then \
+			docker compose --profile prod -f $(COMPOSE) up --remove-orphans -d; \
+			$(MAKE) find-logs; \
+			$(MAKE) patience-kibana; \
+			$(MAKE) import-dashboard-kibana; \
+		else \
+			docker compose -f $(COMPOSE) up --remove-orphans -d; \
+		fi'
+
 
 # Fast start without rebuilding (use when code hasn't changed)
 start:
@@ -104,6 +115,12 @@ find-logs:
 
 kill-logs:
 	@srcs/scripts/logs/kill-finder.sh
+
+import-dashboard-kibana:
+	@srcs/scripts/elk/import_dashboard.sh
+
+patience-kibana:
+	@srcs/scripts/elk/patience_kibana.sh
 
 ######################################################################
 #*********************** ▌ MONITORING ▌ *****************************#

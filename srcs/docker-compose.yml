@@ -234,36 +234,6 @@ services:
       - ./services/game-engine/app/srcs:/game-engine/app/srcs:ro
       - ./certs:/certs:ro
 
-  blockchain:
-    container_name: blockchain
-    build:
-      context: ./services/blockchain/app
-    expose:
-      - 4000
-    environment:
-      - NODE_ENV=${NODE_ENV}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - JWT_SECRET=${JWT_SECRET}
-      - COOKIE_SECRET=${COOKIE_SECRET}
-      - CSRF_SECRET=${CSRF_SECRET}
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-      - RABBITMQ_DEFAULT_PASSWORD=${RABBITMQ_DEFAULT_PASS}
-      - FORTYTWO_CLIENT_ID=${FORTYTWO_CLIENT_ID}
-      - FORTYTWO_CLIENT_SECRET=${FORTYTWO_CLIENT_SECRET}
-      - FORTYTWO_REDIRECT_URI=${FORTYTWO_REDIRECT_URI}
-      - BC_WALLET=${BC_WALLET}
-      - BC_PK=${BC_PK}
-    networks:
-      - internal
-    volumes:
-      - /data/node_modules
-      # - sqlite_data:/data/sqlite
-      # - ./volume/redis_data:/data
-      - ./services/blockchain/app:/data
-      - ./certs:/certs:ro
-
 
 
   game-engine_app:
@@ -412,6 +382,82 @@ services:
       - internal
       - transcendence
 
+######################################################################
+#************************** ELK STACK *******************************
+######################################################################
+
+
+  elasticsearch:
+    profiles: ["prod"]
+    container_name: elasticsearch
+    build:
+      context: .
+      dockerfile: ./services/elk/elasticsearch/Dockerfile
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.monitoring.enabled=false
+      - xpack.ml.enabled=false
+      - xpack.graph.enabled=false
+      - xpack.watcher.enabled=false
+      - ELASTIC_USERNAME=${ELASTIC_USERNAME}
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    mem_limit: 2g
+    memswap_limit: 2g
+    volumes:
+      - logsdata:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "curl -u $${ELASTIC_USERNAME}:$${ELASTIC_PASSWORD} -f http://localhost:9200 || exit 1"]
+      interval: 120s
+      timeout: 120s
+      retries: 5
+    env_file:
+      - .env
+    
+  kibana:
+    profiles: ["prod"]
+    container_name: kibana
+    build:
+      context: .
+      dockerfile: ./services/elk/kibana/Dockerfile
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=${ELASTIC_USERNAME}
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD}
+    ports:
+      - "${PORT_KIBANA}:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - internal
+    env_file:
+      - .env
+    
+  logstash:
+    profiles: ["prod"]
+    container_name: logstash
+    build:
+      context: .
+      dockerfile: ./services/elk/logstash/Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - internal
+    volumes:
+      - ./services/elk/logstash/conf/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./logs:/usr/share/logstash/input_logs:ro
+    privileged: true
+    env_file:
+      - .env
 
 ######################################################################
 #************************** 📊 MONITORING ****************************
@@ -492,3 +538,4 @@ volumes:
   language-manager-node-modules:
   prometheus_data:
   grafana_data:
+  logsdata:
