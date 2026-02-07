@@ -16,14 +16,14 @@ export class OTPManagers {
     public async signupSuccessHandler(){
 	    // TODO: remplacer l'alerte par un vrai message !
 	    // alert("sign up success !!!!!!! Have to display front message")
-	    window.location.href="/";	
+	    window.location.href="/";
     }
 
 	// public async changePasswordSuccessHandler(){
 	//     // TODO: remplacer l'alerte par un vrai message !
 	//     // alert("forgot password success !!!!!!! Have to display front message")
 	// 	// ??????????
-	//     window.location.href="/";	
+	//     window.location.href="/";
     // }
 
     public async OTPValidationHandler(params: OTParams, inputs: NodeListOf<HTMLInputElement>): Promise<{ success: boolean; error?: string }>  {
@@ -51,8 +51,9 @@ export class OTPManagers {
 	    	Logger.log(result);
 	    	if (result.success)
 	    	{
+		    	sessionStorage.removeItem("not_authenticated");
 	    		params.handler();
-                Logger.log("PARAMS: ", params); 
+                Logger.log("PARAMS: ", params);
 	    		return { success: true };
 	    	}
 	    	else{

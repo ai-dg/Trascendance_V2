@@ -217,6 +217,8 @@ export class App {
 
 
   private async initialize(): Promise<void> {
+      // Always re-check auth on page load/refresh.
+      sessionStorage.removeItem("not_authenticated");
       // Check user status and language in parallel for faster initialization
       const [user, _] = await Promise.all([
           this.getConnectedUser(),
@@ -548,13 +550,22 @@ export class App {
     }
   }
 
-  private handleOtpVerificationComplete(success: boolean): void {
+  private async handleOtpVerificationComplete(success: boolean): Promise<void> {
     if (success) {
       Logger.log('OTP verification successful, redirecting to menu');
+      sessionStorage.removeItem("not_authenticated");
       this.authManager.otpData = null;
-      // Update current user and navigate to menu
-      this.currentUser = this.authManager.getCurrentUser();
-      this.routerManager.navigateTo('menu');
+
+      const user = await this.getConnectedUser();
+      this.currentUser = user;
+
+      if (this.currentUser) {
+        const wsManager = WebsocketManager.getInstance();
+        wsManager.init(window.location.origin);
+        gameSocket = wsManager.gameSocket;
+      }
+
+      this.updateCurrentPage();
     } else {
       Logger.log('OTP verification failed');
       // Stay on check-otp page to retry

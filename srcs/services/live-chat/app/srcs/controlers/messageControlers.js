@@ -18,31 +18,50 @@ export async function send_message_route(request, reply) {
 
     try {
         const relation = await app.db.get(`
-            SELECT status, requester_id 
-            FROM friendships 
-            WHERE (user_id = ? AND friend_id = ?) 
+            SELECT status, requester_id
+            FROM friendships
+            WHERE (user_id = ? AND friend_id = ?)
                OR (user_id = ? AND friend_id = ?)
         `, [senderId, receiverId, receiverId, senderId]);
 
         if (!relation || relation.status !== 'accepted') {
-            
+
             if (relation && relation.status === 'blocked') {
                 if (relation.requester_id === senderId) {
                     return reply.code(403).send({ success: false, message: "You blocked this user. Unblock to send messages." });
-                } 
+                }
                 else {
                     return reply.code(403).send({ success: false, message: "You cannot send messages to this user." });
                 }
             }
-            
+
             return reply.code(403).send({ success: false, message: "You are not friends with this user." });
         }
-        
+
         await app.db.run(`
             INSERT INTO messages (sender_id, receiver_id, content)
             VALUES (?, ?, ?)
         `, [senderId, receiverId, message]);
 
+        let username = `User ${senderId}`;
+        try {
+            const userRes = await fetch(`https://auth_app:3000/username-id`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ id: senderId })
+            });
+            if (userRes.ok) {
+                const userData = await userRes.json();
+                if (userData.data?.user?.pseudo) {
+                    username = userData.data.user.pseudo;
+                }
+            }
+        } catch (error) {
+            console.error(`Error fetching username for user ${senderId}:`, error);
+        }
 
         await redis.publish('notifications', JSON.stringify({
             targetUserId: receiverId,
@@ -50,6 +69,7 @@ export async function send_message_route(request, reply) {
             payload: {
                 type: 'new-message',
                 senderId: senderId,
+                username: username,
                 message: message
             }
         }));
@@ -79,9 +99,9 @@ export async function get_messages_route(request, reply) {
 
     try {
         const messages = await app.db.all(`
-            SELECT sender_id, content, sent_at 
-            FROM messages 
-            WHERE (sender_id = ? AND receiver_id = ?) 
+            SELECT sender_id, content, sent_at
+            FROM messages
+            WHERE (sender_id = ? AND receiver_id = ?)
                OR (sender_id = ? AND receiver_id = ?)
             ORDER BY sent_at ASC
         `, [userId, friendId, friendId, userId]);

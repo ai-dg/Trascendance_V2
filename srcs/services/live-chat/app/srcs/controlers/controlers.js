@@ -20,7 +20,7 @@ export async function friend_request_route(request, reply) {
     try {
         console.log(`User ${userId} is sending a friend request to ${receiverId}`);
         const exiting = await app.db.get(`
-            SELECT * FROM friendships 
+            SELECT * FROM friendships
             WHERE (user_id = ? AND friend_id = ?)
                OR (user_id = ? AND friend_id = ?)
         `, [userId, receiverId, receiverId, userId]);
@@ -29,7 +29,7 @@ export async function friend_request_route(request, reply) {
             console.log("Friendship already exists:", exiting);
             return reply.code(400).send({ success: false, message: "Friendship already exists or pending" });
         }
-        
+
         await app.db.run(`
             INSERT INTO friendships (user_id, friend_id, status, requester_id)
             VALUES (?, ?, 'pending', ?)
@@ -40,7 +40,7 @@ export async function friend_request_route(request, reply) {
         try {
         const res = await fetch(`https://auth_app:3000/username-id`, {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
             },
@@ -71,44 +71,44 @@ export async function friend_request_route(request, reply) {
                 message: `User ${username} wants to be your friend!`
             }
         }));
-        
+
         return reply.send({ success: true, message: "friend requested", receiverId });
     } catch (dbErr) {
          if (dbErr.code === "SQLITE_CONSTRAINT") {
             return reply.code(400).send({ success: false, message: dbErr.message });
         }
     }
-    
+
 }
 
 
 export async function friend_request_response_route(request, reply) {
     let token = request.cookies.token || request.body.token;
-    
+
     if (!token) {
         return reply.code(401).send({ success: false, message: "Not authenticated" });
     }
-    
+
     let payload;
     try {
         payload = jwt.verify(token, process.env.JWT_SECRET);
     } catch {
         return reply.code(401).send({ success: false, message: "Invalid or expired token" });
     }
-    
+
     const userId = payload.user_id;
     const { senderId, action } = request.body;
-    
+
     try {
         console.log(`User ${userId} is trying to ${action} friend request from ${senderId}`);
         if (action === 'accept') {
             // Update status to 'accepted'
             const res = await app.db.run(`
-                UPDATE friendships 
-                SET status = 'accepted' 
+                UPDATE friendships
+                SET status = 'accepted'
                 WHERE user_id = ? AND friend_id = ? AND status = 'pending'
             `, [senderId, userId]);
-            
+
             if (res.changes === 0) {
                 console.log("No pending friend request found to accept");
                 return reply.code(400).send({ success: false, message: "No pending friend request found" });
@@ -117,7 +117,7 @@ export async function friend_request_response_route(request, reply) {
             console.log(`User ${userId} is rejecting friend request from ${senderId}`);
             // Delete the request if rejected
             const data = await app.db.run(`
-                DELETE FROM friendships 
+                DELETE FROM friendships
                 WHERE (user_id = ? AND friend_id = ? AND status = 'pending')
                 OR (friend_id = ? AND user_id = ? AND status = 'pending')
             `, [senderId, userId, senderId, userId]);
@@ -146,9 +146,9 @@ export async function friend_request_response_route(request, reply) {
                 senderId: senderId
             }
         }));
-        
-        return reply.send({ 
-            success: true, 
+
+        return reply.send({
+            success: true,
             message: action === 'accept' ? "Friend request accepted" : "Friend request rejected"
         });
     } catch (dbErr) {
@@ -163,25 +163,25 @@ export async function get_friends_route(request, reply) {
     if (!token) {
         return { success: false, message: "Not authenticated" };
     }
-    
+
     let payload;
     try {
         payload = jwt.verify(token, process.env.JWT_SECRET);
     } catch {
         return { success: false, message: "Invalid or expired token" };
     }
-    
+
     const userId = payload.user_id;
-    
+
     try {
         const friendships = await app.db.all(`
             SELECT DISTINCT
-                CASE 
-                    WHEN user_id = ? THEN friend_id 
-                    ELSE user_id 
+                CASE
+                    WHEN user_id = ? THEN friend_id
+                    ELSE user_id
                 END as friend_id
-            FROM friendships 
-            WHERE (user_id = ? OR friend_id = ?) 
+            FROM friendships
+            WHERE (user_id = ? OR friend_id = ?)
               AND status = 'accepted'
         `, [userId, userId, userId]);
 
@@ -194,7 +194,7 @@ export async function get_friends_route(request, reply) {
                 try {
                     const res = await fetch(`https://auth_app:3000/username-id`, {
                         method: 'POST',
-                        headers: { 
+                        headers: {
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${token}`,
                         },
@@ -224,7 +224,7 @@ export async function get_friends_route(request, reply) {
                 };
             })
         );
-        
+
         return { success: true, friends };
     } catch (err) {
         console.error("DB error:", err);
@@ -247,27 +247,27 @@ export async function get_pending_requests_route(request, reply) {
     } catch {
         return { success: false, message: "Invalid or expired token" };
     }
-    
+
     const userId = payload.user_id;
 
     console.log('🔍 Loading pending requests for user:', userId);
-    
+
     try {
         const pendingRequests = await app.db.all(`
-            SELECT 
-                CASE 
-                    WHEN user_id = ? THEN friend_id 
-                    ELSE user_id 
+            SELECT
+                CASE
+                    WHEN user_id = ? THEN friend_id
+                    ELSE user_id
                 END as senderId,
                 requester_id
-            FROM friendships 
-            WHERE (user_id = ? OR friend_id = ?) 
+            FROM friendships
+            WHERE (user_id = ? OR friend_id = ?)
               AND status = 'pending'
               AND requester_id != ?
         `, [userId, userId, userId, userId]);
-        
+
         console.log('Found pending requests from DB:', pendingRequests);
-        
+
         if (!pendingRequests || pendingRequests.length === 0) {
             return reply.send({ success: true, requests: [] });
         }
@@ -277,7 +277,7 @@ export async function get_pending_requests_route(request, reply) {
             console.log(`Cleaning up ${oldKeys.length} old Redis keys for user ${userId}`);
             await redis.del(oldKeys);
         }
-        
+
         const requests = await Promise.all(
             pendingRequests.map(async (req) => {
                 const currentSenderId = req.senderId || req.senderid;
@@ -285,7 +285,7 @@ export async function get_pending_requests_route(request, reply) {
                 try {
                     const res = await fetch(`https://auth_app:3000/username-id`, {
                         method: 'POST',
-                        headers: { 
+                        headers: {
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${token}`,
                         },
@@ -312,10 +312,10 @@ export async function get_pending_requests_route(request, reply) {
                 };
             })
         );
-        
+
         console.log('Returning pending requests:', requests);
         return reply.send({ success: true, requests });
-        
+
     } catch (error) {
         console.error('Error fetching pending requests:', error);
         return reply.code(500).send({ success: false, message: "Server error" });
@@ -325,7 +325,7 @@ export async function get_pending_requests_route(request, reply) {
 export async function block_friend_route(request, reply) {
     const { friendId } = request.body;
     const token = request.cookies.token || request.body.token;
-    
+
     if (!token) {
         return { success: false, message: "Not authenticated" };
     }
@@ -336,15 +336,15 @@ export async function block_friend_route(request, reply) {
     } catch {
         return { success: false, message: "Invalid or expired token" };
     }
-    
+
     const userId = payload.user_id;
     console.log(`User ${userId} is trying to block friend ${friendId}`);
-    
+
     try {
 
         const currentRelation = await app.db.get(`
             SELECT status, requester_id
-            FROM friendships 
+            FROM friendships
             WHERE (user_id = ? AND friend_id = ?)
                OR (user_id = ? AND friend_id = ?)
         `, [userId, friendId, friendId, userId]);
@@ -370,16 +370,16 @@ export async function block_friend_route(request, reply) {
 
         console.log(`Blocking friendship between ${userId} and ${friendId}`);
             const friendship = await app.db.run(`
-                UPDATE friendships 
+                UPDATE friendships
                 SET status = 'blocked', requester_id = ?
                 WHERE (user_id = ? AND friend_id = ?)
                 OR (user_id = ? AND friend_id = ?)
             `, [userId, userId, friendId, friendId, userId]);
-        
+
             if (friendship.changes === 0) {
                 return reply.code(400).send({ success: false, message: "No active friendship to block" });
             }
-            
+
                 await app.db.run(`
                     INSERT INTO friendships (user_id, friend_id, status, requester_id)
                     VALUES (?, ?, 'blocked', ?)
@@ -391,8 +391,8 @@ export async function block_friend_route(request, reply) {
                 event: 'friend-blocked',
                 payload: { friendId }
             }));
-            return reply.code(200).send({ 
-                success: true, 
+            return reply.code(200).send({
+                success: true,
                 message: "Friend blocked"
             });
     } catch (dbErr) {
@@ -405,18 +405,18 @@ export async function remove_friend(request, reply) {
     console.log('Remove friend route called');
     const { friendId } = request.body;
     const token = request.cookies.token || request.body.token;
-    
+
     if (!token) {
         return { success: false, message: "Not authenticated" };
     }
-    
+
     let payload;
     try {
         payload = jwt.verify(token, process.env.JWT_SECRET);
     } catch {
         return { success: false, message: "Invalid or expired token" };
     }
-    
+
     const userId = payload.user_id;
     console.log(`User ${userId} is trying to remove friend ${friendId}`);
     try {
@@ -436,8 +436,8 @@ export async function remove_friend(request, reply) {
                 event: 'friend-removed',
                 payload: { friendId }
             }));
-            return reply.code(200).send({ 
-                success: true, 
+            return reply.code(200).send({
+                success: true,
                 message: "Friend removed"
             });
     } catch (dbErr) {
@@ -450,22 +450,24 @@ export async function add_friend(request, reply) {
 			const senderId = request.user.user_id || request.user.id || request.user.sub;
             const { receiverId } = request.body;
             const token = request.cookies.token || request.body.token;
-		
+
 			console.log(`User ${senderId} wants to add user ${receiverId} as a friend`);
 
-			try {				
+			try {
 				const resData = await createFriendRequest(token, receiverId);
 
 				if (!resData.success) {
 					console.error('Failed to request friend in DB:', resData);
-					return reply.code(400).send({ 
-						success: false, 
-						message: resData.message ||'Failed to send request' 
+					return reply.code(400).send({
+						success: false,
+						message: resData.message ||'Failed to send request'
 					});
 				}
+
+                    let username = `User ${senderId}`;
                     const res = await fetch(`https://auth_app:3000/username-id`, {
                         method: 'POST',
-                        headers: { 
+                        headers: {
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${token}`,
                         },
@@ -477,7 +479,9 @@ export async function add_friend(request, reply) {
                     if (res.ok) {
                         const userData = await res.json();
                         console.log(`Username found for user ${senderId}:`, userData.data?.user?.pseudo);
-                        const username = userData.data?.user?.pseudo || `User ${senderId}`;
+                        if (userData.data?.user?.pseudo) {
+                            username = userData.data.user.pseudo;
+                        }
                     }
 				const isOnline = await redis.get(`online:${receiverId}`);
 
@@ -497,21 +501,21 @@ export async function add_friend(request, reply) {
 				    console.log(`Friend request from ${senderId} saved in Redis for ${receiverId}`);
 				}
 
-				return reply.code(200).send({ 
-                    success: true, 
-                    message: 'Friend request sent', 
-                    senderId 
+				return reply.code(200).send({
+                    success: true,
+                    message: 'Friend request sent',
+                    senderId
                 });
 			} catch (error) {
 				console.error("Error with friend request:", error);
-				return reply.code(500).send({ 
-                    success: false, 
-                    message: 'Server error' 
+				return reply.code(500).send({
+                    success: false,
+                    message: 'Server error'
                 });
 			}
 
         }
-        
+
 export async function get_blocked_users_route(request, reply) {
     const token = request.cookies.token || request.body.token;
     if (!token) {
@@ -524,18 +528,18 @@ export async function get_blocked_users_route(request, reply) {
     } catch {
         return reply.code(401).send({ success: false, message: "Invalid or expired token" });
     }
-    
+
     const userId = payload.user_id;
-    
+
     try {
         const blockedUsers = await app.db.all(`
             SELECT DISTINCT
-                CASE 
-                    WHEN user_id = ? THEN friend_id 
-                    ELSE user_id 
+                CASE
+                    WHEN user_id = ? THEN friend_id
+                    ELSE user_id
                 END as blocked_user_id
-            FROM friendships 
-            WHERE (user_id = ? OR friend_id = ?) 
+            FROM friendships
+            WHERE (user_id = ? OR friend_id = ?)
               AND status = 'blocked'
               AND requester_id = ?
         `, [userId, userId, userId, userId]);
@@ -547,7 +551,7 @@ export async function get_blocked_users_route(request, reply) {
             try {
                 const res = await fetch(`https://auth_app:3000/username-id`, {
                     method: 'POST',
-                    headers: { 
+                    headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`,
                     },
@@ -576,7 +580,7 @@ export async function get_blocked_users_route(request, reply) {
 export async function unblock_user_route(request, reply) {
     const { blockedId } = request.body;
     const token = request.cookies.token || request.body.token;
-    
+
     if (!token) {
         return reply.code(401).send({ success: false, message: "Not authenticated" });
     }
@@ -587,32 +591,32 @@ export async function unblock_user_route(request, reply) {
     } catch {
         return reply.code(401).send({ success: false, message: "Invalid or expired token" });
     }
-    
+
     const userId = payload.user_id;
-    
+
     try {
             const res = await app.db.run(`
-                UPDATE friendships 
+                UPDATE friendships
                 SET status = 'accepted'
                 WHERE ((user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?))
                       AND status = 'blocked'
                       AND requester_id = ?
                 `, [userId, blockedId, blockedId, userId, userId]);
-            
+
             if (res.changes === 0) {
                 return reply.code(400).send({ success: false, message: "No blocked user to unblock" });
             }
 
             await redis.publish('notifications', JSON.stringify({
             targetUserId: userId,
-                event: 'notifications', 
-                payload: { 
+                event: 'notifications',
+                payload: {
                     type: 'unblocked',
-                    message: `User unblocked.` 
+                    message: `User unblocked.`
                 }
             }));
-            return reply.code(200).send({ 
-                success: true, 
+            return reply.code(200).send({
+                success: true,
                 message: "User unblocked"
             });
     } catch (dbErr) {

@@ -138,6 +138,7 @@ export class SocialManager {
         try {
             const res = await fetch(this.routerManager.getUrl('/auth/id-username'), {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username })
             });
@@ -173,6 +174,7 @@ export class SocialManager {
         try {
             const res = await fetch(this.routerManager.getUrl('/auth/username-id'), {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id })
             });
