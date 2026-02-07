@@ -3,6 +3,7 @@
 LOG_DIR=./srcs/logs
 PID_FILE="$LOG_DIR/pids.txt"
 
+mkdir -p "$LOG_DIR"
 rm -f "$PID_FILE"
 rm -rf ./srcs/logs/*
 
