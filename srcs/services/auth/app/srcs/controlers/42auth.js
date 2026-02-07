@@ -107,15 +107,18 @@ export async function oauth_callback_route(request, reply) {
             const isSecure = protocol === 'https';
 
             reply.setCookie('token', token, {
-                path: '/' ,
+                path: '/',
                 httpOnly: true,
-                sameSite: 'lax'
+                secure: isSecure,
+                sameSite: isSecure ? 'none' : 'lax',
+                maxAge: 3600
             }).setCookie('sessionId', sessionId, {
                 httpOnly: true,
                 sameSite: isSecure ? 'none' : 'lax',
                 secure: isSecure,
                 path: '/',
-                maxAge: 3600});
+                maxAge: 3600
+            });
 
             // Redirect with oauth_success flag to clear session storage checking
             return reply.redirect('/?oauth_success=1');

@@ -291,11 +291,18 @@ function setupGameSocket(socket) {
 
 		const game = runningGames.get(gameUUID);
 		if (!game) {
+			console.log(`[Game Socket] Game ${gameUUID} no longer exists`);
 			socket.emit('reconnection-failed', { message: 'Game no longer exists' });
 			return;
 		}
 
-		if (!game.isWaitingForPlayer(userId)) {
+		// For guests or users with changed IDs, allow reconnection if game is waiting for any player
+		// The game object tracks which physical socket/player needs to reconnect
+		const canReconnect = game.isWaitingForPlayer(userId) ||
+							 (game.isRemoteGame && (game.player1Id === userId || game.player2Id === userId));
+
+		if (!canReconnect) {
+			console.log(`[Game Socket] Game ${gameUUID} is not waiting for user ${userId}`);
 			socket.emit('reconnection-failed', { message: 'Game is not waiting for you' });
 			return;
 		}

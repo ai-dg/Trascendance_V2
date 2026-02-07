@@ -236,6 +236,10 @@ export class App {
 
         // Route "new-game" to the currently active game page
         wsManager.onGame('new-game', (data: any) => {
+          // Store gameUUID in sessionStorage for reconnection support after page refresh
+          if (data.gameUUID) {
+            sessionStorage.setItem('currentGameUUID', data.gameUUID);
+          }
           if (this.currentPage === 'game-ai') {
             this.gamePageAI.setupGame(data);
           } else if (this.currentPage === 'game-local') {
@@ -245,9 +249,34 @@ export class App {
           }
         });
 
-        if (this.currentUser && !this.currentUser.isGuest) {
-          // this.menuPage.setWebsocketManager(wsManager);
-          this.liveChatPage.setWebsocketManager(wsManager);
+        // When game ends, clear the stored game UUID
+        wsManager.onGame('game-ended', () => {
+          sessionStorage.removeItem('currentGameUUID');
+        });
+
+        // When game is abandoned/closed, clear the stored game UUID
+        wsManager.onGame('opponent-abandoned', () => {
+          sessionStorage.removeItem('currentGameUUID');
+        });
+
+        // Check if user was in a game before page refresh - attempt reconnection
+        const storedGameUUID = sessionStorage.getItem('currentGameUUID');
+        if (storedGameUUID && gameSocket?.connected) {
+          console.log('[App] Checking for game reconnection:', storedGameUUID);
+          const gSocket = gameSocket; // Capture for use in callbacks
+          gSocket.emit('check-reconnection');
+
+          // Listen for reconnection opportunities
+          gSocket.once('reconnection-available', (data: any) => {
+            console.log('[App] Reconnection available:', data);
+            gSocket.emit('reconnect-to-game', { gameUUID: storedGameUUID });
+          });
+
+          // Cleanup if no reconnection available
+          gSocket.once('no-reconnection-available', () => {
+            console.log('[App] No reconnection available, clearing stored game UUID');
+            sessionStorage.removeItem('currentGameUUID');
+          });
         }
 
         // this.gamePageOnline.setWebsocketManager(wsManager);
@@ -269,9 +298,9 @@ export class App {
    * Get the currently connected user from server or localStorage
    */
   private async getConnectedUser(): Promise<User | null> {
-    // Check for guest user in localStorage first to avoid unnecessary API calls
-    const guestNickname = localStorage.getItem("guestNickname");
-    const guestAvatar = localStorage.getItem("guestAvatar");
+    // Check for guest user in sessionStorage first to avoid unnecessary API calls
+    const guestNickname = sessionStorage.getItem("guestNickname");
+    const guestAvatar = sessionStorage.getItem("guestAvatar");
     if (guestAvatar && guestNickname) {
       return {
         username: guestNickname,
@@ -550,8 +579,8 @@ export class App {
       isGuest: true
     };
 
-    localStorage.setItem('guestNickname', nickname);
-    localStorage.setItem('guestAvatar', avatar);
+    sessionStorage.setItem('guestNickname', nickname);
+    sessionStorage.setItem('guestAvatar', avatar);
 
     // Init sockets for guests too (needed for local/ai games)
     const wsManager = WebsocketManager.getInstance();

@@ -6,16 +6,17 @@ declare const io: any;
 
 /**
  * Generate or retrieve persistent guest ID for unauthenticated users
- * This ensures guests can reconnect to their games after page refresh
+ * Uses sessionStorage (tab-specific) instead of localStorage to allow
+ * multiple sessions from the same browser
  */
 function getOrCreateGuestId(): string {
   const GUEST_ID_KEY = 'arcade_guest_id';
-  let guestId = localStorage.getItem(GUEST_ID_KEY);
+  let guestId = sessionStorage.getItem(GUEST_ID_KEY);
 
   if (!guestId) {
-    // Generate a UUID-like identifier
+    // Generate a UUID-like identifier with tab uniqueness
     guestId = 'guest_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
-    localStorage.setItem(GUEST_ID_KEY, guestId);
+    sessionStorage.setItem(GUEST_ID_KEY, guestId);
   }
 
   return guestId;
@@ -48,9 +49,9 @@ export class WebsocketManager {
     // Include persistent guest ID for reconnection support
     const guestId = getOrCreateGuestId();
 
-    // Include guest info (nickname and avatar) if available
-    const guestNickname = localStorage.getItem('guestNickname');
-    const guestAvatar = localStorage.getItem('guestAvatar');
+    // Include guest info (nickname and avatar) if available - use sessionStorage for tab-specific data
+    const guestNickname = sessionStorage.getItem('guestNickname');
+    const guestAvatar = sessionStorage.getItem('guestAvatar');
 
     const generalOptions = {
       path: "/realtime-sockets/socket.io/",

@@ -768,9 +768,10 @@ export async function auth_me_route(request, reply) {
     }
 	const isProduction = process.env.NODE_ENV === 'PROD';
     if (isProduction && payload.jti) {
-      const isRevoked = await redis.get(`jwt:${payload.jti}`);
-      if (isRevoked) {
-        return reply.code(401).send({ success: false, message: "Token revoked" });
+      // Check if token is still valid in Redis (only in production)
+      const isValid = await redis.get(`jwt:${payload.jti}`);
+      if (!isValid || isValid !== 'valid') {
+        return reply.code(401).send({ success: false, message: "Token revoked or expired" });
       }
     }
 

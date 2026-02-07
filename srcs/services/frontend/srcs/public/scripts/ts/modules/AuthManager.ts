@@ -356,8 +356,8 @@ export class AuthManager {
         Logger.log("Somethig went wrong here");
       const result = await res.json()
 
-      localStorage.removeItem("guestNickname");
-      localStorage.removeItem("guestAvatar");
+      sessionStorage.removeItem("guestNickname");
+      sessionStorage.removeItem("guestAvatar");
 
       // Set flag to prevent auth check after logout
       sessionStorage.setItem("not_authenticated", "true");
