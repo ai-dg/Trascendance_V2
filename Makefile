@@ -33,7 +33,7 @@ d: build
 		fi'
 
 
-# Fast start without rebuilding (use when code hasn't changed)
+
 start:
 	docker compose -f $(COMPOSE) up --remove-orphans -d
 	@$(MAKE) find-logs
@@ -53,6 +53,7 @@ dev:
 	docker compose -f $(COMPOSE) up --force-recreate --build
 
 build:
+	mkdir -p ~/data/logsdata
 	docker compose -f $(COMPOSE) build
 
 no-cache:
@@ -79,6 +80,7 @@ down:
 downv:
 	@$(MAKE) kill-logs
 	docker compose -f $(COMPOSE) down -v
+	sudo rm -rf ~/data/*
 	@echo $(GREEN)Volumes removed.$(RESET)
 
 clean:
