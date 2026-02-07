@@ -7,6 +7,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import { Game } from '../../game-engine/app/srcs/js/Game.js';
 import { handleMatchmaking, cancelSearch } from './matchmaking.js';
+import { setupMetrics } from '/monitoring/metrics.js';
 
 
 const is_prod = process.env.NODE_ENV === "PROD";
@@ -80,6 +81,7 @@ try {
 }
 
 export const app = Fastify({trustProxy: true, https: httpsOptions});
+setupMetrics(app, 'remote-players');
 
 /* Redis Client Setup */
 export const redis = createClient({

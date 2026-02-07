@@ -10,6 +10,7 @@ import { ethers } from 'ethers';
 import { randomTournamentResult } from './srcs/scores.js';
 import fs from 'fs';
 import path from 'path';
+import { setupMetrics } from '/monitoring/metrics.js';
 
 
 
@@ -29,6 +30,7 @@ try {
 }
 
 const app = Fastify({https: httpsOptions});
+setupMetrics(app, 'blockchain');
 
 const provider = new ethers.JsonRpcProvider(
   'https://api.avax-test.network/ext/bc/C/rpc'

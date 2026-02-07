@@ -14,7 +14,7 @@ COPY server-rendering/app/package*.json ./
 RUN npm install -g nodemon typescript tailwindcss ts-node concurrently
 
 
-RUN  npm install fastify @fastify/view ejs @fastify/csrf-protection jsonwebtoken @fastify/env @fastify/jwt	@fastify/oauth2 @fastify/websocket && npm install typescript @types/ejs @types/node autoprefixer postcss postcss-cli amqplib
+RUN  npm install fastify @fastify/view ejs @fastify/csrf-protection jsonwebtoken @fastify/env @fastify/jwt	@fastify/oauth2 @fastify/websocket prom-client && npm install typescript @types/ejs @types/node autoprefixer postcss postcss-cli amqplib
 COPY . .
 
 COPY frontend/srcs/views ./views

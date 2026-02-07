@@ -1,4 +1,4 @@
-.PHONY: up d dev build no-cache re watch fclean down downv clean find-logs kill-logs logs npm-install debug
+.PHONY: up d dev build no-cache re watch fclean down downv clean find-logs kill-logs logs logs-all logs-recent npm-install debug
 
 # ■ Path Configuration
 COMPOSE = srcs/docker-compose.yml
@@ -109,8 +109,18 @@ kill-logs:
 #*********************** ▌ MONITORING ▌ *****************************#
 ######################################################################
 
+# View all service logs in one file (real-time)
+logs-all:
+	@echo $(GREEN)Following all service logs...$(RESET)
+	@tail -f srcs/logs/all_services.log
+
+# View specific service logs
 logs:
 	docker compose -f $(COMPOSE) logs nginx
+
+# Show last 100 lines from all services
+logs-recent:
+	@tail -n 100 srcs/logs/all_services.log
 
 ######################################################################
 #*********************** ▌ DEBUG MODE ▌ *****************************#
@@ -131,7 +141,6 @@ npm-install:
 	@cd srcs/services/frontend && npm install
 	@cd srcs/services/auth/app && npm install
 	@cd srcs/services/backend-ai/app && npm install
-	@cd srcs/services/blockchain/app && npm install
 	@cd srcs/services/game-engine/app && npm install
 	@cd srcs/services/language-manager && npm install
 	@cd srcs/services/live-chat/app && npm install

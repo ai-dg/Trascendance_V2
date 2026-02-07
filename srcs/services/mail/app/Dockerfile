@@ -33,8 +33,9 @@ RUN npm install --package-lock \
 	nodemailer \
 	@grpc/grpc-js \
 	@grpc/proto-loader \
-	amqplib \ 
-	nodemon
+	amqplib \
+	nodemon \
+	prom-client
 
 COPY . .
 

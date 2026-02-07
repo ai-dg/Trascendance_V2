@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import fs from 'fs';
 import path from 'path';
+import { setupMetrics } from '/monitoring/metrics.js';
 
 // HTTPS options
 let httpsOptions = {};
@@ -18,6 +19,7 @@ try {
 }
 
 const app = Fastify({https: httpsOptions});
+setupMetrics(app, 'game-engine');
 
 app.get('/', async () => {
 	return { status: 'ok', service: 'game-engine_app' };

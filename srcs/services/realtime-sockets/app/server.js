@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { createClient } from 'redis';
 import { Server } from 'socket.io';
 import fs from 'fs';
+import { setupMetrics } from '/monitoring/metrics.js';
 
 const is_prod = process.env.NODE_ENV === "PROD";
 export const base_url = is_prod ? "www.transcendance.com" : "localhost";
@@ -31,6 +32,7 @@ try {
 }
 
 export const app = Fastify({trustProxy: true, https: httpsOptions});
+setupMetrics(app, 'realtime-sockets');
 
 let socketio = null;
 

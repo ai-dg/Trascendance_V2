@@ -8,6 +8,7 @@ import fs from 'fs';
 import { routes } from './routes.js';
 import amqp from 'amqplib'
 import path from 'path';
+import { setupMetrics } from '/monitoring/metrics.js';
 
 export const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
@@ -56,6 +57,7 @@ try {
 }
 
 export const app = fastify({https: httpsOptions});
+setupMetrics(app, 'server-rendering');
 
 app.register(fastifyStatic, {
   root: join(__dirname, '../../public'),

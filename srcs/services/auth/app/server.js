@@ -11,6 +11,7 @@ import { setupMessageQueues } from './srcs/services/message-broker.js';
 import { routes } from './srcs/routes/routes.js';
 import fs from 'fs';
 import path from 'path';
+import { setupMetrics } from '/monitoring/metrics.js';
 
 
 /************************************************************************************************* */
@@ -37,6 +38,7 @@ try {
 }
 
 export const app = Fastify({trustProxy: true, https: httpsOptions});
+setupMetrics(app, 'auth');
 
 export const redis = createClient({
 	socket: {

@@ -10,6 +10,7 @@ import jwt from 'jsonwebtoken';
 import { routes } from './srcs/routes/routes.js';
 import fs from 'fs';
 import path from 'path';
+import { setupMetrics } from '/monitoring/metrics.js';
 
 const is_prod = process.env.NODE_ENV === "PROD"
 export const base_url = is_prod ? "www.transcendance.com" : "localhost"
@@ -31,6 +32,7 @@ try {
 }
 
 export const app = Fastify({trustProxy: true, https: httpsOptions});
+setupMetrics(app, 'live-chat');
 
 export const redis = createClient({
 	socket: {

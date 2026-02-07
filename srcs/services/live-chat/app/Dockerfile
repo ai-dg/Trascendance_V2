@@ -5,7 +5,7 @@ WORKDIR /data
 COPY . .
 COPY package*.json ./
 
-RUN npm install --production
+RUN npm install --production && npm install prom-client
 
 COPY . .
 

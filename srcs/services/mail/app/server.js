@@ -1,7 +1,8 @@
 import Fastify from 'fastify';
 import mysql from 'mysql2/promise';
 import 'dotenv/config';
-import { compare, hash } from 'bcryptjs';
+import bcryptjs from 'bcryptjs';
+const { compare, hash } = bcryptjs;
 import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
 import { createClient } from 'redis';
@@ -11,6 +12,7 @@ import nodemailer from "nodemailer";
 import amqp from 'amqplib';
 import fs from 'fs';
 import path from 'path';
+import { setupMetrics } from '/monitoring/metrics.js';
 
 
 // HTTPS options
@@ -29,6 +31,7 @@ try {
 }
 
 const app = Fastify({https: httpsOptions});
+setupMetrics(app, 'mail');
 
 const mail_queue = 'send-mail-queue';
 

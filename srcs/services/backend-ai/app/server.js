@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { createClient } from 'redis';
 import { Ai } from './srcs/Ai.js';
+import { setupMetrics } from '/monitoring/metrics.js';
 
 // HTTPS options
 let httpsOptions = {};
@@ -20,6 +21,7 @@ try {
 }
 
 const app = Fastify({https: httpsOptions});
+setupMetrics(app, 'backend-ai');
 
 // Redis clients
 const redis = createClient({
