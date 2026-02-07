@@ -299,17 +299,6 @@ export class App {
       return null;
     }
 
-    // Skip auth check if we're on auth page and have no prior session indicators
-    // This prevents unnecessary 401 errors in fresh sessions (e.g., incognito tabs)
-    const isAuthPage = this.routerManager.getCurrentPage() === 'auth';
-    const hasSessionIndicator = hasOAuthSuccess || sessionStorage.length > 0 || document.cookie.includes('session');
-
-    if (isAuthPage && !hasSessionIndicator) {
-      Logger.debug("getConnectedUser: skipping check - fresh session on auth page");
-      sessionStorage.setItem("not_authenticated", "true");
-      return null;
-    }
-
     // Try to fetch authenticated user
     // Note: httpOnly cookies cannot be checked from JavaScript, so we always try
     try {
