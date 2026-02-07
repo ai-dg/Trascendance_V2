@@ -1,4 +1,5 @@
-#!/bin/bash
+cd /Users/mari/Trascendance_V2
+docker compose -f srcs/docker-compose.yml logs -f remote-players_app#!/bin/bash
 
 LOG_DIR=./srcs/logs
 PID_FILE="$LOG_DIR/pids.txt"
