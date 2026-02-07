@@ -80,13 +80,17 @@ export class AuthManager {
 
   public async getConnectedUser() {
     try {
+      console.log("Attempting to fetch connected user...");
         const res = await fetch(this.router.getUrl('auth/me'), {
             method: 'GET',
             credentials: 'include'
         });
+        console.log("Response received for connected user:", res);
         if (res.ok) {
           const result = await res.json();
+          console.log("Parsed JSON result for connected user:", result);
           if (result.success) {
+            console.log("Connected user data:", result.data.user);
             return result.data.user;
           }
         }
@@ -121,6 +125,7 @@ export class AuthManager {
       return { success: false, error: 'Username is required' };
     }
     const passwdInput = credentials.password;
+    console.log("Login attempt with username:", loginInput); // Debug log
     if (!passwdInput.trim()) {
       return { success: false, error: 'Password is required' };
     }
@@ -128,6 +133,7 @@ export class AuthManager {
 
     try {
       const result = await this.logUser(loginInput, passwdInput, text, view);
+      console.log("Login result:", result); // Debug log
       return result;
     } catch (error) {
       Logger.error('Login failed:', error);

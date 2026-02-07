@@ -115,7 +115,7 @@ export class LiveChatPage {
     private createProfileColumn(): HTMLElement {
         const profileDiv = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 flex-shrink-0 w-60');
         profileDiv.id = 'profile-div';
-        profileDiv.style.minHeight = '350px';
+        profileDiv.style.minHeight = '380px';
 
         const avatarSection = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
         const avatarImg = this.uiManager.createElement('img', 'w-12 h-12 rounded-full border-2 border-[#ff1493] cursor-pointer') as HTMLImageElement;
@@ -138,6 +138,11 @@ export class LiveChatPage {
             username.textContent = this.currentSelectedFriend.username;
 
         const btnDiv = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
+        
+        const inviteBtn = this.uiManager.createElement('button', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
+        inviteBtn.id = 'invite-friend-btn';
+        inviteBtn.textContent = "INVITE";
+        inviteBtn.className += ' hidden';
         const deleteBtn = this.uiManager.createElement('button', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
         deleteBtn.id = 'delete-friend-btn';
         deleteBtn.textContent = "DELETE";
@@ -147,6 +152,7 @@ export class LiveChatPage {
         blockBtn.textContent = "BLOCK";
         blockBtn.className += ' hidden';
 
+        btnDiv.appendChild(inviteBtn);
         btnDiv.appendChild(deleteBtn);
         btnDiv.appendChild(blockBtn);
 
@@ -249,13 +255,16 @@ export class LiveChatPage {
 
     private async handleFriendSelection(friendId: any, username: string, avatar?: string | null) {
         Logger.log("Handling friend selection:", username);
+
+        const online = await this.socialManager?.isUserOnline(Number(friendId)) ?? false;
         
         this.currentSelectedFriend = {
             username: username,
             id: friendId,
             avatar: avatar ?? '',
             isGuest: false,
-            nbrId: Number(friendId)
+            nbrId: Number(friendId),
+            online: online
         };
 
         this.updateProfileView();
@@ -362,9 +371,16 @@ export class LiveChatPage {
     }
 
     private setupFriendActionButtons(): void {
+        const inviteBtn = document.getElementById('invite-friend-btn');
         const blockBtn = document.getElementById('block-friend-btn');
         const deleteBtn = document.getElementById('delete-friend-btn');
 
+        if (inviteBtn) {
+            const newInviteBtn = inviteBtn.cloneNode(true) as HTMLElement;
+            inviteBtn.replaceWith(newInviteBtn);
+
+            newInviteBtn.addEventListener('click', () => this.handleInviteFriend());
+        }
         if (blockBtn) {
             const newBlockBtn = blockBtn.cloneNode(true) as HTMLElement;
             blockBtn.replaceWith(newBlockBtn);
@@ -378,6 +394,10 @@ export class LiveChatPage {
 
             newDeleteBtn.addEventListener('click', () => this.handleDeleteFriend());
         }
+    }
+
+    private async handleInviteFriend() {
+        if (!this.currentSelectedFriend) return;
     }
 
     private async handleBlockFriend() {

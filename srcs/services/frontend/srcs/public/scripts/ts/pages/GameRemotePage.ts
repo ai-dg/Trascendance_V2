@@ -98,15 +98,9 @@ export class RemotePage {
 		'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',
 		() => this.playAgainstRandomPlayer()
 	);
-	const startButtonFriend = this.uiManager.createButton(
-		'PLAY AGAINST A FRIEND',
-		'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200 mt-4',
-		() => this.playAgainstFriend()
-	);
 	startContent.appendChild(startTitle);
 	startContent.appendChild(startButtonRandom);
 	startContent.appendChild(this.uiManager.createElement('div', 'h-4'));
-	startContent.appendChild(startButtonFriend);
 	startOverlay.appendChild(startContent);
 
 	canvasContainer.appendChild(startOverlay);

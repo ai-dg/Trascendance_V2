@@ -49,6 +49,7 @@ export class OTPManagers {
 	    		throw new Error("Can't reach the server");
 	    	const result = await res.json();
 	    	Logger.log(result);
+			console.log(result);
 	    	if (result.success)
 	    	{
 	    		params.handler();
@@ -58,6 +59,7 @@ export class OTPManagers {
 	    	else{
 	    		const errorMessage = result.error?.message || result.error || result.message || 'Unknown error';
 	    		Logger.log('failure : ', errorMessage);
+				console.log('failure : ', errorMessage);
 	    		return { success: false, error: errorMessage };
 	    	}
 	    }

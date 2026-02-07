@@ -225,39 +225,12 @@ export class SettingsPage {
     this.t("guestMessage")
   );
 
-  const buttonsContainer = this.uiManager.createElement(
-    "div",
-    "w-full flex flex-col gap-4 mt-4"
-  );
 
-  // Sign In Button
-  const signInBtn = this.uiManager.createButton(
-    this.t("signin"),
-    "w-full retro-button bg-[#00ffff] text-black hover:bg-[#00ffff]/80 border-2 border-[#00ffff] py-3",
-    () => Logger.log("to handle signin")
-  );
-
-  // Sign Up Button
-  const signUpBtn = this.uiManager.createButton(
-    this.t("signup"),
-    "w-full retro-button bg-transparent text-[#ff1493] border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black py-3",
-    () => Logger.log("to handle signup")
-  );
-
-  // 42Auth Button
-  const auth42Btn = this.uiManager.createButton(
-    "this",
-    "w-full retro-button bg-[#00babc] text-white hover:bg-[#00a0a2] border-2 border-[#00babc] py-3 flex items-center justify-center gap-3",
-    () => this.authPage.handle42SignIn()
-  );
-
-  buttonsContainer.appendChild(signInBtn);
-  buttonsContainer.appendChild(signUpBtn);
-  buttonsContainer.appendChild(auth42Btn);
+  
 
   //card.appendChild(header);
   card.appendChild(subtitle);
-  card.appendChild(buttonsContainer);
+  //card.appendChild(buttonsContainer);
   card.appendChild(this.createLanguageSelector(false));
 
   return card;

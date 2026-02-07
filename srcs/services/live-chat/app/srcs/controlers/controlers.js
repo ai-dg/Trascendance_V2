@@ -3,6 +3,24 @@ import jwt from 'jsonwebtoken';
 
 
 
+export async function user_online_route(request, reply) {
+    const token = request.cookies.token || request.body?.token;
+    if (!token) {
+        return reply.code(401).send({ success: false, message: "Not authenticated" });
+    }
+    const { userId } = request.body;
+    if (!userId) {
+        return reply.code(400).send({ success: false, message: "User ID is required" });
+    }
+
+    try {
+        const isOnline = await redis.get(`online:${userId}`);
+        return reply.send({ success: true, online: isOnline === 'true' });
+    } catch (err) {
+        console.error('Redis error:', err);
+        return reply.code(500).send({ success: false, message: "Server error" });
+    }
+}
 export async function friend_request_route(request, reply) {
     const token = request.cookies.token || request.body.token;
     if (!token)

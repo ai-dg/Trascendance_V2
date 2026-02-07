@@ -114,6 +114,7 @@ export interface User {
   avatar?: string;
   isGuest?: boolean;
   nbrId?: number;
+  online?: boolean;
 }
 
 export interface LoginCredentials {

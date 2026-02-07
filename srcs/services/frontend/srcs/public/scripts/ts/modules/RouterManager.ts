@@ -43,6 +43,7 @@ export class RouterManager {
   }
 
   public navigateTo(page: Page, data?: RouteData, options?: { replace?: boolean }): void {
+    console.log(`Navigating to page: ${page} with data:`, data, 'and options:', options); // Debug log
     if (this.currentPage !== page) {
       this.currentPage = page;
       this.updateHistory(page, options?.replace ?? false);

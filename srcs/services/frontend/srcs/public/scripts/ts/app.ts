@@ -291,14 +291,6 @@ export class App {
       window.history.replaceState({}, '', newUrl);
     }
 
-    // Check if we've recently determined user is not authenticated
-    // This avoids repeated 401 errors in console during the same session
-    const notAuthFlag = sessionStorage.getItem("not_authenticated");
-    if (notAuthFlag === "true") {
-      Logger.debug("getConnectedUser: skipping check - user not authenticated in this session");
-      return null;
-    }
-
     // Try to fetch authenticated user
     // Note: httpOnly cookies cannot be checked from JavaScript, so we always try
     try {
@@ -445,11 +437,14 @@ export class App {
 
     if (!result.success) {
       Logger.error('Login failed:', result.error);
+      console.log('Login failed:', result.error);
       this.authPage.showError(result.error || 'Login failed');
     } else if (result.needsVerification) {
+      console.log('Login successful, verification page should be shown by showVerificationCode');
       Logger.log('Login successful, verification page should be shown by showVerificationCode');
       // The verification page will be shown by logUser via showVerificationCode
     } else {
+      console.log('Login successful without verification');
       Logger.log('Login successful without verification');
       // Clear the not-authenticated flag on successful login
       sessionStorage.removeItem("not_authenticated");
@@ -463,6 +458,7 @@ export class App {
       };
 
       Logger.log('Playing as user:', username, 'with avatar:', 'default.png');
+      console.log('Playing as user:', username, 'with avatar:', 'default.png');
       this.routerManager.navigateTo('menu');
     }
   }
@@ -519,12 +515,24 @@ export class App {
     }
   }
 
-  private handleOtpVerificationComplete(success: boolean): void {
+  private async handleOtpVerificationComplete(success: boolean): Promise<void> {
     if (success) {
       Logger.log('OTP verification successful, redirecting to menu');
+      console.log('OTP complete', success);
       this.authManager.otpData = null;
+      console.log('Fetching current user after OTP verification...');
+      const user = await this.authManager.getConnectedUser();
+      console.log('Fetched current user after OTP verification:', user);
+      if (user) {
+        console.log('Fetched current user after OTP verification:', user);
+      } else {
+        console.log('No user data returned after OTP verification');
+      }
       // Update current user and navigate to menu
-      this.currentUser = this.authManager.getCurrentUser();
+      console.log('Fetching current user after OTP verification...');
+      this.currentUser = await this.authManager.getConnectedUser();
+      // this.currentUser = this.authManager.getCurrentUser();
+      console.log('Current user after OTP verification:', this.currentUser);
       this.routerManager.navigateTo('menu');
     } else {
       Logger.log('OTP verification failed');
