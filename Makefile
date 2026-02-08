@@ -17,6 +17,7 @@ DATABASE_DIRECTORIES := \
 	$(HOME)/data/prometheus \
 	$(HOME)/data/grafana \
 	$(HOME)/data/logstash \
+	$(HOME)/data/alertmanager \
 	./srcs/logs
 
 
@@ -140,6 +141,7 @@ clean:
 
 find-logs:
 	@echo $(GREEN)Generating logs...$(RESET)
+	@sudo chmod 777 -R $(DATABASE_DIRECTORIES)
 	@srcs/scripts/logs/log-finder.sh
 
 kill-logs:

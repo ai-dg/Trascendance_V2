@@ -621,9 +621,19 @@ volumes:
       o: bind
       device: ${HOME}/data/grafana
 
+  alertmanager_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${HOME}/data/alertmanager
+
   logsdata:
     driver: local
     driver_opts:
       type: none
       o: bind
       device: ${HOME}/data/logstash
+
+
+
