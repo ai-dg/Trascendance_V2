@@ -1,4 +1,4 @@
-.PHONY: up d dev build no-cache re watch fclean down downv clean find-logs kill-logs logs npm-install debug
+.PHONY: up d dev build no-cache re watch fclean down downv clean find-logs kill-logs logs npm-install debug restart
 
 # ■ Path Configuration
 COMPOSE = srcs/docker-compose.yml
@@ -11,6 +11,13 @@ PIDS = $(LOGS)/pids.txt
 GREEN = "\033[32m"
 RESET = "\033[0m"
 
+DATABASE_DIRECTORIES := \
+	$(HOME)/data/rabbit \
+	$(HOME)/data/language \
+	$(HOME)/data/prometheus \
+	$(HOME)/data/grafana \
+	$(HOME)/data/logstash \
+	./srcs/logs
 
 
 ######################################################################
@@ -22,6 +29,7 @@ up: build
 
 
 d: build
+	mkdir -p $(DATABASE_DIRECTORIES)
 	@bash -lc 'source ./srcs/.env && \
 		if [ "$$NODE_ENV" = "PROD" ]; then \
 			docker compose --profile prod -f $(COMPOSE) up --remove-orphans -d; \
@@ -38,6 +46,15 @@ start:
 	docker compose -f $(COMPOSE) up --remove-orphans -d
 	@$(MAKE) find-logs
 
+restart:
+	@if [ -n "$(word 2,$(MAKECMDGOALS))" ]; then \
+		docker compose -f $(COMPOSE) restart $(word 2,$(MAKECMDGOALS)); \
+		echo $(GREEN)Service $(word 2,$(MAKECMDGOALS)) restarted.$(RESET); \
+	else \
+		docker compose -f $(COMPOSE) restart; \
+		echo $(GREEN)Stack restarted.$(RESET); \
+	fi
+
 watch:
 	( \
 		cd srcs/services/frontend && \
@@ -53,7 +70,7 @@ dev:
 	docker compose -f $(COMPOSE) up --force-recreate --build
 
 build:
-	mkdir -p ~/data/logsdata
+	mkdir -p $(DATABASE_DIRECTORIES)
 	docker compose -f $(COMPOSE) build
 
 no-cache:
@@ -75,12 +92,22 @@ re:
 
 down:
 	@$(MAKE) kill-logs
-	docker compose -f $(COMPOSE) down
+	docker compose -f $(COMPOSE) down --remove-orphans
 
 downv:
 	@$(MAKE) kill-logs
-	docker compose -f $(COMPOSE) down -v
-	sudo rm -rf ~/data/*
+	docker compose -f $(COMPOSE) down -v --remove-orphans
+	@for net in srcs_internal srcs_transcendence; do \
+		for c in $$(docker network inspect -f '{{range .Containers}}{{.Name}} {{end}}' $$net 2>/dev/null); do \
+			[ -z "$$c" ] || docker network disconnect -f $$net $$c 2>/dev/null || true; \
+		done; \
+		docker network rm $$net 2>/dev/null || true; \
+	done
+	docker stop elasticsearch || true
+	docker rm elasticsearch || true
+	docker volume rm srcs_logsdata srcs_grafana_data srcs_prometheus_data srcs_rabbitmq_data srcs_language-manager-node-modules 2>/dev/null || true
+	sudo rm -rf $(DATABASE_DIRECTORIES)
+	@mkdir -p $(DATABASE_DIRECTORIES)
 	@echo $(GREEN)Volumes removed.$(RESET)
 
 clean:
@@ -158,3 +185,6 @@ npm-install:
 	@cd srcs/services/realtime-sockets/app && npm install
 	@cd srcs/services/server-rendering/app && npm install
 	@echo $(GREEN)All npm dependencies installed!$(RESET)
+
+%:
+	@:

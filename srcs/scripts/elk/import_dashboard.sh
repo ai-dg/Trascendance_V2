@@ -1,38 +1,36 @@
 #!/bin/bash
+set -e
 
 set -a
-source ./srcs/.env
+. ./srcs/.env
 set +a
 
-sleep 3
-
 KIBANA_URL="http://localhost:$PORT_KIBANA"
-NDJSON_DIR="./srcs/services/elk/export"
+AUTH="$ELASTIC_USERNAME:$ELASTIC_PASSWORD"
+DIR="./srcs/services/elk/export"
 
-KIBANA_USER="$ELASTIC_USERNAME"
-KIBANA_PASSWORD="$ELASTIC_PASSWORD"
+echo "[*] Waiting for Kibana..."
 
-echo "Checking Kibana status..."
-STATUS_RESPONSE=$(curl -u "$KIBANA_USER:$KIBANA_PASSWORD" -s "$KIBANA_URL/api/status")
+for i in $(seq 1 60); do
+  STATE=$(curl -s -u "$AUTH" "$KIBANA_URL/api/status" \
+    | jq -r '.status.overall.state // empty' 2>/dev/null || true)
+  if [ "$STATE" = "available" ] || [ "$STATE" = "degraded" ] || [ "$STATE" = "green" ] || [ "$STATE" = "yellow" ]; then
+    echo "[+] Kibana ready ($STATE)"
+    break
+  fi
+  sleep 2
+done
 
-if echo "$STATUS_RESPONSE" | jq '.status.overall.state' &>/dev/null; then
-  echo "Kibana status: $(echo "$STATUS_RESPONSE" | jq '.status.overall.state')"
-else
-  echo "Kibana is not ready or returned invalid response:"
-  echo "$STATUS_RESPONSE"
-  exit 1
-fi
+[ "$STATE" ] || { echo "[-] Kibana not ready"; exit 1; }
 
-echo "Importing index pattern (multipart)..."
-curl -u "$KIBANA_USER:$KIBANA_PASSWORD" -X POST "$KIBANA_URL/api/saved_objects/_import?overwrite=true" \
+echo "[*] Import index pattern"
+curl -s -u "$AUTH" -X POST "$KIBANA_URL/api/saved_objects/_import?overwrite=true" \
   -H "kbn-xsrf: true" \
-  -F "file=@$NDJSON_DIR/index-pattern.ndjson"
+  -F "file=@$DIR/index.ndjson" >/dev/null
 
-echo ""
-echo "Importing visualizations (multipart)..."
-curl -u "$KIBANA_USER:$KIBANA_PASSWORD" -X POST "$KIBANA_URL/api/saved_objects/_import?overwrite=true" \
+echo "[*] Import visualizations"
+curl -s -u "$AUTH" -X POST "$KIBANA_URL/api/saved_objects/_import?overwrite=true" \
   -H "kbn-xsrf: true" \
-  -F "file=@$NDJSON_DIR/visualization.ndjson"
+  -F "file=@$DIR/dashboard.ndjson" >/dev/null
 
-echo ""
-echo "Kibana dashboard and index pattern import completed via multipart."
+echo "[+] Done"

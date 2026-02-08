@@ -1,31 +1,24 @@
 #!/bin/bash
+set -e
 
 set -a
-source ./srcs/.env
+. ./srcs/.env
 set +a
 
-KIBANA_URL="http://localhost:$PORT_KIBANA"
-KIBANA_USER="$ELASTIC_USERNAME"
-KIBANA_PASSWORD="$ELASTIC_PASSWORD"
+URL="http://localhost:$PORT_KIBANA/api/status"
+AUTH="$ELASTIC_USERNAME:$ELASTIC_PASSWORD"
 
-echo "Waiting for Kibana to be ready on port $PORT_KIBANA..."
+echo "[*] Waiting for Kibana..."
 
-timeout=120
-elapsed=0
-
-while true; do
-	STATUS_RESPONSE=$(curl -u "$KIBANA_USER:$KIBANA_PASSWORD" -s "$KIBANA_URL/api/status")
-	STATE=$(echo "$STATUS_RESPONSE" | jq -r '.status.overall.state' 2>/dev/null)
-
-	if [ "$STATE" == "green" ]; then
-		echo "Kibana is ready"
-		break
-	fi
-
-	sleep 5
-	elapsed=$((elapsed + 5))
-	if [ "$elapsed" -ge "$timeout" ]; then
-		echo "Kibana is not ready after $timeout seconds."
-		exit 1
-	fi
+for _ in $(seq 1 24); do
+  LEVEL=$(curl -s -u "$AUTH" "$URL" 2>/dev/null \
+    | jq -r '.status.overall.level // .status.overall.state // empty' 2>/dev/null || true)
+  if [ "$LEVEL" = "available" ] || [ "$LEVEL" = "degraded" ] || [ "$LEVEL" = "green" ] || [ "$LEVEL" = "yellow" ]; then
+    echo "[+] Kibana ready ($LEVEL)"
+    exit 0
+  fi
+  sleep 5
 done
+echo "[-] Kibana not ready (last level: ${LEVEL:-<no response>})"
+exit 1
+

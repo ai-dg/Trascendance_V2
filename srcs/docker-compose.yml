@@ -454,7 +454,7 @@ services:
     volumes:
       - ./services/elk/logstash/conf/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - ./logs:/usr/share/logstash/input_logs:ro
+      - ./logs:/usr/share/logstash/input_logs
     privileged: true
     env_file:
       - .env
@@ -535,12 +535,36 @@ networks:
 
 volumes:
   rabbitmq_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${HOME}/data/rabbit
+
   language-manager-node-modules:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${HOME}/data/language
+
   prometheus_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${HOME}/data/prometheus
+
   grafana_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${HOME}/data/grafana
+
   logsdata:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${HOME}/data/logsdata
+      device: ${HOME}/data/logstash
