@@ -264,19 +264,19 @@ export class App {
         // Check if user was in a game before page refresh - attempt reconnection
         const storedGameUUID = sessionStorage.getItem('currentGameUUID');
         if (storedGameUUID && gameSocket?.connected) {
-          console.log('[App] Checking for game reconnection:', storedGameUUID);
+          Logger.log('[App] Checking for game reconnection:', storedGameUUID);
           const gSocket = gameSocket; // Capture for use in callbacks
           gSocket.emit('check-reconnection');
 
           // Listen for reconnection opportunities
           gSocket.once('reconnection-available', (data: any) => {
-            console.log('[App] Reconnection available:', data);
+            Logger.log('[App] Reconnection available:', data);
             gSocket.emit('reconnect-to-game', { gameUUID: storedGameUUID });
           });
 
           // Cleanup if no reconnection available
           gSocket.once('no-reconnection-available', () => {
-            console.log('[App] No reconnection available, clearing stored game UUID');
+            Logger.log('[App] No reconnection available, clearing stored game UUID');
             sessionStorage.removeItem('currentGameUUID');
           });
         }

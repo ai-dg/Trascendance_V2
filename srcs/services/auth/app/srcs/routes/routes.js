@@ -30,7 +30,15 @@ import {
 		oauth_callback_route,
 		oauth_update_profile_route
 } from "../controlers/42auth.js";
+import { verifyCSRFToken } from "../auth.js";
 
+async function csrfValidation(request, reply) {
+	const csrfToken = request.headers['x-csrf-token'];
+	const csrfCookie = request.cookies.csrf;
+	if (!csrfToken || !csrfCookie || !verifyCSRFToken(csrfToken, csrfCookie)) {
+		return reply.code(403).send({ success: false, message: 'Invalid CSRF token' });
+	}
+}
 
 export function routes(app, options)
 {
@@ -56,7 +64,7 @@ export function routes(app, options)
 	
 	// logout process
 
-	app.post('/logout', async (request, reply) => logout_route(request, reply))
+	app.post('/logout', { preHandler: csrfValidation }, async (request, reply) => logout_route(request, reply))
 	
 
 	// reset-password (forget password process)
@@ -72,14 +80,14 @@ export function routes(app, options)
 	
 	// update profile
 	app.get('/verify-username', async (request, reply) => verify_update_email_route(request, reply));
-	app.put('/update-avatar', async (request, reply) => update_avatar_route(request, reply));
-	app.put('/update-username', async (request, reply) => update_username_route(request, reply));
-	app.put('/update-email', async (request, reply) => update_email_route(request, reply));
+	app.put('/update-avatar', { preHandler: csrfValidation }, async (request, reply) => update_avatar_route(request, reply));
+	app.put('/update-username', { preHandler: csrfValidation }, async (request, reply) => update_username_route(request, reply));
+	app.put('/update-email', { preHandler: csrfValidation }, async (request, reply) => update_email_route(request, reply));
 	app.post('/verify-email-valid', async (request, reply) => verify_email_route(request, reply));
-	app.put('/update-password', async (request, reply) => update_password_route(request, reply));
+	app.put('/update-password', { preHandler: csrfValidation }, async (request, reply) => update_password_route(request, reply));
 
 	// delete account
-	app.delete('/delete-account', async (request, reply) => delete_account_route(request, reply));
+	app.delete('/delete-account', { preHandler: csrfValidation }, async (request, reply) => delete_account_route(request, reply));
 
 	// 42auth 
 	app.get('/42/login', async (request, reply) => oauth_login_route(request, reply));

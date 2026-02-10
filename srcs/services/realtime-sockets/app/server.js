@@ -15,23 +15,23 @@ try {
     const certPath = '/certs/cert.pem';
     const keyPath = '/certs/key.pem';
 
-    // console.log('Cert exists:', fs.existsSync(certPath));
-    // console.log('Key exists:', fs.existsSync(keyPath));
+    // app.log.info('Cert exists:', fs.existsSync(certPath));
+    // app.log.info('Key exists:', fs.existsSync(keyPath));
 
     if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
         httpsOptions = {
             key: fs.readFileSync(keyPath),
             cert: fs.readFileSync(certPath)
         };
-        console.log('HTTPS certs loaded');
+        app.log.info('HTTPS certs loaded');
     } else {
-        console.log('HTTPS certs not found');
+        app.log.info('HTTPS certs not found');
     }
 } catch (err) {
-    console.error('Error loading HTTPS certs:', err);
+    app.log.error('Error loading HTTPS certs:', err);
 }
 
-export const app = Fastify({trustProxy: true, https: httpsOptions});
+export const app = Fastify({trustProxy: true, https: httpsOptions, logger: { level: process.env.LOG_LEVEL || 'info' }});
 setupMetrics(app, 'realtime-sockets');
 
 let socketio = null;
@@ -72,7 +72,7 @@ const io = new Server(app.server, {
 	transports: ['websocket', 'polling']
 });
 
-console.log("✅ Socket.IO server created");
+app.log.info("✅ Socket.IO server created");
 
 // Subscribe to Redis notifications
 await subscriber.subscribe('notifications', (message) => {
@@ -80,7 +80,7 @@ await subscriber.subscribe('notifications', (message) => {
 
     const userSockets = generalConnections.get(targetUserId);
     if (userSockets) {
-        console.log(`Relaying ${event} to user ${targetUserId}`);
+        app.log.info(`Relaying ${event} to user ${targetUserId}`);
         userSockets.forEach(socket => socket.emit(event, payload));
     }
 });
@@ -106,26 +106,24 @@ async function socketAuthMiddleware(socket, next) {
       return next(new Error('No token found'));
     }
 
-    const val = jwt.decode(token, process.env.JWT_SECRET);
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (!val || !val.jti) {
+    if (!payload || !payload.jti) {
       return next(new Error('Invalid token'));
     }
 
-    const exists = await redis.get(`jwt:${val.jti}`);
+    const exists = await redis.get(`jwt:${payload.jti}`);
 
     if (!exists || exists === "not valid") {
       return next(new Error('Token not valid in Redis'));
     }
-
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
 
     socket.userId = payload.user_id || payload.id;
     socket.user = payload.pseudo || payload;
     next();
 
   } catch (err) {
-    console.error('Auth error:', err);
+    app.log.error('Auth error:', err);
     next(new Error('Authentication failed'));
   }
 }
@@ -138,11 +136,11 @@ io.use(async (socket, next) => {
 });
 
 io.on('connection', async (socket) => {
-	console.log("🎯 Socket.IO client connected");
+	app.log.info("🎯 Socket.IO client connected");
 	const userId = socket.userId;
-	console.log("User ID:", userId);
+	app.log.info("User ID:", userId);
 	if (!userId) {
-		console.error("❌ No user ID found in token!");
+		app.log.error("❌ No user ID found in token!");
 		socket.disconnect();
 		return;
 	}
@@ -150,7 +148,7 @@ io.on('connection', async (socket) => {
 		generalConnections.set(userId, new Set());
 	}
 	generalConnections.get(userId).add(socket);
-	console.log(`🌐 User ${userId} connected. Total connections for this user: ${generalConnections.get(userId).size}`);
+	app.log.info(`🌐 User ${userId} connected. Total connections for this user: ${generalConnections.get(userId).size}`);
 	// generalConnections.set(userId, socket);
 	await redis.set(`online:${userId}`, 'true');
 	socket.emit('welcome', { message: 'Bienvenue sur le canal global' });
@@ -159,12 +157,12 @@ io.on('connection', async (socket) => {
 		const userSockets = generalConnections.get(userId);
 		if (userSockets) {
 			userSockets.delete(socket);
-			console.log(`🌐 User ${userId} disconnected. Remaining connections: ${userSockets.size}`);
+			app.log.info(`🌐 User ${userId} disconnected. Remaining connections: ${userSockets.size}`);
 
 			if (userSockets.size === 0) {
 				generalConnections.delete(userId);
 				redis.del(`online:${userId}`);
-				console.log('Socket.IO client disconnected');
+				app.log.info('Socket.IO client disconnected');
 			}
 		}
 	});
@@ -172,11 +170,11 @@ io.on('connection', async (socket) => {
 
 const start = async () => {
 	try {
-		console.log(app.printRoutes());
+		app.log.info(app.printRoutes());
 		 await app.listen({ port: 3003, host: '0.0.0.0' });
-		console.log('✅ Realtime-sockets service running on port 3003 with Socket.IO');
+		app.log.info('✅ Realtime-sockets service running on port 3003 with Socket.IO');
 	} catch (err) {
-		console.error(err);
+		app.log.error(err);
 		process.exit(1);
 	}
 };

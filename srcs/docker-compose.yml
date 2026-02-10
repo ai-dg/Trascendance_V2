@@ -111,6 +111,7 @@ services:
       - 3000
     environment:
       - NODE_ENV=${NODE_ENV}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
       - NODE_TLS_REJECT_UNAUTHORIZED=0
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - REDIS_HOST=${REDIS_HOST}
@@ -168,6 +169,7 @@ services:
       - 3002
     environment:
       - NODE_ENV=${NODE_ENV}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
@@ -193,6 +195,7 @@ services:
       - 3003
     environment:
       - NODE_ENV=${NODE_ENV}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
       - NODE_TLS_REJECT_UNAUTHORIZED=0
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - REDIS_HOST=${REDIS_HOST}
@@ -247,6 +250,7 @@ services:
       - 3007
     environment:
       - NODE_ENV=${NODE_ENV}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}

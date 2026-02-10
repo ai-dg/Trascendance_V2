@@ -34,10 +34,10 @@ try {
 		};
 	}
 } catch (err) {
-	console.log('HTTPS certs not found, running on HTTP');
+	app.log.info('HTTPS certs not found, running on HTTP');
 }
 
-export const app = Fastify({trustProxy: true, https: httpsOptions});
+export const app = Fastify({trustProxy: true, https: httpsOptions, logger: { level: process.env.LOG_LEVEL || 'info' }});
 setupMetrics(app, 'auth');
 
 export const redis = createClient({
@@ -80,16 +80,12 @@ async function setupDatabase() {
 		return db;
 	}
 	catch(err){
-		console.log("fail opening db");
+		app.log.info("fail opening db");
 		return null;
 	}
 }
 
 
-app.addHook('onRequest', async (request, reply) => {
-	console.log(`[${new Date().toISOString()}] ${request.method} ${request.url}`);
-	// console.log('Origine :', request.headers.origin);
-});
 
 
 
@@ -108,9 +104,9 @@ const start = async () => {
 		app.db = await setupDatabase();
 		await app.listen({ port: port, host: '0.0.0.0'});
 		await setupMessageQueues();
-		console.log(`Auth service running on port ${port}`);
+		app.log.info(`Auth service running on port ${port}`);
 	} catch (err) {
-		console.error(err);
+		app.log.error(err);
 		process.exit(1);
 	}
 };

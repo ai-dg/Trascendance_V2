@@ -1,3 +1,5 @@
+import { app } from '../../server.js';
+
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 400;
 const PADDLE_WIDTH = 10;
@@ -88,7 +90,7 @@ export class GameManager {
   }
 
   startGame() {
-    console.log('GameManager.startGame() called');
+    app.log.info('GameManager.startGame() called');
     this.gameState.gameRunning = true;
     this.gameState.winner = null;
     

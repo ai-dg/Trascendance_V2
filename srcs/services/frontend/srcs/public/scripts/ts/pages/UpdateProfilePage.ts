@@ -206,7 +206,7 @@ export class UpdateProfilePage {
             }
             const res = await fetch(this.routerManager.getUrl('auth/update-username'), {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'x-csrf-token': this.authManager.getCSRFToken() },
             credentials: "include",
             body: JSON.stringify({ username: value })
           });
@@ -279,7 +279,7 @@ export class UpdateProfilePage {
                     try {
                       const res2 = await fetch(this.routerManager.getUrl('/auth/update-email'), {
                           method: 'PUT',
-                          headers: { 'Content-Type': 'application/json' },
+                          headers: { 'Content-Type': 'application/json', 'x-csrf-token': this.authManager.getCSRFToken() },
                           credentials: 'include',
                           body: JSON.stringify({ email: value })
                       });
@@ -341,7 +341,7 @@ export class UpdateProfilePage {
             }
             const res = await fetch(this.routerManager.getUrl('auth/update-password'), {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'x-csrf-token': this.authManager.getCSRFToken() },
                 credentials: "include",
                 body: JSON.stringify({ password: value })
                 });
@@ -414,7 +414,7 @@ export class UpdateProfilePage {
           try {
             const res = await fetch(this.routerManager.getUrl('/auth/update-avatar'), {
               method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json', 'x-csrf-token': this.authManager.getCSRFToken() },
               credentials: 'include',
               body: JSON.stringify({ avatar: avatarId }),
             });
@@ -528,7 +528,7 @@ export class UpdateProfilePage {
 
           const res = await fetch(this.routerManager.getUrl('auth/delete-account'), {
             method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'x-csrf-token': this.authManager.getCSRFToken() },
             credentials: 'include',
             body: JSON.stringify({
               email: this.user.email!,

@@ -28,10 +28,10 @@ try {
 		};
 	}
 } catch (err) {
-	console.log('HTTPS certs not found, running on HTTP');
+	app.log.info('HTTPS certs not found, running on HTTP');
 }
 
-export const app = Fastify({trustProxy: true, https: httpsOptions});
+export const app = Fastify({trustProxy: true, https: httpsOptions, logger: { level: process.env.LOG_LEVEL || 'info' }});
 setupMetrics(app, 'live-chat');
 
 export const redis = createClient({
@@ -44,9 +44,9 @@ export const redis = createClient({
 
 try {
   await redis.connect();
-  console.log("Connected to Redis");
+  app.log.info("Connected to Redis");
 } catch (err) {
-  console.error("Failed to connect to Redis:", err);
+  app.log.error("Failed to connect to Redis:", err);
 }
 
 async function setupLiveChatdb() {
@@ -79,10 +79,10 @@ async function setupLiveChatdb() {
 		    ON messages (sender_id, receiver_id);
 		`);
 
-			console.log("Live-chat db ready");
+			app.log.info("Live-chat db ready");
 		return db;
 	} catch (err) {
-		console.error("Failed to open live-chat database: ", err);
+		app.log.error("Failed to open live-chat database: ", err);
 		process.exit(1);
 	}
 }
@@ -93,10 +93,10 @@ app.register(cookie, {
 });
 
 process.on('unhandledRejection', (reason) => {
-  console.error('Unhandled Rejection:', reason);
+  app.log.error('Unhandled Rejection:', reason);
 });
 process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception:', err);
+  app.log.error('Uncaught Exception:', err);
 });
 
 
@@ -111,13 +111,13 @@ const start = async () => {
 	try {
 		app.db = await setupLiveChatdb();
 		if (!app.db) {
-			console.error('Database live-chat not up');
+			app.log.error('Database live-chat not up');
 			process.exit(1);
 		}
 		await app.listen({ port: 3002, host: '0.0.0.0' });
-		console.log('live-chat service running on port 3002');
+		app.log.info('live-chat service running on port 3002');
 	} catch (err) {
-		console.error(err);
+		app.log.error(err);
 		process.exit(1);
 	}
 };

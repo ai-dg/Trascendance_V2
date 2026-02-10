@@ -43,7 +43,7 @@ export async function setupMessageQueues() {
 	
 	if (!msg)
 	{
-		console.log("returned....")
+		app.log.info("returned....")
 		return;
 	}
    
@@ -71,7 +71,7 @@ export async function setupMessageQueues() {
 	  shouldAck = true;
 	  
 	} catch (error) {
-	  console.error("Erreur validation:", error);
+	  app.log.error("Erreur validation:", error);
 	  
 	  if (msg.properties.replyTo && msg.properties.correlationId) {
 		try {
@@ -85,7 +85,7 @@ export async function setupMessageQueues() {
 		  );
 		  shouldAck = true;
 		} catch (sendError) {
-		  console.error("Erreur envoi réponse:", sendError);
+		  app.log.error("Erreur envoi réponse:", sendError);
 		}
 	  } else {
 		shouldAck = true;
@@ -98,7 +98,7 @@ export async function setupMessageQueues() {
   });
   
   process.on('SIGINT', async () => {
-	console.log('Fermeture des connexions RabbitMQ...');
+	app.log.info('Fermeture des connexions RabbitMQ...');
 	await mailChannel.close();
 	await validationChannel.close();
 	await connection.close();

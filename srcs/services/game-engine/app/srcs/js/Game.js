@@ -1,3 +1,4 @@
+import { app } from '../../server.js';
 import { Ball } from './Ball.js';
 import { Paddle } from './Paddle.js';
 import { Score } from './Score.js';
@@ -79,7 +80,7 @@ export class Game {
    * Called by matchmaking when an opponent is found
    */
   addPlayer2(socket, odileUserId) {
-    console.log(`[Game ${this.uuid}] Adding player 2: ${odileUserId}`);
+    app.log.info(`[Game ${this.uuid}] Adding player 2: ${odileUserId}`);
     this.player2Socket = socket;
     this.player2Id = odileUserId;
   }
@@ -89,7 +90,7 @@ export class Game {
    * This ensures Player 2 won't miss any events
    */
   setPlayer2Joined() {
-    console.log(`[Game ${this.uuid}] Player 2 confirmed joined`);
+    app.log.info(`[Game ${this.uuid}] Player 2 confirmed joined`);
     this.player2Joined = true;
 
     // If Player 1 already clicked ready while Player 2 was switching, send the ready status now
@@ -103,9 +104,9 @@ export class Game {
    * Pauses the game and waits for reconnection
    */
   handlePlayerDisconnect(disconnectedPlayerId, onReconnectionTimeout) {
-    console.log(`[Game ${this.uuid}] handlePlayerDisconnect called for player: ${disconnectedPlayerId}`);
-    console.log(`[Game ${this.uuid}] player1Id: ${this.player1Id}, player2Id: ${this.player2Id}`);
-    console.log(`[Game ${this.uuid}] player1Socket connected: ${this.player1Socket?.connected}, player2Socket connected: ${this.player2Socket?.connected}`);
+    app.log.info(`[Game ${this.uuid}] handlePlayerDisconnect called for player: ${disconnectedPlayerId}`);
+    app.log.info(`[Game ${this.uuid}] player1Id: ${this.player1Id}, player2Id: ${this.player2Id}`);
+    app.log.info(`[Game ${this.uuid}] player1Socket connected: ${this.player1Socket?.connected}, player2Socket connected: ${this.player2Socket?.connected}`);
 
     // Pause the game
     this.gameRunning = false;
@@ -115,7 +116,7 @@ export class Game {
     if (this.countdownInterval) {
       clearInterval(this.countdownInterval);
       this.countdownInterval = null;
-      console.log(`[Game ${this.uuid}] Countdown stopped due to disconnect`);
+      app.log.info(`[Game ${this.uuid}] Countdown stopped due to disconnect`);
     }
 
     if (this.gameLoopInterval) {
@@ -135,10 +136,10 @@ export class Game {
     const remainingSocket = disconnectedPlayerId === this.player1Id ? this.player2Socket : this.player1Socket;
     const remainingPlayerId = disconnectedPlayerId === this.player1Id ? this.player2Id : this.player1Id;
 
-    console.log(`[Game ${this.uuid}] Remaining player: ${remainingPlayerId}, socket exists: ${!!remainingSocket}, connected: ${remainingSocket?.connected}`);
+    app.log.info(`[Game ${this.uuid}] Remaining player: ${remainingPlayerId}, socket exists: ${!!remainingSocket}, connected: ${remainingSocket?.connected}`);
 
     if (remainingSocket && remainingSocket.connected) {
-      console.log(`[Game ${this.uuid}] Emitting opponent-disconnected to remaining player`);
+      app.log.info(`[Game ${this.uuid}] Emitting opponent-disconnected to remaining player`);
       remainingSocket.emit(this.uuid, {
         type: 'opponent-disconnected',
         message: 'Your opponent has disconnected.',
@@ -146,12 +147,12 @@ export class Game {
         gameState: this.getGameState() // Send current score etc.
       });
     } else {
-      console.log(`[Game ${this.uuid}] WARNING: Cannot notify remaining player - socket not connected`);
+      app.log.info(`[Game ${this.uuid}] WARNING: Cannot notify remaining player - socket not connected`);
     }
 
     // Set timeout for reconnection (2 minutes)
     this.reconnectionTimeout = setTimeout(() => {
-      console.log(`[Game ${this.uuid}] Reconnection timeout expired`);
+      app.log.info(`[Game ${this.uuid}] Reconnection timeout expired`);
       this.waitingForReconnection = false;
 
       // Notify remaining player that reconnection timed out
@@ -173,10 +174,10 @@ export class Game {
    * reconnectPlayer - Called when a disconnected player returns
    */
   reconnectPlayer(playerId, socket) {
-    console.log(`[Game ${this.uuid}] Player ${playerId} reconnecting`);
+    app.log.info(`[Game ${this.uuid}] Player ${playerId} reconnecting`);
 
     if (!this.waitingForReconnection || this.disconnectedPlayerId !== playerId) {
-      console.log(`[Game ${this.uuid}] Invalid reconnection attempt`);
+      app.log.info(`[Game ${this.uuid}] Invalid reconnection attempt`);
       return false;
     }
 
@@ -230,18 +231,18 @@ export class Game {
 
     // Always emit to player 1
     if (this.player1Socket) {
-      console.log(`[Game ${this.uuid}] Emitting ${eventType} to player1 (socket connected: ${this.player1Socket.connected})`);
+      app.log.info(`[Game ${this.uuid}] Emitting ${eventType} to player1 (socket connected: ${this.player1Socket.connected})`);
       this.player1Socket.emit(this.uuid, payload);
     } else {
-      console.log(`[Game ${this.uuid}] WARNING: No player1Socket for ${eventType}`);
+      app.log.info(`[Game ${this.uuid}] WARNING: No player1Socket for ${eventType}`);
     }
 
     // For remote games, also emit to player 2
     if (this.isRemoteGame && this.player2Socket) {
-      console.log(`[Game ${this.uuid}] Emitting ${eventType} to player2 (socket connected: ${this.player2Socket.connected})`);
+      app.log.info(`[Game ${this.uuid}] Emitting ${eventType} to player2 (socket connected: ${this.player2Socket.connected})`);
       this.player2Socket.emit(this.uuid, payload);
     } else if (this.isRemoteGame) {
-      console.log(`[Game ${this.uuid}] WARNING: No player2Socket for ${eventType}`);
+      app.log.info(`[Game ${this.uuid}] WARNING: No player2Socket for ${eventType}`);
     }
   }
 
@@ -258,10 +259,10 @@ export class Game {
           state: gameState
         });
       } catch (err) {
-        console.error(`[Game ${this.uuid}] Error emitting to player 1:`, err);
+        app.log.error(`[Game ${this.uuid}] Error emitting to player 1:`, err);
       }
     } else {
-      console.warn(`[Game ${this.uuid}] emitGameUpdate: player1Socket is null!`);
+      app.log.warn(`[Game ${this.uuid}] emitGameUpdate: player1Socket is null!`);
     }
 
     // Player 2 gets mirrored state (for remote games)
@@ -273,7 +274,7 @@ export class Game {
           state: mirroredState
         });
       } catch (err) {
-        console.error(`[Game ${this.uuid}] Error emitting to player 2:`, err);
+        app.log.error(`[Game ${this.uuid}] Error emitting to player 2:`, err);
       }
     }
   }
@@ -330,27 +331,27 @@ export class Game {
             this.playerInputs.paddle2Dir = data.paddle2Dir;
           }
         } catch (err) {
-          console.error('Error parsing AI input:', err);
+          app.log.error('Error parsing AI input:', err);
         }
       });
 
-      console.log(`Game ${this.uuid}: Subscribed to AI input channel`);
+      app.log.info(`Game ${this.uuid}: Subscribed to AI input channel`);
     } catch (err) {
-      console.error('Error setting up AI subscription:', err);
+      app.log.error('Error setting up AI subscription:', err);
     }
   }
 
 
   setPlayerReady(playerNum) {
-    console.log(`[Game ${this.uuid}] setPlayerReady called: playerNum=${playerNum}, type=${this.type}`);
+    app.log.info(`[Game ${this.uuid}] setPlayerReady called: playerNum=${playerNum}, type=${this.type}`);
 
     // Prevent setting the same player ready multiple times
     if (playerNum === 1 && this.playersReady.player1) {
-      console.log(`[Game ${this.uuid}] Player 1 already ready, ignoring duplicate call`);
+      app.log.info(`[Game ${this.uuid}] Player 1 already ready, ignoring duplicate call`);
       return;
     }
     if (playerNum === 2 && this.playersReady.player2) {
-      console.log(`[Game ${this.uuid}] Player 2 already ready, ignoring duplicate call`);
+      app.log.info(`[Game ${this.uuid}] Player 2 already ready, ignoring duplicate call`);
       return;
     }
 
@@ -369,12 +370,12 @@ export class Game {
       this.playersReady.player2 = true;
     }
 
-    console.log(`[Game ${this.uuid}] Ready status - P1: ${this.playersReady.player1}, P2: ${this.playersReady.player2}`);
+    app.log.info(`[Game ${this.uuid}] Ready status - P1: ${this.playersReady.player1}, P2: ${this.playersReady.player2}`);
 
     // For remote games, only emit ready status if Player 2 has confirmed they're listening
     // (or if it's Player 2 setting ready, they must be listening)
     if (this.isRemoteGame && !this.player2Joined && playerNum === 1) {
-      console.log(`[Game ${this.uuid}] Player 2 hasn't joined yet, deferring ready-status emit`);
+      app.log.info(`[Game ${this.uuid}] Player 2 hasn't joined yet, deferring ready-status emit`);
       // Ready status will be emitted when Player 2 joins (in setPlayer2Joined)
       return;
     }
@@ -382,7 +383,7 @@ export class Game {
     this.emitReadyStatus();
 
     if (this.playersReady.player1 && this.playersReady.player2) {
-      console.log(`[Game ${this.uuid}] Both players ready! Starting countdown...`);
+      app.log.info(`[Game ${this.uuid}] Both players ready! Starting countdown...`);
       this.startCountdown();
     }
   }
@@ -401,17 +402,17 @@ export class Game {
   startCountdown() {
     // Prevent duplicate countdowns
     if (this.countdownInProgress) {
-      console.log(`[Game ${this.uuid}] Countdown already in progress, skipping`);
+      app.log.info(`[Game ${this.uuid}] Countdown already in progress, skipping`);
       return;
     }
     this.countdownInProgress = true;
 
     let count = 3;
-    console.log(`[Game ${this.uuid}] Starting countdown...`);
-    console.log(`[Game ${this.uuid}] player1Socket connected: ${this.player1Socket?.connected}, player2Socket connected: ${this.player2Socket?.connected}`);
+    app.log.info(`[Game ${this.uuid}] Starting countdown...`);
+    app.log.info(`[Game ${this.uuid}] player1Socket connected: ${this.player1Socket?.connected}, player2Socket connected: ${this.player2Socket?.connected}`);
 
     this.countdownInterval = setInterval(() => {
-      console.log(`[Game ${this.uuid}] Emitting countdown: ${count}`);
+      app.log.info(`[Game ${this.uuid}] Emitting countdown: ${count}`);
       this.emitToPlayers("countdown", { count: count });
 
       count--;
@@ -433,7 +434,7 @@ export class Game {
       clearInterval(this.countdownInterval);
       this.countdownInterval = null;
       this.countdownInProgress = false;
-      console.log(`[Game ${this.uuid}] Countdown stopped`);
+      app.log.info(`[Game ${this.uuid}] Countdown stopped`);
     }
   }
 
@@ -442,7 +443,7 @@ export class Game {
   ///////////////////////////////////////////
 
   startGame() {
-    console.log('Game.startGame() called');
+    app.log.info('Game.startGame() called');
     this.gameRunning = true;
     this.score.winner = null;
     this.emitToPlayers("game-start", {});
@@ -450,10 +451,10 @@ export class Game {
   }
 
   pauseGame() {
-    console.log(`[Game ${this.uuid}] pauseGame() called, gameRunning: ${this.gameRunning}`);
+    app.log.info(`[Game ${this.uuid}] pauseGame() called, gameRunning: ${this.gameRunning}`);
 
     if (!this.gameRunning) {
-      console.log(`[Game ${this.uuid}] pauseGame() - game not running, cannot pause`);
+      app.log.info(`[Game ${this.uuid}] pauseGame() - game not running, cannot pause`);
       return;
     }
 
@@ -466,14 +467,14 @@ export class Game {
     // For pause, send the current state (mirrored for player 2)
     this.emitGameUpdate(this.getGameState());
     this.emitToPlayers("game-paused", {});
-    console.log(`[Game ${this.uuid}] Game paused successfully`);
+    app.log.info(`[Game ${this.uuid}] Game paused successfully`);
   }
 
   resumeGame() {
-    console.log(`[Game ${this.uuid}] resumeGame() called, gameRunning: ${this.gameRunning}`);
+    app.log.info(`[Game ${this.uuid}] resumeGame() called, gameRunning: ${this.gameRunning}`);
 
     if (this.gameRunning) {
-      console.log(`[Game ${this.uuid}] resumeGame() - game already running`);
+      app.log.info(`[Game ${this.uuid}] resumeGame() - game already running`);
       return;
     }
 
@@ -481,7 +482,7 @@ export class Game {
 
     this.emitToPlayers("game-start", {});
     this.gameLoop();
-    console.log(`[Game ${this.uuid}] Game resumed successfully`);
+    app.log.info(`[Game ${this.uuid}] Game resumed successfully`);
   }
 
   resetGame() {
@@ -529,13 +530,13 @@ export class Game {
         this.gameLoopInterval = null;
       }
 
-      console.log(`[Game ${this.uuid}] gameLoop() starting, gameRunning: ${this.gameRunning}`);
+      app.log.info(`[Game ${this.uuid}] gameLoop() starting, gameRunning: ${this.gameRunning}`);
 
       // 60 FPS = ~16.67ms par frame
       this.gameLoopInterval = setInterval(() => {
         try {
           if (!this.gameRunning) {
-            console.log(`[Game ${this.uuid}] gameLoop() ending - gameRunning is false`);
+            app.log.info(`[Game ${this.uuid}] gameLoop() ending - gameRunning is false`);
             if (this.gameLoopInterval) {
               clearInterval(this.gameLoopInterval);
               this.gameLoopInterval = null;
@@ -545,11 +546,11 @@ export class Game {
 
           this.update();
         } catch (err) {
-          console.error(`[Game ${this.uuid}] Error in gameLoop interval:`, err);
+          app.log.error(`[Game ${this.uuid}] Error in gameLoop interval:`, err);
         }
       }, 1000 / 60); // 60 FPS
     } catch (err) {
-      console.error(`[Game ${this.uuid}] Error in gameLoop():`, err);
+      app.log.error(`[Game ${this.uuid}] Error in gameLoop():`, err);
     }
   }
 
@@ -645,7 +646,7 @@ export class Game {
         difficulty: this.difficulty
       }));
     } catch (err) {
-      console.error('Error publishing game state to AI:', err);
+      app.log.error('Error publishing game state to AI:', err);
     }
   }
 
@@ -684,7 +685,7 @@ export class Game {
     if (this.reconnectionTimeout) {
       clearTimeout(this.reconnectionTimeout);
       this.reconnectionTimeout = null;
-      console.log(`[Game ${this.uuid}] Reconnection timeout cleared on destroy`);
+      app.log.info(`[Game ${this.uuid}] Reconnection timeout cleared on destroy`);
     }
 
     // Clean up Redis subscription
@@ -693,7 +694,7 @@ export class Game {
         await this.redisSubscriber.unsubscribe(`game:${this.uuid}:ai-input`);
         await this.redisSubscriber.quit();
       } catch (err) {
-        console.error('Error cleaning up Redis subscriber:', err);
+        app.log.error('Error cleaning up Redis subscriber:', err);
       }
     }
   }

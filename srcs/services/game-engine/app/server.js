@@ -15,10 +15,11 @@ try {
 		};
 	}
 } catch (err) {
-	console.log('HTTPS certs not found, running on HTTP');
+	app.log.info('HTTPS certs not found, running on HTTP');
 }
 
-const app = Fastify({https: httpsOptions});
+const app = Fastify({https: httpsOptions, logger: { level: process.env.LOG_LEVEL || 'info' }});
+export { app };
 setupMetrics(app, 'game-engine');
 
 app.get('/', async () => {
@@ -29,9 +30,9 @@ app.get('/', async () => {
 const start = async () => {
 	try {
 		app.listen({ port: 3007, host: '0.0.0.0' });
-		console.log('Service game-engine running');
+		app.log.info('Service game-engine running');
 	} catch (err) {
-		console.error(err);
+		app.log.error(err);
 		process.exit(1);
 	}
 };

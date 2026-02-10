@@ -11,7 +11,7 @@ export async function send_message_route(request, reply) {
         try {
             payload = jwt.verify(token, process.env.JWT_SECRET);
         } catch (err) {
-            console.log("payload live-chat error:", err);
+            app.log.info("payload live-chat error:", err);
             return reply.code(401).send({ success: false, message: "Invalid or expired token" });
         }
     const senderId = payload.user_id;
@@ -60,7 +60,7 @@ export async function send_message_route(request, reply) {
                 }
             }
         } catch (error) {
-            console.error(`Error fetching username for user ${senderId}:`, error);
+            app.log.error(`Error fetching username for user ${senderId}:`, error);
         }
 
         await redis.publish('notifications', JSON.stringify({
@@ -76,7 +76,7 @@ export async function send_message_route(request, reply) {
 
         return reply.send({ success: true });
     } catch (err) {
-        console.error("DB error:", err);
+        app.log.error("DB error:", err);
         return reply.code(500).send({ success: false, message: "Error to save message" });
     }
 }
@@ -92,7 +92,7 @@ export async function get_messages_route(request, reply) {
         try {
             payload = jwt.verify(token, process.env.JWT_SECRET);
         } catch (err) {
-            console.log("payload live-chat error:", err);
+            app.log.info("payload live-chat error:", err);
             return reply.code(401).send({ success: false, message: "Invalid or expired token" });
         }
     const userId = payload.user_id;

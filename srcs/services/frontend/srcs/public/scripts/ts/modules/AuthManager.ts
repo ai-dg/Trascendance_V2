@@ -339,7 +339,7 @@ export class AuthManager {
     if (!meta) return "";
       const csrf_token = meta.getAttribute('content');
     if (!csrf_token) return "";
-    return "";
+    return csrf_token;
   }
 
   private async logoutHandler() {

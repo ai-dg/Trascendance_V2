@@ -50,7 +50,7 @@ export async function createFriendRequest(token, receiverId) {
 
         return { success: true, message: "Friend request created", senderId };
     } catch (err) {
-        console.error("DB error:", err);
+        app.log.error("DB error:", err);
         return { success: false, message: "Database error" };
     }
 }

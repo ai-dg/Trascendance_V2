@@ -39,7 +39,7 @@ export async function validate_otp_route(request, reply) {
 	try {
 	  row = await redis.get(otp_id);
 	} catch (err) {
-	  console.error("Redis error:", err);
+	  app.log.error("Redis error:", err);
 	  return reply.code(500).send({ success: false, message: 'Server error' });
 	}
 
@@ -48,7 +48,7 @@ export async function validate_otp_route(request, reply) {
 	try {
 	  data = JSON.parse(row);
 	} catch (err) {
-	  console.error("Failed to parse Redis data:", err);
+	  app.log.error("Failed to parse Redis data:", err);
 	  return reply.code(500).send({ success: false, message: 'Server error' });
 	}
 
@@ -61,7 +61,7 @@ export async function validate_otp_route(request, reply) {
   	  return reply.code(401).send({ success: false, message: 'OTP invalid' });
   	}
 
-  	// await redis.del(otp_id);
+  	await redis.del(otp_id);
 
   	return reply.send({ success: true, message: 'OTP valid', email: data.email });
 }
@@ -76,9 +76,7 @@ export async function verify_otp_route(request, reply) {
 
   	let user = null;
   	try {
-		console.log(email);
   	  user = await app.db.get(`SELECT * FROM users WHERE user_mail = ?`, [email]);
-		console.log("user verified: ", user);
 	} catch (err) {
   	  return reply.send(get_error_message(e.SQL_ERROR, 500));
   	}
@@ -130,28 +128,16 @@ export async function verify_otp_email_route(request, reply) {
 	let payload;
 	try {
 	    payload = verify(token, process.env.JWT_SECRET);
-		console.log(payload.user_id);
 	} catch {
 	    return reply.code(401).send({ success: false, message: "Invalid or expired token" });
 	}
 
   	let user = null;
   	try {
-		const info = await app.db.all(`PRAGMA table_info(users)`);
-		console.log(info);
-
-		console.log("Payload user_id:", payload.user_id);
-		const test = await app.db.all("SELECT * FROM users");
-		console.log("All users:", test);
-
-
 		const user_id = Number(payload.user_id);
-		console.log("user_id as number:", user_id);
-
   	  	user = await app.db.get(`SELECT * FROM users WHERE user_id = ?`, [user_id]);
-		console.log("user verified: ", user);
 	} catch (err) {
-		console.log("User id not found");
+		app.log.error("User id not found");
   	  return reply.send(get_error_message(e.SQL_ERROR, 500));
   	}
 
@@ -185,7 +171,7 @@ export async function verify_otp_email_route(request, reply) {
   	};
 
   	if (!app.mailChannel) {
-		console.log("mailChannel error");
+		app.log.info("mailChannel error");
   	  return reply.send(get_error_message(e.SQL_ERROR, 500));
 	}
 
@@ -243,7 +229,6 @@ export async function login_route(request, reply){
 
 		let user = null;
 		const {pseudo, password} = request.body;
-		console.log(pseudo, password)
 		if (!pseudo || ! password)
 			return reply.send(get_error_message(e.AUTH_INVALID_CREDENTIALS, 401));
 		try{
@@ -376,6 +361,7 @@ export async function login_otp_validation_route(request, reply)
 	try {
 		if (!is_valid)
 			return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
+		await redis.del(otp_id);
 		const jti = crypto.randomUUID();
 		const payload = {
 			user_id: data.user_id,
@@ -388,13 +374,13 @@ export async function login_otp_validation_route(request, reply)
 		await redis.set(`jwt:${jti}`, 'valid', { EX: 3600 });
 
 		let userLang = 'en';
-		console.log("USER_ID:", data.user_id);
+		app.log.debug("login otp validation for user_id: %s", data.user_id);
 		try {
 			const langRes = await fetch(`https://language-manager:3001/get-lang?user_id=${data.user_id}`);
 			const langData = await langRes.json();
 			userLang = langData.lang || 'en';
 		} catch (err) {
-			console.error("Error fetching user language:", err);
+			app.log.error("Error fetching user language:", err);
 			userLang = 'en';
 		}
 
@@ -476,7 +462,7 @@ export async function logout_route(request, reply) {
     return reply.send({ success: true, message: "User logged out" });
 
   } catch (err) {
-    console.error(err);
+    app.log.error(err);
     return reply.code(500).send({ success: false, message: "Internal server error" });
   }
 }
@@ -517,7 +503,6 @@ export async function signup_route(request, reply)
 			return reply.send({success: false, message})
 		}
 
-		console.log(email)
 		const is_mail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 
 		email = validator.normalizeEmail(email);
@@ -528,7 +513,6 @@ export async function signup_route(request, reply)
 		if (m)
 			return reply.send({success: false, message:"Oops! Your mail seems to be already used. Please try to reset your password"}, 400);
 		const u = await app.db.get(`SELECT * FROM users WHERE pseudo= ? `, [pseudo])
-		console.log("check pseudo : ",u)
 		if (u)
 			return reply.send({success: false, message:"Oops! pseudo already used... "}, 400);
 
@@ -591,12 +575,13 @@ export async function signup_otp_validation_route(request, reply)
 	try {
 		if (!is_valid)
 			return reply.send(get_error_message(e.AUTH_INVALID_TOKEN), 401);
+		await redis.del(otp_id);
 		const insert = await app.db.run('INSERT INTO "users" ("user_mail", "pseudo", "user_password", "avatar") VALUES (?, ?, ?, ?)', [data.email, data.pseudo, data.passwordHash, data.avatar])
 
 		if (insert && insert.changes > 0) {
-			console.log("insert: ", insert);
+			app.log.info("insert: ", insert);
 		const userId = insert.lastID;
-		console.log("userId: " + userId);
+		app.log.info("userId: " + userId);
 		const langRes = await fetch('https://language-manager:3001/create-lang', {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
@@ -607,20 +592,20 @@ export async function signup_otp_validation_route(request, reply)
 			// }
 		});
 		if (!langRes.ok) {
-			console.error("Failed to create user language entry", langRes.status, langRes.statusText);
+			app.log.error("Failed to create user language entry", langRes.status, langRes.statusText);
 		}
 		const lang = await langRes.json();
 		if (!lang.success) {
 			return { succes: false, message: "Couldn't reache lang database" };
 		}
-		console.log("SUCESSSSSSS");
+		app.log.info("SUCESSSSSSS");
 		}
 
 		return reply.send({...get_success_message(data.email, data.pseudo), message: 'user created'}, 200)
 	}
 	catch(err)
 	{
-		console.error(err.message)
+		app.log.error(err.message)
 		return reply.send(get_error_message(e.SERVER_ERROR, 500))
 	}
 }
@@ -635,10 +620,7 @@ export async function reset_forgotten_password_route(request, reply) {
 
 
   const { otp_id, password } = request.body;
-  console.log("Body got:", { otp_id, password });
-
   if (!password) {
-    console.log("Password missing");
     return reply.status(400).send({ success: false, message: "Password missing" });
   }
 
@@ -646,12 +628,12 @@ export async function reset_forgotten_password_route(request, reply) {
   try {
     row = await redis.get(otp_id);
   } catch (err) {
-    console.error("Redis.get error:", err);
+    app.log.error("Redis.get error:", err);
     return reply.send(get_error_message(e.SERVER_ERROR, 500));
   }
 
   if (!row) {
-    console.error("No OTP found");
+    app.log.error("No OTP found");
     return reply.send({ success: false, message: "Invalid token" }, 401);
   }
 
@@ -675,7 +657,7 @@ export async function reset_forgotten_password_route(request, reply) {
 
     await redis.del(otp_id);
 
-    console.log("Password changed");
+    app.log.info("Password changed for user");
     return reply.send({ success: true, message: "password changed" }, 201);
   } catch (err) {
     return reply.send(get_error_message(e.SERVER_ERROR, 500));
@@ -696,14 +678,13 @@ export async function reset_forgotten_password_route(request, reply) {
 export async function reset_password_request_route(request, reply)  {
 
 		const email = request.body.email;
-		console.log("email: ", email);
 		let user = null;
 		try{
 			user = await app.db.get("SELECT * FROM users WHERE user_mail= ?", [email]);
 		}
 		catch(err)
 		{
-			console.error(err)
+			app.log.error(err)
 			return reply.send(get_error_message(e.SQL_ERROR, 500))
 		}
 		if (user)
@@ -784,7 +765,7 @@ export async function auth_me_route(request, reply) {
     return reply.send({ success: true, data: { user } });
 
   } catch (err) {
-    console.error("auth/me error:", err);
+    app.log.error("auth/me error:", err);
     return reply.code(500).send({ success: false, message: "Internal app error" });
   }
 }
@@ -820,7 +801,7 @@ export async function get_id_by_username_route(request, reply) {
     return reply.send({ success: true, data: { user } });
 
   } catch (err) {
-    console.error("auth/me error:", err);
+    app.log.error("auth/me error:", err);
     return reply.code(500).send({ success: false, message: "Internal app error" });
   }
 }
@@ -861,7 +842,7 @@ export async function get_username_by_id_route(request, reply) {
     return reply.send({ success: true, data: { user } });
 
   } catch (err) {
-    console.error("auth/me error:", err);
+    app.log.error("auth/me error:", err);
     return reply.code(500).send({ success: false, message: "Internal app error" });
   }
 }

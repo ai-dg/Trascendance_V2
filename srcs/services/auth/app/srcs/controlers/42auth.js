@@ -1,4 +1,4 @@
-import { redis } from '../../server.js';
+import { app, redis } from '../../server.js';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
@@ -9,13 +9,6 @@ export async function oauth_login_route(request, reply) {
     const protocol = request.headers['x-forwarded-proto'] || 'http';
     const host = request.headers['x-forwarded-host'] || request.headers.host || 'localhost';
     const redirectUri = `${protocol}://${host}/auth/42/callback`;
-
-    console.log('42 OAuth Login - Redirect URI:', redirectUri);
-    console.log('Headers:', {
-        'x-forwarded-proto': request.headers['x-forwarded-proto'],
-        'x-forwarded-host': request.headers['x-forwarded-host'],
-        'host': request.headers.host
-    });
 
     // Store the redirect URI in a cookie so the callback can use the same one
     reply.setCookie('oauth_redirect_uri', redirectUri, {
@@ -59,7 +52,6 @@ export async function oauth_callback_route(request, reply) {
             });
 
             const tokenData = await tokenRes.json();
-            console.log(tokenData);
 
             const userRes = await fetch('https://api.intra.42.fr/v2/me', {
                 headers: { Authorization: `Bearer ${tokenData.access_token}` },
@@ -123,7 +115,7 @@ export async function oauth_callback_route(request, reply) {
             // Redirect with oauth_success flag to clear session storage checking
             return reply.redirect('/?oauth_success=1');
         } catch (err) {
-            console.error('42 auth error:', err);
+            app.log.error('42 auth error:', err);
             return reply.status(500).send('42 auth failed');
         }
 }
@@ -164,7 +156,7 @@ export async function oauth_update_profile_route(request, reply) {
         );
         return reply.send({ sucess:true, message: 'Profile updated', data: { pseudo: userData.login, email: userData.email, avatar: userData.image.versions.medium } });
     } catch (err) {
-        console.error('42 update profile error:', err);
+        app.log.error('42 update profile error:', err);
         return reply.status(500).send({ success: false, message: "Failed to update 42 profile"});
     }
 }

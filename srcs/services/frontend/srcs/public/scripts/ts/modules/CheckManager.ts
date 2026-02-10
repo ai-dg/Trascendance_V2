@@ -39,10 +39,11 @@ export class CheckManager {
     public checkPassword(passwd: string) {
         const errors: string[] = [];
 
-        if (passwd.length < 8) errors.push(this.t('errLength'));
+        if (passwd.length < 12) errors.push(this.t('errLength'));
         if (!/[A-Z]/.test(passwd)) errors.push(this.t('errUpper'));
         if (!/[a-z]/.test(passwd)) errors.push(this.t('errLower'));
         if (!/[0-9]/.test(passwd)) errors.push(this.t('errNbr'));
+        if (!/[^a-zA-Z0-9]/.test(passwd)) errors.push(this.t('errSpecial') || "Must contain a special character");
 
         return errors;
     }

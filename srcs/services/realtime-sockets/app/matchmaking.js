@@ -17,6 +17,8 @@
  * Each entry: { odileUserId, socketId, gameUUID, timestamp }
  */
 
+import { app } from './server.js';
+
 // Redis key for the matchmaking queue
 const MATCHMAKING_QUEUE = 'matchmaking:random';
 
@@ -35,7 +37,7 @@ const searchingPlayers = new Map();
  * @param {Function} onMatchFound - Callback when match is found
  */
 async function handleMatchmaking(redis, socket, odileUserId, gameUUID, runningGames, onMatchFound) {
-	console.log(`[Matchmaking] Player ${odileUserId} is searching for opponent...`);
+	app.log.info(`[Matchmaking] Player ${odileUserId} is searching for opponent...`);
 
 	// Step 1: Try to find a waiting opponent in the Redis queue
 	// lPop removes and returns the first element (FIFO - first in, first out)
@@ -44,7 +46,7 @@ async function handleMatchmaking(redis, socket, odileUserId, gameUUID, runningGa
 	if (waitingPlayerData) {
 		// Someone is waiting! Parse their data
 		const opponent = JSON.parse(waitingPlayerData);
-		console.log(`[Matchmaking] Found waiting player: ${opponent.odileUserId}`);
+		app.log.info(`[Matchmaking] Found waiting player: ${opponent.odileUserId}`);
 
 		// Edge case: Make sure we're not matching with ourselves
 		// (can happen if player opens two tabs or same JWT token on multiple devices)
@@ -54,7 +56,7 @@ async function handleMatchmaking(redis, socket, odileUserId, gameUUID, runningGa
 
 			if (waitingPlayerInfo && waitingPlayerInfo.socket.connected) {
 				// They're still connected - this is a duplicate search attempt
-				console.log(`[Matchmaking] Same player detected! User ${odileUserId} is already searching.`);
+				app.log.info(`[Matchmaking] Same player detected! User ${odileUserId} is already searching.`);
 				// Put the original entry back in the queue
 				await redis.rPush(MATCHMAKING_QUEUE, waitingPlayerData);
 
@@ -68,7 +70,7 @@ async function handleMatchmaking(redis, socket, odileUserId, gameUUID, runningGa
 			} else {
 				// Stale entry - the original player disconnected
 				// Discard the stale entry and let this player search normally
-				console.log(`[Matchmaking] Found stale entry for user ${odileUserId}, discarding...`);
+				app.log.info(`[Matchmaking] Found stale entry for user ${odileUserId}, discarding...`);
 				searchingPlayers.delete(opponent.odileUserId);
 				// Continue to check for more players in queue or add this player
 				await addToQueue(redis, socket, odileUserId, gameUUID);
@@ -81,7 +83,7 @@ async function handleMatchmaking(redis, socket, odileUserId, gameUUID, runningGa
 
 	} else {
 		// No one waiting - add this player to the queue
-		console.log(`[Matchmaking] No opponent found, adding player to queue...`);
+		app.log.info(`[Matchmaking] No opponent found, adding player to queue...`);
 		await addToQueue(redis, socket, odileUserId, gameUUID);
 	}
 }
@@ -103,7 +105,7 @@ async function addToQueue(redis, socket, odileUserId, gameUUID) {
 	// Track this player so we can notify them when match is found
 	searchingPlayers.set(odileUserId, { socket, gameUUID });
 
-	console.log(`[Matchmaking] Player ${odileUserId} added to queue (game: ${gameUUID})`);
+	app.log.info(`[Matchmaking] Player ${odileUserId} added to queue (game: ${gameUUID})`);
 }
 
 /**
@@ -117,14 +119,14 @@ async function addToQueue(redis, socket, odileUserId, gameUUID) {
  * sees themselves on the left side of their screen.
  */
 async function createMatch(redis, player2Socket, player2UserId, player2GameUUID, player1Data, runningGames, onMatchFound) {
-	console.log(`[Matchmaking] Creating match: ${player1Data.odileUserId} vs ${player2UserId}`);
+	app.log.info(`[Matchmaking] Creating match: ${player1Data.odileUserId} vs ${player2UserId}`);
 
 	// Get player 1's socket from our tracking map
 	const player1Info = searchingPlayers.get(player1Data.odileUserId);
 
 	if (!player1Info || !player1Info.socket.connected) {
 		// Player 1 disconnected while waiting - add player 2 to queue instead
-		console.log(`[Matchmaking] Player 1 disconnected, adding player 2 to queue`);
+		app.log.info(`[Matchmaking] Player 1 disconnected, adding player 2 to queue`);
 		searchingPlayers.delete(player1Data.odileUserId);
 		await addToQueue(redis, player2Socket, player2UserId, player2GameUUID);
 		return;
@@ -146,7 +148,7 @@ async function createMatch(redis, player2Socket, player2UserId, player2GameUUID,
 	const game = runningGames.get(gameUUID);
 
 	if (!game) {
-		console.error(`[Matchmaking] Game ${gameUUID} not found!`);
+		app.log.error(`[Matchmaking] Game ${gameUUID} not found!`);
 		return;
 	}
 
@@ -163,10 +165,10 @@ async function createMatch(redis, player2Socket, player2UserId, player2GameUUID,
 		});
 	}
 
-	console.log(`[Matchmaking] Match created successfully!`);
-	console.log(`[Matchmaking] Game UUID: ${gameUUID}`);
-	console.log(`[Matchmaking] Player 1: ${player1Data.odileUserId}`);
-	console.log(`[Matchmaking] Player 2: ${player2UserId}`);
+	app.log.info(`[Matchmaking] Match created successfully!`);
+	app.log.info(`[Matchmaking] Game UUID: ${gameUUID}`);
+	app.log.info(`[Matchmaking] Player 1: ${player1Data.odileUserId}`);
+	app.log.info(`[Matchmaking] Player 2: ${player2UserId}`);
 }
 
 /**
@@ -174,7 +176,7 @@ async function createMatch(redis, player2Socket, player2UserId, player2GameUUID,
  * Called when player clicks "Cancel" or disconnects
  */
 async function cancelSearch(redis, odileUserId) {
-	console.log(`[Matchmaking] Canceling search for player ${odileUserId}`);
+	app.log.info(`[Matchmaking] Canceling search for player ${odileUserId}`);
 
 	// Remove from our tracking map
 	const playerInfo = searchingPlayers.get(odileUserId);
@@ -189,7 +191,7 @@ async function cancelSearch(redis, odileUserId) {
 			const player = JSON.parse(data);
 			if (player.odileUserId === odileUserId) {
 				await redis.lRem(MATCHMAKING_QUEUE, 1, data);
-				console.log(`[Matchmaking] Removed ${odileUserId} from queue`);
+				app.log.info(`[Matchmaking] Removed ${odileUserId} from queue`);
 				return playerInfo; // Return info so caller can clean up game
 			}
 		}
@@ -220,7 +222,7 @@ async function getQueueSize(redis) {
 async function clearQueue(redis) {
 	await redis.del(MATCHMAKING_QUEUE);
 	searchingPlayers.clear();
-	console.log(`[Matchmaking] Queue cleared`);
+	app.log.info(`[Matchmaking] Queue cleared`);
 }
 
 // Export all functions

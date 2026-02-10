@@ -1,4 +1,3 @@
-const LOG = true
 
 const ERRORS_MESSAGES = {
 	AUTH_INVALID_CREDENTIALS : "Adresse e-mail ou mot de passe incorrect",
@@ -24,7 +23,7 @@ export const e = Object.freeze({
 })
 
 
-export function get_error_message(message=AUTH_INVALID_CREDENTIALS, log=LOG)
+export function get_error_message(message=AUTH_INVALID_CREDENTIALS)
 {	
 	let msg = {
 			success:false,
@@ -33,8 +32,6 @@ export function get_error_message(message=AUTH_INVALID_CREDENTIALS, log=LOG)
     			message: ERRORS_MESSAGES[message],
 				}
 			}
-	if (log)
-		console.log(msg);
 	return msg;
 }
 
@@ -51,7 +48,7 @@ export function get_message(success, key, table=SUCCESS_MESSAGES)
 
 
 
-export function get_success_message(email, username,log=LOG)
+export function get_success_message(email, username)
 {	
 	let msg = {
 			success: true,

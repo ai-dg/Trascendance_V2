@@ -34,9 +34,6 @@ export async function update_avatar_route(request, reply) {
         } catch {
             return reply.code(401).send({ success: false, message: "Invalid or expired token" });
         }
-        console.log("Payload:", payload);
-        console.log("Cookies:", request.cookies);
-        console.log("Body:", request.body);
         
         const { avatar } = request.body;
         if (!avatar) return reply.code(400).send({ success: false, message: "No avatar provided" });
@@ -45,12 +42,12 @@ export async function update_avatar_route(request, reply) {
             "UPDATE users SET avatar = ? WHERE user_id = ?",
             [avatar, payload.user_id]
         );
-        console.log("Update result:", result);
+        app.log.info("Update result:", result);
 
         return reply.send({ success: true, message: "Avatar updated", avatar });
 
     } catch (err) {
-        console.error("update_avatar error:", err);
+        app.log.error("update_avatar error:", err);
         return reply.code(500).send({ success: false, message: "Internal server error" });
     }
 }
@@ -69,9 +66,6 @@ export async function update_username_route(request, reply) {
             return reply.code(401).send({ success: false, message: "Invalid or expired token" });
         }
 
-        console.log("Payload:", payload);
-        console.log("Cookies:", request.cookies);
-        console.log("Body:", request.body);
 
         const { username } = request.body;
         if (!username) {
@@ -83,7 +77,7 @@ export async function update_username_route(request, reply) {
                 "UPDATE users SET pseudo = ? WHERE user_id = ?",
                 [username, payload.user_id]
             );
-            console.log("Update result:", result);
+            app.log.info("Update result:", result);
             return reply.send({ success: true, message: "Username updated", username });
         } catch (dbErr) {
              if (dbErr.code === "SQLITE_CONSTRAINT") {
@@ -95,7 +89,7 @@ export async function update_username_route(request, reply) {
 
 
     } catch (err) {
-        console.error("update_username error:", err);
+        app.log.error("update_username error:", err);
         return reply.code(500).send({ success: false, message: "Internal server error" });
     }
 }
@@ -113,9 +107,6 @@ export async function update_email_route(request, reply) {
             return reply.code(401).send({ success: false, message: "Invalid or expired token" });
         }
 
-        console.log("Payload:", payload);
-        console.log("Cookies:", request.cookies);
-        console.log("Body:", request.body);
 
         const{ email } = request.body;
         if (!email)
@@ -127,7 +118,7 @@ export async function update_email_route(request, reply) {
                 "UPDATE users SET user_mail = ? WHERE user_id = ?",
                 [email, payload.user_id]
             );
-            console.log("Update result:", result);
+            app.log.info("Update result:", result);
             return reply.send({ success: true, message: "Email updated", email });
         } catch (dbErr) {
              if (dbErr.code === "SQLITE_CONSTRAINT") {
@@ -139,7 +130,7 @@ export async function update_email_route(request, reply) {
             
             
     } catch (err) {
-        console.error("update_email error:", err);
+        app.log.error("update_email error:", err);
         return reply.code(500).send({ success: false, message: "Internal server error" });
     }
 }
@@ -157,9 +148,6 @@ export async function verify_update_email_route(request, reply) {
             return reply.code(401).send({ success: false, message: "Invalid or expired token" });
         }
 
-        console.log("Payload:", payload);
-        console.log("Cookies:", request.cookies);
-        console.log("Body:", request.body);
 
         const{ email } = request.body;
         if (!email)
@@ -183,7 +171,7 @@ export async function verify_update_email_route(request, reply) {
         return reply.code(200).send({ success: true, message: "Email available"});
             
     } catch (err) {
-        console.error("update_email error:", err);
+        app.log.error("update_email error:", err);
         return reply.code(500).send({ success: false, message: "Internal server error" });
     }
 }
@@ -226,9 +214,6 @@ export async function update_password_route(request, reply) {
             return reply.code(401).send({ success: false, message: "Invalid or expired token" });
         }
 
-        console.log("Payload:", payload);
-        console.log("Cookies:", request.cookies);
-        console.log("Body:", request.body);
 
         const{ password } = request.body;
         if (!password)
@@ -240,8 +225,8 @@ export async function update_password_route(request, reply) {
                 "UPDATE users SET user_password = ? WHERE user_id = ?",
                 [hashed, payload.user_id]
             );
-            console.log("Update result:", result);
-            return reply.send({ success: true, message: "password updated", password });
+            app.log.info("Update result:", result);
+            return reply.send({ success: true, message: "password updated" });
         } catch (dbErr) {
              if (dbErr.code === "SQLITE_CONSTRAINT") {
                 return reply.code(400).send({ success: false, message: "sqlite error" });
@@ -252,7 +237,7 @@ export async function update_password_route(request, reply) {
             
             
     } catch (err) {
-        console.error("update_password error:", err);
+        app.log.error("update_password error:", err);
         return reply.code(500).send({ success: false, message: "Internal server error" });
     }
 }
@@ -264,19 +249,16 @@ export async function delete_account_route(request, reply) {
         if (!email || !password)
             return reply.send({ success: false, message: "Missing email or password "});
 
-        console.log("email:", email, "password:", password);
         const user = await app.db.get(`SELECT * FROM users WHERE user_mail = ?`, [email]);
         if (!user)
 			return reply.send({ success: false, message: "User not found." }, 404);
-
-        console.log(user);
         const isValid = await bcrypt.compare(password, user.user_password);
 		if (!isValid)
 			return reply.status(401).send({ success: false, message: "Incorrect password." });
        
-        console.log("Before deleting");
+        app.log.info("Before deleting");
         await app.db.run(`DELETE FROM users WHERE user_mail = ?`, [email]);
-        console.log("After deleting");
+        app.log.info("After deleting");
        
         try {
             const langRes = await fetch('http://language-manager:3001/delete-lang', {
@@ -286,14 +268,14 @@ export async function delete_account_route(request, reply) {
             });
             const lang = await langRes.json();
             if (!langRes.succes)
-                console.warn("Could not remove language record:", lang.message);
+                app.log.warn("Could not remove language record:", lang.message);
 		    } catch (langErr) {
-			    console.warn("Language microservice unreachable:", langErr.message);
+			    app.log.warn("Language microservice unreachable:", langErr.message);
 		    }
 
             return reply.send({ success: true, message: 'Account for ${email} deleted successfully.'}, 200);
         } catch (err) {
-            console.error("delete_account_route error:", err.message);
+            app.log.error("delete_account_route error:", err.message);
             return reply.send({ success: false, message: "Server error while deleting account." });
         }
 }

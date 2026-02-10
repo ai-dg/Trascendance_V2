@@ -91,7 +91,7 @@ export async function is_auth(request){
 	}
 	catch(err)
 	{
-		console.error(err.message);
+		app.log.error(err.message);
 		return {success:false, jwt:{}, message: e.SERVER_ERROR}
 	}
 
@@ -102,7 +102,7 @@ export async function is_auth(request){
 	}
 	catch(err)
 	{
-		console.error(err.message);
+		app.log.error(err.message);
 		return {success:false, jwt:{}}
 	}
 	if (!exists || exists != "valid")
@@ -172,7 +172,7 @@ export async function confirm_email_token(token)
 	}
 	catch (err)
 	{
-		console.error("Redis error:", err);
+		app.log.error("Redis error:", err);
 		return { success: false, message: "Temporary server error. Please try again later." };
 	}
 
@@ -180,7 +180,7 @@ export async function confirm_email_token(token)
 		result = JSON.parse(res); 
 	}
 	catch(err){
-		console.error("Parse error:", err); 
+		app.log.error("Parse error:", err); 
 		return {success : false, message : err.message};
 	}
 	const email = result.email;
@@ -196,7 +196,7 @@ export async function confirm_email_token(token)
 	
 	if (insert && insert.affectedRows > 0) {
 		const userId = insert.lastInsertRowid;
-		console.log("userId: " + userId);
+		app.log.info("userId: " + userId);
 		const langRes = await fetch(getUrl('/language-manager/set-lang', {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
@@ -206,7 +206,7 @@ export async function confirm_email_token(token)
 		if (!lang.success) {
 			return { succes: false, message: "Couldn't reache lang database" };
 		}
-		console.log("SUCESSSSSSS");
+		app.log.info("SUCESSSSSSS");
 		return { success: true, message: "Account created !" };
 	}
 }
