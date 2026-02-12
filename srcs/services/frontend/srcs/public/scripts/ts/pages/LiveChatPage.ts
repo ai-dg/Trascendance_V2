@@ -257,6 +257,13 @@ export class LiveChatPage {
         }
     }
 
+    public updateReadStatus(): void {
+        const icons = document.querySelectorAll(`.message-status-icon`);
+        icons.forEach(icon => {
+            (icon as HTMLElement).style.color = '#00ffff';
+        });
+    }
+
     private async handleFriendSelection(friendId: any, username: string, avatar?: string | null) {
         console.log("Handling friend selection:", username);
 
@@ -270,6 +277,10 @@ export class LiveChatPage {
             nbrId: Number(friendId),
             online: online
         };
+
+        if (this.socialManager) {
+            await this.socialManager.markMessageAsRead(Number(friendId));
+        }
 
         this.updateProfileView();
         await this.loadChatHistory(friendId);
@@ -329,7 +340,7 @@ export class LiveChatPage {
         }
     }
 
-    private addMessage(text: string, isMine: boolean): void {
+    private addMessage(text: string, isMine: boolean, isRead: boolean = false): void {
         const messagesContainer = document.getElementById('messages-div');
         if (!messagesContainer)
             return;
@@ -347,6 +358,22 @@ export class LiveChatPage {
         );
         
         bubble.textContent = text;
+
+        if (isMine) {
+            const statusIcon = this.uiManager.createElement('span', 'ml-2 text-xs');
+
+            statusIcon.style.color = isRead ? '#00ffff' : '#888'; 
+            statusIcon.textContent = '✓✓';
+            statusIcon.classList.add('message-status-icon');
+
+            const content = this.uiManager.createElement('div', 'flex items-end justify-between gap-2');
+            content.appendChild(document.createTextNode(text));
+            content.appendChild(statusIcon);
+            
+            bubble.innerHTML = '';
+            bubble.appendChild(content);
+        }
+
         wrapper.appendChild(bubble);
         messagesContainer.appendChild(wrapper);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;

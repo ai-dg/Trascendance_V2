@@ -385,11 +385,19 @@ export class SocialManager {
                     if (this.isChatOpenWith(sId)) {
                         console.log("New message from open chat:", data.message);
                         if (this.onNewMessage) this.onNewMessage(sId, data.message);
+                        this.markMessageAsRead(sId);
                     } else {
                         console.log("New message notification for closed chat from user:", sId);
                         if (this.wsManager)
                             this.wsManager.saveNotification(sId, username, data.message);
                         this.syncSocialPanel();
+                    }
+                    break;
+
+                case 'message-read':
+                    const readerId = Number(data.readerId);
+                    if (this.isChatOpenWith(readerId)) {
+                        this.updateReadStatus();
                     }
                     break;
 
@@ -421,6 +429,26 @@ export class SocialManager {
             }
 
         });
+    }
+
+    public updateReadStatus(): void {
+        const icons = document.querySelectorAll('.message-status-icon');
+        icons.forEach(icon => {
+            (icon as HTMLElement).style.color = '#00ffff';
+        });
+    }
+
+    public async markMessageAsRead(senderId: number): Promise<void> {
+        try {
+            await fetch(this.routerManager.getUrl('/live-chat/is-read'), {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ senderId })
+            });
+        } catch (error) {
+            console.error("Error marking message as read:", error);
+        }
     }
 
 

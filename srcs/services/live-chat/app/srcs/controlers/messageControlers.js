@@ -91,3 +91,38 @@ export async function get_messages_route(request, reply) {
         return reply.code(500).send({ success: false });
     }
 };
+
+export async function mark_as_read_route(request, reply) {
+    const { senderId } = request.body;
+    const token = request.cookies.token || request.body.token;
+
+    let payload;
+    try {
+        payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+        console.log("payload live-chat error:", err);
+        return reply.code(401).send({ success: false, message: "Invalid or expired token" });
+    }
+    const userId = payload.user_id;
+    try {
+        await app.db.run(`
+            UPDATE messages
+            SET is_read = 1
+            WHERE sender_id = ? AND receiver_id = ? AND is_read = 0
+            `, [senderId, userId]);
+        
+        await redis.publish('notifications', JSON.stringify({
+            targetUserId: senderId,
+            event: 'notifications',
+            payload: {
+                type: 'message-read',
+                readerId: userId
+            }
+    }));
+        return reply.send({ success: true });
+    } catch (err) {
+        console.error("DB error:", err);
+        return reply.code(500).send({ success: false, message: "Error to mark messages as read" });
+    }
+}
+
