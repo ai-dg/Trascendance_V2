@@ -256,7 +256,7 @@ export class SettingsPage {
     this.t('update_profile'),
     'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200',
     () => {
-      Logger.log('UPDATE PROFILE clicked');
+      console.log('UPDATE PROFILE clicked');
       const updateProfilePage = new UpdateProfilePage(
         this.uiManager,
         this.routerManager,

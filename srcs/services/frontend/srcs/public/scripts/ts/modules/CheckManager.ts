@@ -11,7 +11,7 @@ export class CheckManager {
     // TODO: maybe should get Translations text in the constructor
     constructor(languageManager: LanguageManager) {
         this.auth = new AuthManager(() =>
-            Logger.log("To register user or login in someone"));
+            console.log("To register user or login in someone"));
         this.languageManager = languageManager;
     }
     

@@ -364,7 +364,7 @@ export class App {
   private async render(): Promise<void> {
     this.uiManager.clear();
     // Don't refetch user on every render - use cached currentUser
-    Logger.log("CURRENT USER RENDER: ", this.currentUser);
+    console.log("CURRENT USER RENDER: ", this.currentUser);
 
     switch (this.currentPage) {
       case 'auth':
@@ -391,8 +391,8 @@ export class App {
       case 'check-otp':
         // TODO: Get translations from languageManager
         const text = {} as Translations; // Placeholder
-        this.authManager.otpData ?? { otp_id: 'temp_otp_id', context: 'signup', handler: () => Logger.log('Default handler called') };
-        Logger.log("Using OTP params:", this.authManager.otpData);
+        this.authManager.otpData ?? { otp_id: 'temp_otp_id', context: 'signup', handler: () => console.log('Default handler called') };
+        console.log("Using OTP params:", this.authManager.otpData);
         this.checkOtpPage.render(text, this.authManager.otpData);
         break;
       case 'settings':
@@ -441,11 +441,11 @@ export class App {
       this.authPage.showError(result.error || 'Login failed');
     } else if (result.needsVerification) {
       console.log('Login successful, verification page should be shown by showVerificationCode');
-      Logger.log('Login successful, verification page should be shown by showVerificationCode');
+      console.log('Login successful, verification page should be shown by showVerificationCode');
       // The verification page will be shown by logUser via showVerificationCode
     } else {
       console.log('Login successful without verification');
-      Logger.log('Login successful without verification');
+      console.log('Login successful without verification');
       // Clear the not-authenticated flag on successful login
       sessionStorage.removeItem("not_authenticated");
       // Navigate to menu after successful login
@@ -457,7 +457,7 @@ export class App {
         isGuest: false
       };
 
-      Logger.log('Playing as user:', username, 'with avatar:', 'default.png');
+      console.log('Playing as user:', username, 'with avatar:', 'default.png');
       console.log('Playing as user:', username, 'with avatar:', 'default.png');
       this.routerManager.navigateTo('menu');
     }
@@ -471,18 +471,18 @@ export class App {
       Logger.error('Registration failed:', result.error);
       this.authPage.showError(result.error || 'Registration failed');
     } else if (result.needsVerification) {
-      Logger.log('Registration successful, verification page should be shown by showVerificationCode');
+      console.log('Registration successful, verification page should be shown by showVerificationCode');
       // The verification page will be shown by registerUser via showVerificationCode
     } else {
-      Logger.log('Registration successful without verification');
+      console.log('Registration successful without verification');
       // TODO: Handle successful registration without verification
     }
   }
 
   private async appHandleForgotPassword(email: string): Promise<void> {
-    Logger.log('Forgot password requested for:', email);
+    console.log('Forgot password requested for:', email);
     const response = await this.authManager.forgotPassword(email);
-    Logger.log('Response ', response);
+    console.log('Response ', response);
     if (response.success && response.needsVerification) {
       this.routerManager.navigateTo('check-otp', response.verificationData);
     } else if (!response.success) {
@@ -491,13 +491,13 @@ export class App {
   }
 
   private async handleChangePassword(email: string, password: string): Promise<void> {
-    Logger.log('Change password requested for:', email);
+    console.log('Change password requested for:', email);
     const otpId = this.authManager.otpData?.otp_id;
     if (!otpId) return Logger.error("OTP ID missing");
 
     const response = await this.authManager.changePassword(email, password, otpId);
     if (response.success) {
-      Logger.log("Password changed succesfully");
+      console.log("Password changed succesfully");
       this.authManager.otpData = null;
       this.authPage.showLogin();
     } else {
@@ -507,17 +507,17 @@ export class App {
 
   private handleNewChangePassword(success: boolean): void {
     if (success) {
-      Logger.log('OTP verification successful, redirecting to change password');
+      console.log('OTP verification successful, redirecting to change password');
       this.authPage.handleChangePassword;
     } else {
-      Logger.log('OTP verification failed');
+      console.log('OTP verification failed');
       // Stay on check-otp page to retry
     }
   }
 
   private async handleOtpVerificationComplete(success: boolean): Promise<void> {
     if (success) {
-      Logger.log('OTP verification successful, redirecting to menu');
+      console.log('OTP verification successful, redirecting to menu');
       console.log('OTP complete', success);
       this.authManager.otpData = null;
       console.log('Fetching current user after OTP verification...');
@@ -535,7 +535,7 @@ export class App {
       console.log('Current user after OTP verification:', this.currentUser);
       this.routerManager.navigateTo('menu');
     } else {
-      Logger.log('OTP verification failed');
+      console.log('OTP verification failed');
       // Stay on check-otp page to retry
     }
   }
@@ -575,7 +575,7 @@ export class App {
       }
     });
 
-    Logger.log('Playing as guest:', nickname, 'with avatar:', avatar);
+    console.log('Playing as guest:', nickname, 'with avatar:', avatar);
     this.routerManager.navigateTo('menu');
   }
 
@@ -614,10 +614,10 @@ export class App {
 
   private handleBackToUpdateProfile(success: boolean): void {
     if (success) {
-      Logger.log("Email updated successfully!");
+      console.log("Email updated successfully!");
       this.routerManager.navigateTo('update-profile');
     } else {
-      Logger.log("Problem to update e-mail");
+      console.log("Problem to update e-mail");
       // this.routerManager.navigateTo('update-profile');
     }
   }
@@ -628,7 +628,7 @@ export class App {
 
   private handlePlayGameAI(): void {
     // TODO: Implement AI game logic
-    Logger.log('Starting AI game...');
+    console.log('Starting AI game...');
     if (this.gamePageAI) {
       this.gamePageAI.render(this.currentUser);
     }
@@ -637,13 +637,13 @@ export class App {
 
   private handlePlayGameLocal(): void {
     // TODO: Implement local multiplayer logic
-    Logger.log('Starting local multiplayer game...');
+    console.log('Starting local multiplayer game...');
     this.routerManager.navigateTo('game-local');
   }
 
   private handlePlayGameOnline(): void {
     // TODO: Implement online multiplayer logic
-    Logger.log('Starting online multiplayer game...');
+    console.log('Starting online multiplayer game...');
     this.routerManager.navigateTo('game-online');
   }
 
@@ -654,10 +654,10 @@ export class App {
 
   private handleChatWithFriends(): void {
     // TODO: Implement chat functionality
-    Logger.log('Chat with friends functionality not yet implemented');
+    console.log('Chat with friends functionality not yet implemented');
     if (this.currentUser && this.currentUser.isGuest == false)
       this.routerManager.navigateTo('live-chat');
     else
-      Logger.log('Connect to chat wih friends');
+      console.log('Connect to chat wih friends');
   }
 }

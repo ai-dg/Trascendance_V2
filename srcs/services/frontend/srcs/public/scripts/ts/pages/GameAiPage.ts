@@ -234,7 +234,7 @@ export class AIPage {
   }
 
   public setupGame(data:any){
-	Logger.log("Setting up AI game with UUID:", data.UUID)
+	console.log("Setting up AI game with UUID:", data.UUID)
 	if (!this.canvas)
 		throw new Error("canvas is not initialised");
 	this.gameManager = new GameManager(this.canvas, data.UUID);

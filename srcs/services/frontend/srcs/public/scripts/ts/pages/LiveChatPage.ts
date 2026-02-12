@@ -44,7 +44,7 @@ export class LiveChatPage {
     }
 
     public async render(user: User | null): Promise<void> {
-        Logger.log("live-chat for:", user);
+        console.log("live-chat for:", user);
 
         this.checkSessionStorageForRedirect();
 
@@ -99,7 +99,7 @@ export class LiveChatPage {
             this.t('BACK TO MENU'),
             'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 mt-4',
             () => {
-                Logger.log('Back to menu clicked');
+                console.log('Back to menu clicked');
                 this.onBack();
             }
         );
@@ -258,7 +258,7 @@ export class LiveChatPage {
     }
 
     private async handleFriendSelection(friendId: any, username: string, avatar?: string | null) {
-        Logger.log("Handling friend selection:", username);
+        console.log("Handling friend selection:", username);
 
         const online = await this.socialManager?.isUserOnline(Number(friendId)) ?? false;
         
@@ -439,7 +439,7 @@ export class LiveChatPage {
     private async handleBlockFriend() {
         if (!this.currentSelectedFriend) return;
 
-        Logger.log("Blocking friend:", this.currentSelectedFriend.nbrId);
+        console.log("Blocking friend:", this.currentSelectedFriend.nbrId);
         
         try {
             const res = await fetch(this.routerManager.getUrl('/live-chat/block-friend'), {
@@ -451,7 +451,7 @@ export class LiveChatPage {
 
             const data = await res.json();
             if (data.success) {
-                Logger.log("Friend blocked successfully");
+                console.log("Friend blocked successfully");
                 this.socialManager?.loadFriendsList(); 
                 this.currentSelectedFriend = null;
                 this.updateProfileView();
@@ -466,7 +466,7 @@ export class LiveChatPage {
     private async handleDeleteFriend() {
         if (!this.currentSelectedFriend) return;
 
-        Logger.log("Removing friend:", this.currentSelectedFriend.nbrId);
+        console.log("Removing friend:", this.currentSelectedFriend.nbrId);
         try {
             const res = await fetch(this.routerManager.getUrl('/live-chat/remove-friend'), {
                 method: 'POST',
@@ -476,7 +476,7 @@ export class LiveChatPage {
             });
             const data = await res.json();
             if (data.success) {
-                Logger.log("Friend removed");
+                console.log("Friend removed");
                 
                 this.socialManager?.loadFriendsList(); 
                 
