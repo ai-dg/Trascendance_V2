@@ -337,6 +337,7 @@ export class MenuPage {
         sessionStorage.setItem('selectedFriendUsername', username);
         this.onChatWithFriends();
       },
+      () => {},
       () => {}
     );
     this.socialManager.render(socialDivWrapper);

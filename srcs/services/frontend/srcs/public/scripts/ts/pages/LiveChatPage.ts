@@ -76,7 +76,11 @@ export class LiveChatPage {
                     if (this.currentSelectedFriend && senderId === this.currentSelectedFriend.nbrId) {
                         this.addMessage(message, false);
                     }
+                },
+                (senderId) => {
+                    this.handleGameInvite(senderId);
                 }
+                
             
             );
             this.socialManager.render(socialWrapper);
@@ -327,7 +331,8 @@ export class LiveChatPage {
 
     private addMessage(text: string, isMine: boolean): void {
         const messagesContainer = document.getElementById('messages-div');
-        if (!messagesContainer) return;
+        if (!messagesContainer)
+            return;
 
         const wrapper = this.uiManager.createElement(
             'div',
@@ -375,7 +380,7 @@ export class LiveChatPage {
         const blockBtn = document.getElementById('block-friend-btn');
         const deleteBtn = document.getElementById('delete-friend-btn');
 
-        if (inviteBtn) {
+        if (inviteBtn){
             const newInviteBtn = inviteBtn.cloneNode(true) as HTMLElement;
             inviteBtn.replaceWith(newInviteBtn);
 
@@ -396,8 +401,39 @@ export class LiveChatPage {
         }
     }
 
+    private async handleGameInvite(senderId: number) {
+        if (!this.currentSelectedFriend)
+            return;
+        // this.wsManager?.emitGame('game-invite', { friendId: senderId, message: 'You have been invited to a game by ' + this.currentUser?.username });
+        this.routerManager.navigateTo('game-online');
+    }
+
     private async handleInviteFriend() {
-        if (!this.currentSelectedFriend) return;
+        if (!this.currentSelectedFriend)
+            return;
+        
+        this.wsManager?.emitGeneral('game-invite', { friendId: this.currentSelectedFriend.nbrId, message: 'You have been invited to a game by ' + this.currentUser?.username });
+        // try {
+        //     const res = await fetch(this.routerManager.getUrl('/live-chat/game-invite'), {
+        //         method: 'POST',
+        //         credentials: 'include',
+        //         headers: { 'Content-Type': 'application/json' },
+        //         body: JSON.stringify({
+        //             friendId: this.currentSelectedFriend.nbrId,
+        //         })
+        //     });
+    
+        //     const data = await res.json();
+        //     if (!res.ok || !data.success) {
+        //         Logger.error('Failed to send game invite:', data.message);
+        //         return;
+        //     }
+    
+        //     Logger.log('Game invite sent to friend:', this.currentSelectedFriend.nbrId);
+        // } catch (err) {
+        //     Logger.error('Error sending game invite:', err);
+        // }
+        this.routerManager.navigateTo('game-online');
     }
 
     private async handleBlockFriend() {

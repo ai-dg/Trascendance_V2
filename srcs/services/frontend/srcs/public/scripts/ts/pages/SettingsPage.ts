@@ -124,9 +124,7 @@ export class SettingsPage {
     else {
       userSettings = this.userSettings();
     }
-
     settingsGrid.appendChild(gameCard);
-
     if (userSettings)
       settingsGrid.appendChild(userSettings);
 
@@ -230,7 +228,7 @@ export class SettingsPage {
 
   //card.appendChild(header);
   card.appendChild(subtitle);
-  //card.appendChild(buttonsContainer);
+  //card.appendChild(buttonsContaEer);
   card.appendChild(this.createLanguageSelector(false));
 
   return card;

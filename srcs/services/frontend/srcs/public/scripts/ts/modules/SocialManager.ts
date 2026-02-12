@@ -14,7 +14,7 @@ export class SocialManager {
     private getCurrentSelectedFriendId: () => number | null;
     private onFriendSelected: (friendId: number, friendUsername: string, friendAvatar?: string | null) => void;
     private onNewMessage: (senderId: number, message: string) => void;
-
+    private onGameInvite: (senderId: number) => void;
     constructor(
         uiManager: UIManager,
         routerManager: RouterManager,
@@ -22,7 +22,8 @@ export class SocialManager {
         currentUser: User | null,
         getCurrentSelectedFriendId: () => any | null,
         onFriendSelect: (friendId: number, friendUsername: string, friendAvatar?: string | null) => void,
-        onNewMessage: (senderId: number, message: string) => void
+        onNewMessage: (senderId: number, message: string) => void,
+        onGameInvite: (senderId: number) => void
     
     ) {
         this.uiManager = uiManager;
@@ -32,6 +33,7 @@ export class SocialManager {
         this.getCurrentSelectedFriendId = getCurrentSelectedFriendId;
         this.onNewMessage = onNewMessage;
         this.onFriendSelected = onFriendSelect;
+        this.onGameInvite = onGameInvite;
     }
 
     private isChatOpenWith(sId: number): boolean {
@@ -168,7 +170,6 @@ export class SocialManager {
             }
 
             const data = await res.json();
-
             if (!data.success) {
                 console.error('Couldn\'t find username');
                 return;
@@ -410,6 +411,10 @@ export class SocialManager {
                     console.log("User unblocked notification for user:", data.friendId);
                     break;
 
+                case 'game-invite':
+                    console.log("Game invite notification for user:", data.friendId);
+                    break;
+
                 default:
                     console.warn("Unknown notification type:", data.type);
                     break;
@@ -464,6 +469,90 @@ export class SocialManager {
                 rejectBtn.disabled = false;
             }
         });
+
+        rejectBtn.addEventListener('click', async () => {
+            try {
+                console.log(`Rejecting friend request from sender ${senderId}`);
+                const res = await fetch(this.routerManager.getUrl('/live-chat/friend-request-response'), {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ senderId: senderId, action: 'reject' })
+                });
+                let data;
+                const contentType = res.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    data = await res.json();
+                } else {
+                    data = { message: await res.text() };
+                }
+
+                if (!res.ok || (data && !data.success)) {
+                    throw new Error(data.message || "Failed to reject");
+                }
+                this.removeFriendRequestNotification(senderId);
+                this.syncSocialPanel();
+            } catch (error) {
+                console.error("Error rejecting friend request:", error);
+            }
+        });
+        
+        notifButtons.appendChild(acceptBtn);
+        notifButtons.appendChild(rejectBtn);
+        notifCard.appendChild(notifMessage);
+        notifCard.appendChild(notifButtons);
+        
+        container.appendChild(notifCard);
+        
+        this.friendRequests.set(senderId, { senderId, message, element: notifCard });
+        
+        console.log(`Added notification for sender ${senderId}. Total notifications: ${this.friendRequests.size}`);
+    }
+
+    private async addGameInviteNotification(senderId: number, message: string): Promise<void> {
+
+        const container = document.getElementById('notifications-container');
+        if (!container) {
+            console.error("Notifications container not found");
+            return;
+        }
+
+        const notifCard = this.uiManager.createElement('div', 'p-3 bg-black/80 border border-[#ff1493] rounded');
+        
+        const notifMessage = this.uiManager.createElement('p', 'text-[#00ffff] text-sm mb-2');
+        notifMessage.textContent = message;
+
+        const notifButtons = this.uiManager.createElement('div', 'flex gap-2');
+        const acceptBtn = this.uiManager.createElement('button', 'px-3 py-1 text-xs bg-green-500 text-black rounded hover:bg-green-400') as HTMLButtonElement;
+        acceptBtn.textContent = 'Accept';
+
+        const rejectBtn = this.uiManager.createElement('button', 'px-3 py-1 text-xs bg-red-500 text-black rounded hover:bg-red-400') as HTMLButtonElement;
+        rejectBtn.textContent = 'Reject';
+        
+        acceptBtn.addEventListener('click', async () => {
+            acceptBtn.disabled = true;
+            rejectBtn.disabled = true;
+            this.onGameInvite(senderId);
+            // try {
+            //     const res = await fetch(this.routerManager.getUrl('/live-chat/friend-request-response'), {
+            //         method: 'POST',
+            //         credentials: 'include',
+            //         headers: {
+            //             'Content-Type': 'application/json'
+            //         },
+            //         body: JSON.stringify({ senderId: senderId, action: 'accept' })
+            //     });
+            //     if (!res.ok) throw new Error('Failed to accept friend request');
+            //     this.removeFriendRequestNotification(senderId);
+            //     this.loadFriendsList();
+            // } catch (error) {
+            //     console.error("Error accepting friend request:", error);
+            this.removeFriendRequestNotification(senderId);
+                acceptBtn.disabled = false;
+                rejectBtn.disabled = false;
+            });
 
         rejectBtn.addEventListener('click', async () => {
             try {
