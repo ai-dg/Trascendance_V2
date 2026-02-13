@@ -51,6 +51,7 @@ services:
     environment: {}
     depends_on:
       - auth_app
+      - server-rendering_app
       - live-chat_app
       - realtime-sockets_app
       - remote-players_app
@@ -182,6 +183,7 @@ services:
       - ./monitoring/metrics.js:/monitoring/metrics.js:ro
     networks:
       - internal
+      - transcendence
     depends_on:
       redis:
         condition: service_started
@@ -435,7 +437,7 @@ services:
       retries: 5
     env_file:
       - .env
-    
+
   kibana:
     profiles: ["prod"]
     container_name: kibana
@@ -454,7 +456,7 @@ services:
       - internal
     env_file:
       - .env
-    
+
   logstash:
     profiles: ["prod"]
     container_name: logstash

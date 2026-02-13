@@ -61,6 +61,28 @@ async function fetchAuthUserById(userId) {
 const runningGames = new Map();
 const userGames = new Map(); // userId -> gameUUID mapping
 
+// Callback for notifying live-chat of private game state changes
+async function notifyLiveChatGameStateChange(gameUUID, state, metadata = {}) {
+  if (!gameUUID) return;
+  try {
+    const serviceToken = jwt.sign(
+      { service: 'remote-players' },
+      process.env.JWT_SECRET,
+      { expiresIn: '5m' }
+    );
+    await fetch(`${AUTH_INTERNAL_URL.replace('auth_app:3000', 'live-chat_app:3002')}/update-game-state`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${serviceToken}`
+      },
+      body: JSON.stringify({ gameUUID, state, metadata })
+    });
+  } catch (err) {
+    console.warn(`[Game ${gameUUID}] Failed to notify live-chat:`, err?.message || err);
+  }
+}
+
 // HTTPS options
 let httpsOptions = null;
 try {
@@ -105,6 +127,59 @@ await app.register(cookie, {
 
 app.get('/', async () => {
     return { status: 'ok', service: 'remote-players' };
+});
+
+// --- Check if users are in a game (for invite validation) ---
+app.post('/check-in-game', async (request, reply) => {
+	const authHeader = request.headers.authorization;
+	if (!authHeader || !authHeader.startsWith('Bearer ')) {
+		return reply.code(401).send({ success: false, message: 'Unauthorized' });
+	}
+	const token = authHeader.substring(7);
+	try {
+		const payload = jwt.verify(token, process.env.JWT_SECRET);
+		if (payload.service !== 'live-chat') {
+			return reply.code(403).send({ success: false, message: 'Forbidden' });
+		}
+	} catch (err) {
+		return reply.code(401).send({ success: false, message: 'Invalid token' });
+	}
+	const { userIds } = request.body;
+	if (!Array.isArray(userIds)) return reply.code(400).send({ success: false, message: 'userIds must be array' });
+	const inGame = userIds.filter(id => userGames.has(id));
+	return reply.send({ success: true, inGame });
+});
+
+// --- Private Game Invite: Create Private Game Route ---
+app.post('/create-private-game', async (request, reply) => {
+	const { gameUUID, player1Id, player2Id } = request.body;
+	const authHeader = request.headers.authorization;
+
+	// Verify service token
+	if (!authHeader || !authHeader.startsWith('Bearer ')) {
+		return reply.code(401).send({ success: false, message: 'Unauthorized' });
+	}
+	const token = authHeader.substring(7);
+	try {
+		const payload = jwt.verify(token, process.env.JWT_SECRET);
+		if (payload.service !== 'live-chat') {
+			return reply.code(403).send({ success: false, message: 'Forbidden' });
+		}
+	} catch (err) {
+		return reply.code(401).send({ success: false, message: 'Invalid token' });
+	}
+
+	// Create game instance WITHOUT socket initially (will connect when users join)
+	const game = new Game(null, {
+		uuid: gameUUID,
+		type: 'remote'
+	}, {}, null, notifyLiveChatGameStateChange);
+	game.player1Id = player1Id;
+	game.player2Id = player2Id;
+	game.isPrivateGame = true; // New flag
+	game.waitingForPlayers = true; // Both need to join
+	runningGames.set(gameUUID, game);
+	return reply.send({ success: true, gameUUID });
 });
 
 // Create Socket.IO server
@@ -197,6 +272,56 @@ io.use(async (socket, next) => {
 io.on('connection', (socket) => setupGameSocket(socket));
 
 function setupGameSocket(socket) {
+
+		// --- Private Game Join Handler ---
+		socket.on("join-private-game", async (data) => {
+			const { gameUUID } = data;
+			const userId = socket.userId;
+			const game = runningGames.get(gameUUID);
+			if (!game || !game.isPrivateGame) {
+				socket.emit('join-private-game-error', { message: 'Game not found' });
+				return;
+			}
+			// Assign socket to correct player
+			if (userId === game.player1Id) {
+				game.player1Socket = socket;
+				socket.on(gameUUID, (eventData) => gameHandler(gameUUID, eventData, socket));
+				userGames.set(userId, gameUUID);
+				socket.emit("joined-private-game", { UUID: gameUUID, playerNumber: 1 });
+			} else if (userId === game.player2Id) {
+				game.player2Socket = socket;
+				socket.on(gameUUID, (eventData) => gameHandler(gameUUID, eventData, socket));
+				userGames.set(userId, gameUUID);
+				socket.emit("joined-private-game", { UUID: gameUUID, playerNumber: 2 });
+				// Mark player 2 as joined
+				if (typeof game.setPlayer2Joined === 'function') game.setPlayer2Joined();
+			} else {
+				socket.emit('join-private-game-error', { message: 'Not a player in this game' });
+				return;
+			}
+			// If both players have connected, notify them
+			if (game.player1Socket && game.player2Socket && (game.player2Joined || game.waitingForPlayers === false)) {
+				game.waitingForPlayers = false;
+				const [player1Info, player2Info] = await Promise.all([
+					fetchAuthUserById(game.player1Id),
+					fetchAuthUserById(game.player2Id)
+				]);
+				game.player1Socket.emit(gameUUID, {
+					type: "opponent-found",
+					playerNumber: 1,
+					opponentId: game.player2Id,
+					opponentUsername: player2Info?.username || 'Player 2',
+					opponentAvatar: player2Info?.avatar || null
+				});
+				game.player2Socket.emit(gameUUID, {
+					type: "opponent-found",
+					playerNumber: 2,
+					opponentId: game.player1Id,
+					opponentUsername: player1Info?.username || 'Player 1',
+					opponentAvatar: player1Info?.avatar || null
+				});
+			}
+		});
 	const userId = socket.userId;
 	console.log('✅ Game player connected:', userId);
 	socket.emit("welcome", {message : "welcome in the game !", userId: userId, user: socket.user})

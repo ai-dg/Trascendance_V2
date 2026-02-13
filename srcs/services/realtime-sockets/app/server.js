@@ -23,12 +23,12 @@ try {
             key: fs.readFileSync(keyPath),
             cert: fs.readFileSync(certPath)
         };
-        app.log.info('HTTPS certs loaded');
+        console.log('HTTPS certs loaded');
     } else {
-        app.log.info('HTTPS certs not found');
+        console.log('HTTPS certs not found');
     }
 } catch (err) {
-    app.log.error('Error loading HTTPS certs:', err);
+    console.error('Error loading HTTPS certs:', err);
 }
 
 export const app = Fastify({trustProxy: true, https: httpsOptions, logger: { level: process.env.LOG_LEVEL || 'info' }});

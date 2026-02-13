@@ -89,6 +89,8 @@ export class App {
       this.currentUser = user;
       // this.updateCurrentPage();
     });
+    // Sync App.currentPage with RouterManager's initial page from URL
+    this.currentPage = this.routerManager.getCurrentPage();
 
     this.websocketManager = WebsocketManager.getInstance();
 
@@ -143,8 +145,7 @@ export class App {
     );
     this.gamePageOnline = new RemotePage(
       this.uiManager,
-      this.handleBackToMenu.bind(this),
-      this.currentUser
+      this.handleBackToMenu.bind(this)
     );
     this.guestPage = new GuestPage(
       this.uiManager,
@@ -205,9 +206,9 @@ export class App {
     });
 
     // Listen to router changes
-    this.routerManager.addListener((page) => {
+    this.routerManager.addListener((page, data) => {
       this.currentPage = page;
-      this.render();
+      this.render(data);
     });
   }
 
@@ -389,10 +390,6 @@ export class App {
   /**************************************** SOCKET MANAGEMENT ***********************************/
   /**********************************************************************************************/
 
-
-
-
-
   /**********************************************************************************************/
   /**************************************** RENDERING *******************************************/
   /**********************************************************************************************/
@@ -400,7 +397,7 @@ export class App {
   /**
    * Render the current page based on router state
    */
-  private async render(): Promise<void> {
+  private async render(routeData?: any): Promise<void> {
     this.uiManager.clear();
     // Don't refetch user on every render - use cached currentUser
     Logger.log("CURRENT USER RENDER: ", this.currentUser);
@@ -425,7 +422,7 @@ export class App {
         this.gamePageLocal.render();
         break;
       case 'game-online':
-        this.gamePageOnline.render(this.currentUser);
+        this.gamePageOnline.render(this.currentUser, routeData);
         break;
       case 'check-otp':
         // TODO: Get translations from languageManager
@@ -444,6 +441,9 @@ export class App {
         break;
       case 'live-chat':
         this.liveChatPage = new LiveChatPage(this.uiManager, this.routerManager, this.languageManager, this.websocketManager, this.handleBackToMenu.bind(this), this.currentUser);
+        if (this.websocketManager) {
+          this.liveChatPage.setWebsocketManager(this.websocketManager);
+        }
         this.liveChatPage.render(this.currentUser);
         break;
       case 'privacy-policy':

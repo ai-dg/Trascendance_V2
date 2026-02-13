@@ -99,7 +99,7 @@ export async function get_messages_route(request, reply) {
 
     try {
         const messages = await app.db.all(`
-            SELECT sender_id, content, sent_at
+            SELECT message_id, sender_id, content, sent_at, message_type, game_state, game_uuid, game_metadata
             FROM messages
             WHERE (sender_id = ? AND receiver_id = ?)
                OR (sender_id = ? AND receiver_id = ?)

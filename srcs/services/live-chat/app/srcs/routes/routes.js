@@ -1,3 +1,4 @@
+
 import { friend_request_route,
          friend_request_response_route,
          get_friends_route,
@@ -7,12 +8,19 @@ import { friend_request_route,
          remove_friend,
          get_blocked_users_route,
          unblock_user_route
- } from "../controlers/controlers.js";
+} from "../controlers/controlers.js";
 
- import {
-        send_message_route,
-        get_messages_route
- } from "../controlers/messageControlers.js";
+import {
+    send_message_route,
+    get_messages_route
+} from "../controlers/messageControlers.js";
+
+import {
+    send_game_invite_route,
+    respond_to_game_invite_route,
+    join_game_route,
+    update_game_state_route
+} from "../controlers/gameInviteControlers.js";
 
 export function routes(app, options)
 {
@@ -30,4 +38,10 @@ export function routes(app, options)
 
     app.get('/blocked-users', async (request, reply) => get_blocked_users_route(request, reply));
     app.post('/unblock', async (request, reply) => unblock_user_route(request, reply));
+
+    // --- Game Invite Routes ---
+    app.post('/send-game-invite', async (request, reply) => send_game_invite_route(request, reply));
+    app.post('/respond-to-game-invite', async (request, reply) => respond_to_game_invite_route(request, reply));
+    app.post('/join-game', async (request, reply) => join_game_route(request, reply));
+    app.post('/update-game-state', async (request, reply) => update_game_state_route(request, reply));
 }

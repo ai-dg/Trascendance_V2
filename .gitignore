@@ -2,6 +2,7 @@ redis_data/
 node_modules/
 .env
 srcs/.env
+srcs/.env
 srcs/logs/
 *.log
 *.sqlite
@@ -17,8 +18,9 @@ __pycache__/
 
 .vscode/
 vscode/
+.vscode
 claude/
-.claude/
+.claude
 
 
 # Ignore compiled/transpiled JS files from TypeScript in frontend
