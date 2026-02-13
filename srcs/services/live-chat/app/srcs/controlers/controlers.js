@@ -35,6 +35,13 @@ export async function friend_request_route(request, reply) {
     const{ receiverId } = request.body;
     const userId = payload.user_id;
 
+    if (receiverId === userId) {
+        return reply.code(400).send({ 
+            success: false, 
+            message: "You cannot send a friend request to yourself" 
+        });
+    }
+
     try {
         console.log(`User ${userId} is sending a friend request to ${receiverId}`);
         const exiting = await app.db.get(`
@@ -470,6 +477,13 @@ export async function add_friend(request, reply) {
             const token = request.cookies.token || request.body.token;
 		
 			console.log(`User ${senderId} wants to add user ${receiverId} as a friend`);
+
+            if (senderId === receiverId) {
+                return reply.code(400).send({ 
+                    success: false, 
+                    message: "You cannot send a friend request to yourself" 
+                });
+            }
 
 			try {				
 				const resData = await createFriendRequest(token, receiverId);
