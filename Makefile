@@ -8,8 +8,8 @@ LOGS = srcs/logs
 PIDS = $(LOGS)/pids.txt
 
 # ■ Terminal Colors
-GREEN = "\033[32m"
-RESET = "\033[0m"
+GREEN =
+RESET =
 
 DATABASE_DIRECTORIES := \
 	$(HOME)/data/rabbit \
@@ -128,10 +128,17 @@ clean:
 	@rm -f srcs/services/live-chat/app/live-chat.sqlite
 	@echo $(GREEN)Removing Redis data...$(RESET)
 	@rm -rf srcs/volumes/redis_data/dump.rdb
-	@echo $(GREEN)Removing compiled JavaScript files...$(RESET)
-	@find srcs/services/frontend/srcs/public/scripts/js -type f -name "*.js" -delete 2>/dev/null || true
-	@find srcs/services/frontend/srcs/public/scripts/js -type f -name "*.d.ts" -delete 2>/dev/null || true
-	@find srcs/services/frontend/srcs/public/scripts/js -type f -name "*.js.map" -delete 2>/dev/null || true
+	@echo $(GREEN)Removing compiled frontend build files (scoped)...$(RESET)
+	# Safety: only remove generated build artifacts inside the frontend public js folder.
+	# This prevents accidental removal of backend/service source files.
+	@if [ -d srcs/services/frontend/srcs/public/scripts/js ]; then \
+		# delete sourcemaps and declaration files first
+		find srcs/services/frontend/srcs/public/scripts/js -maxdepth 1 -type f -name "*.js.map" -delete 2>/dev/null || true; \
+		find srcs/services/frontend/srcs/public/scripts/js -maxdepth 1 -type f -name "*.d.ts" -delete 2>/dev/null || true; \
+		# Optionally delete compiled JS files produced by the frontend build
+		# Only delete files that exist in this exact frontend path to avoid touching backend code
+		find srcs/services/frontend/srcs/public/scripts/js -maxdepth 1 -type f -name "*.js" -delete 2>/dev/null || true; \
+	fi
 	@docker system df
 	@echo ${GREEN}Cleanup complete!${RESET}
 

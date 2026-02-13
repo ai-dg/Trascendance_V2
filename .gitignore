@@ -2,7 +2,6 @@ redis_data/
 node_modules/
 .env
 srcs/.env
-srcs/.env
 srcs/logs/
 *.log
 *.sqlite

@@ -1,7 +1,8 @@
-import { 
+// @ts-nocheck
+import {
 		get_csrf_route,
 		login_route,
-		logout_route, 
+		logout_route,
 		reset_forgotten_password_route,
 		reset_password_request_route,
 		signup_route,
@@ -33,6 +34,14 @@ import {
 import { verifyCSRFToken } from "../auth.js";
 
 async function csrfValidation(request, reply) {
+	// Allow guests to logout without CSRF token, require CSRF for authenticated users
+	if (request.routeOptions.url === '/logout') {
+		const token = request.cookies.token;
+		if (!token) {
+			// Guest logout, skip CSRF check
+			return;
+		}
+	}
 	const csrfToken = request.headers['x-csrf-token'];
 	const csrfCookie = request.cookies.csrf;
 	if (!csrfToken || !csrfCookie || !verifyCSRFToken(csrfToken, csrfCookie)) {
@@ -52,32 +61,32 @@ export function routes(app, options)
 
 	// login process
 	app.post('/login', async (request, reply) => login_route(request, reply))
-	app.post('/login/otp-validation', async (request, reply) => login_otp_validation_route(request,reply));	
+	app.post('/login/otp-validation', async (request, reply) => login_otp_validation_route(request,reply));
 	app.get('/csrf-token', async (request, reply) => get_csrf_route(request, reply));
 
-	app.post('/is-connected', async (request, reply) => is_connected(request,reply));	
+	app.post('/is-connected', async (request, reply) => is_connected(request,reply));
 
-	
+
 	// signup process
 	app.post('/signup', async (request, reply) => signup_route(request, reply));
-	app.post('/signup/otp-validation', async (request, reply) => signup_otp_validation_route(request,reply));	
-	
+	app.post('/signup/otp-validation', async (request, reply) => signup_otp_validation_route(request,reply));
+
 	// logout process
 
 	app.post('/logout', { preHandler: csrfValidation }, async (request, reply) => logout_route(request, reply))
-	
+
 
 	// reset-password (forget password process)
 
 	app.post('/reset-password', async (request, reply) => reset_password_request_route(request, reply));
 	app.post('/reset-password/otp-validation', async (request, reply) => reset_forgotten_password_route(request, reply));
-	
+
 
 	// get auth data
 	app.get('/me', async (request, reply) => auth_me_route(request, reply));
 	app.post('/id-username', async (request, reply) => get_id_by_username_route(request, reply));
 	app.post('/username-id', async (request, reply) => get_username_by_id_route(request, reply));
-	
+
 	// update profile
 	app.get('/verify-username', async (request, reply) => verify_update_email_route(request, reply));
 	app.put('/update-avatar', { preHandler: csrfValidation }, async (request, reply) => update_avatar_route(request, reply));
@@ -89,7 +98,7 @@ export function routes(app, options)
 	// delete account
 	app.delete('/delete-account', { preHandler: csrfValidation }, async (request, reply) => delete_account_route(request, reply));
 
-	// 42auth 
+	// 42auth
 	app.get('/42/login', async (request, reply) => oauth_login_route(request, reply));
 	app.get('/42/callback', async (request, reply) => oauth_callback_route(request, reply));
 	app.put('/42/update', async (request, reply) => oauth_update_profile_route(request, reply));

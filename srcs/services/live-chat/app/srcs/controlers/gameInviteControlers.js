@@ -74,11 +74,10 @@ export async function send_game_invite_route(request, reply) {
     const messageId = res.lastID;
 
     // Insert game_invitations
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
     const invitationRes = await app.db.run(`
         INSERT INTO game_invitations (message_id, inviter_id, invitee_id, state, expires_at)
-        VALUES (?, ?, ?, 'pending', ?)
-    `, [messageId, senderId, receiverId, expiresAt]);
+        VALUES (?, ?, ?, 'pending', datetime('now', '+5 minutes'))
+    `, [messageId, senderId, receiverId]);
     const invitationId = invitationRes.lastID;
 
     // Notify invitee
