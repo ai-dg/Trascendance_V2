@@ -294,18 +294,20 @@ export class UpdateProfilePage {
                     if (this.user) this.user.email = value;
                     if (this.authManager.otpData)
                       this.authManager.otpData.context = "update-profile";
-                    this.render();
+                    this.routerManager.navigateTo('settings');
                   } catch (error: unknown) {
                     if (error instanceof Error) {
                       if (this.authManager.otpData)
                         this.authManager.otpData.context = "update-profile";
-                      throw new Error(error.message || this.t('failedUpdateEmail'));
+                      const msg = error instanceof Error ? error.message : this.t('failedUpdateEmail');
+                      alert(msg);
+                      this.routerManager.navigateTo('settings');
                     }
                     else {
                       if (this.authManager.otpData)
                         this.authManager.otpData.context = "update-profile";
-                      throw new Error(this.t('failedUpdateEmail'));
-                    }
+                      const msg2 = error instanceof Error ? error.message : this.t('failedUpdateEmail');
+                      alert(msg2);}
                   }
                 }
               };

@@ -80,6 +80,15 @@ export class MenuPage {
   }
 
   public render(user: User | null): void {
+    if (user && (user as any).pseudo && !user.username) {
+        user = {
+            ...user,
+            username: (user as any).pseudo,
+            id: (user as any).user_id || user.id,
+            email: (user as any).user_mail || user.email,
+        } as User;
+    }
+    
     this.currentUser = user;
 
     const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
