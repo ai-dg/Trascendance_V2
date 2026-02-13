@@ -423,6 +423,13 @@ export class SocialManager {
                     console.log("Game invite notification for user:", data.friendId);
                     break;
 
+                case 'typing':
+                    const typingId = Number(data.senderId);
+                    if (this.isChatOpenWith(typingId)) {
+                        if (this.onTyping) this.onTyping(typingId);
+                    }
+                    break;
+
                 default:
                     console.warn("Unknown notification type:", data.type);
                     break;
@@ -448,6 +455,28 @@ export class SocialManager {
             });
         } catch (error) {
             console.error("Error marking message as read:", error);
+        }
+    }
+
+    public onTyping?:(senderId: number) => void;
+
+    private isTypingCooldown: boolean = false;
+
+    public async sendTypingSignal(friendId: number): Promise<void> {
+        if (this.isTypingCooldown) return;
+        this.isTypingCooldown = true;
+        setTimeout(() => {
+            this.isTypingCooldown = false;
+        }, 3000);
+        try {
+            await fetch(this.routerManager.getUrl('/live-chat/typing'), {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ receiverId: friendId })
+            });
+        } catch (error) {
+            console.error("Error sending typing signal:", error);
         }
     }
 

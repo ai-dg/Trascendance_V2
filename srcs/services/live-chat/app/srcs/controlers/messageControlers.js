@@ -126,3 +126,33 @@ export async function mark_as_read_route(request, reply) {
     }
 }
 
+export async function typing_route(request, reply) {
+    const { receiverId } = request.body;
+    const token = request.cookies.token || request.body.token;
+    if (!token)
+        return reply.code(401).send({ success: false, message: "Not authenticated" });
+
+    let payload;
+        try {
+            payload = jwt.verify(token, process.env.JWT_SECRET);
+        } catch (err) {
+            console.log("payload live-chat error:", err);
+            return reply.code(401).send({ success: false, message: "Invalid or expired token" });
+        }
+    const senderId = payload.user_id;
+
+    try {
+        await redis.publish('notifications', JSON.stringify({
+            targetUserId: receiverId,
+            event: 'notifications',
+            payload: {
+                type: 'typing',
+                senderId: senderId
+            }
+        }));
+        return reply.send({ success: true });
+    } catch (err) {
+        console.error("Redis error:", err);
+        return reply.code(500).send({ success: false, message: "Error to send typing notification" });
+    }
+}

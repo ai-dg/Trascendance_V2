@@ -83,6 +83,10 @@ export class LiveChatPage {
                 
             
             );
+            this.socialManager.onTyping = (senderId) => {
+
+                this.showTypingIndicator();
+            };
             this.socialManager.render(socialWrapper);
         }
         // Main Grid
@@ -199,7 +203,7 @@ export class LiveChatPage {
         messagesSelectFriendText.className += ' hidden';
 
         const inputDiv = this.uiManager.createElement('div', 'flex gap-2 mt-2 flex-shrink-0');
-        const inputField = this.uiManager.createElement('input', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
+        const inputField = this.uiManager.createElement('input', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 overflow-y-auto text-[#00ffff]') as HTMLInputElement;
         inputField.id = 'input-field';
         inputField.className += ' hidden';
         const sendButton = this.uiManager.createElement('button', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
@@ -218,6 +222,12 @@ export class LiveChatPage {
             sendButton.classList.add('hidden');
             messagesSelectFriendText.classList.remove('hidden');
         }
+
+        inputField.addEventListener('input', () => {
+            if (inputField.value.length > 0 && this.currentSelectedFriend && this.currentSelectedFriend.nbrId) {
+                this.socialManager?.sendTypingSignal(this.currentSelectedFriend.nbrId);
+            }
+        });
 
         inputField.addEventListener('keydown', (e: KeyboardEvent) => {
             if (e.key === 'Enter'){
@@ -263,6 +273,28 @@ export class LiveChatPage {
             (icon as HTMLElement).style.color = '#00ffff';
         });
     }
+
+    private typingTimeout: any = null;
+
+    private showTypingIndicator(): void {
+        const messagesContainer = document.getElementById('messages-div');
+        if (!messagesContainer) return;
+
+        let typingDiv = document.getElementById('typing-indicator');
+        if (!typingDiv) {
+                typingDiv = this.uiManager.createElement('div', 'text-xs text-[#00ffff] ml-4 mb-2 animate-pulse italic');
+                typingDiv.id = 'typing-indicator';
+                typingDiv.textContent = 'Typing...';
+                messagesContainer.appendChild(typingDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+            if (this.typingTimeout) clearTimeout(this.typingTimeout);
+        
+            this.typingTimeout = setTimeout(() => {
+                const div = document.getElementById('typing-indicator');
+                if (div) div.remove();
+            }, 3500);
+        }
 
     private async handleFriendSelection(friendId: any, username: string, avatar?: string | null) {
         console.log("Handling friend selection:", username);
@@ -314,6 +346,7 @@ export class LiveChatPage {
     }
 
     private async sendMessage(inputField: HTMLInputElement): Promise<void> {
+    
         const message = inputField.value.trim();
         if (message === '' || !this.currentSelectedFriend) return;
 
