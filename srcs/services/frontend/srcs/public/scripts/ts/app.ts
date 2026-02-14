@@ -5,7 +5,7 @@
 // Types
 import type { User } from './modules/TypesManager.js';
 import type { Socket } from "socket.io-client";
-import { RouterManager, type Page } from './modules/RouterManager.js';
+import { RouterManager, type Page, type RouteData } from './modules/RouterManager.js';
 import { type Translations } from './modules/TypesManager.js';
 
 // Managers
@@ -55,6 +55,7 @@ export class App {
   // State
   private currentUser: User | null = null;
   private currentPage: Page = 'auth';
+  private currentRouteData?: RouteData;
   private _lastAuthMeStatus: number | null | 'error' = null;
 
   // Socket Connections
@@ -207,10 +208,11 @@ export class App {
     });
 
     // Listen to router changes
-    this.routerManager.addListener((page) => {
+    this.routerManager.addListener((page, data) => {
       if (page === 'auth') console.log('[AUTH_SWITCH]', { reason: 'router(page=auth)', currentUser: this.currentUser, stack: new Error().stack });
       if (page === 'menu') console.log('[MENU_SWITCH]', { reason: 'router(page=menu)', currentUser: this.currentUser, stack: new Error().stack });
       this.currentPage = page;
+      this.currentRouteData = data;
       this.render();
     });
   }
@@ -325,6 +327,12 @@ export class App {
             this.gamePageLocal.setupGame(data);
           } else if (this.currentPage === 'game-online') {
             this.gamePageOnline.setupGame(data);
+            const pending = wsManager.getPendingGameInvite();
+            if (pending && data?.UUID) {
+              const inviteId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'inv_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+              wsManager.emitGeneral('game-invite', { friendId: pending.friendId, gameUUID: data.UUID, inviteId, message: pending.message });
+              wsManager.clearPendingGameInvite();
+            }
           }
         });
 
@@ -490,7 +498,7 @@ export class App {
         this.gamePageLocal.render();
         break;
       case 'game-online':
-        this.gamePageOnline.render(this.currentUser);
+        this.gamePageOnline.render(this.currentUser, this.currentRouteData);
         break;
       case 'check-otp':
         // TODO: Get translations from languageManager

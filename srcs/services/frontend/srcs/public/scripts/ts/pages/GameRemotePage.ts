@@ -1,6 +1,7 @@
 import { UIManager } from '../modules/UIManager.js';
 import { GameManager } from '../modules/GameManager.js';
 import type { User } from '../modules/TypesManager.js';
+import type { RouteData } from '../modules/RouterManager.js';
 import { gameSocket } from '../app.js';
 import { Logger } from '../modules/Logger.js';
 
@@ -26,7 +27,7 @@ export class RemotePage {
 
   ///////////// DESIGN & RENDERING /////////////
 
-  public render(user?: User | null): void {
+  public render(user?: User | null, routeData?: RouteData): void {
 	if (user !== undefined) {
 	  this.user = user;
 	}
@@ -190,8 +191,31 @@ export class RemotePage {
 	this.uiManager.clear();
 	this.uiManager.container.appendChild(container);
 
+	if (routeData?.joinGameUUID) {
+	  this.joinGameByInvite(routeData.joinGameUUID);
+	  return;
+	}
 	// Check if there's a game to reconnect to
 	this.checkForReconnection();
+  }
+
+  /** Join an existing game by invite (player 2): emit join-game, server adds us and emits opponent-found */
+  private joinGameByInvite(gameUUID: string): void {
+	if (!this.canvas || !gameSocket) return;
+	if (typeof (window as any).DEBUG_INVITE !== 'undefined' && (window as any).DEBUG_INVITE) {
+	  console.log('[INVITE_JOIN]', { gameUUID });
+	}
+	this.gameManager = new GameManager(this.canvas, gameUUID);
+	this.setupGameListeners();
+	gameSocket.emit('join-game', { UUID: gameUUID });
+	const startOverlay = document.querySelector<HTMLElement>('[data-overlay="start-game"]');
+	if (startOverlay) {
+	  startOverlay.innerHTML = '';
+	  const content = this.uiManager.createElement('div', 'text-center retro-text');
+	  content.appendChild(this.uiManager.createElement('div', 'text-lg text-[#00ffff]', 'Joining game...'));
+	  startOverlay.appendChild(content);
+	  startOverlay.classList.remove('hidden');
+	}
   }
 
   /**

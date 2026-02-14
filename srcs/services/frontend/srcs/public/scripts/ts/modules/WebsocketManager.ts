@@ -44,6 +44,18 @@ export class WebsocketManager {
 
   private chatNotifications = new Map<number, { senderId: number, username: string, message: string }>();
 
+  /** Pending game invite to send once new-game UUID is received (invite-from-chat flow) */
+  private pendingGameInvite: { friendId: number; message: string } | null = null;
+  public setPendingGameInvite(friendId: number, message: string): void {
+    this.pendingGameInvite = { friendId, message };
+  }
+  public getPendingGameInvite(): { friendId: number; message: string } | null {
+    return this.pendingGameInvite;
+  }
+  public clearPendingGameInvite(): void {
+    this.pendingGameInvite = null;
+  }
+
   public init(origin: string) {
     // Include persistent guest ID for reconnection support
     const guestId = getOrCreateGuestId();

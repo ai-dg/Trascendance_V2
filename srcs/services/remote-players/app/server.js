@@ -204,10 +204,69 @@ function setupGameSocket(socket) {
 		await requestGameUID(socket, data);
 	});
 
-	socket.on("join-game", (data) => {
+	socket.on("join-game", async (data) => {
 		console.log("Joining game : ", data);
-		socket.join(`game-${data.UUID}`);
-		socket.emit("joined-game", {UUID: data.UUID});
+		const gameUUID = data?.UUID;
+		if (!gameUUID) return;
+		socket.join(`game-${gameUUID}`);
+		socket.emit("joined-game", { UUID: gameUUID });
+
+		// Invite flow: if Redis has game-invite:<gameUUID> = this user, add as player 2
+		const allowedToJoin = await redis.get(`game-invite:${gameUUID}`);
+		if (allowedToJoin != null && String(userId) === String(allowedToJoin)) {
+			const game = runningGames.get(gameUUID);
+			if (game && game.isRemoteGame && !game.player2Id) {
+				await redis.del(`game-invite:${gameUUID}`);
+				game.addPlayer2(socket, userId);
+				userGames.set(userId, gameUUID);
+				socket.on(gameUUID, (eventData) => gameHandler(gameUUID, eventData, socket));
+				if (process.env.DEBUG_INVITE === '1' || process.env.DEBUG_INVITE === 'true') {
+					console.log('[INVITE_OPPONENT_FOUND]', { gameUUID, player2UserId: userId });
+				}
+				Promise.all([
+					fetchAuthUserById(game.player1Id),
+					fetchAuthUserById(userId)
+				]).then(([player1Info, player2Info]) => {
+					const player1Username = player1Info?.username || 'Player 1';
+					const player2Username = player2Info?.username || socket.user || 'Player 2';
+					const player1Avatar = player1Info?.avatar || null;
+					const player2Avatar = player2Info?.avatar || socket.avatar || null;
+					const player1Socket = game.player1Socket;
+					player1Socket.emit(gameUUID, {
+						type: "opponent-found",
+						playerNumber: 1,
+						opponentId: userId,
+						opponentUsername: player2Username,
+						opponentAvatar: player2Avatar
+					});
+					socket.emit(gameUUID, {
+						type: "opponent-found",
+						playerNumber: 2,
+						opponentId: game.player1Id,
+						opponentUsername: player1Username,
+						opponentAvatar: player1Avatar,
+						gameUUID: gameUUID
+					});
+				}).catch((err) => {
+					console.warn('[remote-players] invite opponent-found enrich failed:', err?.message || err);
+					game.player1Socket.emit(gameUUID, {
+						type: "opponent-found",
+						playerNumber: 1,
+						opponentId: userId,
+						opponentUsername: socket.user || 'Player 2',
+						opponentAvatar: null
+					});
+					socket.emit(gameUUID, {
+						type: "opponent-found",
+						playerNumber: 2,
+						opponentId: game.player1Id,
+						opponentUsername: game.player1Socket.user || 'Player 1',
+						opponentAvatar: null,
+						gameUUID: gameUUID
+					});
+				});
+			}
+		}
 	});
 
 	socket.on("new-game", (data) => newGameSocket(socket, data) );

@@ -11,6 +11,8 @@ export class SocialManager {
 
     private friendRequests: Map<number, {senderId: number, message: string, element: HTMLElement}> = new Map();
     private chatNotifications: Map<number, { senderId: number, element: HTMLElement }> = new Map();
+    private pendingGameInvites: Map<string, { element: HTMLElement }> = new Map();
+    private static readonly DEBUG_INVITE = false;
     private getCurrentSelectedFriendId: () => number | null;
     private onFriendSelected: (friendId: number, friendUsername: string, friendAvatar?: string | null) => void;
     private onNewMessage: (senderId: number, message: string) => void;
@@ -431,7 +433,16 @@ export class SocialManager {
                     break;
 
                 case 'game-invite':
-                    console.log("Game invite notification for user:", data.friendId);
+                    if (SocialManager.DEBUG_INVITE) console.log('[INVITE_RECV]', data);
+                    this.addGameInviteNotification(data);
+                    break;
+                case 'game-invite-accepted':
+                    if (SocialManager.DEBUG_INVITE) console.log('[INVITE_ACCEPT]', data);
+                    this.handleGameInviteAccepted(data);
+                    break;
+                case 'game-invite-declined':
+                    if (SocialManager.DEBUG_INVITE) console.log('[INVITE_DECLINE]', data);
+                    this.handleGameInviteDeclined(data);
                     break;
 
                 case 'typing':
@@ -579,88 +590,72 @@ export class SocialManager {
         console.log(`Added notification for sender ${senderId}. Total notifications: ${this.friendRequests.size}`);
     }
 
-    private async addGameInviteNotification(senderId: number, message: string): Promise<void> {
-
+    private addGameInviteNotification(data: { inviteId: string; fromUserId: number; toUserId: number; gameUUID: string; fromUsername?: string | null; message?: string | null }): void {
+        const { inviteId, fromUsername, message } = data;
+        if (this.pendingGameInvites.has(inviteId)) return;
         const container = document.getElementById('notifications-container');
-        if (!container) {
-            console.error("Notifications container not found");
-            return;
-        }
-
+        if (!container) return;
+        const text = message || (fromUsername ? `${fromUsername} invited you to play` : 'You were invited to a game');
         const notifCard = this.uiManager.createElement('div', 'p-3 bg-black/80 border border-[#ff1493] rounded');
-        
         const notifMessage = this.uiManager.createElement('p', 'text-[#00ffff] text-sm mb-2');
-        notifMessage.textContent = message;
-
+        notifMessage.textContent = text;
         const notifButtons = this.uiManager.createElement('div', 'flex gap-2');
         const acceptBtn = this.uiManager.createElement('button', 'px-3 py-1 text-xs bg-green-500 text-black rounded hover:bg-green-400') as HTMLButtonElement;
         acceptBtn.textContent = 'Accept';
-
-        const rejectBtn = this.uiManager.createElement('button', 'px-3 py-1 text-xs bg-red-500 text-black rounded hover:bg-red-400') as HTMLButtonElement;
-        rejectBtn.textContent = 'Reject';
-        
-        acceptBtn.addEventListener('click', async () => {
+        const declineBtn = this.uiManager.createElement('button', 'px-3 py-1 text-xs bg-red-500 text-black rounded hover:bg-red-400') as HTMLButtonElement;
+        declineBtn.textContent = 'Decline';
+        acceptBtn.addEventListener('click', () => {
             acceptBtn.disabled = true;
-            rejectBtn.disabled = true;
-            this.onGameInvite(senderId);
-            // try {
-            //     const res = await fetch(this.routerManager.getUrl('/live-chat/friend-request-response'), {
-            //         method: 'POST',
-            //         credentials: 'include',
-            //         headers: {
-            //             'Content-Type': 'application/json'
-            //         },
-            //         body: JSON.stringify({ senderId: senderId, action: 'accept' })
-            //     });
-            //     if (!res.ok) throw new Error('Failed to accept friend request');
-            //     this.removeFriendRequestNotification(senderId);
-            //     this.loadFriendsList();
-            // } catch (error) {
-            //     console.error("Error accepting friend request:", error);
-            this.removeFriendRequestNotification(senderId);
-                acceptBtn.disabled = false;
-                rejectBtn.disabled = false;
-            });
-
-        rejectBtn.addEventListener('click', async () => {
-            try {
-                console.log(`Rejecting friend request from sender ${senderId}`);
-                const res = await fetch(this.routerManager.getUrl('/live-chat/friend-request-response'), {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ senderId: senderId, action: 'reject' })
-                });
-                let data;
-                const contentType = res.headers.get("content-type");
-                if (contentType && contentType.includes("application/json")) {
-                    data = await res.json();
-                } else {
-                    data = { message: await res.text() };
-                }
-
-                if (!res.ok || (data && !data.success)) {
-                    throw new Error(data.message || "Failed to reject");
-                }
-                this.removeFriendRequestNotification(senderId);
-                this.syncSocialPanel();
-            } catch (error) {
-                console.error("Error rejecting friend request:", error);
-            }
+            declineBtn.disabled = true;
+            this.wsManager.emitGeneral('game-invite-accept', { inviteId });
+            this.removeGameInviteNotification(inviteId);
         });
-        
+        declineBtn.addEventListener('click', () => {
+            acceptBtn.disabled = true;
+            declineBtn.disabled = true;
+            this.wsManager.emitGeneral('game-invite-decline', { inviteId });
+            this.removeGameInviteNotification(inviteId);
+        });
         notifButtons.appendChild(acceptBtn);
-        notifButtons.appendChild(rejectBtn);
+        notifButtons.appendChild(declineBtn);
         notifCard.appendChild(notifMessage);
         notifCard.appendChild(notifButtons);
-        
         container.appendChild(notifCard);
-        
-        this.friendRequests.set(senderId, { senderId, message, element: notifCard });
-        
-        console.log(`Added notification for sender ${senderId}. Total notifications: ${this.friendRequests.size}`);
+        this.pendingGameInvites.set(inviteId, { element: notifCard });
+    }
+
+    private removeGameInviteNotification(inviteId: string): void {
+        const entry = this.pendingGameInvites.get(inviteId);
+        if (entry) {
+            entry.element.remove();
+            this.pendingGameInvites.delete(inviteId);
+        }
+    }
+
+    private showToast(message: string, durationMs: number = 4000): void {
+        const container = document.getElementById('notifications-container');
+        if (!container) return;
+        const el = this.uiManager.createElement('div', 'p-2 bg-black/90 border border-[#00ffff] rounded text-[#00ffff] text-sm');
+        el.textContent = message;
+        container.appendChild(el);
+        setTimeout(() => el.remove(), durationMs);
+    }
+
+    private handleGameInviteAccepted(data: { inviteId: string; fromUserId: number; toUserId: number; gameUUID: string }): void {
+        const myId = this.currentUser ? Number(this.currentUser.id) : null;
+        if (myId === null) return;
+        if (myId === Number(data.toUserId)) {
+            this.routerManager.navigateTo('game-online', { joinGameUUID: data.gameUUID });
+        } else if (myId === Number(data.fromUserId)) {
+            this.showToast('Invite accepted! Waiting for opponent...');
+        }
+    }
+
+    private handleGameInviteDeclined(data: { inviteId: string; fromUserId: number; toUserId: number }): void {
+        const myId = this.currentUser ? Number(this.currentUser.id) : null;
+        if (myId !== null && myId === Number(data.fromUserId)) {
+            this.showToast('Invite declined.');
+        }
     }
 
     private removeFriendRequestNotification(senderId: number): void {
