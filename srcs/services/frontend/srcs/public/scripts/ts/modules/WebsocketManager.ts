@@ -45,15 +45,27 @@ export class WebsocketManager {
   private chatNotifications = new Map<number, { senderId: number, username: string, message: string }>();
 
   /** Pending game invite to send once new-game UUID is received (invite-from-chat flow) */
-  private pendingGameInvite: { friendId: number; message: string } | null = null;
-  public setPendingGameInvite(friendId: number, message: string): void {
-    this.pendingGameInvite = { friendId, message };
+  private pendingGameInvite: { friendId: number; message: string; toUsername?: string } | null = null;
+  public setPendingGameInvite(friendId: number, message: string, toUsername?: string): void {
+    this.pendingGameInvite = { friendId, message, toUsername };
   }
-  public getPendingGameInvite(): { friendId: number; message: string } | null {
+  public getPendingGameInvite(): { friendId: number; message: string; toUsername?: string } | null {
     return this.pendingGameInvite;
   }
   public clearPendingGameInvite(): void {
     this.pendingGameInvite = null;
+  }
+
+  /** Received game invites (persist across navigation so notification is re-shown when returning to Live Chat) */
+  private pendingReceivedGameInvites = new Map<string, { inviteId: string; fromUserId: number; toUserId: number; gameUUID: string; fromUsername?: string | null; message?: string | null }>();
+  public addPendingReceivedGameInvite(payload: { inviteId: string; fromUserId: number; toUserId: number; gameUUID: string; fromUsername?: string | null; message?: string | null }): void {
+    this.pendingReceivedGameInvites.set(payload.inviteId, payload);
+  }
+  public getPendingReceivedGameInvites(): Array<{ inviteId: string; fromUserId: number; toUserId: number; gameUUID: string; fromUsername?: string | null; message?: string | null }> {
+    return Array.from(this.pendingReceivedGameInvites.values());
+  }
+  public removePendingReceivedGameInvite(inviteId: string): void {
+    this.pendingReceivedGameInvites.delete(inviteId);
   }
 
   public init(origin: string) {

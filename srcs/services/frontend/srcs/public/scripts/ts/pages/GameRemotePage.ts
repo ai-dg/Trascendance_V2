@@ -19,6 +19,8 @@ export class RemotePage {
   private player1LabelEl: HTMLElement | null = null;
   private player2LabelEl: HTMLElement | null = null;
 
+  private _waitingForInviteDeclinedListener: ((e: Event) => void) | null = null;
+
   constructor(uiManager: UIManager, onBack: () => void, user?: User | null) {
 	this.uiManager = uiManager;
 	this.onBack = onBack;
@@ -392,6 +394,66 @@ export class RemotePage {
       .forEach((el) => el.remove());
   }
 
+  private clearWaitingForInviteListener(): void {
+    if (this._waitingForInviteDeclinedListener) {
+      window.removeEventListener('game-invite-declined', this._waitingForInviteDeclinedListener);
+      this._waitingForInviteDeclinedListener = null;
+    }
+  }
+
+  /** Called when A has sent an invite from live chat: show "Waiting for [username]..." and listen for decline */
+  public setWaitingForInviteResponse(_friendId: number, username?: string): void {
+    this.clearWaitingForInviteListener();
+    const startOverlay = document.querySelector<HTMLElement>('[data-overlay="start-game"]');
+    if (!startOverlay) return;
+    startOverlay.innerHTML = '';
+    const content = this.uiManager.createElement('div', 'text-center retro-text');
+    const title = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'WAITING FOR OPPONENT');
+    const subtitle = this.uiManager.createElement('div', 'text-lg mb-6 text-[#00ffff]', username ? `Waiting for ${username} to accept...` : 'Waiting for opponent to accept...');
+    const cancelBtn = this.uiManager.createButton(
+      'CANCEL',
+      'retro-button bg-transparent text-[#ff1493] px-6 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200',
+      () => {
+        this.clearWaitingForInviteListener();
+        this.requestNewGame();
+      }
+    );
+    content.appendChild(title);
+    content.appendChild(subtitle);
+    content.appendChild(cancelBtn);
+    startOverlay.appendChild(content);
+    startOverlay.classList.remove('hidden');
+    startOverlay.style.display = '';
+
+    this._waitingForInviteDeclinedListener = () => {
+      this.clearWaitingForInviteListener();
+      this.showInviteDeclined();
+    };
+    window.addEventListener('game-invite-declined', this._waitingForInviteDeclinedListener);
+  }
+
+  /** Show "Invite declined" and offer "Play Against Random Player?" */
+  public showInviteDeclined(): void {
+    this.clearWaitingForInviteListener();
+    const startOverlay = document.querySelector<HTMLElement>('[data-overlay="start-game"]');
+    if (!startOverlay) return;
+    startOverlay.innerHTML = '';
+    const content = this.uiManager.createElement('div', 'text-center retro-text');
+    const title = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff6b6b]', 'INVITE DECLINED');
+    const subtitle = this.uiManager.createElement('div', 'text-lg mb-6 text-white', 'Your invite was declined.');
+    const randomBtn = this.uiManager.createButton(
+      'PLAY AGAINST RANDOM PLAYER',
+      'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',
+      () => this.playAgainstRandomPlayer()
+    );
+    content.appendChild(title);
+    content.appendChild(subtitle);
+    content.appendChild(randomBtn);
+    startOverlay.appendChild(content);
+    startOverlay.classList.remove('hidden');
+    startOverlay.style.display = '';
+  }
+
   /**
    * Reject reconnection and notify server so other player is informed
    */
@@ -409,6 +471,7 @@ export class RemotePage {
 
   private requestNewGame(): void {
 	// Return to lobby - show game mode selection
+    this.clearWaitingForInviteListener();
     this.removeWaitingScreen();
 
 	const gameOverOverlay = document.querySelector('[data-overlay="game-over"]') as HTMLElement;
@@ -427,15 +490,8 @@ export class RemotePage {
 		'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',
 		() => this.playAgainstRandomPlayer()
 	  );
-	  const startButtonFriend = this.uiManager.createButton(
-		'PLAY AGAINST A FRIEND',
-		'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200 mt-4',
-		() => this.playAgainstFriend()
-	  );
 	  startContent.appendChild(startTitle);
 	  startContent.appendChild(startButtonRandom);
-	  startContent.appendChild(this.uiManager.createElement('div', 'h-4'));
-	  startContent.appendChild(startButtonFriend);
 	  startOverlay.appendChild(startContent);
 	  startOverlay.classList.remove('hidden');
 	  startOverlay.style.display = ''; // Clear inline display:none from countdown/pause
@@ -548,12 +604,13 @@ export class RemotePage {
    */
   private handleOpponentFound(data: any): void {
 	this.isSearchingOpponent = false;
+	this.clearWaitingForInviteListener();
 	this.removeWaitingScreen();
 
-	// Update avatars and usernames (for player 2, server sends yourAvatar/yourUsername so we show our own avatar even if this.user wasn't set)
-	const myUsername = (data?.playerNumber === 2 && data?.yourUsername) ? data.yourUsername : (this.user?.username ?? 'Guest');
+	// Update avatars and usernames (server sends yourAvatar/yourUsername to both players so we show our own avatar even if this.user wasn't set)
+	const myUsername = data?.yourUsername ?? this.user?.username ?? 'Guest';
 	const opponentUsername = data?.opponentUsername ?? 'Player 2';
-	const myAvatarSrc = this.resolveAvatarSrc(data?.playerNumber === 2 ? (data?.yourAvatar ?? this.user?.avatar ?? null) : (this.user?.avatar ?? null));
+	const myAvatarSrc = this.resolveAvatarSrc(data?.yourAvatar ?? this.user?.avatar ?? null);
 	const opponentAvatarSrc = this.resolveAvatarSrc(data?.opponentAvatar ?? null);
 
 	if (this.player1LabelEl)

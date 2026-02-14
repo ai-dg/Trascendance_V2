@@ -154,9 +154,21 @@ export class SocialManager {
         parentElement.appendChild(socialDiv);
 
         this.setupSocketListeners();
-        this.loadFriendsList(); 
+        this.loadFriendsList();
         this.loadPendingFriendRequests();
+        this.restorePendingGameInvites(notificationsContainer);
         this.syncSocialPanel();
+    }
+
+    /** Re-show game invite notifications from persistent store (e.g. after navigating back to Live Chat / Menu).
+     * @param container - The notifications container element (required: it may not be in document yet when called from render) */
+    private restorePendingGameInvites(container: HTMLElement): void {
+        if (!container) return;
+        for (const payload of this.wsManager.getPendingReceivedGameInvites()) {
+            if (!this.pendingGameInvites.has(payload.inviteId)) {
+                this.addGameInviteNotificationToContainer(payload, container);
+            }
+        }
     }
 
     private async getIdByUsername(username: string) {
@@ -434,6 +446,7 @@ export class SocialManager {
 
                 case 'game-invite':
                     if (SocialManager.DEBUG_INVITE) console.log('[INVITE_RECV]', data);
+                    this.wsManager.addPendingReceivedGameInvite(data);
                     this.addGameInviteNotification(data);
                     break;
                 case 'game-invite-accepted':
@@ -591,10 +604,14 @@ export class SocialManager {
     }
 
     private addGameInviteNotification(data: { inviteId: string; fromUserId: number; toUserId: number; gameUUID: string; fromUsername?: string | null; message?: string | null }): void {
-        const { inviteId, fromUsername, message } = data;
-        if (this.pendingGameInvites.has(inviteId)) return;
         const container = document.getElementById('notifications-container');
         if (!container) return;
+        this.addGameInviteNotificationToContainer(data, container);
+    }
+
+    private addGameInviteNotificationToContainer(data: { inviteId: string; fromUserId: number; toUserId: number; gameUUID: string; fromUsername?: string | null; message?: string | null }, container: HTMLElement): void {
+        const { inviteId, fromUsername, message } = data;
+        if (this.pendingGameInvites.has(inviteId)) return;
         const text = message || (fromUsername ? `${fromUsername} invited you to play` : 'You were invited to a game');
         const notifCard = this.uiManager.createElement('div', 'p-3 bg-black/80 border border-[#ff1493] rounded');
         const notifMessage = this.uiManager.createElement('p', 'text-[#00ffff] text-sm mb-2');
@@ -608,12 +625,14 @@ export class SocialManager {
             acceptBtn.disabled = true;
             declineBtn.disabled = true;
             this.wsManager.emitGeneral('game-invite-accept', { inviteId });
+            this.wsManager.removePendingReceivedGameInvite(inviteId);
             this.removeGameInviteNotification(inviteId);
         });
         declineBtn.addEventListener('click', () => {
             acceptBtn.disabled = true;
             declineBtn.disabled = true;
             this.wsManager.emitGeneral('game-invite-decline', { inviteId });
+            this.wsManager.removePendingReceivedGameInvite(inviteId);
             this.removeGameInviteNotification(inviteId);
         });
         notifButtons.appendChild(acceptBtn);
@@ -644,6 +663,7 @@ export class SocialManager {
     private handleGameInviteAccepted(data: { inviteId: string; fromUserId: number; toUserId: number; gameUUID: string }): void {
         const myId = this.currentUser ? Number(this.currentUser.id) : null;
         if (myId === null) return;
+        this.wsManager.removePendingReceivedGameInvite(data.inviteId);
         if (myId === Number(data.toUserId)) {
             this.routerManager.navigateTo('game-online', { joinGameUUID: data.gameUUID });
         } else if (myId === Number(data.fromUserId)) {
@@ -655,6 +675,7 @@ export class SocialManager {
         const myId = this.currentUser ? Number(this.currentUser.id) : null;
         if (myId !== null && myId === Number(data.fromUserId)) {
             this.showToast('Invite declined.');
+            window.dispatchEvent(new CustomEvent('game-invite-declined'));
         }
     }
 

@@ -475,10 +475,11 @@ export class LiveChatPage {
         if (friendId == null)
             return;
         const message = 'You have been invited to a game by ' + (this.currentUser?.username ?? 'Someone');
+        const toUsername = this.currentSelectedFriend.username ?? undefined;
         if (typeof (window as any).DEBUG_INVITE !== 'undefined' && (window as any).DEBUG_INVITE) {
             console.log('[INVITE_SEND]', { toFriendId: friendId, message });
         }
-        this.wsManager.setPendingGameInvite(friendId, message);
+        this.wsManager.setPendingGameInvite(friendId, message, toUsername);
         this.routerManager.navigateTo('game-online');
         this.wsManager.gameSocket?.emit('request-game-uid', { type: 'remote' });
     }

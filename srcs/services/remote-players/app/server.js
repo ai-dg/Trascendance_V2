@@ -237,7 +237,9 @@ function setupGameSocket(socket) {
 						playerNumber: 1,
 						opponentId: userId,
 						opponentUsername: player2Username,
-						opponentAvatar: player2Avatar
+						opponentAvatar: player2Avatar,
+						yourUsername: player1Username,
+						yourAvatar: player1Avatar
 					});
 					socket.emit(gameUUID, {
 						type: "opponent-found",
@@ -257,7 +259,9 @@ function setupGameSocket(socket) {
 						playerNumber: 1,
 						opponentId: userId,
 						opponentUsername: socket.user || 'Player 2',
-						opponentAvatar: 'default'
+						opponentAvatar: 'default',
+						yourUsername: p1.user || 'Player 1',
+						yourAvatar: 'default'
 					});
 					socket.emit(gameUUID, {
 						type: "opponent-found",
@@ -505,8 +509,8 @@ function onMatchFound(matchData) {
 
 	const player1Username = player1Info?.username || player1Socket.user || 'Player 1';
 	const player2Username = player2Info?.username || player2Socket.user || 'Player 2';
-	const player1Avatar = player1Info?.avatar || player1Socket.avatar || null;
-	const player2Avatar = player2Info?.avatar || player2Socket.avatar || null;
+	const player1Avatar = (player1Info?.avatar && String(player1Info.avatar).trim()) || player1Socket?.avatar || 'default';
+	const player2Avatar = (player2Info?.avatar && String(player2Info.avatar).trim()) || player2Socket?.avatar || 'default';
 
 	// Add player 2 to the game
 	game.addPlayer2(player2Socket, player2UserId);
@@ -521,13 +525,15 @@ function onMatchFound(matchData) {
 	// Set up socket listener for player 2's inputs on the MATCHED game
 	player2Socket.on(gameUUID, (eventData) => gameHandler(gameUUID, eventData, player2Socket));
 
-	// Notify Player 1
+	// Notify Player 1 (include yourUsername/yourAvatar so player 1 sees their own avatar on the left)
 	player1Socket.emit(gameUUID, {
 		type: "opponent-found",
 		playerNumber: 1,
 		opponentId: player2UserId,
 		opponentUsername: player2Username,
-		opponentAvatar: player2Avatar
+		opponentAvatar: player2Avatar,
+		yourUsername: player1Username,
+		yourAvatar: player1Avatar
 	});
 
 	// Notify Player 2 (include yourUsername/yourAvatar so player 2 sees their own avatar)
@@ -551,14 +557,16 @@ function onMatchFound(matchData) {
 			playerNumber: 1,
 			opponentId: player2UserId,
 			opponentUsername: player2Socket.user || 'Player 2',
-			opponentAvatar: player2Socket.avatar || null
+			opponentAvatar: player2Socket.avatar || 'default',
+			yourUsername: player1Socket.user || 'Player 1',
+			yourAvatar: player1Socket.avatar || 'default'
 		});
 		player2Socket.emit(player2GameUUID, {
 			type: "opponent-found",
 			playerNumber: 2,
 			opponentId: player1UserId,
 			opponentUsername: player1Socket.user || 'Player 1',
-			opponentAvatar: player1Socket.avatar || null,
+			opponentAvatar: player1Socket.avatar || 'default',
 			gameUUID: gameUUID,
 			yourUsername: player2Socket.user || 'Player 2',
 			yourAvatar: player2Socket.avatar || 'default'

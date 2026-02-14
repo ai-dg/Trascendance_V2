@@ -331,6 +331,7 @@ export class App {
             if (pending && data?.UUID) {
               const inviteId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'inv_' + Date.now() + '_' + Math.random().toString(36).slice(2);
               wsManager.emitGeneral('game-invite', { friendId: pending.friendId, gameUUID: data.UUID, inviteId, message: pending.message });
+              this.gamePageOnline.setWaitingForInviteResponse(pending.friendId, pending.toUsername);
               wsManager.clearPendingGameInvite();
             }
           }
