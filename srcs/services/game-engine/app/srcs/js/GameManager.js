@@ -56,14 +56,14 @@ export class GameManager {
       this.playersReady.player2 = true;
     }
     
-    // Notifie les clients du statut
+    // Notify clients of ready status
     this.socket.emit(this.uuid, {
       type: "ready-status",
       player1Ready: this.playersReady.player1,
       player2Ready: this.playersReady.player2
     });
     
-    // Si tous sont prêts, lance le countdown
+    // When both ready, start countdown
     if (this.playersReady.player1 && this.playersReady.player2) {
       this.startCountdown();
     }
@@ -92,7 +92,7 @@ export class GameManager {
     this.gameState.gameRunning = true;
     this.gameState.winner = null;
     
-    // Prévenir le frontend
+    // Notify frontend
     this.socket.emit(this.uuid, { type: "game-start" });
     
     this.gameLoop();

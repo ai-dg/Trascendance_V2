@@ -397,7 +397,7 @@ export class UpdateProfilePage {
 
       const card = this.uiManager.createElement(
         'div',
-        // Card large ("bannière") mais contenu gardé étroit au centre
+        // Wide banner card, content kept narrow and centred
         'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-8 shadow-[0_0_30px_#ff1493] w-full flex flex-col items-center'
       );
       card.style.width = '1300px';
@@ -408,7 +408,7 @@ export class UpdateProfilePage {
 
       const title = this.uiManager.createElement(
         'h1',
-        // inline-flex => le titre ne "s'étire" pas en largeur avec la bannière
+        // inline-flex so title doesn't stretch with banner width
         'retro-title text-sm mb-6 inline-flex text-center',
         this.t('chooseYourAvatar')
       );

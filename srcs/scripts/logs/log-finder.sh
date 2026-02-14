@@ -7,7 +7,7 @@ mkdir -p "$LOG_DIR"
 rm -f "$PID_FILE"
 rm -rf ./srcs/logs/*
 
-# Tous les container_name du docker-compose (ordre cohérent)
+# All docker-compose container_name values (order must match)
 SERVICES=(
   modsecurity
   gateway

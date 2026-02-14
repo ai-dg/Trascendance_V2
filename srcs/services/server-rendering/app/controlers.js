@@ -85,7 +85,7 @@ export async function confirm_email(request, reply)
 			let consumerTag;
 			let timeout;
 			try {
-				// Création du consumer
+				// Create consumer
 				const { consumerTag: tag } = await server.channel.consume(
 					replyQueue.queue,
 					async (msg) => {

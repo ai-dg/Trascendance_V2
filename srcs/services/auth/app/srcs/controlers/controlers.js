@@ -568,7 +568,7 @@ export async function signup_route(request, reply)
 				<p>Ce lien est valable 2mn
 				<p>À très vite sur Transcendance 42 ! 👋</p>`
 			};
-			// html: `<p>Votre code de connexion est : ${otp}</p>`
+			// html: `<p>Your login code is: ${otp}</p>`
 			if (!app.mailChannel)
 				return reply.send({success: false, message:"Unknown app error, please try again later"}, 500);
 			app.mailChannel.sendToQueue(mail_queue, Buffer.from(JSON.stringify(mailOptions)), {

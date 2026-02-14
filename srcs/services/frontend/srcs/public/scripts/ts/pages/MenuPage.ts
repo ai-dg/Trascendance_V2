@@ -339,7 +339,7 @@ export class MenuPage {
     ///////////////////////////////////
     /////////// Main Grid /////////////
     ///////////////////////////////////
-    // Layout principal de la page : 2 colonnes côte à côte, centrées
+    // Main layout: two columns side by side, centred
     const mainGrid = this.uiManager.createElement('div', 'flex gap-6 w-full justify-center');
 
     // Menu Grid Wrapper

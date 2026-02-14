@@ -53,10 +53,10 @@ WORKDIR /
 #     && chmod 644 /etc/nginx/ssl/nginx.crt \
 #     && chmod 644 /etc/nginx/ssl/nginx.key
 
-    # Cloner le connecteur ModSecurity pour Nginx
+    # Clone ModSecurity-nginx connector
 RUN git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git /opt/ModSecurity-nginx
 
-# Télécharger Nginx depuis les sources
+# Download Nginx from source
 WORKDIR /opt
 RUN curl -O http://nginx.org/download/nginx-1.28.0.tar.gz && \
     tar -zxvf nginx-1.28.0.tar.gz

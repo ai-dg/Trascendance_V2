@@ -11,15 +11,13 @@ export async function connect_message_queue() {
   const password = process.env.RABBITMQ_DEFAULT_PASSWORD;
   const connection = await amqp.connect(`amqp://${user}:${password}@rabbitmq:5672`);
   
-  // Canal pour les emails (rapide)
+  // Channel for transactional mail (fast)
   const mailChannel = await connection.createChannel();
   await mailChannel.assertQueue(mail_queue, { durable: true });
-  // Préfetch élevé pour les emails rapides
   await mailChannel.prefetch(10);
   
   const validationChannel = await connection.createChannel();
   await validationChannel.assertQueue(validation_queue, { durable: true });
-  // Préfetch bas pour les validations lentes
   await validationChannel.prefetch(10);
   
   return {
@@ -33,7 +31,7 @@ export async function connect_message_queue() {
 export async function setupMessageQueues() {
   const { connection, mailChannel, validationChannel } = await connect_message_queue();
   
-  // Attacher les canaux a fastify
+  // Attach channels to Fastify app
   app.mailChannel = mailChannel;
   app.validationChannel = validationChannel;
   app.rabbitConnection = connection;

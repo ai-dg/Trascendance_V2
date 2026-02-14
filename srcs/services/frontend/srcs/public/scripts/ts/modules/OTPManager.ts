@@ -14,13 +14,13 @@ export class OTPManagers {
     }
 
     public async signupSuccessHandler(){
-	    // TODO: remplacer l'alerte par un vrai message !
+	    // TODO: replace alert with proper UI message
 	    // alert("sign up success !!!!!!! Have to display front message")
 	    window.location.href="/";	
     }
 
 	// public async changePasswordSuccessHandler(){
-	//     // TODO: remplacer l'alerte par un vrai message !
+	//     // TODO: replace alert with proper UI message
 	//     // alert("forgot password success !!!!!!! Have to display front message")
 	// 	// ??????????
 	//     window.location.href="/";	
