@@ -804,7 +804,7 @@ export async function auth_me_route(request, reply) {
     }
 
     const user = await app.db.get(
-      "SELECT user_id, pseudo, user_mail, avatar FROM users WHERE user_id = ?",
+      "SELECT user_id, pseudo, user_mail, avatar, auth_provider FROM users WHERE user_id = ?",
       [payload.user_id]
     );
     if (!user) {

@@ -90,7 +90,7 @@ export async function oauth_callback_route(request, reply) {
             if (!existingUser) {
                 const tempPassword = crypto.randomBytes(16).toString('hex');
                 const result = await db.run(
-                    `INSERT INTO users (user_mail, pseudo, user_password, avatar, created_at) VALUES (?, ?, ?, ?, datetime('now'))`,
+                    `INSERT INTO users (user_mail, pseudo, user_password, avatar, created_at, auth_provider) VALUES (?, ?, ?, ?, datetime('now'), '42')`,
                     [userData.email, userData.login, tempPassword, avatarUrl]
                 );
                 userId = result.lastID;
@@ -99,7 +99,7 @@ export async function oauth_callback_route(request, reply) {
             }
 
             await db.run(
-                `UPDATE users SET pseudo = ?, user_mail = ?, avatar = COALESCE(?, avatar) WHERE user_id = ?`,
+                `UPDATE users SET pseudo = ?, user_mail = ?, avatar = COALESCE(?, avatar), auth_provider = '42' WHERE user_id = ?`,
                 [userData.login, userData.email, avatarUrl, userId]
             );
 

@@ -89,8 +89,8 @@ clean:
 	@rm -f srcs/logs/*.log
 	@rm -f srcs/logs/pids.txt
 	@echo $(GREEN)Removing SQLite databases...$(RESET)
-	@rm -f srcs/services/auth/app/auth.sqlite
-	@rm -f srcs/services/live-chat/app/live-chat.sqlite
+	@rm -f ./srcs/services/auth/app/auth.sqlite
+	@rm -f ./srcs/services/live-chat/app/live-chat.sqlite
 	@echo $(GREEN)Removing Redis data...$(RESET)
 	@rm -rf srcs/volumes/redis_data/dump.rdb
 	@echo $(GREEN)Removing compiled JavaScript files...$(RESET)

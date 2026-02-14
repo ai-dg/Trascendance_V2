@@ -115,6 +115,8 @@ export interface User {
   isGuest?: boolean;
   nbrId?: number;
   online?: boolean;
+  /** '42' when logged in via 42 OAuth, 'local' or undefined otherwise */
+  provider?: 'local' | '42';
 }
 
 export interface LoginCredentials {

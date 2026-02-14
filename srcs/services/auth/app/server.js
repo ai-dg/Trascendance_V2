@@ -95,6 +95,11 @@ async function setupDatabase() {
 			pseudo TEXT NOT NULL UNIQUE,
 			user_password TEXT NOT NULL,		avatar TEXT,			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 			);`);
+		try {
+			await db.exec(`ALTER TABLE users ADD COLUMN auth_provider TEXT DEFAULT 'local'`);
+		} catch (e) {
+			if (!String(e).includes('duplicate column')) throw e;
+		}
 		return db;
 	}
 	catch(err){

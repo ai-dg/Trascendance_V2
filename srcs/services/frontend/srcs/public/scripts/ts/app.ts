@@ -391,7 +391,8 @@ export class App {
           username: result.data.user.pseudo,
           email: result.data.user.user_mail,
           avatar: result.data.user.avatar,
-          isGuest: false
+          isGuest: false,
+          provider: (result.data.user.auth_provider === '42' ? '42' : 'local') as 'local' | '42'
         };
         console.log('[REFRESH_DEBUG] auth/me 200 → server accepted cookie, user_id=', user.id);
         return user;
