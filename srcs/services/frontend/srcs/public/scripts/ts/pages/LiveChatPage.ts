@@ -45,6 +45,7 @@ export class LiveChatPage {
 
     public async render(user: User | null): Promise<void> {
         console.log("live-chat for:", user);
+        this.currentUser = user;
 
         this.checkSessionStorageForRedirect();
 
@@ -120,6 +121,14 @@ export class LiveChatPage {
         }
     }
 
+    private resolveProfileAvatarSrc(avatar: string | null | undefined): string {
+        const v = (avatar != null && typeof avatar === 'string') ? avatar.trim() : '';
+        if (!v) return 'public/avatars/default.png';
+        if (v.startsWith('http')) return v;
+        const hasExtension = /\.(png|jpe?g|gif|webp)$/i.test(v);
+        return hasExtension ? `public/avatars/${v}` : `public/avatars/${v}.png`;
+    }
+
     private createProfileColumn(): HTMLElement {
         const profileDiv = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 flex-shrink-0 w-60');
         profileDiv.id = 'profile-div';
@@ -131,19 +140,18 @@ export class LiveChatPage {
         avatarSection.style.height = '100px';
         avatarImg.style.width = '100px';
         avatarImg.style.height = '100px';
-        
-        if (!this.currentSelectedFriend || !this.currentSelectedFriend.avatar)
-            avatarImg.src = 'public/avatars/unknownPlayer.jpeg';
-        else if (this.currentSelectedFriend.avatar.startsWith('http'))
-            avatarImg.src = this.currentSelectedFriend.avatar;
+
+        const displayUser = this.currentSelectedFriend ?? this.currentUser;
+        if (!displayUser)
+            avatarImg.src = 'public/avatars/default.png';
         else
-            avatarImg.src = `public/avatars/${this.currentSelectedFriend.avatar}.png`;
+            avatarImg.src = this.resolveProfileAvatarSrc(displayUser.avatar);
 
         const username = this.uiManager.createElement('p', 'retro-subtitle text-lg text-[#00ffff] font-bold');
-        if (!this.currentSelectedFriend || !this.currentSelectedFriend.username)
+        if (!displayUser || !displayUser.username)
             username.textContent = ' ';
         else
-            username.textContent = this.currentSelectedFriend.username;
+            username.textContent = displayUser.username;
 
         const btnDiv = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
         

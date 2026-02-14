@@ -33,30 +33,42 @@ export async function friend_request_route(request, reply) {
         return reply.code(401).send({ success: false, message: "Invalid or expired token" });
     }
     const { senderId: bodySenderId, receiverId } = request.body || {};
-    const userId = payload.user_id;
+    const userId = Number(payload.user_id);
+    const receiverIdNum = receiverId != null ? Number(receiverId) : null;
 
     try {
         console.log('[ADD_FRIEND_SEND] backend received body.senderId=', bodySenderId, 'body.receiverId=', receiverId, 'jwt.userId=', userId);
-        if (receiverId == null || Number(receiverId) === Number(userId)) {
+        if (receiverIdNum == null || receiverIdNum === userId) {
             return reply.code(400).send({ success: false, message: "You cannot add yourself as a friend" });
         }
-        console.log(`User ${userId} is sending a friend request to ${receiverId}`);
+        console.log(`User ${userId} is sending a friend request to ${receiverIdNum}`);
         const exiting = await app.db.get(`
             SELECT * FROM friendships 
             WHERE (user_id = ? AND friend_id = ?)
                OR (user_id = ? AND friend_id = ?)
-        `, [userId, receiverId, receiverId, userId]);
+        `, [userId, receiverIdNum, receiverIdNum, userId]);
 
         if (exiting) {
-            console.log("Friendship already exists:", exiting);
-            return reply.code(400).send({ success: false, message: "Friendship already exists or pending" });
+            if (exiting.status === 'accepted') {
+                return reply.code(400).send({ success: false, message: "Friendship already exists or pending" });
+            }
+            if (exiting.status === 'pending') {
+                return reply.code(400).send({ success: false, message: "Friend request already pending" });
+            }
+            if (exiting.status === 'blocked') {
+                await app.db.run(`
+                    DELETE FROM friendships
+                    WHERE (user_id = ? AND friend_id = ?)
+                       OR (user_id = ? AND friend_id = ?)
+                `, [userId, receiverIdNum, receiverIdNum, userId]);
+            }
         }
-        
+
         await app.db.run(`
             INSERT INTO friendships (user_id, friend_id, status, requester_id)
             VALUES (?, ?, 'pending', ?)
-            ON CONFLICT(user_id, friend_id) DO NOTHING
-        `, [userId, receiverId, userId]);
+            ON CONFLICT(user_id, friend_id) DO UPDATE SET status = 'pending', requester_id = excluded.requester_id
+        `, [userId, receiverIdNum, userId]);
 
         let username = `User ${userId}`;
         try {
@@ -85,7 +97,7 @@ export async function friend_request_route(request, reply) {
         console.log("Publishing friend-request via Redis");
 
         await redis.publish('notifications', JSON.stringify({
-            targetUserId: receiverId,
+            targetUserId: receiverIdNum,
             event: 'notifications',
             payload: {
                 type: 'friend-request',
@@ -93,8 +105,8 @@ export async function friend_request_route(request, reply) {
                 message: `User ${username} wants to be your friend!`
             }
         }));
-        
-        return reply.send({ success: true, message: "friend requested", receiverId });
+
+        return reply.send({ success: true, message: "friend requested", receiverId: receiverIdNum });
     } catch (dbErr) {
          if (dbErr.code === "SQLITE_CONSTRAINT") {
             return reply.code(400).send({ success: false, message: dbErr.message });
@@ -433,26 +445,30 @@ export async function remove_friend(request, reply) {
     console.log('Remove friend route called');
     const { friendId } = request.body;
     const token = request.cookies.token || request.body.token;
-    
+
     if (!token) {
-        return { success: false, message: "Not authenticated" };
+        return reply.code(401).send({ success: false, message: "Not authenticated" });
     }
-    
+
     let payload;
     try {
         payload = jwt.verify(token, process.env.JWT_SECRET);
     } catch {
-        return { success: false, message: "Invalid or expired token" };
+        return reply.code(401).send({ success: false, message: "Invalid or expired token" });
     }
-    
-    const userId = payload.user_id;
-    console.log(`User ${userId} is trying to remove friend ${friendId}`);
+
+    const userId = Number(payload.user_id);
+    const friendIdNum = friendId != null ? Number(friendId) : null;
+    if (friendIdNum == null) {
+        return reply.code(400).send({ success: false, message: "friendId is required" });
+    }
+    console.log(`User ${userId} is trying to remove friend ${friendIdNum}`);
     try {
             const res = await app.db.run(`
                 DELETE FROM friendships
                 WHERE (user_id = ? AND friend_id = ?)
                     OR (user_id = ? AND friend_id = ?)
-            `, [userId, friendId, friendId, userId]);
+            `, [userId, friendIdNum, friendIdNum, userId]);
             console.log(`Friendship removal result:`, res);
             if (res.changes === 0) {
                 return reply.code(400).send({ success: false, message: "No active friendship to remove" });
@@ -462,7 +478,7 @@ export async function remove_friend(request, reply) {
             await redis.publish('notifications', JSON.stringify({
                 targetUserId: userId,
                 event: 'friend-removed',
-                payload: { friendId }
+                payload: { friendId: friendIdNum }
             }));
             return reply.code(200).send({ 
                 success: true, 
