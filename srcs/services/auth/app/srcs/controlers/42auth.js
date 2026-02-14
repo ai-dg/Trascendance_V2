@@ -4,18 +4,29 @@ import crypto from 'crypto';
 
 const { sign, verify } = jwt;
 
-export async function oauth_login_route(request, reply) {
-    // Build redirect URI dynamically from request host (supports localhost, LAN IP, domain)
+/** Cookie options matching main branch so session persists on refresh (token: sameSite lax, no secure). */
+function get42CallbackCookieOptions(request) {
+    const protocol = request.headers['x-forwarded-proto'] || 'http';
+    const isSecure = protocol === 'https';
+    return {
+        token: { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 3600 },
+        sessionId: { path: '/', httpOnly: true, sameSite: isSecure ? 'none' : 'lax', secure: isSecure, maxAge: 3600 }
+    };
+}
+
+/** Redirect URI for 42 OAuth: use FORTYTWO_REDIRECT_URI if set (must match 42 dashboard), else build from request. */
+function getRedirectUri(request) {
+    const fromEnv = process.env.FORTYTWO_REDIRECT_URI?.trim();
+    if (fromEnv) return fromEnv;
     const protocol = request.headers['x-forwarded-proto'] || 'http';
     const host = request.headers['x-forwarded-host'] || request.headers.host || 'localhost';
-    const redirectUri = `${protocol}://${host}/auth/42/callback`;
+    return `${protocol}://${host}/auth/42/callback`;
+}
 
-    console.log('42 OAuth Login - Redirect URI:', redirectUri);
-    console.log('Headers:', {
-        'x-forwarded-proto': request.headers['x-forwarded-proto'],
-        'x-forwarded-host': request.headers['x-forwarded-host'],
-        'host': request.headers.host
-    });
+export async function oauth_login_route(request, reply) {
+    const redirectUri = getRedirectUri(request);
+
+    console.log('42 OAuth Login - Redirect URI:', redirectUri, process.env.FORTYTWO_REDIRECT_URI ? '(from FORTYTWO_REDIRECT_URI)' : '(from request headers)');
 
     // Store the redirect URI in a cookie so the callback can use the same one
     reply.setCookie('oauth_redirect_uri', redirectUri, {
@@ -34,10 +45,8 @@ export async function oauth_callback_route(request, reply) {
         const { code } = request.query;
         if (!code) return reply.status(400).send('Missing code');
 
-        // Get the redirect URI from cookie (set during login) or construct from request
-        const protocol = request.headers['x-forwarded-proto'] || 'http';
-        const host = request.headers['x-forwarded-host'] || request.headers.host || 'localhost';
-        const redirectUri = request.cookies.oauth_redirect_uri || `${protocol}://${host}/auth/42/callback`;
+        // Same redirect URI as in login (cookie from login, or env, or from request)
+        const redirectUri = request.cookies.oauth_redirect_uri || getRedirectUri(request);
 
         // Clear the OAuth cookie
         reply.clearCookie('oauth_redirect_uri', { path: '/' });
@@ -103,21 +112,9 @@ export async function oauth_callback_route(request, reply) {
 
             await redis.set(`session:user:${userId}`, sessionId, { EX: 3600 });
 
-            const protocol = request.headers['x-forwarded-proto'] || (request.headers['x-forwarded-host']?.includes('443') ? 'https' : 'http');
-            const isSecure = protocol === 'https';
+            const opts = get42CallbackCookieOptions(request);
+            reply.setCookie('token', token, opts.token).setCookie('sessionId', sessionId, opts.sessionId);
 
-            reply.setCookie('token', token, {
-                path: '/' ,
-                httpOnly: true,
-                sameSite: 'lax'
-            }).setCookie('sessionId', sessionId, {
-                httpOnly: true,
-                sameSite: isSecure ? 'none' : 'lax',
-                secure: isSecure,
-                path: '/',
-                maxAge: 3600});
-
-            // Redirect with oauth_success flag to clear session storage checking
             return reply.redirect('/?oauth_success=1');
         } catch (err) {
             console.error('42 auth error:', err);

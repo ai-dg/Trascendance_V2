@@ -32,10 +32,14 @@ export async function friend_request_route(request, reply) {
         console.log("payload live-chat error:", err);
         return reply.code(401).send({ success: false, message: "Invalid or expired token" });
     }
-    const{ receiverId } = request.body;
+    const { senderId: bodySenderId, receiverId } = request.body || {};
     const userId = payload.user_id;
 
     try {
+        console.log('[ADD_FRIEND_SEND] backend received body.senderId=', bodySenderId, 'body.receiverId=', receiverId, 'jwt.userId=', userId);
+        if (receiverId == null || Number(receiverId) === Number(userId)) {
+            return reply.code(400).send({ success: false, message: "You cannot add yourself as a friend" });
+        }
         console.log(`User ${userId} is sending a friend request to ${receiverId}`);
         const exiting = await app.db.get(`
             SELECT * FROM friendships 
@@ -207,8 +211,14 @@ export async function get_friends_route(request, reply) {
             return { success: true, friends: [] };
         }
 
+        // Exclude current user from list (e.g. bogus self-friendship)
+        const otherFriendships = friendships.filter((f) => Number(f.friend_id) !== Number(userId));
+        if (otherFriendships.length === 0) {
+            return { success: true, friends: [] };
+        }
+
         const friends = await Promise.all(
-            friendships.map(async (friendship) => {
+            otherFriendships.map(async (friendship) => {
                 try {
                     const res = await fetch(`https://auth_app:3000/username-id`, {
                         method: 'POST',

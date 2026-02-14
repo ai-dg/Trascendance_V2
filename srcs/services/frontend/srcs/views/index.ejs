@@ -69,6 +69,98 @@
                 document.body.appendChild(loadingScreen);
             })();
         </script>
+        <!-- Debug: logs cumulatifs (localStorage) pour voir avant + après refresh -->
+        <script>
+            (function() {
+                var MAX_LINES = 2000;
+                var STORAGE_KEY = '__debugLogBuffer';
+                var buffer = [];
+                try {
+                    var saved = localStorage.getItem(STORAGE_KEY);
+                    if (saved) {
+                        buffer = saved.split('\n').filter(Boolean);
+                        if (buffer.length > MAX_LINES) buffer = buffer.slice(-MAX_LINES);
+                    }
+                } catch (e) {}
+                function formatArgs(args) {
+                    try {
+                        return Array.prototype.map.call(args, function(a) {
+                            if (typeof a === 'object') try { return JSON.stringify(a); } catch (e) { return String(a); }
+                            return String(a);
+                        }).join(' ');
+                    } catch (e) { return String(args); }
+                }
+                function save() {
+                    try { localStorage.setItem(STORAGE_KEY, buffer.join('\n')); } catch (e) {}
+                }
+                function push(level, args) {
+                    var line = new Date().toISOString() + ' [' + level + '] ' + formatArgs(args);
+                    buffer.push(line);
+                    if (buffer.length > MAX_LINES) buffer = buffer.slice(-MAX_LINES);
+                    save();
+                }
+                var origLog = console.log, origWarn = console.warn, origError = console.error;
+                console.log = function() { push('LOG', arguments); return origLog.apply(console, arguments); };
+                console.warn = function() { push('WARN', arguments); return origWarn.apply(console, arguments); };
+                console.error = function() { push('ERROR', arguments); return origError.apply(console, arguments); };
+                window.downloadDebugLog = function(filename) {
+                    filename = filename || 'console-debug-' + new Date().toISOString().slice(0,19).replace(/:/g,'-') + '.txt';
+                    var text = buffer.join('\n');
+                    var blob = new Blob([text], { type: 'text/plain' });
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
+                    origLog.call(console, '[DEBUG] Téléchargement:', buffer.length, 'lignes (cumulatif) ->', filename);
+                };
+                window.copyDebugLog = function() {
+                    var text = buffer.join('\n');
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(text).then(function() {
+                            origLog.call(console, '[DEBUG]', buffer.length, 'lignes copiées (cumulatif).');
+                        }).catch(function() {});
+                    }
+                };
+                window.copyDebugLogRaw = function() { return buffer.join('\n'); };
+                window.clearDebugLog = function() {
+                    buffer = [];
+                    save();
+                    origLog.call(console, '[DEBUG] Logs effacés.');
+                };
+                origLog.call(console, '[DEBUG] Logs cumulatifs (survit au refresh). Export logs = bouton | clearDebugLog() = effacer. Pour refresh/cookies: chercher REFRESH_DEBUG dans l\'export.');
+                var wrap = document.createElement('div');
+                wrap.style.cssText = 'position:fixed;bottom:12px;right:12px;z-index:99999;display:flex;gap:6px;';
+                var btn = document.createElement('button');
+                btn.textContent = 'Export logs';
+                btn.type = 'button';
+                btn.style.cssText = 'padding:6px 12px;font-size:12px;background:#333;color:#0ff;border:1px solid #0ff;border-radius:4px;cursor:pointer;';
+                btn.onclick = function() {
+                    var fn = 'console-debug-' + new Date().toISOString().slice(0,19).replace(/:/g,'-') + '.txt';
+                    var text = buffer.join('\n');
+                    var blob = new Blob([text], { type: 'text/plain' });
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = fn;
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);
+                };
+                var btnClear = document.createElement('button');
+                btnClear.textContent = 'Clear logs';
+                btnClear.type = 'button';
+                btnClear.style.cssText = 'padding:6px 12px;font-size:12px;background:#333;color:#f96;border:1px solid #f96;border-radius:4px;cursor:pointer;';
+                btnClear.onclick = function() { clearDebugLog(); };
+                wrap.appendChild(btn);
+                wrap.appendChild(btnClear);
+                document.body.appendChild(wrap);
+            })();
+        </script>
 
         <!-- Client-side JavaScript will hydrate this content -->
         <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+" crossorigin="anonymous"></script>

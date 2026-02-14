@@ -7,20 +7,28 @@ mkdir -p "$LOG_DIR"
 rm -f "$PID_FILE"
 rm -rf ./srcs/logs/*
 
+# Tous les container_name du docker-compose (ordre cohérent)
 SERVICES=(
+  modsecurity
   gateway
   server-rendering_app
   auth_app
   language-manager_app
   live-chat_app
   realtime-sockets_app
-  backend-ai_app
+  remote-players_app
+  blockchain
   game-engine_app
+  backend-ai_app
   gt_mailpit
   mail
   rabbit
   redis
-
+  frontend_app
+  prometheus
+  grafana
+  redis-exporter
+  cadvisor
 )
 
 for service in "${SERVICES[@]}"; do

@@ -113,8 +113,8 @@ export class RouterManager {
 
   private getBaseUrl(): string {
       const element = document.querySelector("meta[name='api-base-url']");
-      const baseUrl = element?.getAttribute('content') ?? '';
-      return baseUrl;
+      const baseUrl = (element?.getAttribute('content') ?? '').trim();
+      return baseUrl || (typeof window !== 'undefined' ? window.location.host : '');
   }
 
   public getUrl(endpoint: string): string{

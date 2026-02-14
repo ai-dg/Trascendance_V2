@@ -69,6 +69,12 @@ downv:
 	@$(MAKE) kill-logs
 	docker compose -f $(COMPOSE) down -v
 	@echo $(GREEN)Volumes removed.$(RESET)
+	@echo $(GREEN)Removing SQLite databases...$(RESET)
+	@rm -f srcs/services/auth/app/auth.sqlite
+	@rm -f srcs/services/live-chat/app/live-chat.sqlite
+	@echo $(GREEN)Removing Redis data...$(RESET)
+	@rm -rf srcs/volumes/redis_data
+	@echo $(GREEN)Databases and Redis data removed. Next 'make d' will start with fresh data.$(RESET)
 
 clean:
 	@echo $(GREEN)Stopping and killing log processes...$(RESET)

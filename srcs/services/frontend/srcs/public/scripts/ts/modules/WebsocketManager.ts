@@ -75,6 +75,7 @@ export class WebsocketManager {
       }
     };
 
+    console.log('[WS_AUTH] connecting with withCredentials: true (cookies)');
     this.generalSocket = io(origin, generalOptions);
     this.gameSocket = io(origin, gameOptions);
     this.setupDefaultListeners();

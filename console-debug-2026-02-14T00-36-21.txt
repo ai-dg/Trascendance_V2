@@ -1,0 +1,232 @@
+2026-02-13T23:05:52.215Z [LOG] [AUTH_DEBUG] Boot start. origin= https://localhost path= /
+2026-02-13T23:05:52.215Z [LOG] [AUTH_DEBUG] localStorage arcade_user present: false
+2026-02-13T23:05:52.215Z [LOG] current user: null
+2026-02-13T23:05:52.215Z [LOG] [AUTH_DEBUG] No user in localStorage
+2026-02-13T23:05:52.215Z [LOG] [AUTH_DEBUG] Calling auth/me url= https://localhost/auth/me credentials=include
+2026-02-13T23:05:52.247Z [LOG] [AUTH_DEBUG] auth/me response status= 401 ok= false
+2026-02-13T23:05:52.247Z [LOG] [AUTH_DEBUG] auth/me 401 → server: no cookie or token invalid/revoked/expired
+2026-02-13T23:05:52.247Z [LOG] [AUTH_DEBUG] auth/me returned null and no rehydrated user → will show auth page
+2026-02-13T23:05:52.247Z [LOG] [AUTH_DEBUG] After init: currentUser= null → will show: auth
+2026-02-13T23:05:52.247Z [LOG] CURRENT USER RENDER:  null
+2026-02-13T23:05:52.247Z [LOG] render:  false
+2026-02-13T23:05:53.380Z [LOG] [AUTH_DEBUG] Boot start. origin= https://localhost path= /
+2026-02-13T23:05:53.381Z [LOG] [AUTH_DEBUG] localStorage arcade_user present: false
+2026-02-13T23:05:53.381Z [LOG] current user: null
+2026-02-13T23:05:53.381Z [LOG] [AUTH_DEBUG] No user in localStorage
+2026-02-13T23:05:53.381Z [LOG] [AUTH_DEBUG] Calling auth/me url= https://localhost/auth/me credentials=include
+2026-02-13T23:05:53.427Z [LOG] [AUTH_DEBUG] auth/me response status= 401 ok= false
+2026-02-13T23:05:53.427Z [LOG] [AUTH_DEBUG] auth/me 401 → server: no cookie or token invalid/revoked/expired
+2026-02-13T23:05:53.428Z [LOG] [AUTH_DEBUG] auth/me returned null and no rehydrated user → will show auth page
+2026-02-13T23:05:53.428Z [LOG] [AUTH_DEBUG] After init: currentUser= null → will show: auth
+2026-02-13T23:05:53.428Z [LOG] CURRENT USER RENDER:  null
+2026-02-13T23:05:53.428Z [LOG] render:  false
+2026-02-13T23:05:53.624Z [LOG] [AUTH_DEBUG] Boot start. origin= https://localhost path= /
+2026-02-13T23:05:53.624Z [LOG] [AUTH_DEBUG] localStorage arcade_user present: false
+2026-02-13T23:05:53.624Z [LOG] current user: null
+2026-02-13T23:05:53.624Z [LOG] [AUTH_DEBUG] No user in localStorage
+2026-02-13T23:05:53.624Z [LOG] [AUTH_DEBUG] Calling auth/me url= https://localhost/auth/me credentials=include
+2026-02-13T23:05:53.657Z [LOG] [AUTH_DEBUG] auth/me response status= 401 ok= false
+2026-02-13T23:05:53.657Z [LOG] [AUTH_DEBUG] auth/me 401 → server: no cookie or token invalid/revoked/expired
+2026-02-13T23:05:53.657Z [LOG] [AUTH_DEBUG] auth/me returned null and no rehydrated user → will show auth page
+2026-02-13T23:05:53.657Z [LOG] [AUTH_DEBUG] After init: currentUser= null → will show: auth
+2026-02-13T23:05:53.657Z [LOG] CURRENT USER RENDER:  null
+2026-02-13T23:05:53.657Z [LOG] render:  false
+2026-02-13T23:07:53.735Z [LOG] 42 Sign In clicked
+2026-02-13T23:07:54.675Z [LOG] [AUTH_DEBUG] Boot start. origin= https://localhost path= /
+2026-02-13T23:07:54.675Z [LOG] [AUTH_DEBUG] localStorage arcade_user present: false
+2026-02-13T23:07:54.675Z [LOG] current user: null
+2026-02-13T23:07:54.675Z [LOG] [AUTH_DEBUG] No user in localStorage
+2026-02-13T23:07:54.675Z [LOG] [AUTH_DEBUG] Calling auth/me url= https://localhost/auth/me credentials=include
+2026-02-13T23:07:54.732Z [LOG] [AUTH_DEBUG] auth/me response status= 200 ok= true
+2026-02-13T23:07:54.733Z [LOG] [AUTH_DEBUG] auth/me returned 200, user id= 30 → persisting
+2026-02-13T23:07:54.733Z [LOG] [AUTH_DEBUG] After init: currentUser= 30 → will show: menu
+2026-02-13T23:07:54.733Z [LOG] [WS_AUTH] connecting with withCredentials: true (cookies)
+2026-02-13T23:07:54.735Z [LOG] [AUTH_LOGIN] boot: user set, persisted to localStorage
+2026-02-13T23:07:54.735Z [LOG] Navigating to page: menu with data: undefined and options: {"replace":true}
+2026-02-13T23:07:54.735Z [LOG] CURRENT USER RENDER:  {"id":30,"username":"dagudelo","email":"dagudelo@student.42.fr","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg","isGuest":false}
+2026-02-13T23:07:54.768Z [LOG] Loaded 0 pending friend requests on socket setup
+2026-02-13T23:07:54.780Z [LOG] Pending requests response: {"success":true,"requests":[]}
+2026-02-13T23:07:54.780Z [LOG] No pending friend requests found
+2026-02-13T23:07:54.781Z [LOG] Friends list response: {"success":true,"friends":[{"id":30,"username":"dagudelo","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg"}]}
+2026-02-13T23:07:54.781Z [LOG] [ADD_FRIEND_STATE] about to display friends, ids= [30] me.id= 30
+2026-02-13T23:07:54.781Z [ERROR] [ADD_FRIEND_STATE] Skipping self in friends list (guard)
+2026-02-13T23:07:54.781Z [LOG] Loaded 1 friends
+2026-02-13T23:07:54.790Z [LOG] General socket connected
+2026-02-13T23:07:54.808Z [LOG] Game socket connected
+2026-02-13T23:07:56.062Z [LOG] [AUTH_DEBUG] Boot start. origin= https://localhost path= /
+2026-02-13T23:07:56.062Z [LOG] [AUTH_DEBUG] localStorage arcade_user present: true
+2026-02-13T23:07:56.062Z [LOG] current user: {"id":30,"username":"dagudelo","email":"dagudelo@student.42.fr","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg","isGuest":false}
+2026-02-13T23:07:56.062Z [LOG] [AUTH_DEBUG] Rehydrated from localStorage, user id= 30 isGuest= false
+2026-02-13T23:07:56.062Z [LOG] [AUTH_DEBUG] Calling auth/me url= https://localhost/auth/me credentials=include
+2026-02-13T23:07:56.099Z [LOG] [AUTH_DEBUG] auth/me response status= 200 ok= true
+2026-02-13T23:07:56.100Z [LOG] [AUTH_DEBUG] auth/me returned 200, user id= 30 → persisting
+2026-02-13T23:07:56.100Z [LOG] [AUTH_DEBUG] After init: currentUser= 30 → will show: menu
+2026-02-13T23:07:56.100Z [LOG] [WS_AUTH] connecting with withCredentials: true (cookies)
+2026-02-13T23:07:56.101Z [LOG] [AUTH_LOGIN] boot: user set, persisted to localStorage
+2026-02-13T23:07:56.101Z [LOG] CURRENT USER RENDER:  {"id":30,"username":"dagudelo","email":"dagudelo@student.42.fr","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg","isGuest":false}
+2026-02-13T23:07:56.101Z [LOG] render:  false
+2026-02-13T23:07:56.143Z [LOG] General socket connected
+2026-02-13T23:07:56.166Z [LOG] Game socket connected
+2026-02-13T23:09:28.846Z [LOG] [WebsocketManager] Game socket disconnected: transport close
+2026-02-14T00:35:41.389Z [LOG] 42 Sign In clicked
+2026-02-14T00:35:42.338Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 30 isGuest= false
+2026-02-14T00:35:42.338Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 30 isGuest= false
+2026-02-14T00:35:42.339Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 30 isGuest= false
+2026-02-14T00:35:42.339Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 30 isGuest= false
+2026-02-14T00:35:42.339Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 30 isGuest= false
+2026-02-14T00:35:42.340Z [LOG] [BOOT] origin=https://localhost navType=navigate
+2026-02-14T00:35:42.340Z [LOG] [BOOT] arcade_user=present length=174
+2026-02-14T00:35:42.340Z [LOG] [REFRESH_DEBUG] ========== BOOT START ==========
+2026-02-14T00:35:42.340Z [LOG] [BOOT_ORIGIN] https://localhost host= localhost protocol= https:
+2026-02-14T00:35:42.340Z [LOG] [REFRESH_DEBUG] origin= https://localhost path= / navType= navigate (0=normal 1=reload 2=backforward)
+2026-02-14T00:35:42.340Z [LOG] [BOOT_STORAGE] arcade_user present= true length= 174 (has value)
+2026-02-14T00:35:42.340Z [LOG] [REFRESH_DEBUG] localStorage.arcade_user present= true length= 174
+2026-02-14T00:35:42.340Z [LOG] [REFRESH_DEBUG] localStorage.arcade_user parsed id= 30 isGuest= false
+2026-02-14T00:35:42.340Z [LOG] [BOOT_COOKIES_CLIENT] document.cookie= csrftoken=Kh79x1y1v2qTYawZPoReA3nlhuMsyDiq; ajs_anonymous_id=2e1bbf58-4289-4b3b-b1dd-a8b8a7eeb4de; __next_hmr_refresh_hash__=f3ee0a21543f6da6ded9b7bff1c0e8ef4c4377eead24c0f9 | length= 173 | token/sessionId are HttpOnly so not visible here
+2026-02-14T00:35:42.340Z [LOG] [REFRESH_DEBUG] document.cookie (visible to JS)= csrftoken=Kh79x1y1v2qTYawZPoReA3nlhuMsyDiq; ajs_anonymous_id=2e1bbf58-4289-4b3b-b1dd-a8b8a7eeb4de; __next_hmr_refresh_hash__=f3ee0a21543f6da6ded9b7bff1c0e8ef4c4377eead24c0f9 | length= 173 | token/sessionId are httpOnly so never visible here
+2026-02-14T00:35:42.397Z [LOG] [REFRESH_DEBUG] cookies received by server: token= true sessionId= true lang= false
+2026-02-14T00:35:42.397Z [LOG] current user: {"id":30,"username":"dagudelo","email":"dagudelo@student.42.fr","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg","isGuest":false}
+2026-02-14T00:35:42.398Z [LOG] [REFRESH_DEBUG] Rehydrated from localStorage → currentUser.id= 30 isGuest= false
+2026-02-14T00:35:42.398Z [LOG] [API_AUTH_REQ] auth/me url= https://localhost/auth/me sameOrigin= true credentials=include
+2026-02-14T00:35:42.398Z [LOG] [REFRESH_DEBUG] Calling auth/me url= https://localhost/auth/me sameOrigin= true credentials=include
+2026-02-14T00:35:42.410Z [LOG] [REFRESH_DEBUG] auth/me response status= 200 ok= true (if 401: cookie missing/expired or not sent with this request)
+2026-02-14T00:35:42.413Z [LOG] [REFRESH_DEBUG] auth/me 200 → server accepted cookie, user_id= 1
+2026-02-14T00:35:42.414Z [LOG] [REFRESH_DEBUG] AuthManager.setUserAndPersist: id= 1 isGuest= false
+2026-02-14T00:35:42.414Z [LOG] [PERSIST_OK] wrote arcade_user length=173
+2026-02-14T00:35:42.414Z [LOG] [REFRESH_DEBUG] auth/me 200 → currentUser set and persisted, id= 1
+2026-02-14T00:35:42.414Z [LOG] [DECIDE] authMeStatus=200 hasRehydratedUser=true currentUserId=1 showing=MENU
+2026-02-14T00:35:42.414Z [LOG] [REFRESH_DEBUG] After init: currentUser.id= 1 → showing= MENU
+2026-02-14T00:35:42.414Z [LOG] [REFRESH_DEBUG] ========== BOOT END ==========
+2026-02-14T00:35:42.414Z [LOG] [WS_AUTH] connecting with withCredentials: true (cookies)
+2026-02-14T00:35:42.416Z [LOG] [AUTH_LOGIN] boot: user set, persisted to localStorage
+2026-02-14T00:35:42.416Z [LOG] [MENU_SWITCH] {"reason":"initialize(boot has user)","currentUser":{"id":1,"username":"dagudelo","email":"dagudelo@student.42.fr","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg","isGuest":false},"stack":"Error\n    at App.initialize (https://localhost/public/scripts/js/app.js:205:123)"}
+2026-02-14T00:35:42.416Z [LOG] Navigating to page: menu with data: undefined and options: {"replace":true}
+2026-02-14T00:35:42.416Z [LOG] [MENU_SWITCH] {"reason":"router(page=menu)","currentUser":{"id":1,"username":"dagudelo","email":"dagudelo@student.42.fr","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg","isGuest":false},"stack":"Error\n    at https://localhost/public/scripts/js/app.js:87:115\n    at https://localhost/public/scripts/js/modules/RouterManager.js:44:44\n    at Array.forEach (<anonymous>)\n    at RouterManager.notifyListeners (https://localhost/public/scripts/js/modules/RouterManager.js:44:24)\n    at RouterManager.navigateTo (https://localhost/public/scripts/js/modules/RouterManager.js:34:18)\n    at App.initialize (https://localhost/public/scripts/js/app.js:206:36)"}
+2026-02-14T00:35:42.416Z [LOG] CURRENT USER RENDER:  {"id":1,"username":"dagudelo","email":"dagudelo@student.42.fr","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg","isGuest":false}
+2026-02-14T00:35:42.416Z [LOG] [MENU_SWITCH] {"reason":"render(case menu)","currentUser":{"id":1,"username":"dagudelo","email":"dagudelo@student.42.fr","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg","isGuest":false},"stack":"Error\n    at App.render (https://localhost/public/scripts/js/app.js:312:115)\n    at https://localhost/public/scripts/js/app.js:89:18\n    at https://localhost/public/scripts/js/modules/RouterManager.js:44:44\n    at Array.forEach (<anonymous>)\n    at RouterManager.notifyListeners (https://localhost/public/scripts/js/modules/RouterManager.js:44:24)\n    at RouterManager.navigateTo (https://localhost/public/scripts/js/modules/RouterManager.js:34:18)\n    at App.initialize (https://localhost/public/scripts/js/app.js:206:36)"}
+2026-02-14T00:35:42.417Z [LOG] [MENU_RENDER_START] {"navType":"navigate","visibility":"visible","now":1771029342417}
+2026-02-14T00:35:42.419Z [LOG] [LOGOUT_BUTTON_ATTACHED] {"when":"footer","performanceNow":1028.7999999988824}
+2026-02-14T00:35:42.419Z [LOG] [MENU_RENDER_END] logout button in DOM {"performanceNow":1029.0999999996275}
+2026-02-14T00:35:42.446Z [LOG] Loaded 0 pending friend requests on socket setup
+2026-02-14T00:35:42.447Z [LOG] Friends list response: {"success":true,"friends":[]}
+2026-02-14T00:35:42.447Z [LOG] No friends found
+2026-02-14T00:35:42.448Z [LOG] Pending requests response: {"success":true,"requests":[]}
+2026-02-14T00:35:42.448Z [LOG] No pending friend requests found
+2026-02-14T00:35:42.465Z [LOG] General socket connected
+2026-02-14T00:35:42.478Z [LOG] Game socket connected
+2026-02-14T00:35:44.605Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 1 isGuest= false
+2026-02-14T00:35:44.606Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 1 isGuest= false
+2026-02-14T00:35:44.606Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 1 isGuest= false
+2026-02-14T00:35:44.606Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 1 isGuest= false
+2026-02-14T00:35:44.606Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 1 isGuest= false
+2026-02-14T00:35:44.607Z [LOG] [BOOT] origin=https://localhost navType=reload
+2026-02-14T00:35:44.607Z [LOG] [BOOT] arcade_user=present length=173
+2026-02-14T00:35:44.607Z [LOG] [REFRESH_DEBUG] ========== BOOT START ==========
+2026-02-14T00:35:44.607Z [LOG] [BOOT_ORIGIN] https://localhost host= localhost protocol= https:
+2026-02-14T00:35:44.607Z [LOG] [REFRESH_DEBUG] origin= https://localhost path= / navType= reload (0=normal 1=reload 2=backforward)
+2026-02-14T00:35:44.607Z [LOG] [BOOT_STORAGE] arcade_user present= true length= 173 (has value)
+2026-02-14T00:35:44.607Z [LOG] [REFRESH_DEBUG] localStorage.arcade_user present= true length= 173
+2026-02-14T00:35:44.607Z [LOG] [REFRESH_DEBUG] localStorage.arcade_user parsed id= 1 isGuest= false
+2026-02-14T00:35:44.607Z [LOG] [BOOT_COOKIES_CLIENT] document.cookie= csrftoken=Kh79x1y1v2qTYawZPoReA3nlhuMsyDiq; ajs_anonymous_id=2e1bbf58-4289-4b3b-b1dd-a8b8a7eeb4de; __next_hmr_refresh_hash__=f3ee0a21543f6da6ded9b7bff1c0e8ef4c4377eead24c0f9 | length= 173 | token/sessionId are HttpOnly so not visible here
+2026-02-14T00:35:44.607Z [LOG] [REFRESH_DEBUG] document.cookie (visible to JS)= csrftoken=Kh79x1y1v2qTYawZPoReA3nlhuMsyDiq; ajs_anonymous_id=2e1bbf58-4289-4b3b-b1dd-a8b8a7eeb4de; __next_hmr_refresh_hash__=f3ee0a21543f6da6ded9b7bff1c0e8ef4c4377eead24c0f9 | length= 173 | token/sessionId are httpOnly so never visible here
+2026-02-14T00:35:44.639Z [LOG] [REFRESH_DEBUG] cookies received by server: token= true sessionId= true lang= false
+2026-02-14T00:35:44.639Z [LOG] current user: {"id":1,"username":"dagudelo","email":"dagudelo@student.42.fr","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg","isGuest":false}
+2026-02-14T00:35:44.639Z [LOG] [REFRESH_DEBUG] Rehydrated from localStorage → currentUser.id= 1 isGuest= false
+2026-02-14T00:35:44.639Z [LOG] [API_AUTH_REQ] auth/me url= https://localhost/auth/me sameOrigin= true credentials=include
+2026-02-14T00:35:44.639Z [LOG] [REFRESH_DEBUG] Calling auth/me url= https://localhost/auth/me sameOrigin= true credentials=include
+2026-02-14T00:35:44.665Z [LOG] [REFRESH_DEBUG] auth/me response status= 200 ok= true (if 401: cookie missing/expired or not sent with this request)
+2026-02-14T00:35:44.669Z [LOG] [REFRESH_DEBUG] auth/me 200 → server accepted cookie, user_id= 1
+2026-02-14T00:35:44.669Z [LOG] [REFRESH_DEBUG] AuthManager.setUserAndPersist: id= 1 isGuest= false
+2026-02-14T00:35:44.669Z [LOG] [PERSIST_OK] wrote arcade_user length=173
+2026-02-14T00:35:44.669Z [LOG] [REFRESH_DEBUG] auth/me 200 → currentUser set and persisted, id= 1
+2026-02-14T00:35:44.669Z [LOG] [DECIDE] authMeStatus=200 hasRehydratedUser=true currentUserId=1 showing=MENU
+2026-02-14T00:35:44.669Z [LOG] [REFRESH_DEBUG] After init: currentUser.id= 1 → showing= MENU
+2026-02-14T00:35:44.669Z [LOG] [REFRESH_DEBUG] ========== BOOT END ==========
+2026-02-14T00:35:44.670Z [LOG] [WS_AUTH] connecting with withCredentials: true (cookies)
+2026-02-14T00:35:44.671Z [LOG] [AUTH_LOGIN] boot: user set, persisted to localStorage
+2026-02-14T00:35:44.671Z [LOG] CURRENT USER RENDER:  {"id":1,"username":"dagudelo","email":"dagudelo@student.42.fr","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg","isGuest":false}
+2026-02-14T00:35:44.672Z [LOG] [AUTH_SWITCH] {"reason":"render(case auth)","currentUser":{"id":1,"username":"dagudelo","email":"dagudelo@student.42.fr","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg","isGuest":false},"stack":"Error\n    at App.render (https://localhost/public/scripts/js/app.js:308:115)\n    at App.initialize (https://localhost/public/scripts/js/app.js:211:18)"}
+2026-02-14T00:35:44.672Z [LOG] render:  false
+2026-02-14T00:35:44.705Z [LOG] General socket connected
+2026-02-14T00:35:44.722Z [LOG] Game socket connected
+2026-02-14T00:36:17.040Z [LOG] 42 Sign In clicked
+2026-02-14T00:36:17.954Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 1 isGuest= false
+2026-02-14T00:36:17.955Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 1 isGuest= false
+2026-02-14T00:36:17.955Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 1 isGuest= false
+2026-02-14T00:36:17.955Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 1 isGuest= false
+2026-02-14T00:36:17.955Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 1 isGuest= false
+2026-02-14T00:36:17.955Z [LOG] [BOOT] origin=https://localhost navType=navigate
+2026-02-14T00:36:17.955Z [LOG] [BOOT] arcade_user=present length=173
+2026-02-14T00:36:17.955Z [LOG] [REFRESH_DEBUG] ========== BOOT START ==========
+2026-02-14T00:36:17.955Z [LOG] [BOOT_ORIGIN] https://localhost host= localhost protocol= https:
+2026-02-14T00:36:17.955Z [LOG] [REFRESH_DEBUG] origin= https://localhost path= / navType= navigate (0=normal 1=reload 2=backforward)
+2026-02-14T00:36:17.955Z [LOG] [BOOT_STORAGE] arcade_user present= true length= 173 (has value)
+2026-02-14T00:36:17.956Z [LOG] [REFRESH_DEBUG] localStorage.arcade_user present= true length= 173
+2026-02-14T00:36:17.956Z [LOG] [REFRESH_DEBUG] localStorage.arcade_user parsed id= 1 isGuest= false
+2026-02-14T00:36:17.956Z [LOG] [BOOT_COOKIES_CLIENT] document.cookie= csrftoken=Kh79x1y1v2qTYawZPoReA3nlhuMsyDiq; ajs_anonymous_id=2e1bbf58-4289-4b3b-b1dd-a8b8a7eeb4de; __next_hmr_refresh_hash__=f3ee0a21543f6da6ded9b7bff1c0e8ef4c4377eead24c0f9 | length= 173 | token/sessionId are HttpOnly so not visible here
+2026-02-14T00:36:17.956Z [LOG] [REFRESH_DEBUG] document.cookie (visible to JS)= csrftoken=Kh79x1y1v2qTYawZPoReA3nlhuMsyDiq; ajs_anonymous_id=2e1bbf58-4289-4b3b-b1dd-a8b8a7eeb4de; __next_hmr_refresh_hash__=f3ee0a21543f6da6ded9b7bff1c0e8ef4c4377eead24c0f9 | length= 173 | token/sessionId are httpOnly so never visible here
+2026-02-14T00:36:17.980Z [LOG] [REFRESH_DEBUG] cookies received by server: token= true sessionId= true lang= false
+2026-02-14T00:36:17.981Z [LOG] current user: {"id":1,"username":"dagudelo","email":"dagudelo@student.42.fr","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg","isGuest":false}
+2026-02-14T00:36:17.981Z [LOG] [REFRESH_DEBUG] Rehydrated from localStorage → currentUser.id= 1 isGuest= false
+2026-02-14T00:36:17.981Z [LOG] [API_AUTH_REQ] auth/me url= https://localhost/auth/me sameOrigin= true credentials=include
+2026-02-14T00:36:17.981Z [LOG] [REFRESH_DEBUG] Calling auth/me url= https://localhost/auth/me sameOrigin= true credentials=include
+2026-02-14T00:36:18.000Z [LOG] [REFRESH_DEBUG] auth/me response status= 200 ok= true (if 401: cookie missing/expired or not sent with this request)
+2026-02-14T00:36:18.002Z [LOG] [REFRESH_DEBUG] auth/me 200 → server accepted cookie, user_id= 1
+2026-02-14T00:36:18.002Z [LOG] [REFRESH_DEBUG] AuthManager.setUserAndPersist: id= 1 isGuest= false
+2026-02-14T00:36:18.003Z [LOG] [PERSIST_OK] wrote arcade_user length=173
+2026-02-14T00:36:18.003Z [LOG] [REFRESH_DEBUG] auth/me 200 → currentUser set and persisted, id= 1
+2026-02-14T00:36:18.003Z [LOG] [DECIDE] authMeStatus=200 hasRehydratedUser=true currentUserId=1 showing=MENU
+2026-02-14T00:36:18.003Z [LOG] [REFRESH_DEBUG] After init: currentUser.id= 1 → showing= MENU
+2026-02-14T00:36:18.003Z [LOG] [REFRESH_DEBUG] ========== BOOT END ==========
+2026-02-14T00:36:18.003Z [LOG] [WS_AUTH] connecting with withCredentials: true (cookies)
+2026-02-14T00:36:18.005Z [LOG] [AUTH_LOGIN] boot: user set, persisted to localStorage
+2026-02-14T00:36:18.005Z [LOG] [MENU_SWITCH] {"reason":"initialize(boot has user)","currentUser":{"id":1,"username":"dagudelo","email":"dagudelo@student.42.fr","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg","isGuest":false},"stack":"Error\n    at App.initialize (https://localhost/public/scripts/js/app.js:205:123)"}
+2026-02-14T00:36:18.005Z [LOG] Navigating to page: menu with data: undefined and options: {"replace":true}
+2026-02-14T00:36:18.005Z [LOG] [MENU_SWITCH] {"reason":"router(page=menu)","currentUser":{"id":1,"username":"dagudelo","email":"dagudelo@student.42.fr","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg","isGuest":false},"stack":"Error\n    at https://localhost/public/scripts/js/app.js:87:115\n    at https://localhost/public/scripts/js/modules/RouterManager.js:44:44\n    at Array.forEach (<anonymous>)\n    at RouterManager.notifyListeners (https://localhost/public/scripts/js/modules/RouterManager.js:44:24)\n    at RouterManager.navigateTo (https://localhost/public/scripts/js/modules/RouterManager.js:34:18)\n    at App.initialize (https://localhost/public/scripts/js/app.js:206:36)"}
+2026-02-14T00:36:18.005Z [LOG] CURRENT USER RENDER:  {"id":1,"username":"dagudelo","email":"dagudelo@student.42.fr","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg","isGuest":false}
+2026-02-14T00:36:18.005Z [LOG] [MENU_SWITCH] {"reason":"render(case menu)","currentUser":{"id":1,"username":"dagudelo","email":"dagudelo@student.42.fr","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg","isGuest":false},"stack":"Error\n    at App.render (https://localhost/public/scripts/js/app.js:312:115)\n    at https://localhost/public/scripts/js/app.js:89:18\n    at https://localhost/public/scripts/js/modules/RouterManager.js:44:44\n    at Array.forEach (<anonymous>)\n    at RouterManager.notifyListeners (https://localhost/public/scripts/js/modules/RouterManager.js:44:24)\n    at RouterManager.navigateTo (https://localhost/public/scripts/js/modules/RouterManager.js:34:18)\n    at App.initialize (https://localhost/public/scripts/js/app.js:206:36)"}
+2026-02-14T00:36:18.012Z [LOG] [MENU_RENDER_START] {"navType":"navigate","visibility":"visible","now":1771029378012}
+2026-02-14T00:36:18.013Z [LOG] [LOGOUT_BUTTON_ATTACHED] {"when":"footer","performanceNow":970.5999999996275}
+2026-02-14T00:36:18.013Z [LOG] [MENU_RENDER_END] logout button in DOM {"performanceNow":970.8000000007451}
+2026-02-14T00:36:18.034Z [LOG] Loaded 0 pending friend requests on socket setup
+2026-02-14T00:36:18.035Z [LOG] Friends list response: {"success":true,"friends":[]}
+2026-02-14T00:36:18.035Z [LOG] No friends found
+2026-02-14T00:36:18.036Z [LOG] Pending requests response: {"success":true,"requests":[]}
+2026-02-14T00:36:18.036Z [LOG] No pending friend requests found
+2026-02-14T00:36:18.050Z [LOG] General socket connected
+2026-02-14T00:36:18.071Z [LOG] Game socket connected
+2026-02-14T00:36:20.474Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 1 isGuest= false
+2026-02-14T00:36:20.474Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 1 isGuest= false
+2026-02-14T00:36:20.475Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 1 isGuest= false
+2026-02-14T00:36:20.475Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 1 isGuest= false
+2026-02-14T00:36:20.475Z [LOG] [REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id= 1 isGuest= false
+2026-02-14T00:36:20.476Z [LOG] [BOOT] origin=https://localhost navType=reload
+2026-02-14T00:36:20.476Z [LOG] [BOOT] arcade_user=present length=173
+2026-02-14T00:36:20.476Z [LOG] [REFRESH_DEBUG] ========== BOOT START ==========
+2026-02-14T00:36:20.476Z [LOG] [BOOT_ORIGIN] https://localhost host= localhost protocol= https:
+2026-02-14T00:36:20.476Z [LOG] [REFRESH_DEBUG] origin= https://localhost path= / navType= reload (0=normal 1=reload 2=backforward)
+2026-02-14T00:36:20.477Z [LOG] [BOOT_STORAGE] arcade_user present= true length= 173 (has value)
+2026-02-14T00:36:20.477Z [LOG] [REFRESH_DEBUG] localStorage.arcade_user present= true length= 173
+2026-02-14T00:36:20.477Z [LOG] [REFRESH_DEBUG] localStorage.arcade_user parsed id= 1 isGuest= false
+2026-02-14T00:36:20.477Z [LOG] [BOOT_COOKIES_CLIENT] document.cookie= csrftoken=Kh79x1y1v2qTYawZPoReA3nlhuMsyDiq; ajs_anonymous_id=2e1bbf58-4289-4b3b-b1dd-a8b8a7eeb4de; __next_hmr_refresh_hash__=f3ee0a21543f6da6ded9b7bff1c0e8ef4c4377eead24c0f9 | length= 173 | token/sessionId are HttpOnly so not visible here
+2026-02-14T00:36:20.477Z [LOG] [REFRESH_DEBUG] document.cookie (visible to JS)= csrftoken=Kh79x1y1v2qTYawZPoReA3nlhuMsyDiq; ajs_anonymous_id=2e1bbf58-4289-4b3b-b1dd-a8b8a7eeb4de; __next_hmr_refresh_hash__=f3ee0a21543f6da6ded9b7bff1c0e8ef4c4377eead24c0f9 | length= 173 | token/sessionId are httpOnly so never visible here
+2026-02-14T00:36:20.509Z [LOG] [REFRESH_DEBUG] cookies received by server: token= true sessionId= true lang= false
+2026-02-14T00:36:20.510Z [LOG] current user: {"id":1,"username":"dagudelo","email":"dagudelo@student.42.fr","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg","isGuest":false}
+2026-02-14T00:36:20.510Z [LOG] [REFRESH_DEBUG] Rehydrated from localStorage → currentUser.id= 1 isGuest= false
+2026-02-14T00:36:20.510Z [LOG] [API_AUTH_REQ] auth/me url= https://localhost/auth/me sameOrigin= true credentials=include
+2026-02-14T00:36:20.510Z [LOG] [REFRESH_DEBUG] Calling auth/me url= https://localhost/auth/me sameOrigin= true credentials=include
+2026-02-14T00:36:20.518Z [LOG] [REFRESH_DEBUG] auth/me response status= 200 ok= true (if 401: cookie missing/expired or not sent with this request)
+2026-02-14T00:36:20.519Z [LOG] [REFRESH_DEBUG] auth/me 200 → server accepted cookie, user_id= 1
+2026-02-14T00:36:20.520Z [LOG] [REFRESH_DEBUG] AuthManager.setUserAndPersist: id= 1 isGuest= false
+2026-02-14T00:36:20.520Z [LOG] [PERSIST_OK] wrote arcade_user length=173
+2026-02-14T00:36:20.520Z [LOG] [REFRESH_DEBUG] auth/me 200 → currentUser set and persisted, id= 1
+2026-02-14T00:36:20.520Z [LOG] [DECIDE] authMeStatus=200 hasRehydratedUser=true currentUserId=1 showing=MENU
+2026-02-14T00:36:20.520Z [LOG] [REFRESH_DEBUG] After init: currentUser.id= 1 → showing= MENU
+2026-02-14T00:36:20.520Z [LOG] [REFRESH_DEBUG] ========== BOOT END ==========
+2026-02-14T00:36:20.521Z [LOG] [WS_AUTH] connecting with withCredentials: true (cookies)
+2026-02-14T00:36:20.521Z [LOG] [AUTH_LOGIN] boot: user set, persisted to localStorage
+2026-02-14T00:36:20.522Z [LOG] CURRENT USER RENDER:  {"id":1,"username":"dagudelo","email":"dagudelo@student.42.fr","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg","isGuest":false}
+2026-02-14T00:36:20.522Z [LOG] [AUTH_SWITCH] {"reason":"render(case auth)","currentUser":{"id":1,"username":"dagudelo","email":"dagudelo@student.42.fr","avatar":"https://cdn.intra.42.fr/users/703697f2979108638726f305afb12330/medium_dagudelo.jpg","isGuest":false},"stack":"Error\n    at App.render (https://localhost/public/scripts/js/app.js:308:115)\n    at App.initialize (https://localhost/public/scripts/js/app.js:211:18)"}
+2026-02-14T00:36:20.522Z [LOG] render:  false
+2026-02-14T00:36:20.573Z [LOG] General socket connected
+2026-02-14T00:36:20.601Z [LOG] Game socket connected

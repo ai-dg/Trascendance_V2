@@ -339,13 +339,7 @@ export async function get_csrf_route(request, reply){
 		catch(err){
 			return reply.send({success:false, message: "app can't serve csrf token, try again later"}, 500)
 		}
-		reply.setCookie('csrf', signed_token, {
-			httpOnly: true,
-			sameSite: 'none',
-			secure: true,
-			path: '/',
-			maxAge: 3600
-		})
+		reply.setCookie('csrf', signed_token, getMainStyleCookieOptions(3600).token)
 		.send({success:true, data:{csrfToken : csrf_token}}, 200)
 }
 
@@ -402,25 +396,11 @@ export async function login_otp_validation_route(request, reply)
 
 		await redis.set(`session:user:${data.user_id}`, sessionId, { EX: 3600 });
 
-		return reply.setCookie('token', token, {
-			httpOnly: true,
-			sameSite: 'none',
-			secure: true,
-			path: '/',
-			maxAge: 3600
-		}).setCookie('sessionId', sessionId, {
-		    httpOnly: true,
-		    sameSite: 'none',
-		    secure: true,
-		    path: '/',
-		    maxAge: 3600
-		}).setCookie('lang', userLang, {
-			httpOnly: false,
-			sameSite: 'none',
-			secure: true,
-			path: '/',
-			maxAge: 3600
-		}).send({...get_success_message(data.email, data.pseudo)}, 200)
+		const opts = getMainStyleCookieOptions(3600, request);
+		return reply.setCookie('token', token, opts.token)
+		.setCookie('sessionId', sessionId, opts.sessionId)
+		.setCookie('lang', userLang, opts.lang)
+		.send({...get_success_message(data.email, data.pseudo)}, 200)
 	} catch(err) {
 		return reply.send(get_error_message(e.app_ERROR, 500))
 	}
@@ -429,18 +409,40 @@ export async function login_otp_validation_route(request, reply)
 
 
 /**********************************************************************************************************************************************************/
-/*** 																	Logout controlers		  											  			***/
+/*** 																	Cookie options (from request protocol so cookies persist on refresh)		  			***/
 /**********************************************************************************************************************************************************/
 
-function getCookieParams(maxAge){
+/** Cookie options matching main branch: token with sameSite lax (no secure) so it persists on refresh. */
+function getMainStyleCookieOptions(maxAge = 3600, request = null) {
+	const isSecure = request ? (request.headers['x-forwarded-proto'] || 'http') === 'https' : true;
 	return {
-		httpOnly: true,
-		sameSite: 'none',
-		secure: true,
-		path: '/',
-		maxAge: maxAge
-	}
+		token: { path: '/', httpOnly: true, sameSite: 'lax', maxAge },
+		sessionId: { path: '/', httpOnly: true, sameSite: isSecure ? 'none' : 'lax', secure: isSecure, maxAge },
+		lang: { path: '/', httpOnly: false, sameSite: 'lax', maxAge }
+	};
 }
+
+/** Cookie options from X-Forwarded-Proto (fallback when INSECURE_COOKIES set). */
+export function getCookieOptions(request, maxAge = 3600) {
+	const forceInsecure = process.env.INSECURE_COOKIES === '1' || process.env.INSECURE_COOKIES === 'true';
+	const protocol = request.headers['x-forwarded-proto'] || 'http';
+	const isSecure = !forceInsecure && protocol === 'https';
+	const opts = {
+		httpOnly: true,
+		sameSite: isSecure ? 'none' : 'lax',
+		secure: isSecure,
+		path: '/',
+		maxAge
+	};
+	if (process.env.NODE_ENV !== 'PROD') {
+		console.log('[AUTH_COOKIE] getCookieOptions proto=', protocol, 'isSecure=', isSecure, 'sameSite=', opts.sameSite);
+	}
+	return opts;
+}
+
+/**********************************************************************************************************************************************************/
+/*** 																	Logout controlers		  											  			***/
+/**********************************************************************************************************************************************************/
 
 
 export async function logout_route(request, reply) {
@@ -755,22 +757,49 @@ export async function reset_password_request_route(request, reply)  {
 /**********************************************************************************************************************************************************/
 
 
+/** Debug: return cookie presence only (no values). For frontend REFRESH_DEBUG. */
+export async function debug_cookies_route(request, reply) {
+  const origin = request.headers.origin || request.headers.referer || '(none)';
+  const cookieLen = (request.headers.cookie || '').length;
+  console.log('[AUTH_DEBUG] debug-cookies Origin=', origin, 'Cookie header length=', cookieLen);
+  const tokenPresent = !!request.cookies.token;
+  const sessionIdPresent = !!request.cookies.sessionId;
+  const langPresent = !!request.cookies.lang;
+  return reply.send({
+    tokenPresent,
+    sessionIdPresent,
+    langPresent,
+    note: 'token and sessionId are httpOnly so not visible in document.cookie; this shows what the server received'
+  });
+}
+
 export async function auth_me_route(request, reply) {
   try {
+    const origin = request.headers.origin || request.headers.referer || '(none)';
+    const cookieLen = (request.headers.cookie || '').length;
     const token = request.cookies.token;
-    if (!token) return reply.code(401).send({ success: false, message: "Not authenticated" });
+    console.log('[AUTH_DEBUG] /me Origin=', origin, 'Cookie header length=', cookieLen, 'token present=', !!token, 'NODE_ENV=', process.env.NODE_ENV);
+    if (!token) {
+      console.log('[AUTH_DEBUG] /me 401 → no token in request');
+      return reply.code(401).send({ success: false, message: "Not authenticated" });
+    }
 
     let payload;
     try {
       payload = verify(token, process.env.JWT_SECRET);
-    } catch {
+      console.log('[AUTH_DEBUG] /me JWT verify ok. user_id=', payload.user_id, 'jti=', payload.jti);
+    } catch (e) {
+      console.log('[AUTH_DEBUG] /me 401 → JWT verify failed:', (e && e.message) || String(e));
       return reply.code(401).send({ success: false, message: "Invalid or expired token" });
     }
-	const isProduction = process.env.NODE_ENV === 'PROD';
+
+    const isProduction = process.env.NODE_ENV === 'PROD';
     if (isProduction && payload.jti) {
-      const isRevoked = await redis.get(`jwt:${payload.jti}`);
-      if (isRevoked) {
-        return reply.code(401).send({ success: false, message: "Token revoked" });
+      const redisVal = await redis.get(`jwt:${payload.jti}`);
+      console.log('[AUTH_DEBUG] /me Redis jwt:' + payload.jti + ' =', redisVal === null ? 'null (expired?)' : redisVal);
+      if (redisVal !== 'valid') {
+        console.log('[AUTH_DEBUG] /me 401 → Redis not valid (revoked or expired)');
+        return reply.code(401).send({ success: false, message: "Token revoked or expired" });
       }
     }
 
@@ -778,12 +807,15 @@ export async function auth_me_route(request, reply) {
       "SELECT user_id, pseudo, user_mail, avatar FROM users WHERE user_id = ?",
       [payload.user_id]
     );
-    if (!user) return reply.code(404).send({ success: false, message: "User not found" });
-
+    if (!user) {
+      console.log('[AUTH_DEBUG] /me 401 → user_id not in DB (e.g. after DB reset):', payload.user_id);
+      return reply.code(401).send({ success: false, message: "User not found or session invalid" });
+    }
+    console.log('[AUTH_DEBUG] /me 200 → sending user_id=', user.user_id);
     return reply.send({ success: true, data: { user } });
 
   } catch (err) {
-    console.error("auth/me error:", err);
+    console.error('[AUTH_DEBUG] /me 500 error:', err);
     return reply.code(500).send({ success: false, message: "Internal app error" });
   }
 }
@@ -802,9 +834,9 @@ export async function get_id_by_username_route(request, reply) {
     }
 	const isProduction = process.env.NODE_ENV === 'PROD';
     if (isProduction && payload.jti) {
-      const isRevoked = await redis.get(`jwt:${payload.jti}`);
-      if (isRevoked) {
-        return reply.code(401).send({ success: false, message: "Token revoked" });
+      const redisVal = await redis.get(`jwt:${payload.jti}`);
+      if (redisVal !== 'valid') {
+        return reply.code(401).send({ success: false, message: "Token revoked or expired" });
       }
     }
 
@@ -843,9 +875,9 @@ export async function get_username_by_id_route(request, reply) {
     }
 	const isProduction = process.env.NODE_ENV === 'PROD';
     if (isProduction && payload.jti) {
-      const isRevoked = await redis.get(`jwt:${payload.jti}`);
-      if (isRevoked) {
-        return reply.code(401).send({ success: false, message: "Token revoked" });
+      const redisVal = await redis.get(`jwt:${payload.jti}`);
+      if (redisVal !== 'valid') {
+        return reply.code(401).send({ success: false, message: "Token revoked or expired" });
       }
     }
 

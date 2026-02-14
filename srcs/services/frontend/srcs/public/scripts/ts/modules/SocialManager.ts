@@ -225,9 +225,17 @@ export class SocialManager {
 
                 const senderId = this.currentUser.id;
                 const receiverId = await this.getIdByUsername(username);
+                const payload = { senderId, receiverId };
+                console.log('[ADD_FRIEND_SEND] me.id=', senderId, 'target(receiverId)=', receiverId, 'full payload=', payload);
                 
                 if (!receiverId) {
                     errorMessageDiv.textContent = "User id not found";
+                    errorMessageDiv.classList.remove('hidden', 'text-green-500');
+                    errorMessageDiv.classList.add('text-red-500');
+                    return;
+                }
+                if (Number(receiverId) === Number(this.currentUser.id)) {
+                    errorMessageDiv.textContent = "You cannot add yourself as a friend";
                     errorMessageDiv.classList.remove('hidden', 'text-green-500');
                     errorMessageDiv.classList.add('text-red-500');
                     return;
@@ -239,7 +247,7 @@ export class SocialManager {
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ senderId, receiverId })
+                    body: JSON.stringify(payload)
                 });
                 let data;
                 const contentType = res.headers.get("content-type");
@@ -350,6 +358,9 @@ export class SocialManager {
 
         this.wsManager.onGeneral('notifications', async (data) => {
             console.log("Received notification:", data);
+            if (data.type === 'friend-request' || data.type === 'friend-request-accepted') {
+                console.log('[ADD_FRIEND_RECV] event=', data.type, 'payload=', data);
+            }
             
             switch (data.type) {
                 case 'friend-request':
@@ -719,6 +730,8 @@ export class SocialManager {
             console.log("Friends list response:", data);
 
             if (data.success && data.friends && data.friends.length > 0) {
+                const friendIds = data.friends.map((f: any) => f.id);
+                console.log('[ADD_FRIEND_STATE] about to display friends, ids=', friendIds, 'me.id=', this.currentUser?.id);
                 this.displayFriends(data.friends);
                 console.log(`Loaded ${data.friends.length} friends`);
             } else {
@@ -750,7 +763,13 @@ export class SocialManager {
     
         container.innerHTML = '';
 
+        const myId = this.currentUser ? Number(this.currentUser.id) : null;
         for (const friend of friends) {
+            const friendIdNum = Number(friend.id);
+            if (myId !== null && friendIdNum === myId) {
+                console.error('[ADD_FRIEND_STATE] Skipping self in friends list (guard)');
+                continue;
+            }
             const username = friend.username;
         
             const friendItem = this.uiManager.createElement(
@@ -761,7 +780,7 @@ export class SocialManager {
             const friendName = this.uiManager.createElement('p', 'text-[#00ffff] text-sm');
             friendName.textContent = username || `User ${username}`;
 
-            const friendId = Number(friend.id);
+            const friendId = friendIdNum;
             const online = await this.isUserOnline(friend.id);
             if (online) {
                 friendName.textContent += " (Online)";

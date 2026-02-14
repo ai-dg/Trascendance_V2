@@ -32,10 +32,14 @@ export class AuthManager {
     if (stored) {
       try {
         this.currentUser = JSON.parse(stored);
+        console.log('[REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id=', this.currentUser?.id, 'isGuest=', this.currentUser?.isGuest);
       } catch (error) {
         Logger.error('Error loading user from storage:', error);
-        localStorage.removeItem('arcade_user');
+        this.currentUser = null;
+        console.log('[REFRESH_DEBUG] AuthManager.loadUserFromStorage: parse error (keeping arcade_user in storage for recovery)');
       }
+    } else {
+      console.log('[REFRESH_DEBUG] AuthManager.loadUserFromStorage: no arcade_user in localStorage');
     }
   }
 
@@ -43,7 +47,24 @@ export class AuthManager {
     if (this.currentUser) {
       localStorage.setItem('arcade_user', JSON.stringify(this.currentUser));
     } else {
+      console.log('[AUTH_CLEAR] reason=saveUserToStorage(currentUser=null)');
+      console.trace();
       localStorage.removeItem('arcade_user');
+    }
+  }
+
+  /** Persist user to localStorage so session survives refresh. Call after successful auth/me or OTP. */
+  public setUserAndPersist(user: User | null): void {
+    this.currentUser = user;
+    this.saveUserToStorage();
+    if (user && !user.isGuest) {
+      localStorage.removeItem('guestNickname');
+      localStorage.removeItem('guestAvatar');
+    }
+    console.log('[REFRESH_DEBUG] AuthManager.setUserAndPersist: id=', user?.id ?? 'null', 'isGuest=', user?.isGuest ?? 'n/a');
+    if (user) {
+      const raw = localStorage.getItem('arcade_user');
+      console.log('[PERSIST_OK] wrote arcade_user length=' + (raw?.length ?? 0));
     }
   }
 
@@ -349,6 +370,8 @@ export class AuthManager {
   }
 
   private async logoutHandler() {
+    console.log('[AUTH_CLEAR] reason=logoutHandler');
+    console.trace();
     try {
       const url = this.router.getUrl("auth/logout");
       const res = await fetch(url, {
@@ -457,10 +480,10 @@ public async changePassword(email: string, password: string, otpId: string): Pro
   }
 }
 
-  public logout(): void { // TODO: Implement logout
+  public logout(reason: string): void {
+    console.log('[LOGOUT_TRIGGER]', { reason, stack: new Error().stack });
     this.logoutHandler();
     this.currentUser = null;
-    // this.saveUserToStorage();
     this.notifyListeners();
   }
 

@@ -16,9 +16,13 @@ export class MenuPage {
   private onPlayGameOnline: () => void;
   private onChatWithFriends: () => void;
   private onSettings: () => void;
-  private onLogout: () => void;
+  private onLogout: (reason: string) => void;
   private onShowPrivacyPolicy: () => void;
   private onShowTermsOfService: () => void;
+
+  private _logoutArmed = false;
+  private _logoutArmTimeout: ReturnType<typeof setTimeout> | null = null;
+  private _menuRenderTime = 0;
 
   private menuItems = [
     {
@@ -62,7 +66,7 @@ export class MenuPage {
     onPlayGameOnline: () => void,
     onChatWithFriends: () => void,
     onSettings: () => void,
-    onLogout: () => void,
+    onLogout: (reason: string) => void,
     onShowPrivacyPolicy: () => void,
     onShowTermsOfService: () => void
   ) {
@@ -80,6 +84,20 @@ export class MenuPage {
   }
 
   public render(user: User | null): void {
+    this._logoutArmed = false;
+    if (this._logoutArmTimeout) clearTimeout(this._logoutArmTimeout);
+    this._logoutArmTimeout = setTimeout(() => {
+      this._logoutArmed = true;
+      this._logoutArmTimeout = null;
+    }, 1000);
+    this._menuRenderTime = Date.now();
+
+    const navEntry = typeof performance !== 'undefined' && (performance as any).getEntriesByType
+      ? (performance as any).getEntriesByType('navigation')[0]
+      : undefined;
+    const navType = navEntry?.type ?? 'unknown';
+    console.log('[MENU_RENDER_START]', { navType, visibility: document.visibilityState, now: Date.now() });
+
     if (user && (user as any).pseudo && !user.username) {
         user = {
             ...user,
@@ -363,14 +381,58 @@ export class MenuPage {
     //////////////////////////////////
 
     const footer = this.uiManager.createElement('div', 'flex justify-center gap-6 mt-12');
-    const logoutButton = this.uiManager.createButton(
-      'LOGOUT',
-      'retro-button bg-transparent text-red-400 px-6 py-3 rounded border-2 border-red-400 hover:bg-red-400 hover:text-black transition-all duration-200 flex items-center gap-2',
-      this.onLogout
-    );
+    const logoutButton = this.uiManager.createElement('button', 'retro-button bg-transparent text-red-400 px-6 py-3 rounded border-2 border-red-400 hover:bg-red-400 hover:text-black transition-all duration-200 flex items-center gap-2') as HTMLButtonElement;
+    logoutButton.textContent = 'LOGOUT ';
+    logoutButton.setAttribute('type', 'button');
+    logoutButton.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      if (!this._logoutArmed) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('[LOGOUT_BLOCKED_EARLY_CLICK]', { reason: 'keydown', key: e.key, logoutArmed: this._logoutArmed });
+      }
+    });
+    logoutButton.addEventListener('click', (e: MouseEvent) => {
+      const navEntry = typeof performance !== 'undefined' && (performance as any).getEntriesByType
+        ? (performance as any).getEntriesByType('navigation')[0]
+        : undefined;
+      const navType = navEntry?.type ?? 'unknown';
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const timeSinceMenuRender = Date.now() - this._menuRenderTime;
+      const isPointerClick = (e as PointerEvent).pointerType === 'mouse' || (e as PointerEvent).pointerType === 'touch';
+      const diagnostic = {
+        type: e.type,
+        isTrusted: e.isTrusted,
+        pointerType: (e as PointerEvent).pointerType ?? 'n/a',
+        isPointerClick,
+        button: e.button,
+        clientX: e.clientX,
+        clientY: e.clientY,
+        timeStamp: e.timeStamp,
+        visibilityState: document.visibilityState,
+        navType,
+        timeSinceBootMs: typeof performance !== 'undefined' ? Math.round(performance.now()) : 0,
+        timeSinceMenuRenderMs: timeSinceMenuRender,
+        logoutArmed: this._logoutArmed,
+        buttonRect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height }
+      };
+      console.log('[LOGOUT_CLICK]', diagnostic);
+
+      if (!e.isTrusted) return;
+      if (!this._logoutArmed) {
+        console.log('[LOGOUT_BLOCKED_EARLY_CLICK]', diagnostic);
+        return;
+      }
+      if (!isPointerClick) {
+        console.log('[LOGOUT_BLOCKED_EARLY_CLICK]', { reason: 'not pointer (keyboard?)', diagnostic });
+        return;
+      }
+      this.onLogout('user_click_logout');
+    });
     const logoutIcon = this.uiManager.createIcon('logout', 'w-4 h-4');
     logoutButton.appendChild(logoutIcon);
     footer.appendChild(logoutButton);
+    console.log('[LOGOUT_BUTTON_ATTACHED]', { when: 'footer', performanceNow: typeof performance !== 'undefined' ? performance.now() : 0 });
 
     // Version Info
     const versionInfo = this.uiManager.createElement('div', 'text-center mt-8 retro-text text-xs');
@@ -396,6 +458,7 @@ export class MenuPage {
 
     this.uiManager.clear();
     this.uiManager.container.appendChild(container);
+    console.log('[MENU_RENDER_END] logout button in DOM', { performanceNow: typeof performance !== 'undefined' ? performance.now() : 0 });
 
   }
 

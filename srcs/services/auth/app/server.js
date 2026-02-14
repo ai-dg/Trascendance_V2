@@ -49,9 +49,29 @@ export const redis = createClient({
 await redis.connect();
 
 
+// Allow dev origins so cookies are accepted when using http://localhost:8080 etc.
+const allowedOrigins = [
+	`https://${base_url}`,
+	`http://${base_url}`,
+	'http://localhost',
+	'https://localhost',
+	'http://localhost:8080',
+	'https://localhost:8080',
+	'http://127.0.0.1',
+	'http://127.0.0.1:8080'
+];
 await app.register(cors, {
-	origin: `https://${base_url}`,
-	credentials: true
+	origin: (origin, cb) => {
+		if (!origin) return cb(null, allowedOrigins[0]);
+		if (allowedOrigins.includes(origin)) return cb(null, true);
+		try {
+			const u = new URL(origin);
+			if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') return cb(null, true);
+		} catch (_) {}
+		cb(null, false);
+	},
+	credentials: true,
+	allowedHeaders: ['Content-Type', 'Authorization']
 });
 
 
