@@ -550,10 +550,10 @@ export class RemotePage {
 	this.isSearchingOpponent = false;
 	this.removeWaitingScreen();
 
-	// Update avatars and usernames
-	const myUsername = this.user?.username ?? 'Guest';
+	// Update avatars and usernames (for player 2, server sends yourAvatar/yourUsername so we show our own avatar even if this.user wasn't set)
+	const myUsername = (data?.playerNumber === 2 && data?.yourUsername) ? data.yourUsername : (this.user?.username ?? 'Guest');
 	const opponentUsername = data?.opponentUsername ?? 'Player 2';
-	const myAvatarSrc = this.resolveAvatarSrc(this.user?.avatar ?? null);
+	const myAvatarSrc = this.resolveAvatarSrc(data?.playerNumber === 2 ? (data?.yourAvatar ?? this.user?.avatar ?? null) : (this.user?.avatar ?? null));
 	const opponentAvatarSrc = this.resolveAvatarSrc(data?.opponentAvatar ?? null);
 
 	if (this.player1LabelEl)
@@ -589,11 +589,14 @@ export class RemotePage {
   }
 
   private resolveAvatarSrc(avatar: string | null | undefined): string {
-	if (!avatar)
+	const v = (avatar != null && typeof avatar === 'string') ? avatar.trim() : '';
+	if (!v)
 		return 'public/avatars/unknownPlayer.jpeg';
-	if (avatar.startsWith('http'))
-		return avatar;
-	return `public/avatars/${avatar}.png`;
+	if (v.startsWith('http'))
+		return v;
+	// Avoid double extension when backend returns "default.png" or "avatar1.png"
+	const hasExtension = /\.(png|jpe?g|gif|webp)$/i.test(v);
+	return hasExtension ? `public/avatars/${v}` : `public/avatars/${v}.png`;
   }
 
   /**

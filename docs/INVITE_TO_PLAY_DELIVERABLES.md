@@ -9,9 +9,9 @@
 | **srcs/services/frontend/srcs/public/scripts/ts/app.ts** | Router listener now stores `currentRouteData`. On `new-game` for game-online: if pending invite exists, emit `game-invite` with friendId, gameUUID, inviteId, message then clear pending. `game-online` render passes `currentRouteData` to page. |
 | **srcs/services/frontend/srcs/public/scripts/ts/modules/RouterManager.ts** | No change (already had `navigateTo(page, data?)` and listener `(page, data?)`). |
 | **srcs/services/frontend/srcs/public/scripts/ts/modules/SocialManager.ts** | `pendingGameInvites` Map. Case `game-invite`: call `addGameInviteNotification(data)` (banner with Accept/Decline; on Accept emit `game-invite-accept`, on Decline emit `game-invite-decline`). Case `game-invite-accepted`: if receiver is B navigate to game-online with `{ joinGameUUID }`, if A show toast. Case `game-invite-declined`: toast for A. Helpers: `removeGameInviteNotification`, `showToast`, `handleGameInviteAccepted`, `handleGameInviteDeclined`. Optional `DEBUG_INVITE` logs. |
-| **srcs/services/frontend/srcs/public/scripts/ts/pages/GameRemotePage.ts** | `render(user?, routeData?)`. If `routeData?.joinGameUUID` call `joinGameByInvite(gameUUID)`: create GameManager with UUID, setup listeners, emit `join-game` on game socket, show "Joining game...". Optional `[INVITE_JOIN]` debug log. Import `RouteData`. |
+| **srcs/services/frontend/srcs/public/scripts/ts/pages/GameRemotePage.ts** | `render(user?, routeData?)`. If `routeData?.joinGameUUID` call `joinGameByInvite(gameUUID)`: create GameManager with UUID, setup listeners, emit `join-game` on game socket, show "Joining game...". Optional `[INVITE_JOIN]` debug log. Import `RouteData`. **Avatar:** `resolveAvatarSrc` handles empty string, trim, and avoids double extension (e.g. `default.png` → `public/avatars/default.png`). In `handleOpponentFound`, for player 2 use `data.yourAvatar` / `data.yourUsername` for the left side (own avatar) so B sees their avatar even when `this.user` is not set. |
 | **srcs/services/realtime-sockets/app/server.js** | In-memory `gameInvites` Map. `socket.on('game-invite')`: validate, store invite, publish to Redis `notifications` for `toUserId` with payload `type: 'game-invite'`. `socket.on('game-invite-accept')`: validate receiver, set Redis `game-invite:<gameUUID>` = toUserId (TTL 60s), publish `game-invite-accepted` to both users. `socket.on('game-invite-decline')`: publish `game-invite-declined` to sender. `DEBUG_INVITE` env logs. |
-| **srcs/services/remote-players/app/server.js** | `join-game` handler: after join room + emit joined-game, check Redis `game-invite:<gameUUID>`. If value equals socket.userId and game exists (remote, no player2), then addPlayer2, delete key, set up listener, emit `opponent-found` to both (same shape as matchmaking). Optional `DEBUG_INVITE` log. |
+| **srcs/services/remote-players/app/server.js** | `join-game` handler: after join room + emit joined-game, check Redis `game-invite:<gameUUID>`. If value equals socket.userId and game exists (remote, no player2), then addPlayer2, delete key, set up listener, emit `opponent-found` to both (same shape as matchmaking). Optional `DEBUG_INVITE` log. **Avatar:** In invite flow and matchmaking, when sending `opponent-found` to player 2, include `yourUsername` and `yourAvatar` (so B sees their own avatar on the left). Fallback avatar `'default'` when auth returns null/empty or fetch fails; catch block also sends `yourUsername`/`yourAvatar` with `'default'`. |
 
 ---
 
@@ -37,6 +37,11 @@ Client → realtime-sockets (General socket):
 Game socket (remote-players):
 
 - **`join-game`**: `{ UUID: string }` — if Redis `game-invite:<UUID>` = this user, server adds player2 and emits `opponent-found` to both.
+
+**`opponent-found`** (emitted on game UUID, to both players):
+
+- Common: `type`, `playerNumber`, `opponentId`, `opponentUsername`, `opponentAvatar`.
+- For **player 2** only: `yourUsername`, `yourAvatar` (so the invited/random player 2 can display their own avatar on the left even when `this.user` is not set). Used by frontend in `handleOpponentFound` when `data.playerNumber === 2`.
 
 ---
 
@@ -72,3 +77,12 @@ Game socket (remote-players):
 - **Backend:** Set env `DEBUG_INVITE=1` or `DEBUG_INVITE=true`:
   - realtime-sockets: `[INVITE_SEND]`, `[INVITE_ACCEPT]`, `[INVITE_DECLINE]`
   - remote-players: `[INVITE_OPPONENT_FOUND]`
+
+---
+
+## 5) Avatar display (post-implementation fixes)
+
+- **Côté A (invitant)** : l’avatar de B (adversaire) est envoyé via `opponentAvatar` dans `opponent-found` ; si l’auth ne renvoie rien, le backend envoie `'default'` pour afficher au moins `public/avatars/default.png`.
+- **Côté B (invité)** : le serveur envoie `yourAvatar` et `yourUsername` dans `opponent-found` au joueur 2. Le frontend utilise ces champs dans `handleOpponentFound` pour la colonne de gauche (avatar et pseudo du joueur courant), afin que B voie son propre avatar même si `this.user` n’est pas renpli.
+- **Frontend** : `resolveAvatarSrc` gère les chaînes vides, le trim, et évite le double `.png` (ex. `default.png` → `public/avatars/default.png`).
+- **Matchmaking** : le même schéma `yourUsername` / `yourAvatar` est envoyé au joueur 2 pour cohérence.
