@@ -257,21 +257,20 @@ export class LiveChatPage {
     private async checkSessionStorageForRedirect() {
         const storedId = sessionStorage.getItem('selectedFriendId');
         const storedUsername = sessionStorage.getItem('selectedFriendUsername');
+        const storedAvatar = sessionStorage.getItem('selectedFriendAvatar');
 
-        // const res = await this.getUsernameById(storedId || '');
-        // const avatar = res.json
-        // PEGAR AVATAR AQUIIIIII
         if (storedId && storedUsername) {
             this.currentSelectedFriend = {
                 id: storedId,
                 username: storedUsername,
-                avatar: '',
+                avatar: storedAvatar ?? '',
                 isGuest: false,
                 nbrId: Number(storedId)
             };
 
             sessionStorage.removeItem('selectedFriendId');
             sessionStorage.removeItem('selectedFriendUsername');
+            sessionStorage.removeItem('selectedFriendAvatar');
         }
     }
 
@@ -337,15 +336,13 @@ export class LiveChatPage {
     private updateProfileView(): void {
         const profileDiv = document.getElementById('profile-div');
         if (!profileDiv || !this.currentSelectedFriend) return;
-            
+
         const friendImg = profileDiv.querySelector('img') as HTMLImageElement;
         const friendPseudo = profileDiv.querySelector('p');
         const friend = this.currentSelectedFriend;
 
         if (friendImg) {
-            if (!friend.avatar) friendImg.src = 'public/avatars/default.png';
-            else if (friend.avatar.startsWith('http')) friendImg.src = friend.avatar;
-            else friendImg.src = `public/avatars/${friend.avatar}.png`;
+            friendImg.src = this.resolveProfileAvatarSrc(friend.avatar);
         }
 
         if (friendPseudo) {

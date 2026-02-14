@@ -359,9 +359,12 @@ export class MenuPage {
       this.wsManager,
       this.currentUser,
       () => null,
-      (friendId, username) => {
+      (friendId, username, avatar) => {
         sessionStorage.setItem('selectedFriendId', friendId.toString());
         sessionStorage.setItem('selectedFriendUsername', username);
+        if (avatar != null && avatar !== '') {
+          sessionStorage.setItem('selectedFriendAvatar', avatar);
+        }
         this.onChatWithFriends();
       },
       () => {},

@@ -76,7 +76,8 @@ export async function oauth_callback_route(request, reply) {
 
             const userData = await userRes.json();
 
-            // console.log(userData);
+            // 42 API: image.versions.medium or image.link (optional chaining if user has no profile photo)
+            const avatarUrl = userData.image?.versions?.medium ?? userData.image?.link ?? null;
 
             const db = request.server.db;
 
@@ -90,7 +91,7 @@ export async function oauth_callback_route(request, reply) {
                 const tempPassword = crypto.randomBytes(16).toString('hex');
                 const result = await db.run(
                     `INSERT INTO users (user_mail, pseudo, user_password, avatar, created_at) VALUES (?, ?, ?, ?, datetime('now'))`,
-                    [userData.email, userData.login, tempPassword, userData.image.versions.medium]
+                    [userData.email, userData.login, tempPassword, avatarUrl]
                 );
                 userId = result.lastID;
             } else {
@@ -98,8 +99,8 @@ export async function oauth_callback_route(request, reply) {
             }
 
             await db.run(
-                `UPDATE users SET pseudo = ?, user_mail = ?, avatar = ? WHERE user_id = ?`,
-                [userData.login, userData.email, userData.image.versions.medium, userId]
+                `UPDATE users SET pseudo = ?, user_mail = ?, avatar = COALESCE(?, avatar) WHERE user_id = ?`,
+                [userData.login, userData.email, avatarUrl, userId]
             );
 
             const jti = crypto.randomBytes(16).toString('hex');
@@ -152,11 +153,12 @@ export async function oauth_update_profile_route(request, reply) {
 
         const userData = await userRes.json();
 
+        const avatarUrl = userData.image?.versions?.medium ?? userData.image?.link ?? null;
         await db.run(
-            `UPDATE users SET pseudo = ?, user_mail = ?, avatar = ? WHERE user_id = ?`,
-            [userData.login, userData.email, userData.image.versions.medium, user.user_id]
+            `UPDATE users SET pseudo = ?, user_mail = ?, avatar = COALESCE(?, avatar) WHERE user_id = ?`,
+            [userData.login, userData.email, avatarUrl, user.user_id]
         );
-        return reply.send({ sucess:true, message: 'Profile updated', data: { pseudo: userData.login, email: userData.email, avatar: userData.image.versions.medium } });
+        return reply.send({ sucess:true, message: 'Profile updated', data: { pseudo: userData.login, email: userData.email, avatar: avatarUrl } });
     } catch (err) {
         console.error('42 update profile error:', err);
         return reply.status(500).send({ success: false, message: "Failed to update 42 profile"});

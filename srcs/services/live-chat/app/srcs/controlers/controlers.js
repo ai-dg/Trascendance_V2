@@ -260,7 +260,7 @@ export async function get_friends_route(request, reply) {
                 return {
                     id: friendship.friend_id,
                     username: `User ${friendship.friend_id}`,
-                    avatar: `User ${friendship.friend_id}`
+                    avatar: null
                 };
             })
         );
