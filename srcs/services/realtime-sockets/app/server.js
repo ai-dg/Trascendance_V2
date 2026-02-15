@@ -156,7 +156,7 @@ io.on('connection', async (socket) => {
 	console.log(`🌐 User ${userId} connected. Total connections for this user: ${generalConnections.get(userId).size}`);
 	// generalConnections.set(userId, socket);
 	await redis.set(`online:${userId}`, 'true');
-	socket.emit('welcome', { message: 'Bienvenue sur le canal global' });
+	socket.emit('welcome', { message: 'Welcome to the global channel' });
 
 	socket.on('game-invite', async (data) => {
 		if (!userId) return;

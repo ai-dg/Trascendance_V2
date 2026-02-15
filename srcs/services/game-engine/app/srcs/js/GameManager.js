@@ -131,7 +131,7 @@ export class GameManager {
       clearInterval(this.gameLoopInterval);
     }
     
-    // 60 FPS = ~16.67ms par frame
+    // 60 FPS = ~16.67ms per frame
     this.gameLoopInterval = setInterval(() => {
       if (!this.gameState.gameRunning) {
         clearInterval(this.gameLoopInterval);

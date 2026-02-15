@@ -531,7 +531,7 @@ export class Game {
 
       console.log(`[Game ${this.uuid}] gameLoop() starting, gameRunning: ${this.gameRunning}`);
 
-      // 60 FPS = ~16.67ms par frame
+      // 60 FPS = ~16.67ms per frame
       this.gameLoopInterval = setInterval(() => {
         try {
           if (!this.gameRunning) {
