@@ -308,7 +308,7 @@ services:
     image: axllent/mailpit
     container_name: gt_mailpit
     ports:
-      - "8025:8025"    # Interface web
+      - "8025:8025"    # Web interface
       - "1025:1025"    # SMTP
     restart: unless-stopped
     networks:
@@ -343,8 +343,8 @@ services:
     image: rabbitmq:3-management
     container_name: rabbit
     ports:
-      - "5672:5672"    # port principal AMQP (clients)
-      - "15672:15672"  # interface web management
+      - "5672:5672"    # main AMQP port (clients)
+      - "15672:15672"  # web management interface
     environment:
       - NODE_ENV=${NODE_ENV}
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}

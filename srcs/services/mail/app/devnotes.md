@@ -1,58 +1,52 @@
+# Next steps
 
+- Handle errors with nack() + retry
+- Add a TTL (time-to-live) on messages if needed
+- Set up a Dead Letter Queue to store failed messages
+- Monitor with a dashboard such as RabbitMQ Management UI
+- Add a tracking ID in the mail for tracing
 
-Pistes pour aller plus loin :
-✅ Gérer les erreurs avec nack() + retry
+## 1. The nack() function (Negative Acknowledgment)
 
-✅ Ajouter un TTL (temps de vie) sur les messages si besoin
+It is the opposite of ack() (acknowledgment).
 
-✅ Mettre une Dead Letter Queue pour stocker les messages échoués
+When a consumer receives a message, it can say "message received and processed OK" with ack().
 
-✅ Surveiller avec un dashboard comme RabbitMQ Management UI
+If it cannot process the message (failure, or wants to retry later), it can use nack().
 
-✅ Ajouter un ID de tracking dans le mail pour tracer
+nack() means: "I reject this message, do not consider it as processed".
 
+Depending on the broker configuration, this message can:
 
-1. La fonction nack() (Negative Acknowledgment)
-C’est l’opposé de ack() (acknowledgment).
+- be put back in the queue for retry,
+- be sent to a Dead Letter Queue (DLQ) if too many retries or failures.
 
-Quand un consommateur reçoit un message, il peut dire "message reçu et traité OK" avec ack().
+## 2. Dead Letter Queue (DLQ)
 
-S’il ne peut pas traiter le message (erreur, ou veut réessayer plus tard), il peut utiliser nack().
+A special queue where messages that were not processed correctly go after a certain number of attempts or if explicitly rejected.
 
-nack() signifie : "je rejette ce message, ne le considère pas comme traité".
+Prevents blocking the main queue with problematic messages.
 
-Selon la config du broker, ce message peut :
+Useful for analysing why some messages failed (log, debug, alerts).
 
-être remis dans la queue pour réessayer (retry),
+Often, tools are set up to monitor the DLQ and intervene manually or automatically.
 
-être envoyé vers une Dead Letter Queue (DLQ) si trop de retries ou erreurs.
+## 3. Tracking ID
 
-2. Dead Letter Queue (DLQ)
-C’est une file spéciale où vont les messages non traités correctement après un certain nombre d’essais ou si rejetés explicitement.
+A unique identifier associated with each message (often in the headers).
 
-Permet de ne pas bloquer la queue principale avec des messages problématiques.
+Used to trace the path of the message through the whole distributed system.
 
-Utile pour analyser pourquoi certains messages ont échoué (log, debug, alertes).
+Very useful for:
 
-Souvent, on met en place des outils pour surveiller la DLQ et intervenir manuellement ou automatiquement.
+- debug (find the message in the logs),
+- monitoring (processing time, failures, performance),
+- correlation in complex systems with multiple microservices.
 
-3. ID de tracking
-Un identifiant unique associé à chaque message (souvent dans les headers).
+In short, it is like a "digital trace" of the message.
 
-Sert à tracer le parcours du message dans tout le système distribué.
+## Why is this important?
 
-Très utile pour :
+These mechanisms allow reliability, robustness and traceability to be managed in a distributed system.
 
-debug (retrouver le message dans les logs),
-
-monitoring (temps de traitement, échecs, performance),
-
-correlation dans les systèmes complexes avec plusieurs microservices.
-
-En gros, c’est comme une “trace digitale” du message.
-
-Pourquoi tout ça est important ?
-Ces mécanismes permettent de gérer la fiabilité, la robustesse et la traçabilité dans un système distribué.
-
-Ça évite de perdre des messages ou de rester bloqué sur un message impossible à traiter.
-
+They avoid losing messages or getting stuck on a message that cannot be processed.

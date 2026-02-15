@@ -69,7 +69,7 @@
                 document.body.appendChild(loadingScreen);
             })();
         </script>
-        <!-- Debug: logs cumulatifs (localStorage) pour voir avant + après refresh -->
+        <!-- Debug: cumulative logs (localStorage) to see before + after refresh -->
         <script>
             (function() {
                 var MAX_LINES = 2000;
@@ -115,13 +115,13 @@
                     document.body.appendChild(a);
                     a.click();
                     setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
-                    origLog.call(console, '[DEBUG] Téléchargement:', buffer.length, 'lignes (cumulatif) ->', filename);
+                    origLog.call(console, '[DEBUG] Download:', buffer.length, 'lines (cumulative) ->', filename);
                 };
                 window.copyDebugLog = function() {
                     var text = buffer.join('\n');
                     if (navigator.clipboard && navigator.clipboard.writeText) {
                         navigator.clipboard.writeText(text).then(function() {
-                            origLog.call(console, '[DEBUG]', buffer.length, 'lignes copiées (cumulatif).');
+                            origLog.call(console, '[DEBUG]', buffer.length, 'lines copied (cumulative).');
                         }).catch(function() {});
                     }
                 };
@@ -129,9 +129,9 @@
                 window.clearDebugLog = function() {
                     buffer = [];
                     save();
-                    origLog.call(console, '[DEBUG] Logs effacés.');
+                    origLog.call(console, '[DEBUG] Logs cleared.');
                 };
-                origLog.call(console, '[DEBUG] Logs cumulatifs (survit au refresh). Export logs = bouton | clearDebugLog() = effacer. Pour refresh/cookies: chercher REFRESH_DEBUG dans l\'export.');
+                origLog.call(console, '[DEBUG] Cumulative logs (persist across refresh). Export logs = button | clearDebugLog() = clear. For refresh/cookies: search REFRESH_DEBUG in export.');
                 var wrap = document.createElement('div');
                 wrap.style.cssText = 'position:fixed;bottom:12px;right:12px;z-index:99999;display:flex;gap:6px;';
                 var btn = document.createElement('button');
