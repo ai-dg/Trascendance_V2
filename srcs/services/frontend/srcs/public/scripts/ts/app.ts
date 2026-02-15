@@ -421,9 +421,9 @@ export class App {
       this._lastAuthMeStatus = 'error';
       console.log('[REFRESH_DEBUG] auth/me fetch error:', err instanceof Error ? err.message : String(err));
       if (err instanceof TypeError && err.message.includes("NetworkError")) {
-        Logger.debug("getConnectedUser: server internal error");
+        Logger.debug("getConnectedUser: server internal failure");
       } else {
-        Logger.error("getConnectedUser: unexpected error →", err);
+        Logger.info("getConnectedUser: unexpected failure →", err);
       }
     }
     return null;

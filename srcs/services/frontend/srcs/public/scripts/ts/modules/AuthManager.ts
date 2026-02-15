@@ -34,7 +34,7 @@ export class AuthManager {
         this.currentUser = JSON.parse(stored);
         console.log('[REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id=', this.currentUser?.id, 'isGuest=', this.currentUser?.isGuest);
       } catch (error) {
-        Logger.error('Error loading user from storage:', error);
+        Logger.info('Load user from storage failed:', error);
         this.currentUser = null;
         console.log('[REFRESH_DEBUG] AuthManager.loadUserFromStorage: parse error (keeping arcade_user in storage for recovery)');
       }
@@ -121,9 +121,9 @@ export class AuthManager {
         }
     } catch (err) {
         if (err instanceof TypeError && err.message.includes("NetworkError")) {
-            Logger.debug("getConnectedUser: server internal error");
+            Logger.debug("getConnectedUser: server internal failure");
         } else {
-            Logger.error("getConnectedUser: unexpected error →", err);
+            Logger.info("getConnectedUser: unexpected failure →", err);
         }
     }
     return null;
@@ -214,7 +214,7 @@ export class AuthManager {
         };
       }
     } catch (error) {
-      Logger.error('Login error:', error);
+      Logger.info('Login failed:', error);
       return { success: false, error: "Network error. Please try again." };
     }
   }
@@ -452,7 +452,7 @@ export class AuthManager {
     };
 
     } catch (err) {
-      Logger.error("forgotPassword error:", err);
+      Logger.info("forgotPassword failed:", err);
       return { success: false, error: "Network error" };
     }
 }
@@ -475,7 +475,7 @@ public async changePassword(email: string, password: string, otpId: string): Pro
 
     return { success: true };
   } catch (err) {
-    Logger.error("changePassword error:", err);
+    Logger.info("changePassword failed:", err);
     return { success: false, error: "Network error" };
   }
 }

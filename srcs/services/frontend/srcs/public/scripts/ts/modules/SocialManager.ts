@@ -53,14 +53,14 @@ export class SocialManager {
         });
         console.log("Response received for online status check:", res);
         if (!res.ok) {
-            console.error('Error checking online status for user', userId);
+            console.info('[SocialManager]', 'Online status check failed for user', userId);
             return false;
         }
         
         const data = await res.json();
         console.log("Parsed JSON result for online status check:", data);
         if (!data || typeof data.online === 'undefined') {
-            console.error('Invalid response format for online status check for user', userId);
+            console.info('[SocialManager]', 'Invalid response format for online status check for user', userId);
             return false;
         }
         if (data.online == true) {
@@ -179,13 +179,13 @@ export class SocialManager {
                 body: JSON.stringify({ username })
             });
             if (!res.ok) {
-                console.error('Error fetching user data');
+                console.info('[SocialManager]', 'Fetch user data failed');
                 return;
             }
 
             const data = await res.json();
             if (!data.success) {
-                console.error('Couldn\'t find username');
+                console.info('[SocialManager]','Couldn\'t find username');
                 return;
             } else {
                 const userId = data.data.user.user_id;
@@ -193,7 +193,7 @@ export class SocialManager {
                 return userId;
             }
         } catch (error) {
-            console.error("Error:", error);
+            console.info('[SocialManager]', 'Exception:', error);
         }
     }
 
@@ -205,14 +205,14 @@ export class SocialManager {
                 body: JSON.stringify({ id })
             });
             if (!res.ok) {
-                console.error('Error fetching user data');
+                console.info('[SocialManager]', 'Fetch user data failed');
                 return;
             }
 
             const data = await res.json();
 
             if (!data.success) {
-                console.error('Couldn\'t find username');
+                console.info('[SocialManager]','Couldn\'t find username');
                 return;
             } else {
                 console.log
@@ -221,7 +221,7 @@ export class SocialManager {
                 return username;
             }
         } catch (error) {
-            console.error("Error:", error);
+            console.info('[SocialManager]', 'Exception:', error);
         }
     }
 
@@ -273,7 +273,11 @@ export class SocialManager {
                     data = { message: text || res.statusText };
                 }
                 if (!data.success) {
-                    throw new Error(data.message || 'Failed to send friend request');
+                    console.info('[SocialManager]', 'Send friend request failed:', data.message || 'Request failed');
+                    errorMessageDiv.textContent = data.message || "Request failed. Please try again.";
+                    errorMessageDiv.classList.remove('hidden', 'text-green-500');
+                    errorMessageDiv.classList.add('text-red-500');
+                    return;
                 }
             
                 errorMessageDiv.textContent = "Friend request sent!";
@@ -283,7 +287,7 @@ export class SocialManager {
                 console.log("Friend request sent via socket.io!");
             }
         } catch (error) {
-            console.error("Error sending friend request:", error);
+            console.info('[SocialManager]', 'Send friend request failed:', error);
             errorMessageDiv.textContent = "Failed to send request. Please try again.";
             errorMessageDiv.classList.remove('hidden', 'text-green-500');
             errorMessageDiv.classList.add('text-red-500');
@@ -338,7 +342,7 @@ export class SocialManager {
             const data = await res.json();
             return data?.data?.user?.avatar ?? null;
         } catch (error) {
-            console.error("Error fetching avatar:", error);
+            console.info('[SocialManager]', 'Fetch avatar failed:', error);
             return null;
         }
     }
@@ -466,7 +470,7 @@ export class SocialManager {
                     break;
 
                 default:
-                    console.warn("Unknown notification type:", data.type);
+                    console.info('[SocialManager]',"Unknown notification type:", data.type);
                     break;
             }
 
@@ -489,7 +493,7 @@ export class SocialManager {
                 body: JSON.stringify({ senderId })
             });
         } catch (error) {
-            console.error("Error marking message as read:", error);
+            console.info('[SocialManager]', 'Mark message as read failed:', error);
         }
     }
 
@@ -511,7 +515,7 @@ export class SocialManager {
                 body: JSON.stringify({ receiverId: friendId })
             });
         } catch (error) {
-            console.error("Error sending typing signal:", error);
+            console.info('[SocialManager]', 'Send typing signal failed:', error);
         }
     }
 
@@ -524,7 +528,7 @@ export class SocialManager {
 
         const container = document.getElementById('notifications-container');
         if (!container) {
-            console.error("Notifications container not found");
+            console.info('[SocialManager]',"Notifications container not found");
             return;
         }
 
@@ -552,11 +556,16 @@ export class SocialManager {
                     },
                     body: JSON.stringify({ senderId: senderId, action: 'accept' })
                 });
-                if (!res.ok) throw new Error('Failed to accept friend request');
+                if (!res.ok) {
+                    console.info('[SocialManager]', 'Accept friend request failed:', res.status);
+                    acceptBtn.disabled = false;
+                    rejectBtn.disabled = false;
+                    return;
+                }
                 this.removeFriendRequestNotification(senderId);
                 this.loadFriendsList();
-            } catch (error) {
-                console.error("Error accepting friend request:", error);
+            } catch (err) {
+                console.info('[SocialManager]', 'Accept friend request failed:', err);
                 acceptBtn.disabled = false;
                 rejectBtn.disabled = false;
             }
@@ -582,12 +591,13 @@ export class SocialManager {
                 }
 
                 if (!res.ok || (data && !data.success)) {
-                    throw new Error(data.message || "Failed to reject");
+                    console.info('[SocialManager]', 'Reject friend request failed:', data?.message || res.status);
+                    return;
                 }
                 this.removeFriendRequestNotification(senderId);
                 this.syncSocialPanel();
-            } catch (error) {
-                console.error("Error rejecting friend request:", error);
+            } catch (err) {
+                console.info('[SocialManager]', 'Reject friend request failed:', err);
             }
         });
         
@@ -703,9 +713,9 @@ export class SocialManager {
             });
 
             if (!res.ok) {
-                console.error('Failed to load pending requests:', res.status);
+                console.info('[SocialManager]','Failed to load pending requests:', res.status);
                 const resData = await res.json();
-                console.error('Response data:', resData);
+                console.info('[SocialManager]','Response data:', resData);
                 return;
             }
 
@@ -724,7 +734,7 @@ export class SocialManager {
                 console.log("No pending friend requests found");
             }
         } catch (error) {
-            console.error("Error loading pending friend requests:", error);
+            console.info('[SocialManager]', 'Load pending friend requests failed:', error);
         }
     }
 
@@ -738,7 +748,7 @@ export class SocialManager {
             });
 
             if (!res.ok) {
-                console.error('Failed to load friends:', res.status);
+                console.info('[SocialManager]','Failed to load friends:', res.status);
                 return;
             }
 
@@ -755,7 +765,7 @@ export class SocialManager {
                 this.displayNoFriends();
             }
         } catch (error) {
-            console.error("Error loading friends:", error);
+            console.info('[SocialManager]', 'Load friends failed:', error);
         }
     }
 
@@ -773,7 +783,7 @@ export class SocialManager {
     private async displayFriends(friends: any[]): Promise<void> {
         const container = document.getElementById('friends-container');
         if (!container) {
-            console.error("Friends container not found");
+            console.info('[SocialManager]',"Friends container not found");
             return;
         }
     
@@ -783,7 +793,7 @@ export class SocialManager {
         for (const friend of friends) {
             const friendIdNum = Number(friend.id);
             if (myId !== null && friendIdNum === myId) {
-                console.error('[ADD_FRIEND_STATE] Skipping self in friends list (guard)');
+                console.info('[SocialManager]','[ADD_FRIEND_STATE] Skipping self in friends list (guard)');
                 continue;
             }
             const username = friend.username;

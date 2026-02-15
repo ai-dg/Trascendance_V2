@@ -292,8 +292,10 @@ export class RemotePage {
 		console.log("[RemotePage] Reconnection successful:", result);
 
 		// Set up the game manager with the reconnected game
-		if (!this.canvas)
-		  throw new Error("canvas is not initialized");
+		if (!this.canvas) {
+		  console.info('[GameRemotePage]', 'Canvas not initialized');
+		  return;
+		}
 
 		this.gameManager = new GameManager(this.canvas, result.gameUUID);
 		this.gameManager.setPlayerNumber(result.playerNumber); // Set correct player number for reconnection
@@ -502,8 +504,10 @@ export class RemotePage {
 
   public setupGame(data:any){
 	console.log("should work here in setupGame")
-	if (!this.canvas)
-		throw new Error("canvas is not initialised");
+	if (!this.canvas) {
+		console.info('[GameRemotePage]', 'Canvas not initialised');
+		return;
+	}
 	this.gameManager = new GameManager(this.canvas, data.UUID);
 	this.setupGameListeners()
 	console.log(data.UUID, this.gameManager)
@@ -533,7 +537,7 @@ export class RemotePage {
 
 	// Handle matchmaking errors (e.g., already searching)
 	this.gameManager.setOnMatchmakingError((data) => {
-	  console.log("[RemotePage] Matchmaking error!", data);
+	  console.log("[RemotePage] Matchmaking failed", data);
 	  this.handleMatchmakingError(data);
 	});
 
@@ -843,7 +847,7 @@ export class RemotePage {
    * Shows error message and returns to lobby
    */
   private handleMatchmakingError(data: any): void {
-	console.log("[RemotePage] Handling matchmaking error", data);
+	console.log("[RemotePage] Handling matchmaking failure", data);
 
 	this.isSearchingOpponent = false;
 	this.removeWaitingScreen();
@@ -860,7 +864,7 @@ export class RemotePage {
 	  startOverlay.innerHTML = '';
 	  const content = this.uiManager.createElement('div', 'text-center retro-text');
 	  const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'MATCHMAKING ERROR');
-	  const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'An error occurred while searching for an opponent.');
+	  const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'A problem occurred while searching for an opponent.');
 	  const backButton = this.uiManager.createButton(
 		'BACK TO LOBBY',
 		'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200',

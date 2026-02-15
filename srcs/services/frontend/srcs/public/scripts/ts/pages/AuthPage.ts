@@ -311,7 +311,7 @@ export class AuthPage {
         await this.languageManager.loadTranslations();
         this.render();
       } catch (err) {
-        Logger.error("Error changing language:", err);
+        Logger.info("Language change failed:", err);
       }
     });
 

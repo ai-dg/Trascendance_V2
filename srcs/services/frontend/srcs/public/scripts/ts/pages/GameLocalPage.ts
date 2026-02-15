@@ -195,8 +195,10 @@ export class GamePageLocal {
 
   public setupGame(data:any)
   {
-    if (!this.canvas)
-      throw new Error("canvas is not initialised");
+    if (!this.canvas) {
+      console.info('[GameLocalPage]', 'Canvas not initialised');
+      return;
+    }
     this.gameManager = new GameManager(this.canvas, data.UUID);
     this.setupGameListeners()
   }

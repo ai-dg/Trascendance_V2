@@ -144,8 +144,10 @@ export class GameManager {
   /////////////////////////////////////////
 
   private setupSocketListeners(): void {
-    if (!gameSocket || !this.gameUID)
-      throw Error("gameSocket is not ready");
+    if (!gameSocket || !this.gameUID) {
+      console.info('[GameManager]', 'Game socket not ready');
+      return;
+    }
 
     console.log(`[GameManager] Setting up socket listeners for game: ${this.gameUID}`);
     console.log(`[GameManager] gameSocket connected: ${gameSocket.connected}`);
@@ -303,7 +305,7 @@ export class GameManager {
     if (this.onMatchmakingError) {
       this.onMatchmakingError(data);
     } else {
-      Logger.warn("[GameManager] No onMatchmakingError callback set!");
+      Logger.info("[GameManager] No matchmaking callback set");
     }
   }
 
@@ -434,8 +436,10 @@ export class GameManager {
   }
 
   static requestGameID(type: "local" | "ai" | "remote", options: { difficulty?: string; settings?: Partial<GameSettings> } = {}) {
-    if (!gameSocket)
-      throw Error("gameSocket is not ready");
+    if (!gameSocket) {
+      console.info('[GameManager]', 'Game socket not ready');
+      return;
+    }
 
     const payload: any = { type, ...options };
 
@@ -461,8 +465,11 @@ export class GameManager {
    * Check if user has a game waiting for reconnection
    */
   static checkForReconnection(onResult: (data: any) => void): void {
-    if (!gameSocket)
-      throw Error("gameSocket is not ready");
+    if (!gameSocket) {
+      console.info('[GameManager]', 'Game socket not ready');
+      onResult({ hasGame: false });
+      return;
+    }
 
     // Set up one-time listeners for the response
     gameSocket.once('reconnection-available', (data: any) => {
@@ -482,8 +489,11 @@ export class GameManager {
    * Attempt to reconnect to an existing game
    */
   static reconnectToGame(gameUUID: string, onResult: (data: any) => void): void {
-    if (!gameSocket)
-      throw Error("gameSocket is not ready");
+    if (!gameSocket) {
+      console.info('[GameManager]', 'Game socket not ready');
+      onResult({ success: false });
+      return;
+    }
 
     // Set up one-time listeners for the response
     gameSocket.once('reconnection-success', (data: any) => {
@@ -505,8 +515,10 @@ export class GameManager {
       return;
     this.isReady = true;
 
-    if (!gameSocket || !this.gameUID)
-      throw Error("gameSocket is not ready");
+    if (!gameSocket || !this.gameUID) {
+      console.info('[GameManager]', 'Game socket not ready');
+      return;
+    }
 
     // For remote games: send individual player number (1 or 2)
     // For local/AI: send 3 to mark both players ready
@@ -522,8 +534,10 @@ export class GameManager {
   }
 
   public pauseGame(): void {
-    if (!gameSocket || !this.gameUID)
-      throw Error("gameSocket is not ready");
+    if (!gameSocket || !this.gameUID) {
+      console.info('[GameManager]', 'Game socket not ready');
+      return;
+    }
 
     this.isPaused = true;
     this.stopInputLoop();
@@ -533,8 +547,10 @@ export class GameManager {
   }
 
   public resumeGame(): void {
-    if (!gameSocket || !this.gameUID)
-      throw Error("gameSocket is not ready");
+    if (!gameSocket || !this.gameUID) {
+      console.info('[GameManager]', 'Game socket not ready');
+      return;
+    }
 
     // Don't change isPaused here - wait for server's game-start event
     // this.isPaused = false;
@@ -544,8 +560,10 @@ export class GameManager {
   }
 
   public resetGame(): void {
-    if (!this.gameUID || !gameSocket)
-      throw Error("Error with game socket!");
+    if (!this.gameUID || !gameSocket) {
+      console.info('[GameManager]', 'Game socket not ready');
+      return;
+    }
 
     this.isReady = false;
     this.isPaused = false;
@@ -561,8 +579,10 @@ export class GameManager {
    * This triggers the matchmaking system
    */
   public searchForRandomOpponent(): void {
-    if (!this.gameUID || !gameSocket)
-      throw Error("Error with game socket!");
+    if (!this.gameUID || !gameSocket) {
+      console.info('[GameManager]', 'Game socket not ready');
+      return;
+    }
 
     console.log("[GameManager] Searching for random opponent...");
     gameSocket.emit(this.gameUID, { action: "play-against-random-player" });
@@ -572,8 +592,10 @@ export class GameManager {
    * cancelSearch - Cancel matchmaking search
    */
   public cancelSearch(): void {
-    if (!this.gameUID || !gameSocket)
-      throw Error("Error with game socket!");
+    if (!this.gameUID || !gameSocket) {
+      console.info('[GameManager]', 'Game socket not ready');
+      return;
+    }
 
     console.log("[GameManager] Canceling search...");
     gameSocket.emit(this.gameUID, { action: "cancel-matchmaking" });
@@ -689,8 +711,10 @@ export class GameManager {
   }
 
   private sendPlayerInputs(): void {
-    if (!this.gameUID || !gameSocket)
-      throw Error("Error with game socket!");
+    if (!this.gameUID || !gameSocket) {
+      console.info('[GameManager]', 'Game socket not ready');
+      return;
+    }
 
     let paddle1 = 0;
     let paddle2 = 0;
@@ -731,8 +755,6 @@ export class GameManager {
       paddle2
     };
 
-    if (!gameSocket)
-      throw Error("Error with game socket!");
     gameSocket.emit(this.gameUID, { state });
   }
 

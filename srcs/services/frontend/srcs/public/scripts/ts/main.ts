@@ -1,8 +1,24 @@
 import { App } from './app.js';
 import { Logger } from './modules/Logger.js';
 
+// Global guards: log unhandled exceptions and rejections via console.info and prevent red/yellow in console
+function installGlobalGuards(): void {
+    window.addEventListener('error', (event: ErrorEvent) => {
+        console.info('[APP] Unhandled exception:', event.message, event.filename, event.lineno, event.colno, event.error);
+        event.preventDefault();
+        event.stopPropagation();
+        return true;
+    });
+    window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
+        console.info('[APP] Unhandled rejection:', event.reason);
+        event.preventDefault();
+    });
+}
+
 // Initialize app without showing it until ready
 function initializeApp() {
+    installGlobalGuards();
+
     const appContainer = document.getElementById('app');
 
     if (appContainer) {
@@ -11,7 +27,7 @@ function initializeApp() {
         // App will handle showing itself and hiding loading screen
         new App(appContainer);
     } else {
-        Logger.error('App container not found');
+        Logger.info('[APP] App container #app not found');
     }
 }
 

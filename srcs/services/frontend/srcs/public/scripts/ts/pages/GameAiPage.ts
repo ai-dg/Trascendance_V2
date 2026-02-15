@@ -235,8 +235,10 @@ export class AIPage {
 
   public setupGame(data:any){
 	console.log("Setting up AI game with UUID:", data.UUID)
-	if (!this.canvas)
-		throw new Error("canvas is not initialised");
+	if (!this.canvas) {
+		console.info('[GameAiPage]', 'Canvas not initialised');
+		return;
+	}
 	this.gameManager = new GameManager(this.canvas, data.UUID);
 	this.setupGameListeners();
 	// Auto-ready since player already selected difficulty

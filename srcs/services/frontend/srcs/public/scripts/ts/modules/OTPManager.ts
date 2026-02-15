@@ -45,8 +45,10 @@ export class OTPManagers {
 	    		body: JSON.stringify({otp: code, otp_id: params.otp_id})
 	    	});
 
-	    	if (!res)
-	    		throw new Error("Can't reach the server");
+	    	if (!res) {
+	    		console.info('[OTP]', 'Server unreachable');
+	    		return { success: false, error: 'Server unreachable. Please try again.' };
+	    	}
 	    	const result = await res.json();
 	    	console.log(result);
 			console.log(result);

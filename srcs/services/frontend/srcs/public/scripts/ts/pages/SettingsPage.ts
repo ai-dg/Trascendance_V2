@@ -316,7 +316,7 @@ export class SettingsPage {
           await this.languageManager.setLang(nextLang.code);
         await this.render();
       } catch (err) {
-        Logger.error("Error changing language:", err);
+        Logger.info("Language change failed:", err);
       }
     });
 
@@ -371,7 +371,11 @@ export class SettingsPage {
         credentials: 'include'
       });
 
-      if (!res.ok) throw new Error('Failed to fetch');
+      if (!res.ok) {
+        console.info('[Settings]', 'Fetch blocked users failed:', res.status);
+        listContainer.innerHTML = '<p class="text-red-500 text-center">Failed to load list.</p>';
+        return;
+      }
 
       const data = await res.json();
       listContainer.innerHTML = '';
@@ -386,9 +390,9 @@ export class SettingsPage {
         });
       }
 
-    } catch (error) {
-      Logger.error(error);
-      listContainer.innerHTML = '<p class="text-red-500 text-center">Error loading list.</p>';
+    } catch (err) {
+      Logger.info('[Settings]', err);
+      listContainer.innerHTML = '<p class="text-red-500 text-center">Failed to load list.</p>';
     }
   }
 
@@ -447,7 +451,7 @@ export class SettingsPage {
         Logger.warn('Failed to unblock user');
       }
     } catch (error) {
-      Logger.error('Error unblocking user:', error);
+      Logger.info('Unblock user failed:', error);
     }
   }
 }

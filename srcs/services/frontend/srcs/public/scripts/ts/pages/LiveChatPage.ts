@@ -374,7 +374,7 @@ export class LiveChatPage {
                 inputField.focus();
             }
         } catch (error) {
-            Logger.error("Error sending message:", error);
+            Logger.info("Send message failed:", error);
         }
     }
 
@@ -436,7 +436,7 @@ export class LiveChatPage {
                 });
             }
         } catch (err) {
-            Logger.error("Error loading chat history:", err);
+            Logger.info("Load chat history failed:", err);
         }
     }
 
@@ -512,7 +512,7 @@ export class LiveChatPage {
                 Logger.error("Failed to block friend:", data.message);
             }
         } catch (err) {
-            Logger.error("Error blocking friend:", err);
+            Logger.info("Block friend failed:", err);
         }
     }
 
@@ -537,7 +537,7 @@ export class LiveChatPage {
                 this.updateProfileView();
             }
         } catch (err) {
-            Logger.error("Error removing friend:", err);
+            Logger.info("Remove friend failed:", err);
         }
     }
 }

@@ -140,13 +140,13 @@ export class WebsocketManager {
     this.generalSocket?.on("connect_error", (err) => {
       generalErrorCount++;
       if (generalErrorCount > 3) {
-        Logger.error("[WebsocketManager] General socket persistent connection error:", err.message);
+        Logger.info("[WebsocketManager] General socket connection failed:", err.message);
       }
     });
     this.gameSocket?.on("connect_error", (err) => {
       gameErrorCount++;
       if (gameErrorCount > 3) {
-        Logger.error("[WebsocketManager] Game socket persistent connection error:", err.message);
+        Logger.info("[WebsocketManager] Game socket connection failed:", err.message);
       }
     });
   }

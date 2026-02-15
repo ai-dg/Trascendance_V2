@@ -20,10 +20,12 @@ export class CheckManager {
     }
     
 
-    public getElement<T extends HTMLElement>(id: string): T {
+    public getElement<T extends HTMLElement>(id: string): T | null {
         const el = document.getElementById(id);
-        if (!el)
-            throw new Error(`Element #${id} not found`);
+        if (!el) {
+            console.info('[CheckManager]', `Element #${id} not found`);
+            return null;
+        }
         return el as T;
     }
 
@@ -82,6 +84,7 @@ export class CheckManager {
         const passwdConfirm = (form.querySelector('#passwdConfirm') as HTMLInputElement).value.trim();
     
         const errorDiv = this.getElement<HTMLDivElement>('formErrors');
+        if (!errorDiv) return;
         const errors = this.checkForm(login, email, passwd);
 
         if (passwd != passwdConfirm)
@@ -107,10 +110,16 @@ export class CheckManager {
                 const passwdConfirm = (form.querySelector('#passwdConfirm') as HTMLInputElement).value.trim();
 
                 const errorDiv = this.getElement<HTMLDivElement>('formErrors');
+                if (!errorDiv) {
+                    console.info('[CheckManager]', 'formErrors element not found');
+                    resolve('');
+                    return;
+                }
                 let errors: string[] = [];
 
                 if (!passwd || !passwdConfirm) {
-                    reject(new Error("Input elements not found"));
+                    console.info('[CheckManager]', 'Input elements not found');
+                    resolve('');
                     return;
                 }
 
