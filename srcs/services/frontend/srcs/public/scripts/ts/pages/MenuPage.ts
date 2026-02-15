@@ -334,7 +334,7 @@ export class MenuPage {
   socialDivWrapper.style.justifySelf = 'end';
 
 
-  if (this.wsManager && this.routerManager) {
+  if (this.wsManager && this.routerManager && this.currentUser.isGuest === false) {
     this.socialManager = new SocialManager(
       this.uiManager,
       this.routerManager,
