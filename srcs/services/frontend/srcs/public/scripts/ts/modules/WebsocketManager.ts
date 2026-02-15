@@ -1,6 +1,6 @@
 import type { User } from '../modules/TypesManager.js';
 import type { Socket } from "socket.io-client";
-import { Logger } from './Logger.js';
+import logger from '../../js/utils/logger.js';
 
 declare const io: any;
 
@@ -93,36 +93,36 @@ export class WebsocketManager {
     let gameErrorCount = 0;
 
     this.generalSocket?.on("connect", () => {
-      Logger.log("General socket connected");
+      logger.info("General socket connected");
       generalErrorCount = 0; // Reset error count on successful connection
     });
 
     this.gameSocket?.on("connect", () => {
-      Logger.log("Game socket connected");
+      logger.info("Game socket connected");
       gameErrorCount = 0; // Reset error count on successful connection
       // If we were previously connected and now reconnected, trigger reconnection check
       if (this.gameSocketWasConnected && this.onGameReconnectCallback) {
-        Logger.log("[WebsocketManager] Game socket reconnected - triggering reconnection check");
+        logger.info("[WebsocketManager] Game socket reconnected - triggering reconnection check");
         this.onGameReconnectCallback();
       }
       this.gameSocketWasConnected = true;
     });
 
     this.gameSocket?.on("disconnect", (reason) => {
-      Logger.log("[WebsocketManager] Game socket disconnected:", reason);
+      logger.info("[WebsocketManager] Game socket disconnected:", reason);
     });
 
     // Only log errors after multiple failures (Socket.io retries automatically)
     this.generalSocket?.on("connect_error", (err) => {
       generalErrorCount++;
       if (generalErrorCount > 3) {
-        Logger.error("[WebsocketManager] General socket persistent connection error:", err.message);
+        logger.error("[WebsocketManager] General socket persistent connection error:", err.message);
       }
     });
     this.gameSocket?.on("connect_error", (err) => {
       gameErrorCount++;
       if (gameErrorCount > 3) {
-        Logger.error("[WebsocketManager] Game socket persistent connection error:", err.message);
+        logger.error("[WebsocketManager] Game socket persistent connection error:", err.message);
       }
     });
   }

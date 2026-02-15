@@ -1,7 +1,7 @@
 import { UIManager } from '../modules/UIManager.js';
 import { GameManager } from '../modules/GameManager.js';
 import type { User } from '../modules/TypesManager.js';
-import { Logger } from '../modules/Logger.js';
+import logger from '../../js/utils/logger.js';
 
 export class AIPage {
   private uiManager: UIManager;
@@ -10,20 +10,20 @@ export class AIPage {
 	private canvas: HTMLCanvasElement | null = null;
 	private user: User | null = null;
 	private selectedDifficulty: string = 'medium';
-  
+
 	constructor(uiManager: UIManager, onBack: () => void, user?: User | null) {
 	this.uiManager = uiManager;
 	this.onBack = onBack;
 	this.user = user ?? null;
 	}
-  
+
 	///////////// DESIGN & RENDERING /////////////
-  
+
 	public render(user?: User | null): void {
 	if (user !== undefined) {
 	  this.user = user;
 	}
-  
+
 	// Avatars
 	const avatarPlayer1Section = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
 	const avatarPlayer1Img = this.uiManager.createElement('img', 'rounded-full') as HTMLImageElement;
@@ -36,44 +36,44 @@ export class AIPage {
 	else
 		avatarPlayer1Img.src = `public/avatars/${this.user.avatar}.png`;
 	avatarPlayer1Section.appendChild(avatarPlayer1Img);
-  
+
 	const avatarPlayer2Section = this.uiManager.createElement('div', 'flex flex-col items-center gap-2 mt-2');
 	const avatarPlayer2Img = this.uiManager.createElement('img', 'rounded-full') as HTMLImageElement;
 	avatarPlayer2Img.style.width = '110px';
     avatarPlayer2Img.style.height = '110px';
 	avatarPlayer2Img.src = 'public/avatars/default.png';
 	avatarPlayer2Section.appendChild(avatarPlayer2Img);
-  
-  
+
+
 	// Score Display
 	const scoreDisplay = this.uiManager.createElement('div', 'flex gap-16 items-center retro-text');
-	
+
 	const player1Score = this.uiManager.createElement('div', 'text-center');
 	const player1Label = this.uiManager.createElement('div', 'text-lg opacity-60', 'PLAYER 1');
 	player1Label.textContent = this.user ? this.user.username : 'PLAYER 1';
 	const player1Value = this.uiManager.createElement('div', 'text-4xl tracking-wider', '00');
 	player1Score.appendChild(player1Label);
 	player1Score.appendChild(player1Value);
-	
+
 	const vsLabel = this.uiManager.createElement('div', 'text-2xl opacity-40', 'VS');
-	
+
 	const player2Score = this.uiManager.createElement('div', 'text-center');
 	const player2Label = this.uiManager.createElement('div', 'text-lg opacity-60', 'AI BOT');
 	const player2Value = this.uiManager.createElement('div', 'text-4xl tracking-wider', '00');
 	player2Score.appendChild(player2Label);
 	player2Score.appendChild(player2Value);
-	
+
 	scoreDisplay.appendChild(avatarPlayer1Section);
 	scoreDisplay.appendChild(player1Score);
 	scoreDisplay.appendChild(vsLabel);
 	scoreDisplay.appendChild(player2Score);
 	scoreDisplay.appendChild(avatarPlayer2Section);
-	
+
 	// Game Canvas Container
 	const canvasContainer = this.uiManager.createElement('div', 'relative');
 	this.canvas = this.uiManager.createCanvas(800, 400, 'border-2 border-[#ff1493] rounded-lg bg-black shadow-[0_0_20px_#ff1493] retro-canvas');
 	canvasContainer.appendChild(this.canvas);
-	
+
 	// Start Game Overlay
 	const startOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg');
 	startOverlay.setAttribute('data-overlay', 'start-game');
@@ -101,7 +101,7 @@ export class AIPage {
 	startContent.appendChild(this.uiManager.createElement('div', 'h-4'));
 	startContent.appendChild(startButtonHard);
 	startOverlay.appendChild(startContent);
-	
+
 	canvasContainer.appendChild(startOverlay);
 
 	// Pause Game Overlay
@@ -112,7 +112,7 @@ export class AIPage {
 	pauseContent.appendChild(pauseTitle);
 	pauseOverlay.appendChild(pauseContent);
 	canvasContainer.appendChild(pauseOverlay);
-	
+
 	// Game Over Overlay
 	const gameOverOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg hidden');
 	gameOverOverlay.setAttribute('data-overlay', 'game-over');
@@ -129,11 +129,11 @@ export class AIPage {
 	gameOverContent.appendChild(playAgainButton);
 	gameOverOverlay.appendChild(gameOverContent);
 	canvasContainer.appendChild(gameOverOverlay);
-	
-	
+
+
 	// Controls
 	const controls = this.uiManager.createElement('div', 'flex gap-12 retro-text text-sm opacity-60');
-	
+
 	const player1Controls = this.uiManager.createElement('div', 'text-center');
 	const player1Title = this.uiManager.createElement('div', 'mb-2', 'COMMANDS');
 	const player1Up = this.uiManager.createElement('div', '', 'W - UP');
@@ -141,9 +141,9 @@ export class AIPage {
 	player1Controls.appendChild(player1Title);
 	player1Controls.appendChild(player1Up);
 	player1Controls.appendChild(player1Down);
-	
+
 	controls.appendChild(player1Controls);
-	
+
 	// Buttons Pause & Reset
 	const gameControls = this.uiManager.createElement('div', 'flex gap-4');
 	const pauseButton = this.uiManager.createButton(
@@ -156,7 +156,7 @@ export class AIPage {
 		'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200',
 		() => this.resetGame()
 	);
-  
+
 	// Back to Menu Button
 	const backButtonContainer = this.uiManager.createElement('div', 'text-center mb-8');
     const backButton = this.uiManager.createButton(
@@ -170,25 +170,25 @@ export class AIPage {
 
     gameControls.appendChild(pauseButton);
     gameControls.appendChild(resetButton);
-	
+
 	// Game Container
 	const gameContainer = this.uiManager.createElement('div', 'flex flex-col items-center gap-6');
 	gameContainer.appendChild(scoreDisplay);
 	gameContainer.appendChild(canvasContainer);
 	gameContainer.appendChild(controls);
 	gameContainer.appendChild(gameControls);
-  
-  
-	// Main Bloc 
+
+
+	// Main Bloc
 	const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-6xl');
 	content.appendChild(gameContainer);
 	content.appendChild(backButtonContainer);
-	
+
 	const container = this.uiManager.createElement('div', 'retro-container min-h-screen w-full flex flex-col items-center justify-center p-8');
 	container.appendChild(content);
 	this.uiManager.clear();
 	this.uiManager.container.appendChild(container);
-	
+
 	// Initialize game manager
 	if (this.canvas)
 		this.requestNewGame()
@@ -218,7 +218,7 @@ export class AIPage {
 	// Don't request game here - wait for difficulty selection
   }
 
-  
+
   private setReady(): void
   {
     if (!this.gameManager)
@@ -234,7 +234,7 @@ export class AIPage {
   }
 
   public setupGame(data:any){
-	Logger.log("Setting up AI game with UUID:", data.UUID)
+	logger.info("Setting up AI game with UUID:", data.UUID)
 	if (!this.canvas)
 		throw new Error("canvas is not initialised");
 	this.gameManager = new GameManager(this.canvas, data.UUID);
@@ -259,7 +259,7 @@ export class AIPage {
   private updateScore(player1Score: number, player2Score: number): void {
 	const player1Element = document.querySelector('.text-4xl.tracking-wider') as HTMLElement;
 	const player2Element = document.querySelectorAll('.text-4xl.tracking-wider')[1] as HTMLElement;
-	
+
 	if (player1Element) {
 	  player1Element.textContent = player1Score.toString().padStart(2, '0');
 	}
@@ -341,7 +341,7 @@ export class AIPage {
 		return;
 	}
   }
-	
+
   //////////////////////////////////////////
   ///////////// GAME FUNCTIONS ////////////
   //////////////////////////////////////////

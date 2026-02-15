@@ -3,7 +3,7 @@ import type { Translations } from '../modules/TypesManager.js';
 import type { AuthManager } from '../modules/AuthManager.js';
 import { CheckManager } from '../modules/CheckManager.js';
 import type { LanguageManager } from '../modules/LangManager.js';
-import { Logger } from '../modules/Logger.js';
+import logger from '../../js/utils/logger.js';
 
 export class AuthPage {
   private uiManager: UIManager;
@@ -74,7 +74,7 @@ export class AuthPage {
   //////////////////////////////////////////////
 
    public render(): void {
-    Logger.log("render: ", this.showChangePassword);
+    logger.info("render: ", this.showChangePassword);
     const container = this.uiManager.createElement('div', 'retro-container size-full flex items-center justify-center p-8');
     const content = this.uiManager.createElement('div', 'relative z-10');
     content.style.width = '600px';
@@ -311,7 +311,7 @@ export class AuthPage {
         await this.languageManager.loadTranslations();
         this.render();
       } catch (err) {
-        Logger.error("Error changing language:", err);
+        logger.error("Error changing language:", err);
       }
     });
 
@@ -332,7 +332,7 @@ export class AuthPage {
   //////////////////////////////////////////////
 
   public handle42SignIn(): void {
-    Logger.log('42 Sign In clicked');
+    logger.info('42 Sign In clicked');
     window.location.href = `${window.location.origin}/auth/42/login`;
   }
 
@@ -363,7 +363,7 @@ export class AuthPage {
   }
 
   private handleSubmit(e: Event): void {
-    Logger.log("handleSubmit called");
+    logger.info("handleSubmit called");
     e.preventDefault();
     this.errors = [];
 
@@ -381,9 +381,9 @@ export class AuthPage {
         this.render();
         return ;
       }
-      Logger.log(this.formData.password, " ", this.formData.confirmPassword);
+      logger.info(this.formData.password, " ", this.formData.confirmPassword);
       if (this.formData.password !== this.formData.confirmPassword) {
-        Logger.log("strings dont match");
+        logger.info("strings dont match");
         const newErrors: string[] = [];
         newErrors.push('Password do not match');
         this.errors = newErrors;
@@ -397,7 +397,7 @@ export class AuthPage {
         return;
       }
 
-      Logger.log("strings matched");
+      logger.info("strings matched");
       this.onChangePassword(this.formData.email, this.formData.password, this.formData.confirmPassword);
       return ;
     } else if (this.isLogin) {

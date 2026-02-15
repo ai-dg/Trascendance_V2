@@ -1,6 +1,6 @@
 import { RouterManager } from "./RouterManager.js";
 import type { OTParams } from "./TypesManager.js";
-import { Logger } from './Logger.js';
+import logger from '../../js/utils/logger.js';
 
 export class OTPManagers {
     private router: RouterManager;
@@ -29,12 +29,12 @@ export class OTPManagers {
     public async OTPValidationHandler(params: OTParams, inputs: NodeListOf<HTMLInputElement>): Promise<{ success: boolean; error?: string }>  {
 	      const  context = params.context;
 	      const code = Array.from(inputs).map(i => i.value).join('');
-	      Logger.log("verifyBtn called : code ", code)
+		logger.info("verifyBtn called : code ", code)
 	    try{
 
-	    	Logger.log("OTP sent:", code);
-	    	Logger.log("OTP id:", params.otp_id);
-	    	Logger.log(context);
+	    	logger.info("OTP sent:", code);
+	    	logger.info("OTP id:", params.otp_id);
+	    	logger.info(context);
 
 	    	const res = await fetch(this.router.getUrl(`auth/${context}/otp-validation`),{
 	    		method:"POST",
@@ -48,23 +48,23 @@ export class OTPManagers {
 	    	if (!res)
 	    		throw new Error("Can't reach the server");
 	    	const result = await res.json();
-	    	Logger.log(result);
+			logger.info(result);
 	    	if (result.success)
 	    	{
 		    	sessionStorage.removeItem("not_authenticated");
 	    		params.handler();
-                Logger.log("PARAMS: ", params);
+				logger.info("PARAMS: ", params);
 	    		return { success: true };
 	    	}
 	    	else{
 	    		const errorMessage = result.error?.message || result.error || result.message || 'Unknown error';
-	    		Logger.log('failure : ', errorMessage);
+				logger.info('failure : ', errorMessage);
 	    		return { success: false, error: errorMessage };
 	    	}
 	    }
 	    catch (err)
 	    {
-	    	Logger.log(err);
+			logger.info(err);
 	    	return { success: false, error: 'Network error. Please try again.' };
 	    }
     }

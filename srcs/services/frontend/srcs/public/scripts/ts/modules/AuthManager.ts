@@ -4,7 +4,7 @@ import type { OTParams } from './TypesManager.js';
 import { getErrorMessage } from './ErrorManager.js';
 import { RouterManager } from './RouterManager.js';
 import { OTPManagers } from './OTPManager.js';
-import { Logger } from './Logger.js';
+import logger from '../../js/utils/logger.js';
 
 
 export class AuthManager {
@@ -33,7 +33,7 @@ export class AuthManager {
       try {
         this.currentUser = JSON.parse(stored);
       } catch (error) {
-        Logger.error('Error loading user from storage:', error);
+        logger.error('Error loading user from storage:', error);
         localStorage.removeItem('arcade_user');
       }
     }
@@ -61,7 +61,7 @@ export class AuthManager {
       })
       if (!res.ok)
       {
-        Logger.log("failed")
+        logger.info("failed")
         return false;
       }
       const result =  await res.json()
@@ -73,7 +73,7 @@ export class AuthManager {
     }
     catch(err)
     {
-      Logger.log(err);
+      logger.info(err);
       return false;
     }
   }
@@ -92,20 +92,20 @@ export class AuthManager {
         }
         if (res.status === 401) {
         } else {
-            Logger.warn(`getConnectedUser: unexpected response (${res.status})`);
+            logger.warn(`getConnectedUser: unexpected response (${res.status})`);
         }
     } catch (err) {
         if (err instanceof TypeError && err.message.includes("NetworkError")) {
-            Logger.debug("getConnectedUser: server internal error");
+            logger.debug("getConnectedUser: server internal error");
         } else {
-            Logger.error("getConnectedUser: unexpected error →", err);
+            logger.error("getConnectedUser: unexpected error →", err);
         }
     }
     return null;
   }
 
   public getCurrentUser(): User | null {
-    Logger.log("current user:", this.currentUser);
+    logger.info("current user:", this.currentUser);
     return this.currentUser;
   }
 
@@ -130,7 +130,7 @@ export class AuthManager {
       const result = await this.logUser(loginInput, passwdInput, text, view);
       return result;
     } catch (error) {
-      Logger.error('Login failed:', error);
+      logger.error('Login failed:', error);
       return { success: false, error: 'Login failed. Please try again.' };
     }
   }
@@ -153,7 +153,7 @@ export class AuthManager {
       });
 
       const texttext = await res.text();
-      Logger.log("DEBUG RESPONSE:", texttext);
+      logger.info("DEBUG RESPONSE:", texttext);
       const result = JSON.parse(texttext);
 
       if (!result) {
@@ -172,7 +172,7 @@ export class AuthManager {
           handler: this.otpManager.signupSuccessHandler
         };
 
-        Logger.log("OTP data stored:", this.otpData);
+        logger.info("OTP data stored:", this.otpData);
         this.onBackToCheckOtp();
 
         // Return success with verification data
@@ -187,7 +187,7 @@ export class AuthManager {
         };
       }
     } catch (error) {
-      Logger.error('Login error:', error);
+      logger.error('Login error:', error);
       return { success: false, error: "Network error. Please try again." };
     }
   }
@@ -219,7 +219,7 @@ export class AuthManager {
       const result = await this.registerUser(login, passwd, email, 'signup');
       return result;
     } catch (error) {
-      Logger.error('Registration failed:', error);
+      logger.error('Registration failed:', error);
       return { success: false, error: 'Registration failed. Please try again.' };
     }
   }
@@ -275,12 +275,12 @@ export class AuthManager {
           handler: this.otpManager.signupSuccessHandler
         };
 
-        Logger.log("OTP data stored:", this.otpData);
+        logger.info("OTP data stored:", this.otpData);
         this.onBackToCheckOtp();
         if (errorDiv) {
           errorDiv.textContent = result.message;
         }
-        Logger.log("a confirmation mail has been sended");
+        logger.info("a confirmation mail has been sended");
 
         // Return success with verification data
         return {
@@ -313,7 +313,7 @@ export class AuthManager {
         credentials:'include'
       })
       if(!res)
-        Logger.error("can't connect to server, please try again later")
+        logger.error("can't connect to server, please try again later")
       const result = await res.json();
       if (result.success)
       {
@@ -325,12 +325,12 @@ export class AuthManager {
       }
       else
       {
-        Logger.error("Not authenticated...")
+        logger.error("Not authenticated...")
       }
     }
     catch(err)
     {
-      Logger.error(getErrorMessage(err));
+      logger.error(getErrorMessage(err));
     }
   };
 
@@ -353,7 +353,7 @@ export class AuthManager {
         credentials: 'include'
       });
       if (!res.ok)
-        Logger.log("Somethig went wrong here");
+        logger.info("Somethig went wrong here");
       const result = await res.json()
 
       sessionStorage.removeItem("guestNickname");
@@ -369,7 +369,7 @@ export class AuthManager {
     }
     catch(err)
     {
-      Logger.log(err)
+      logger.info(err)
       // Set flag even if logout fails
       sessionStorage.setItem("not_authenticated", "true");
       window.location.href = '/';
@@ -384,7 +384,7 @@ export class AuthManager {
     verificationData?: { otp_id: string; context: string; handler: any };
   }> {
     try {
-      Logger.log("in authmanager: otpdata: ", this.otpData);
+      logger.info("in authmanager: otpdata: ", this.otpData);
       const res = await fetch(this.router.getUrl('auth/reset-password'), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -400,14 +400,14 @@ export class AuthManager {
       otp_id: result.otp_id,
       context: "verify",
       handler: () => {
-          Logger.log("OTP verified, triggering Change Password UI first");
+          logger.info("OTP verified, triggering Change Password UI first");
           this.onChangePasswordRequest?.();
         }
     };
 
-    Logger.log("OTP data stored HERE:", this.otpData); // TODO: remove this line
+    logger.info("OTP data stored HERE:", this.otpData); // TODO: remove this line
     this.onBackToCheckOtp();
-    Logger.log("AQUI DPS DE onbacktocheckotp"); // TODO: remove this line
+    logger.info("AQUI DPS DE onbacktocheckotp"); // TODO: remove this line
     // Return success with verification data
     return {
       success: true,
@@ -416,14 +416,14 @@ export class AuthManager {
         otp_id: result.otp_id || 'temp_otp_id',
         context: "verify",
         handler: () => {
-          Logger.log("OTP verified, triggering Change Password UI");
+          logger.info("OTP verified, triggering Change Password UI");
           // this.onChangePasswordRequest?.();
         }
       }
     };
 
     } catch (err) {
-      Logger.error("forgotPassword error:", err);
+      logger.error("forgotPassword error:", err);
       return { success: false, error: "Network error" };
     }
 }
@@ -446,7 +446,7 @@ public async changePassword(email: string, password: string, otpId: string): Pro
 
     return { success: true };
   } catch (err) {
-    Logger.error("changePassword error:", err);
+    logger.error("changePassword error:", err);
     return { success: false, error: "Network error" };
   }
 }

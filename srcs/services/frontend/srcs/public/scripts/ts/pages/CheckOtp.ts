@@ -3,7 +3,7 @@ import type { Translations } from '../modules/TypesManager.js';
 import { CheckManager } from '../modules/CheckManager.js';
 import { OTPManagers } from '../modules/OTPManager.js';
 import type { LanguageManager } from '../modules/LangManager.js';
-import { Logger } from '../modules/Logger.js';
+import logger from '../../js/utils/logger.js';
 
 export class CheckOtp {
   private uiManager: UIManager;
@@ -32,27 +32,27 @@ export class CheckOtp {
 
   public render(text: Translations, params: any): void {
     const container = this.uiManager.createElement('div', 'retro-container size-full flex items-center justify-center p-8');
-    
+
     const content = this.uiManager.createElement('div', 'relative z-10 w-full max-w-md');
-    
+
     const card = this.uiManager.createElement('div', 'auth-card bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-8 shadow-[0_0_30px_#ff1493]');
-    
+
     // Header
     const header = this.uiManager.createElement('div', 'text-center mb-8');
     const title = this.uiManager.createElement('h1', 'retro-text text-3xl font-bold text-[#00ffff] mb-2');
     title.textContent = text.verifyTitle || this.t("verifyTitle");
-    
+
     const subtitle = this.uiManager.createElement('p', 'text-white/80 text-sm');
     subtitle.textContent = text.verifyInstruction || this.t("verifyInstruction");
-    
+
     header.appendChild(title);
     header.appendChild(subtitle);
-    
+
     // OTP Container
     const otpContainer = this.uiManager.createElement('div', 'space-y-6');
     const codeContainer = this.uiManager.createElement('div', 'flex justify-center space-x-2');
     codeContainer.id = 'codeContainer';
-    
+
     // Create 6 input fields for the verification code
     for (let i = 0; i < 6; i++) {
       const input = this.uiManager.createElement('input', 'w-12 h-12 text-center rounded bg-black/60 border-2 border-[#00ffff] text-[#00ffff] focus:border-[#ff1493] focus:ring-2 focus:ring-[#ff1493] retro-text text-xl') as HTMLInputElement;
@@ -109,7 +109,7 @@ export class CheckOtp {
     const inputs = document.querySelectorAll<HTMLInputElement>('#codeContainer input');
 
     if (!inputs) {
-      Logger.error("Failed to find inputs element");
+      logger.error("Failed to find inputs element");
       return;
     }
 
@@ -130,14 +130,14 @@ export class CheckOtp {
       if (!result.success) {
         this.showError(result.error || this.t("otpError"));  // Use translation for error message
       }
-      Logger.log("Params context: ", params.context);
+      logger.info("Params context: ", params.context);
       if (params.context === 'verify') {
         // this.onChangePassword(result.success);
-        Logger.log("Skipping params.handler()");
+        logger.info("Skipping params.handler()");
         return ;
       }
       else if (params.context === 'update-email') {
-        Logger.log("Going to update profile");
+        logger.info("Going to update profile");
         this.onUpdateProfile(result.success);
       }
       this.onVerificationComplete(result.success);

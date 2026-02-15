@@ -4,6 +4,8 @@ import type { User } from '../modules/TypesManager.js';
 import type { RouterManager } from '../modules/RouterManager.js';
 import { SocialManager } from '../modules/SocialManager.js';
 
+import logger from '../../js/utils/logger.js';
+
 export class MenuPage {
   private uiManager: UIManager;
   private wsManager: WebsocketManager | null = null;
@@ -81,6 +83,8 @@ export class MenuPage {
 
   public render(user: User | null): void {
     this.currentUser = user;
+
+    logger.debug('Rendering menu for user:', user);
 
     const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
     const content = this.uiManager.createElement('div', 'relative z-10 w-full flex-1 mx-auto flex flex-col items-center');

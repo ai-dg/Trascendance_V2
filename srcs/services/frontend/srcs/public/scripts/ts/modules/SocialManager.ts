@@ -2,7 +2,7 @@ import { UIManager } from "./UIManager";
 import { WebsocketManager } from "./WebsocketManager";
 import type { User } from "./TypesManager";
 import type { RouterManager } from "./RouterManager";
-import { Logger } from './Logger.js';
+import logger from '../../js/utils/logger.js';
 
 export class SocialManager {
     private uiManager: UIManager;
@@ -146,26 +146,26 @@ export class SocialManager {
             if (!res.ok) {
                 // Handle 404 gracefully - user not found is expected
                 if (res.status === 404) {
-                    Logger.log(`User '${username}' not found`);
+                    logger.info(`User '${username}' not found`);
                     return null;
                 }
                 // Log only unexpected errors
-                Logger.error(`Error fetching user data: ${res.status} ${res.statusText}`);
+                logger.error(`Error fetching user data: ${res.status} ${res.statusText}`);
                 return null;
             }
 
             const data = await res.json();
 
             if (!data.success) {
-                Logger.log('Couldn\'t find username');
+                logger.info('Couldn\'t find username');
                 return null;
             }
 
             const userId = data.data.user.user_id;
-            Logger.log('User ID found for friend request: ', userId);
+            logger.info('User ID found for friend request: ', userId);
             return userId;
         } catch (error) {
-            Logger.error("Error fetching user ID:", error);
+            logger.error("Error fetching user ID:", error);
             return null;
         }
     }
@@ -179,23 +179,23 @@ export class SocialManager {
                 body: JSON.stringify({ id })
             });
             if (!res.ok) {
-                Logger.error('Error fetching user data');
+                logger.error('Error fetching user data');
                 return;
             }
 
             const data = await res.json();
 
             if (!data.success) {
-                Logger.error('Couldn\'t find username');
+                logger.error('Couldn\'t find username');
                 return;
             } else {
-                Logger.log
+                logger.info
                 const username = data.data.user.pseudo;
-                Logger.log('Username found for friend request: ', username);
+                logger.info('Username found for friend request: ', username);
                 return username;
             }
         } catch (error) {
-            Logger.error("Error:", error);
+            logger.error("Error:", error);
         }
     }
 
@@ -235,7 +235,7 @@ export class SocialManager {
                     data = await res.json();
                 } else {
                     const text = await res.text();
-                    Logger.warn("Unexpected server response:", text);
+                    logger.warn("Unexpected server response:", text);
                     data = { message: text || res.statusText };
                 }
                 if (!data.success) {
@@ -246,10 +246,10 @@ export class SocialManager {
                 errorMessageDiv.classList.remove('hidden', 'text-red-500');
                 errorMessageDiv.classList.add('text-green-500');
                 friendInput.value = '';
-                Logger.log("Friend request sent via socket.io!");
+                logger.log("Friend request sent via socket.io!");
             }
         } catch (error) {
-            Logger.error("Error sending friend request:", error);
+            logger.error("Error sending friend request:", error);
             errorMessageDiv.textContent = "Failed to send request. Please try again.";
             errorMessageDiv.classList.remove('hidden', 'text-green-500');
             errorMessageDiv.classList.add('text-red-500');
@@ -304,7 +304,7 @@ export class SocialManager {
             const data = await res.json();
             return data?.data?.user?.avatar ?? null;
         } catch (error) {
-            Logger.error("Error fetching avatar:", error);
+            logger.error("Error fetching avatar:", error);
             return null;
         }
     }
@@ -320,7 +320,7 @@ export class SocialManager {
         const friendInput = document.getElementById('friend-input') as HTMLInputElement;
 
         if (!this.wsManager) {
-            Logger.log("No generalSocket available");
+            logger.log("No generalSocket available");
             return;
         }
 
@@ -339,7 +339,7 @@ export class SocialManager {
                             request.message
                         );
                     });
-                    Logger.log(`Loaded ${data.requests.length} pending friend requests on socket setup`);
+                    logger.log(`Loaded ${data.requests.length} pending friend requests on socket setup`);
                 }
             }
         } catch (error) {
@@ -349,7 +349,7 @@ export class SocialManager {
         this.wsManager.offGeneral('notifications');
 
         this.wsManager.onGeneral('notifications', async (data) => {
-            Logger.log("Received notification:", data);
+            logger.log("Received notification:", data);
 
             switch (data.type) {
                 case 'friend-request':
@@ -383,10 +383,10 @@ export class SocialManager {
                     const sId = Number(data.senderId);
                     const username = data.username || await this.getUsernameById(data.senderId.toString());
                     if (this.isChatOpenWith(sId)) {
-                        Logger.debug("New message from open chat:", data.message);
+                        logger.debug("New message from open chat:", data.message);
                         if (this.onNewMessage) this.onNewMessage(sId, data.message);
                     } else {
-                        Logger.debug("New message notification for closed chat from user:", sId);
+                        logger.debug("New message notification for closed chat from user:", sId);
                         if (this.wsManager)
                             this.wsManager.saveNotification(sId, username, data.message);
                         this.syncSocialPanel();
@@ -397,7 +397,7 @@ export class SocialManager {
                     if (this.currentUser) {
                         this.loadFriendsList();
                     }
-                    Logger.debug("User blocked notification for user:", data.friendId);
+                    logger.debug("User blocked notification for user:", data.friendId);
                     const blockedId = Number(data.friendId);
                     if (this.isChatOpenWith(blockedId)) {
                         if (this.onNewMessage) this.onNewMessage(blockedId, "🚫 You blocked this user.");
@@ -408,11 +408,11 @@ export class SocialManager {
                     if (this.currentUser) {
                         this.loadFriendsList();
                     }
-                    Logger.debug("User unblocked notification for user:", data.friendId);
+                    logger.debug("User unblocked notification for user:", data.friendId);
                     break;
 
                 default:
-                    Logger.warn("Unknown notification type:", data.type);
+                    logger.warn("Unknown notification type:", data.type);
                     break;
             }
 
@@ -422,13 +422,13 @@ export class SocialManager {
 
     private async addFriendRequestNotification(senderId: number, message: string): Promise<void> {
         if (this.friendRequests.has(senderId)) {
-            Logger.log("Notification already exists for sender:", senderId);
+            logger.log("Notification already exists for sender:", senderId);
             return;
         }
 
         const container = document.getElementById('notifications-container');
         if (!container) {
-            Logger.error("Notifications container not found");
+            logger.error("Notifications container not found");
             return;
         }
 
@@ -460,7 +460,7 @@ export class SocialManager {
                 this.removeFriendRequestNotification(senderId);
                 this.loadFriendsList();
             } catch (error) {
-                Logger.error("Error accepting friend request:", error);
+                logger.error("Error accepting friend request:", error);
                 acceptBtn.disabled = false;
                 rejectBtn.disabled = false;
             }
@@ -468,7 +468,7 @@ export class SocialManager {
 
         rejectBtn.addEventListener('click', async () => {
             try {
-                Logger.debug(`Rejecting friend request from sender ${senderId}`);
+                logger.debug(`Rejecting friend request from sender ${senderId}`);
                 const res = await fetch(this.routerManager.getUrl('/live-chat/friend-request-response'), {
                     method: 'POST',
                     credentials: 'include',
@@ -491,7 +491,7 @@ export class SocialManager {
                 this.removeFriendRequestNotification(senderId);
                 this.syncSocialPanel();
             } catch (error) {
-                Logger.error("Error rejecting friend request:", error);
+                logger.error("Error rejecting friend request:", error);
             }
         });
 
@@ -504,13 +504,13 @@ export class SocialManager {
 
         this.friendRequests.set(senderId, { senderId, message, element: notifCard });
 
-        Logger.log(`Added notification for sender ${senderId}. Total notifications: ${this.friendRequests.size}`);
+        logger.log(`Added notification for sender ${senderId}. Total notifications: ${this.friendRequests.size}`);
     }
 
     private removeFriendRequestNotification(senderId: number): void {
         const notification = this.friendRequests.get(senderId);
         if (!notification) {
-            Logger.log("No notification found for sender:", senderId);
+            logger.log("No notification found for sender:", senderId);
             return;
         }
 
@@ -518,7 +518,7 @@ export class SocialManager {
 
         this.friendRequests.delete(senderId);
 
-        Logger.log(`Removed notification for sender ${senderId}. Remaining: ${this.friendRequests.size}`);
+        logger.log(`Removed notification for sender ${senderId}. Remaining: ${this.friendRequests.size}`);
     }
 
     private async loadPendingFriendRequests(): Promise<void> {
@@ -541,7 +541,7 @@ export class SocialManager {
             }
 
             const data = await res.json();
-            Logger.log("Pending requests response:", data);
+            logger.log("Pending requests response:", data);
 
             if (data.success && data.requests && data.requests.length > 0) {
                 data.requests.forEach((request: any) => {
@@ -550,12 +550,12 @@ export class SocialManager {
                         request.message
                     );
                 });
-                Logger.log(`Loaded ${data.requests.length} pending friend requests`);
+                logger.log(`Loaded ${data.requests.length} pending friend requests`);
             } else {
-                Logger.log("No pending friend requests found");
+                logger.log("No pending friend requests found");
             }
         } catch (error) {
-            Logger.error("Error loading pending friend requests:", error);
+            logger.error("Error loading pending friend requests:", error);
         }
     }
 
@@ -581,17 +581,17 @@ export class SocialManager {
             }
 
             const data = await res.json();
-            Logger.log("Friends list response:", data);
+            logger.log("Friends list response:", data);
 
             if (data.success && data.friends && data.friends.length > 0) {
                 this.displayFriends(data.friends);
-                Logger.log(`Loaded ${data.friends.length} friends`);
+                logger.log(`Loaded ${data.friends.length} friends`);
             } else {
-                Logger.log("No friends found");
+                logger.log("No friends found");
                 this.displayNoFriends();
             }
         } catch (error) {
-            Logger.error("Error loading friends:", error);
+            logger.error("Error loading friends:", error);
         }
     }
 
@@ -609,7 +609,7 @@ export class SocialManager {
     private async displayFriends(friends: any[]): Promise<void> {
         const container = document.getElementById('friends-container');
         if (!container) {
-            Logger.error("Friends container not found");
+            logger.error("Friends container not found");
             return;
         }
 

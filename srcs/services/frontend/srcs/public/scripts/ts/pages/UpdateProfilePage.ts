@@ -4,7 +4,7 @@ import type { RouterManager } from '../modules/RouterManager.js';
 import { AuthManager } from '../modules/AuthManager.js';
 import { CheckManager } from '../modules/CheckManager.js';
 import type { LanguageManager } from '../modules/LangManager.js';
-import { Logger } from '../modules/Logger.js';
+import logger from '../../js/utils/logger.js';
 
 export class UpdateProfilePage {
     private uiManager: UIManager;
@@ -63,7 +63,7 @@ export class UpdateProfilePage {
         avatarImg.alt = this.t('avatarAlt');
         avatarImg.title = this.t('avatarTitle');
         avatarImg.addEventListener('click', () => {
-          Logger.log('Change avatar clicked');
+          logger.info('Change avatar clicked');
           this.renderAvatarSelector();
         });
 
@@ -170,7 +170,7 @@ export class UpdateProfilePage {
             this.t('change'),
             'retro-button bg-transparent text-[#ff1493] px-4 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200 self-end',
             async () => {
-              Logger.log(`${labelText} changed to:`, input.value, withConfirm ? confirmInput?.value : '');
+              logger.info(`${labelText} changed to:`, input.value, withConfirm ? confirmInput?.value : '');
               errorDiv.innerHTML = '';
               try {
                 await changeHandler(input.value, confirmInput?.value);
@@ -200,8 +200,8 @@ export class UpdateProfilePage {
                 const errorMessage = this.uiManager.createElement('p', '', error);
                 usernameErrorDiv?.appendChild(errorMessage);
               });
-              Logger.log("usernameErrors:", usernameErrors);
-              Logger.log(usernameErrorDiv);
+              logger.info("usernameErrors:", usernameErrors);
+              logger.info(usernameErrorDiv);
               return ;
             }
             const res = await fetch(this.routerManager.getUrl('auth/update-username'), {
@@ -238,8 +238,8 @@ export class UpdateProfilePage {
                 const errorMessage = this.uiManager.createElement('p', '', error);
                 emailErrorDiv?.appendChild(errorMessage);
               });
-              Logger.log("emailErrors:", emailErrors);
-              Logger.log(emailErrorDiv);
+              logger.info("emailErrors:", emailErrors);
+              logger.info(emailErrorDiv);
               return ;
             }
             try {
@@ -254,7 +254,7 @@ export class UpdateProfilePage {
                   throw new Error(message.message || this.t('failedRequestOTP'));
                 }
               const data1 = await res.json();
-              Logger.log("OTP sent:", data1);
+              logger.info("OTP sent:", data1);
               if (!data1.success)
                 throw new Error(data1.message || this.t('failedUpdateEmail'));
 
@@ -335,8 +335,8 @@ export class UpdateProfilePage {
                 const errorMessage = this.uiManager.createElement('p', '', error);
                 passwordErrorDiv?.appendChild(errorMessage);
               });
-              Logger.log("passwordErrors:", passwordErrors);
-              Logger.log(passwordErrorDiv);
+              logger.info("passwordErrors:", passwordErrors);
+              logger.info(passwordErrorDiv);
               return ;
             }
             const res = await fetch(this.routerManager.getUrl('auth/update-password'), {
@@ -365,7 +365,7 @@ export class UpdateProfilePage {
           this.t('deleteAccount'),
           'retro-button bg-[#ff0000] text-red px-6 py-2 rounded border-2 border-[#ff0000] hover:bg-[#ff3333] hover:text-white shadow-[0_0_10px_#ff0000] hover:shadow-[0_0_20px_#ff0000] transition-all duration-200',
           () => {
-            Logger.log('DELETE ACCOUNT clicked');
+            logger.info('DELETE ACCOUNT clicked');
             this.handlerDeleteAccount();
         });
 
@@ -428,7 +428,7 @@ export class UpdateProfilePage {
 
             this.render();
           } catch (err) {
-            Logger.error('Error updating avatar:', err);
+            logger.error('Error updating avatar:', err);
           }
         },
         this.user?.avatar
@@ -458,7 +458,7 @@ export class UpdateProfilePage {
 
 
   private handlerDeleteAccount() {
-      Logger.log("Opening delete confirmation screen");
+      logger.info("Opening delete confirmation screen");
 
       const container = this.uiManager.createElement(
         'div',
@@ -544,7 +544,7 @@ export class UpdateProfilePage {
           alert(this.t('accountDeleteSuccess'));
           window.location.href = '/';
         } catch (err) {
-          Logger.error('Error deleting account:', err);
+          logger.error('Error deleting account:', err);
           alert(this.t('errorDeletingAccount'));
         }
       }

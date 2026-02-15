@@ -49,6 +49,7 @@ async function csrfValidation(request, reply) {
 	}
 }
 
+
 export function routes(app, options)
 {
 	// OTP validation only

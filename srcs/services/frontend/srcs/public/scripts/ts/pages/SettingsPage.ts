@@ -5,7 +5,7 @@ import type { User, Settings } from '../modules/TypesManager.js';
 import { UIManager } from '../modules/UIManager.js';
 import type { AuthPage } from './AuthPage.js';
 import { UpdateProfilePage } from './UpdateProfilePage.js';
-import { Logger } from '../modules/Logger.js';
+import logger from '../../js/utils/logger.js';
 
 
 export class SettingsPage {
@@ -234,14 +234,14 @@ export class SettingsPage {
   const signInBtn = this.uiManager.createButton(
     this.t("signin"),
     "w-full retro-button bg-[#00ffff] text-black hover:bg-[#00ffff]/80 border-2 border-[#00ffff] py-3",
-    () => Logger.log("to handle signin")
+    () => logger.info("to handle signin")
   );
 
   // Sign Up Button
   const signUpBtn = this.uiManager.createButton(
     this.t("signup"),
     "w-full retro-button bg-transparent text-[#ff1493] border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black py-3",
-    () => Logger.log("to handle signup")
+    () => logger.info("to handle signup")
   );
 
   // 42Auth Button
@@ -285,7 +285,7 @@ export class SettingsPage {
     this.t('update_profile'),
     'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200',
     () => {
-      Logger.log('UPDATE PROFILE clicked');
+      logger.info('UPDATE PROFILE clicked');
       const updateProfilePage = new UpdateProfilePage(
         this.uiManager,
         this.routerManager,
@@ -345,7 +345,7 @@ export class SettingsPage {
           await this.languageManager.setLang(nextLang.code);
         await this.render();
       } catch (err) {
-        Logger.error("Error changing language:", err);
+        logger.error("Error changing language:", err);
       }
     });
 
@@ -416,7 +416,7 @@ export class SettingsPage {
       }
 
     } catch (error) {
-      Logger.error(error);
+      logger.error(error);
       listContainer.innerHTML = '<p class="text-red-500 text-center">Error loading list.</p>';
     }
   }
@@ -473,10 +473,10 @@ export class SettingsPage {
         rowElement.style.transform = 'translateX(20px)';
         setTimeout(() => rowElement.remove(), 300);
       } else {
-        Logger.warn('Failed to unblock user');
+        logger.warn('Failed to unblock user');
       }
     } catch (error) {
-      Logger.error('Error unblocking user:', error);
+      logger.error('Error unblocking user:', error);
     }
   }
 }

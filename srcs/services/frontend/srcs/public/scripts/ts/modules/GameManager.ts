@@ -1,6 +1,6 @@
 import { gameSocket } from "../app.js";
 import type { GameState, GameSettings } from "./TypesManager.js";
-import { Logger } from './Logger.js';
+import logger from '../../js/utils/logger.js';
 //import { INITIAL_READY_STATE } from "../../../realtime-sockets/app/srcs/Data.js";
 
 
@@ -74,7 +74,7 @@ export class GameManager {
    *                       that should allow reconnection (triggers player-left instead)
    */
   public destroy(notifyServer: boolean = true): void {
-    Logger.log(`[GameManager] destroy() called for game: ${this.gameUID}, notifyServer: ${notifyServer}`);
+    logger.info(`[GameManager] destroy() called for game: ${this.gameUID}, notifyServer: ${notifyServer}`);
     this.stopInputLoop();
     if (this.onKeyDown)
       window.removeEventListener('keydown', this.onKeyDown);
@@ -85,16 +85,16 @@ export class GameManager {
       if (notifyServer) {
         // Completely destroy the game on server
         gameSocket.emit(this.gameUID, { action: "destroy-game" });
-        Logger.log(`[GameManager] Sent destroy-game to server for: ${this.gameUID}`);
+        logger.info(`[GameManager] Sent destroy-game to server for: ${this.gameUID}`);
       } else {
         // For active remote games: notify server that player left (triggers reconnection flow)
         this.leaveGame();
-        Logger.log(`[GameManager] Sent player-left to server (reconnection enabled)`);
+        logger.info(`[GameManager] Sent player-left to server (reconnection enabled)`);
       }
 
       // Remove socket listener to prevent memory leaks
       gameSocket.removeAllListeners(this.gameUID);
-      Logger.log(`[GameManager] Socket listener removed for: ${this.gameUID}`);
+      logger.info(`[GameManager] Socket listener removed for: ${this.gameUID}`);
     }
   }
 
@@ -136,7 +136,7 @@ export class GameManager {
   public setPlayerNumber(num: number): void {
     this.playerNumber = num;
     this.isRemoteGame = true;
-    Logger.log(`[GameManager] Player number set to: ${num}`);
+    logger.info(`[GameManager] Player number set to: ${num}`);
   }
 
   //////////////////////////////////////////
@@ -147,11 +147,11 @@ export class GameManager {
     if (!gameSocket || !this.gameUID)
       throw Error("gameSocket is not ready");
 
-    Logger.log(`[GameManager] Setting up socket listeners for game: ${this.gameUID}`);
-    Logger.log(`[GameManager] gameSocket connected: ${gameSocket.connected}`);
+    logger.info(`[GameManager] Setting up socket listeners for game: ${this.gameUID}`);
+    logger.info(`[GameManager] gameSocket connected: ${gameSocket.connected}`);
 
     gameSocket.on(this.gameUID, (data: any) => {
-      Logger.log(`[GameManager] <<<< RECEIVED EVENT on ${this.gameUID}:`, data?.type || 'NO TYPE');
+      logger.info(`[GameManager] <<<< RECEIVED EVENT on ${this.gameUID}:`, data?.type || 'NO TYPE');
       if (!data?.type)
         return;
       if (data.type === "ready-status") {
@@ -164,12 +164,12 @@ export class GameManager {
         this.drawReadyScreen();
       }
       else if (data.type === "countdown") {
-        Logger.log(`[GameManager] COUNTDOWN RECEIVED: ${data.count}`);
+        logger.info(`[GameManager] COUNTDOWN RECEIVED: ${data.count}`);
         // Set countdown flag to prevent draw() from overwriting
         this.isInCountdown = true;
         // Notify UI to hide overlays on EVERY countdown (not just first)
         if (this.onCountdownStart) {
-          Logger.log("[GameManager] Calling onCountdownStart callback");
+          logger.info("[GameManager] Calling onCountdownStart callback");
           this.onCountdownStart();
         }
         this.drawCountdown(data.count);
@@ -189,23 +189,23 @@ export class GameManager {
       else if (data.type === "opponent-found")
         this.handleOpponentFound(data);
       else if (data.type === "opponent-disconnected") {
-        Logger.log("[GameManager] OPPONENT DISCONNECTED EVENT RECEIVED", data);
+        logger.info("[GameManager] OPPONENT DISCONNECTED EVENT RECEIVED", data);
         this.handleOpponentDisconnected(data);
       }
       else if (data.type === "matchmaking-error") {
-        Logger.log("[GameManager] MATCHMAKING ERROR:", data);
+        logger.info("[GameManager] MATCHMAKING ERROR:", data);
         this.handleMatchmakingError(data);
       }
       else if (data.type === "opponent-reconnected") {
-        Logger.log("[GameManager] OPPONENT RECONNECTED:", data);
+        logger.info("[GameManager] OPPONENT RECONNECTED:", data);
         this.handleOpponentReconnected(data);
       }
       else if (data.type === "reconnection-timeout") {
-        Logger.log("[GameManager] RECONNECTION TIMEOUT:", data);
+        logger.info("[GameManager] RECONNECTION TIMEOUT:", data);
         this.handleReconnectionTimeout(data);
       }
       else if (data.type === "opponent-abandoned") {
-        Logger.log("[GameManager] OPPONENT ABANDONED:", data);
+        logger.info("[GameManager] OPPONENT ABANDONED:", data);
         this.handleOpponentAbandoned(data);
       }
     });
@@ -215,19 +215,19 @@ export class GameManager {
    * handleOpponentFound - Called when matchmaking finds an opponent
    */
   private handleOpponentFound(data: any): void {
-    Logger.log("[GameManager] Opponent found!", data);
+    logger.info("[GameManager] Opponent found!", data);
     this.playerNumber = data.playerNumber; // 1 or 2
     this.opponentId = data.opponentId;
     this.isRemoteGame = true; // Mark this as a remote game
 
     // If player 2, switch to the matched game UUID
     if (data.playerNumber === 2 && data.gameUUID) {
-      Logger.log(`[GameManager] Player 2 switching from ${this.gameUID} to ${data.gameUUID}`);
+      logger.info(`[GameManager] Player 2 switching from ${this.gameUID} to ${data.gameUUID}`);
 
       // Remove old socket listener
       if (gameSocket && this.gameUID) {
         gameSocket.removeAllListeners(this.gameUID);
-        Logger.log(`[GameManager] Removed listener for old UUID: ${this.gameUID}`);
+        logger.info(`[GameManager] Removed listener for old UUID: ${this.gameUID}`);
       }
 
       // Update to new game UUID
@@ -235,12 +235,12 @@ export class GameManager {
 
       // Set up listener for the new game
       this.setupSocketListeners();
-      Logger.log(`[GameManager] Now listening on matched game: ${this.gameUID}`);
+      logger.info(`[GameManager] Now listening on matched game: ${this.gameUID}`);
 
       // Confirm to server that we're now listening on the new channel
       if (gameSocket && this.gameUID) {
         gameSocket.emit(this.gameUID, { action: "player-2-joined" });
-        Logger.log(`[GameManager] Sent player-2-joined confirmation`);
+        logger.info(`[GameManager] Sent player-2-joined confirmation`);
       }
     }
 
@@ -261,7 +261,7 @@ export class GameManager {
    * handleOpponentDisconnected - Called when opponent leaves the game
    */
   private handleOpponentDisconnected(data: any): void {
-    Logger.log("[GameManager] handleOpponentDisconnected() called", data);
+    logger.log("[GameManager] handleOpponentDisconnected() called", data);
 
     // CRITICAL: Stop the game loop IMMEDIATELY to prevent draw() from overwriting countdown/ready screens
     this.gameState.gameRunning = false;
@@ -277,13 +277,13 @@ export class GameManager {
       this.intervalId = null;
     }
 
-    Logger.log("[GameManager] Game loop stopped, gameRunning:", this.gameState.gameRunning);
-    Logger.log("[GameManager] Calling onOpponentDisconnected callback");
+    logger.log("[GameManager] Game loop stopped, gameRunning:", this.gameState.gameRunning);
+    logger.log("[GameManager] Calling onOpponentDisconnected callback");
     // Notify UI (GameRemotePage will handle this)
     if (this.onOpponentDisconnected) {
       this.onOpponentDisconnected(data);
     } else {
-      Logger.warn("[GameManager] No onOpponentDisconnected callback set!");
+      logger.warn("[GameManager] No onOpponentDisconnected callback set!");
     }
   }
 
@@ -298,12 +298,12 @@ export class GameManager {
    * handleMatchmakingError - Called when matchmaking fails (e.g., already searching)
    */
   private handleMatchmakingError(data: any): void {
-    Logger.log("[GameManager] handleMatchmakingError() called", data);
+    logger.log("[GameManager] handleMatchmakingError() called", data);
 
     if (this.onMatchmakingError) {
       this.onMatchmakingError(data);
     } else {
-      Logger.warn("[GameManager] No onMatchmakingError callback set!");
+      logger.warn("[GameManager] No onMatchmakingError callback set!");
     }
   }
 
@@ -318,7 +318,7 @@ export class GameManager {
    * handleOpponentReconnected - Called when disconnected opponent returns
    */
   private handleOpponentReconnected(data: any): void {
-    Logger.log("[GameManager] handleOpponentReconnected() called", data);
+    logger.log("[GameManager] handleOpponentReconnected() called", data);
 
     // Reset ready states - both need to click Ready again
     this.isReady = false;
@@ -327,7 +327,7 @@ export class GameManager {
     if (this.onOpponentReconnected) {
       this.onOpponentReconnected(data);
     } else {
-      Logger.warn("[GameManager] No onOpponentReconnected callback set!");
+      logger.warn("[GameManager] No onOpponentReconnected callback set!");
     }
   }
 
@@ -342,12 +342,12 @@ export class GameManager {
    * handleReconnectionTimeout - Called when opponent doesn't reconnect in time
    */
   private handleReconnectionTimeout(data: any): void {
-    Logger.log("[GameManager] handleReconnectionTimeout() called", data);
+    logger.log("[GameManager] handleReconnectionTimeout() called", data);
 
     if (this.onReconnectionTimeout) {
       this.onReconnectionTimeout(data);
     } else {
-      Logger.warn("[GameManager] No onReconnectionTimeout callback set!");
+      logger.warn("[GameManager] No onReconnectionTimeout callback set!");
     }
   }
 
@@ -355,12 +355,12 @@ export class GameManager {
    * handleOpponentAbandoned - Called when opponent starts new game instead of reconnecting
    */
   private handleOpponentAbandoned(data: any): void {
-    Logger.log("[GameManager] handleOpponentAbandoned() called", data);
+    logger.log("[GameManager] handleOpponentAbandoned() called", data);
 
     if (this.onOpponentAbandoned) {
       this.onOpponentAbandoned(data);
     } else {
-      Logger.warn("[GameManager] No onOpponentAbandoned callback set!");
+      logger.warn("[GameManager] No onOpponentAbandoned callback set!");
     }
   }
 
@@ -466,12 +466,12 @@ export class GameManager {
 
     // Set up one-time listeners for the response
     gameSocket.once('reconnection-available', (data: any) => {
-      Logger.log("[GameManager] Reconnection available:", data);
+      logger.log("[GameManager] Reconnection available:", data);
       onResult({ hasGame: true, ...data });
     });
 
     gameSocket.once('no-reconnection-available', () => {
-      Logger.log("[GameManager] No reconnection available");
+      logger.log("[GameManager] No reconnection available");
       onResult({ hasGame: false });
     });
 
@@ -487,12 +487,12 @@ export class GameManager {
 
     // Set up one-time listeners for the response
     gameSocket.once('reconnection-success', (data: any) => {
-      Logger.log("[GameManager] Reconnection success:", data);
+      logger.log("[GameManager] Reconnection success:", data);
       onResult({ success: true, ...data });
     });
 
     gameSocket.once('reconnection-failed', (data: any) => {
-      Logger.log("[GameManager] Reconnection failed:", data);
+      logger.log("[GameManager] Reconnection failed:", data);
       onResult({ success: false, ...data });
     });
 
@@ -512,7 +512,7 @@ export class GameManager {
     // For local/AI: send 3 to mark both players ready
     const playerNum = isRemoteGame ? this.playerNumber : 3;
 
-    Logger.log(`[GameManager] setReady - sending player: ${playerNum} (isRemote: ${isRemoteGame})`);
+    logger.log(`[GameManager] setReady - sending player: ${playerNum} (isRemote: ${isRemoteGame})`);
 
     gameSocket.emit(this.gameUID, {
       action: "player-ready",
@@ -564,7 +564,7 @@ export class GameManager {
     if (!this.gameUID || !gameSocket)
       throw Error("Error with game socket!");
 
-    Logger.log("[GameManager] Searching for random opponent...");
+    logger.log("[GameManager] Searching for random opponent...");
     gameSocket.emit(this.gameUID, { action: "play-against-random-player" });
   }
 
@@ -575,7 +575,7 @@ export class GameManager {
     if (!this.gameUID || !gameSocket)
       throw Error("Error with game socket!");
 
-    Logger.log("[GameManager] Canceling search...");
+    logger.log("[GameManager] Canceling search...");
     gameSocket.emit(this.gameUID, { action: "cancel-matchmaking" });
   }
 
@@ -587,7 +587,7 @@ export class GameManager {
     if (!this.gameUID || !gameSocket)
       return;
 
-    Logger.log("[GameManager] Leaving game (triggering reconnection flow)...");
+    logger.log("[GameManager] Leaving game (triggering reconnection flow)...");
     gameSocket.emit(this.gameUID, { action: "player-left" });
   }
 
@@ -627,11 +627,11 @@ export class GameManager {
   }
 
   private handleServerPlayAgainstRandomPlayer(data: any): void {
-    Logger.log("handleServerPlayAgainstRandomPlayer", data);
+    logger.log("handleServerPlayAgainstRandomPlayer", data);
   }
 
   private handleServerPlayAgainstFriend(data: any): void {
-    Logger.log("handleServerPlayAgainstFriend", data);
+    logger.log("handleServerPlayAgainstFriend", data);
   }
 
 
@@ -649,12 +649,12 @@ export class GameManager {
   private startInputLoop(): void {
     if (!this.gameState.gameRunning) {
       // Ensure the loop is fully stopped so it can be restarted on resume
-      Logger.log('[GameManager] startInputLoop stopped: gameRunning=false');
+      logger.log('[GameManager] startInputLoop stopped: gameRunning=false');
       this.stopInputLoop();
       return;
     }
 
-    Logger.log('[GameManager] startInputLoop frame - gameRunning=true, animationId set');
+    logger.log('[GameManager] startInputLoop frame - gameRunning=true, animationId set');
 
     // Send inputs to server
     this.sendPlayerInputs();
@@ -676,7 +676,7 @@ export class GameManager {
 
       // If game is running but input loop was stopped (e.g., after pause), restart it
       if (this.gameState.gameRunning && !this.isInCountdown && !this.animationId) {
-        Logger.log('[GameManager] Restarting input loop: gameRunning=true, animationId=null');
+        logger.log('[GameManager] Restarting input loop: gameRunning=true, animationId=null');
         this.startInputLoop();
       }
 
@@ -794,7 +794,7 @@ export class GameManager {
   }
 
   private drawReadyScreen(): void {
-    Logger.log("[GameManager] drawReadyScreen called, canvas valid:", !!this.ctx);
+    logger.log("[GameManager] drawReadyScreen called, canvas valid:", !!this.ctx);
     // Clear canvas
     this.ctx.fillStyle = '#000000';
     this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
@@ -824,7 +824,7 @@ export class GameManager {
   }
 
   private drawCountdown(count: number): void {
-    Logger.log("[GameManager] drawCountdown called with count:", count, "canvas valid:", !!this.ctx);
+    logger.log("[GameManager] drawCountdown called with count:", count, "canvas valid:", !!this.ctx);
     // Clear canvas
     this.ctx.fillStyle = '#000000';
     this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);

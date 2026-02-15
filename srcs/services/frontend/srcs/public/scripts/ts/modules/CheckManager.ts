@@ -1,7 +1,7 @@
 import { AuthManager } from "./AuthManager.js";
 import type { LanguageManager } from "./LangManager.js";
 import type { Translations } from "./TypesManager.js";
-import { Logger } from './Logger.js';
+import logger from '../../js/utils/logger.js';
 
 
 export class CheckManager {
@@ -11,14 +11,14 @@ export class CheckManager {
     // TODO: maybe should get Translations text in the constructor
     constructor(languageManager: LanguageManager) {
         this.auth = new AuthManager(() =>
-            Logger.log("To register user or login in someone"));
+            logger.info("To register user or login in someone"));
         this.languageManager = languageManager;
     }
-    
+
     private t(key: string): string {
         return this.languageManager.t(key);
     }
-    
+
 
     public getElement<T extends HTMLElement>(id: string): T {
         const el = document.getElementById(id);
@@ -69,19 +69,19 @@ export class CheckManager {
         errors = errors.concat(this.checkPassword(passwd));
 
         return errors;
-        
+
     }
 
 
     public setupSignUpForm(form: HTMLFormElement) {
       form.addEventListener("submit", (e: Event) => {
         e.preventDefault();
-    
+
         const login = (form.querySelector('#login') as HTMLInputElement).value.trim();
         const email = (form.querySelector('#email') as HTMLInputElement).value.trim();
         const passwd = (form.querySelector('#passwd') as HTMLInputElement).value.trim();
         const passwdConfirm = (form.querySelector('#passwdConfirm') as HTMLInputElement).value.trim();
-    
+
         const errorDiv = this.getElement<HTMLDivElement>('formErrors');
         const errors = this.checkForm(login, email, passwd);
 
@@ -127,7 +127,7 @@ export class CheckManager {
 
                 errorDiv.innerHTML = '';
                 resolve(passwd);
-            }); 
+            });
         });
     }
 

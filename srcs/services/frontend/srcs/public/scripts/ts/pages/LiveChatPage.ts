@@ -5,7 +5,7 @@ import type { RouterManager } from '../modules/RouterManager.js';
 import type { Socket } from "socket.io-client";
 import type { WebsocketManager } from '../modules/WebsocketManager.js';
 import { SocialManager } from '../modules/SocialManager.js';
-import { Logger } from '../modules/Logger.js';
+import logger from '../../js/utils/logger.js';
 
 export class LiveChatPage {
     private uiManager: UIManager;
@@ -40,7 +40,7 @@ export class LiveChatPage {
 
 
     public async render(user: User | null): Promise<void> {
-        Logger.log("live-chat for:", user);
+        logger.log("live-chat for:", user);
 
         this.checkSessionStorageForRedirect();
 
@@ -91,7 +91,7 @@ export class LiveChatPage {
             this.t('BACK TO MENU'),
             'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 mt-4',
             () => {
-                Logger.log('Back to menu clicked');
+                logger.log('Back to menu clicked');
                 this.onBack();
             }
         );
@@ -240,7 +240,7 @@ export class LiveChatPage {
             this.addGameCard(data.messageId, 'pending', null, true);
             this.showFeedback(this.t('Invite sent!'), false);
         } catch (error: any) {
-            Logger.error("Error sending game invite:", error);
+            logger.error("Error sending game invite:", error);
             this.showFeedback(error?.message || 'Failed to send invite', true);
             if (challengeButton) challengeButton.disabled = false;
         }
@@ -262,7 +262,7 @@ export class LiveChatPage {
             }
             // Card will be updated via socket notification
         } catch (error: any) {
-            Logger.error("Error responding to invite:", error);
+            logger.error("Error responding to invite:", error);
             this.showFeedback(error?.message || 'Failed to respond', true);
         }
     }
@@ -511,7 +511,7 @@ export class LiveChatPage {
     }
 
     private async handleFriendSelection(friendId: any, username: string, avatar?: string | null) {
-        Logger.log("Handling friend selection:", username);
+        logger.log("Handling friend selection:", username);
 
         this.currentSelectedFriend = {
             username: username,
@@ -567,7 +567,7 @@ export class LiveChatPage {
                 body: JSON.stringify({ receiverId: this.currentSelectedFriend.id, message: message })
             });
             if (!res.ok) {
-                Logger.error('Failed to send message:', res.status);
+                logger.error('Failed to send message:', res.status);
                 return;
             }
             if (res.ok) {
@@ -576,7 +576,7 @@ export class LiveChatPage {
                 inputField.focus();
             }
         } catch (error) {
-            Logger.error("Error sending message:", error);
+            logger.error("Error sending message:", error);
         }
     }
 
@@ -635,7 +635,7 @@ export class LiveChatPage {
                 });
             }
         } catch (err) {
-            Logger.error("Error loading chat history:", err);
+            logger.error("Error loading chat history:", err);
         }
     }
 
@@ -661,7 +661,7 @@ export class LiveChatPage {
     private async handleBlockFriend() {
         if (!this.currentSelectedFriend) return;
 
-        Logger.log("Blocking friend:", this.currentSelectedFriend.nbrId);
+        logger.log("Blocking friend:", this.currentSelectedFriend.nbrId);
 
         try {
             const res = await fetch(this.routerManager.getUrl('/live-chat/block-friend'), {
@@ -673,22 +673,22 @@ export class LiveChatPage {
 
             const data = await res.json();
             if (data.success) {
-                Logger.log("Friend blocked successfully");
+                logger.log("Friend blocked successfully");
                 this.socialManager?.loadFriendsList();
                 this.currentSelectedFriend = null;
                 this.updateProfileView();
             } else {
-                Logger.error("Failed to block friend:", data.message);
+                logger.error("Failed to block friend:", data.message);
             }
         } catch (err) {
-            Logger.error("Error blocking friend:", err);
+            logger.error("Error blocking friend:", err);
         }
     }
 
     private async handleDeleteFriend() {
         if (!this.currentSelectedFriend) return;
 
-        Logger.log("Removing friend:", this.currentSelectedFriend.nbrId);
+        logger.log("Removing friend:", this.currentSelectedFriend.nbrId);
         try {
             const res = await fetch(this.routerManager.getUrl('/live-chat/remove-friend'), {
                 method: 'POST',
@@ -698,7 +698,7 @@ export class LiveChatPage {
             });
             const data = await res.json();
             if (data.success) {
-                Logger.log("Friend removed");
+                logger.log("Friend removed");
 
                 this.socialManager?.loadFriendsList();
 
@@ -706,7 +706,7 @@ export class LiveChatPage {
                 this.updateProfileView();
             }
         } catch (err) {
-            Logger.error("Error removing friend:", err);
+            logger.error("Error removing friend:", err);
         }
     }
 }
