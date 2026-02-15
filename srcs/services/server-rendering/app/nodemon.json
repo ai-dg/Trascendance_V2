@@ -1,7 +1,0 @@
-{
-  "watch": ["."],
-  "ext": "js, json, ejs",
-  "ignore": ["node_modules"],
-  "exec": "node server-rendering/app/server.js",
-  "legacyWatch": true
-}
