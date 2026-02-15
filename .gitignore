@@ -4,7 +4,6 @@ srcs/logs/
 *.log
 *.sqlite
 *.map
-*.js
 !srcs/services/realtime-sockets/**/*.js
 !srcs/services/game-engine/**/*.js
 *.d.ts
