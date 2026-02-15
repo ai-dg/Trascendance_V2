@@ -1,0 +1,14 @@
+{
+  "name": "discord-webhook-adapter",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Converts Alertmanager webhooks to Discord format",
+  "main": "discord-adapter.js",
+  "scripts": {
+    "start": "node discord-adapter.js"
+  },
+  "dependencies": {
+    "fastify": "^4.26.0",
+    "axios": "^1.6.7"
+  }
+}

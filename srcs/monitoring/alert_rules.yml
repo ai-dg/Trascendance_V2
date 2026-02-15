@@ -1,0 +1,210 @@
+groups:
+  - name: service_alerts
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been unreachable for more than 1 minute."
+
+      - alert: HighErrorRate
+        expr: sum(rate(http_requests_total{status_code=~"5.."}[5m])) by (service) / sum(rate(http_requests_total[5m])) by (service) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate on {{ $labels.service }}"
+          description: "{{ $labels.service }} has more than 10% error rate for 2 minutes."
+
+      - alert: HighRequestLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)) > 2
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency on {{ $labels.service }}"
+          description: "{{ $labels.service }} p95 latency is above 2 seconds for 3 minutes."
+
+  - name: infrastructure_alerts
+    rules:
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is down"
+          description: "Redis has been unreachable for more than 1 minute."
+
+      - alert: HighContainerMemory
+        expr: container_memory_usage_bytes{name!=""} > 536870912
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.name }}"
+          description: "Container {{ $labels.name }} is using more than 512MB of memory for 5 minutes."
+
+      - alert: HighContainerCPU
+        expr: sum(rate(container_cpu_usage_seconds_total{name!=""}[3m])) by (name) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.name }}"
+          description: "Container {{ $labels.name }} CPU usage is above 80% for 5 minutes."
+
+      - alert: RedisHighMemory
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis memory usage is high"
+          description: "Redis is using more than 80% of its maximum memory."
+
+      - alert: ContainerRestarting
+        expr: rate(container_start_time_seconds{name!=""}[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} is restarting"
+          description: "Container {{ $labels.name }} has restarted in the last 5 minutes."
+
+      - alert: RedisConnectionPoolExhaustion
+        expr: redis_connected_clients / redis_config_maxclients * 100 > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis connection pool near exhaustion"
+          description: "Redis is using more than 80% of its maximum connections."
+
+  - name: authentication_alerts
+    rules:
+      - alert: HighFailedLogins
+        expr: sum(rate(auth_login_failed_total[5m])) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High failed login attempts"
+          description: "More than 10 failed login attempts per second detected over 5 minutes."
+
+      - alert: AuthServiceSlowResponse
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="auth"}[5m])) by (le)) > 1
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Auth service responding slowly"
+          description: "Auth service p95 response time is above 1 second."
+
+      - alert: SuspiciousAuthActivity
+        expr: sum(rate(auth_login_attempts_total[1m])) > 50
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Suspicious authentication activity detected"
+          description: "More than 50 login attempts per second detected. Possible attack."
+
+  - name: realtime_alerts
+    rules:
+      - alert: HighWebSocketDisconnections
+        expr: rate(websocket_disconnections_total[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High WebSocket disconnection rate"
+          description: "More than 5 WebSocket disconnections per second."
+
+      - alert: WebSocketConnectionSaturation
+        expr: websocket_active_connections / websocket_max_connections * 100 > 90
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "WebSocket connection pool saturated"
+          description: "WebSocket connections are above 90% capacity."
+
+      - alert: RealtimeServiceLatency
+        expr: histogram_quantile(0.95, sum(rate(websocket_message_duration_seconds_bucket[5m])) by (le)) > 0.5
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High real-time message latency"
+          description: "WebSocket message p95 latency is above 500ms."
+
+  - name: game_alerts
+    rules:
+      - alert: HighMatchmakingQueueTime
+        expr: histogram_quantile(0.95, sum(rate(matchmaking_queue_duration_seconds_bucket[5m])) by (le)) > 30
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Matchmaking queue time is high"
+          description: "Players are waiting more than 30 seconds (p95) for matches."
+
+      - alert: HighGameSessionFailures
+        expr: rate(game_session_failures_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High game session failure rate"
+          description: "More than 10% of game sessions are failing."
+
+      - alert: HighPlayerDisconnectionRate
+        expr: sum(rate(player_disconnections_total[5m])) / sum(rate(player_connections_total[5m])) > 0.2
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High player disconnection rate"
+          description: "More than 20% of players are disconnecting."
+
+  - name: security_alerts
+    rules:
+      - alert: HighRateLimitTriggers
+        expr: rate(rate_limit_exceeded_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate limiting activity"
+          description: "Rate limits are being exceeded frequently."
+
+      - alert: High401Responses
+        expr: sum(rate(http_requests_total{status_code="401"}[5m])) > 10
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High unauthorized access attempts"
+          description: "More than 10 unauthorized (401) requests per second."
+
+      - alert: ModSecurityViolations
+        expr: rate(modsecurity_violations_total[5m]) > 1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ModSecurity detecting attacks"
+          description: "ModSecurity is blocking suspicious requests at a high rate."
+
+      - alert: CSRFAttemptsDetected
+        expr: rate(csrf_validation_failed_total[5m]) > 5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CSRF attack attempts detected"
+          description: "Multiple CSRF validation failures detected."
