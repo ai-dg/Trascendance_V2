@@ -182,15 +182,26 @@ debug:
 	@echo $(GREEN)Add ?debug to URL to enable console logs$(RESET)
 	@$(MAKE) up
 
+
 ######################################################################
-#*********************** ▌ DEBUG MODE ▌ *****************************#
+#***************************** ▌ VAULT ▌ ****************************#
 ######################################################################
 
-# Launch with browser console logging enabled (add ?debug to URL)
-debug:
-	@echo $(GREEN)Starting in DEBUG mode...$(RESET)
-	@echo $(GREEN)Add ?debug to URL to enable console logs$(RESET)
-	@$(MAKE) up
+
+vault:
+	mkdir -p srcs/services/vault/data
+	mkdir -p srcs/services/vault/logs
+	docker compose -f $(COMPOSE) up -d vault
+	sleep 2
+	docker cp srcs/services/vault/init/vaultInit.sh vault:/vault/config
+	docker cp srcs/.env vault:/vault/config/.env
+	docker exec vault sh ./vault/config/vaultInit.sh
+	docker exec vault rm /vault/config/vaultInit.sh
+	docker exec vault rm /vault/config/.env
+
+reset-vault:
+	@sudo rm -rf $(VAULT_DIRECTORIES)
+
 
 ######################################################################
 #*********************** ▌ UPDATE DATA ▌ ****************************#
