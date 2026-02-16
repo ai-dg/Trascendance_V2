@@ -28,14 +28,14 @@ export async function send_message_route(request, reply) {
             
             if (relation && relation.status === 'blocked') {
                 if (relation.requester_id === senderId) {
-                    return reply.code(403).send({ success: false, message: "You blocked this user. Unblock to send messages." });
+                    return reply.code(200).send({ success: false, message: "You blocked this user. Unblock to send messages." });
                 } 
                 else {
-                    return reply.code(403).send({ success: false, message: "You cannot send messages to this user." });
+                    return reply.code(200).send({ success: false, message: "You cannot send messages to this user." });
                 }
             }
             
-            return reply.code(403).send({ success: false, message: "You are not friends with this user." });
+            return reply.code(200).send({ success: false, message: "You are not friends with this user." });
         }
         
         await app.db.run(`

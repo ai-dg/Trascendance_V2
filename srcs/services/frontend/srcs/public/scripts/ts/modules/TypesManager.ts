@@ -263,6 +263,8 @@ export interface Translations {
   privacySec13Title: string;
   privacySec13Text: string;
 
+  guestSocialDisabled: string;
+
 }
 
 

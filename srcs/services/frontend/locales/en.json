@@ -349,6 +349,8 @@
   "privacySec12Title": "12. CHANGES TO THIS PRIVACY POLICY",
   "privacySec12Text": "We may update this Privacy Policy from time to time. We will notify you of any significant changes by posting the updated policy on our website and updating the \"Last Updated\" date. Your continued use of our services indicates acceptance of the updated Privacy Policy.",
   "privacySec13Title": "13. CONTACT US",
-  "privacySec13Text": "If you have any questions about this Privacy Policy or our privacy practices, please contact us at:"
+  "privacySec13Text": "If you have any questions about this Privacy Policy or our privacy practices, please contact us at:",
+
+  "guestSocialDisabled": "Social features are not available in guest mode."
 
 }

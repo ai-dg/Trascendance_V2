@@ -1,7 +1,3 @@
-// import { UIManager } from "./UIManager";
-// import { WebsocketManager } from "./WebsocketManager";
-// import type { User } from "./TypesManager";
-// import type { RouterManager } from "./RouterManager";
 export class SocialManager {
     constructor(uiManager, routerManager, wsManager, languageManager, currentUser, getCurrentSelectedFriendId, onFriendSelect, onNewMessage, onGameInvite) {
         this.currentUser = null;
@@ -55,6 +51,7 @@ export class SocialManager {
         }
     }
     render(parentElement) {
+        const isGuest = !this.currentUser || this.currentUser.isGuest === true;
         // Social Div
         const socialDiv = this.uiManager.createElement('div', 'w-80 bg-black/40 backdrop-blur-sm border-2 border-[#9d4edd] rounded-lg flex flex-col py-6 px-4 min-h-[700px]');
         socialDiv.style.minHeight = '480px';
@@ -62,49 +59,59 @@ export class SocialManager {
         const socialHeaderWrapper = this.uiManager.createElement('div', 'flex items-center justify-between mb-4');
         const socialHeader = this.uiManager.createElement('h3', 'retro-text text-xl text-[#00ffff]');
         socialHeader.textContent = this.t('social') || 'SOCIAL';
-        const addFriendBtn = this.uiManager.createElement('div', 'mt-1 px-1');
-        const img = this.uiManager.createElement('img', 'w-6 h-6');
-        img.style.width = '25px';
-        img.style.height = '25px';
-        img.src = 'public/avatars/add.png';
-        addFriendBtn.appendChild(img);
-        const addFriendDiv = this.uiManager.createElement('div', 'flex flex-col gap-2 mt-2 hidden');
-        const friendInput = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black');
-        friendInput.placeholder = this.t('username') || 'Username';
-        friendInput.id = 'friend-input';
-        const sendFriendBtn = this.uiManager.createElement('button', 'px-4 py-2 mb-4 bg-[#00ffff] text-black rounded');
-        sendFriendBtn.textContent = this.t('send') || 'Send';
-        const errorMessageDiv = this.uiManager.createElement('div', 'hidden text-red-500 text-sm mt-2');
-        errorMessageDiv.id = 'error-message-div';
-        addFriendDiv.appendChild(friendInput);
-        addFriendDiv.appendChild(sendFriendBtn);
-        addFriendDiv.appendChild(errorMessageDiv);
-        addFriendBtn.addEventListener('click', () => {
-            addFriendDiv.classList.toggle('hidden');
-        });
-        sendFriendBtn.addEventListener('click', async () => {
-            const username = friendInput.value.trim();
-            if (!username) {
-                errorMessageDiv.textContent = this.t('pleaseEnterUsername') || 'Please enter a username';
-                errorMessageDiv.classList.remove('hidden', 'text-green-500');
-                errorMessageDiv.classList.add('text-red-500');
-                return;
-            }
-            if (this.currentUser) {
-                await this.addFriend(username);
-            }
-        });
         socialHeaderWrapper.appendChild(socialHeader);
-        socialHeaderWrapper.appendChild(addFriendBtn);
-        socialDiv.appendChild(socialHeaderWrapper);
-        socialDiv.appendChild(addFriendDiv);
+        if (!isGuest) {
+            const addFriendBtn = this.uiManager.createElement('div', 'mt-1 px-1');
+            const img = this.uiManager.createElement('img', 'w-6 h-6');
+            img.style.width = '25px';
+            img.style.height = '25px';
+            img.src = 'public/avatars/add.png';
+            addFriendBtn.appendChild(img);
+            const addFriendDiv = this.uiManager.createElement('div', 'flex flex-col gap-2 mt-2 hidden');
+            const friendInput = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black');
+            friendInput.placeholder = this.t('username') || 'Username';
+            friendInput.id = 'friend-input';
+            const sendFriendBtn = this.uiManager.createElement('button', 'px-4 py-2 mb-4 bg-[#00ffff] text-black rounded');
+            sendFriendBtn.textContent = this.t('send') || 'Send';
+            const errorMessageDiv = this.uiManager.createElement('div', 'hidden text-red-500 text-sm mt-2');
+            errorMessageDiv.id = 'error-message-div';
+            addFriendDiv.appendChild(friendInput);
+            addFriendDiv.appendChild(sendFriendBtn);
+            addFriendDiv.appendChild(errorMessageDiv);
+            addFriendBtn.addEventListener('click', () => {
+                addFriendDiv.classList.toggle('hidden');
+            });
+            sendFriendBtn.addEventListener('click', async () => {
+                const username = friendInput.value.trim();
+                if (!username) {
+                    errorMessageDiv.textContent = this.t('pleaseEnterUsername') || 'Please enter a username';
+                    errorMessageDiv.classList.remove('hidden', 'text-green-500');
+                    errorMessageDiv.classList.add('text-red-500');
+                    return;
+                }
+                if (this.currentUser) {
+                    await this.addFriend(username);
+                }
+            });
+            socialHeaderWrapper.appendChild(addFriendBtn);
+            socialDiv.appendChild(socialHeaderWrapper);
+            socialDiv.appendChild(addFriendDiv);
+        }
+        else {
+            socialDiv.appendChild(socialHeaderWrapper);
+        }
         // Online list
         const onlineList = this.uiManager.createElement('div', 'w-full mb-6');
         onlineList.id = 'friends-container';
         const onlineTitle = this.uiManager.createElement('h4', 'retro-text text-lg text-[#00ffff] mb-2');
         onlineTitle.textContent = this.t('friends') || 'Friends';
         const onlineContent = this.uiManager.createElement('div', 'text-[#00ffff] opacity-80');
-        onlineContent.textContent = this.t('friendsListPlaceholder') || 'List of friends goes here...';
+        if (isGuest) {
+            onlineContent.textContent = this.t('guestSocialDisabled') || 'Social features are not available in guest mode.';
+        }
+        else {
+            onlineContent.textContent = this.t('friendsListPlaceholder') || 'List of friends goes here...';
+        }
         onlineList.appendChild(onlineTitle);
         onlineList.appendChild(onlineContent);
         socialDiv.appendChild(onlineList);
@@ -119,11 +126,13 @@ export class SocialManager {
         notifList.appendChild(notificationsContainer);
         socialDiv.appendChild(notifList);
         parentElement.appendChild(socialDiv);
-        this.setupSocketListeners();
-        this.loadFriendsList();
-        this.loadPendingFriendRequests();
-        this.restorePendingGameInvites(notificationsContainer);
-        this.syncSocialPanel();
+        if (!isGuest) {
+            this.setupSocketListeners();
+            this.loadFriendsList();
+            this.loadPendingFriendRequests();
+            this.restorePendingGameInvites(notificationsContainer);
+            this.syncSocialPanel();
+        }
     }
     /** Re-show game invite notifications from persistent store (e.g. after navigating back to Live Chat / Menu).
      * @param container - The notifications container element (required: it may not be in document yet when called from render) */

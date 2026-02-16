@@ -348,6 +348,8 @@
   "privacySec12Title": "12. PRIVAATSUSPOLIITIKA MUUDATUSED",
   "privacySec12Text": "Võime seda poliitikat aeg-ajalt värskendada. Teie jätkuv kasutamine näitab nõustumist.",
   "privacySec13Title": "13. VÕTA MEIEGA ÜHENDUST",
-  "privacySec13Text": "Kui teil on küsimusi selle privaatsuspoliitika kohta, võtke meiega ühendust aadressil:"
+  "privacySec13Text": "Kui teil on küsimusi selle privaatsuspoliitika kohta, võtke meiega ühendust aadressil:",
+
+  "guestSocialDisabled": "Sotsiaalsed funktsioonid pole külalisrežiimis saadaval."
 
 }

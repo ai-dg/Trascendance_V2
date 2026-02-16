@@ -368,11 +368,17 @@ export class LiveChatPage {
                 Logger.error('Failed to send message:', res.status);
                 return;
             }
-            if (res.ok) {
-                this.addMessage(message, true);
-                inputField.value = '';
-                inputField.focus();
+
+            const data = await res.json();
+            if (data.success == false) {
+                Logger.log('Message not sent:', data.message);
+                return;
             }
+
+            this.addMessage(message, true);
+            inputField.value = '';
+            inputField.focus();
+            
         } catch (error) {
             Logger.info("Send message failed:", error);
         }

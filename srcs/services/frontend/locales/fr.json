@@ -350,5 +350,7 @@
   "privacySec12Title": "12. MODIFICATIONS DE CETTE POLITIQUE",
   "privacySec12Text": "Nous pouvons mettre à jour cette politique de temps à autre. Votre utilisation continue indique votre acceptation.",
   "privacySec13Title": "13. NOUS CONTACTER",
-  "privacySec13Text": "Si vous avez des questions sur cette politique, veuillez nous contacter à :"
+  "privacySec13Text": "Si vous avez des questions sur cette politique, veuillez nous contacter à :",
+
+  "guestSocialDisabled": "Les fonctionnalités sociales ne sont pas disponibles en mode invité."
 }
