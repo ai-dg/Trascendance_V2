@@ -19,6 +19,8 @@ services:
     networks:
       - internal
       - transcendence
+    volumes:
+      - ./certs:/certs:ro
     expose:
       - 443
     env_file:

@@ -39,7 +39,7 @@ export class UpdateProfilePage {
         avatarImg.alt = this.t('avatarAlt');
         avatarImg.title = this.t('avatarTitle');
         avatarImg.addEventListener('click', () => {
-            console.log('Change avatar clicked');
+            Logger.log('Change avatar clicked');
             this.renderAvatarSelector();
         });
         const avatarLabel = this.uiManager.createElement('p', 'retro-subtitle text-sm opacity-70', this.t('clickToChangeAvatar'));
@@ -115,7 +115,7 @@ export class UpdateProfilePage {
             const errorDiv = this.uiManager.createElement('div', 'text-red-500 text-sm mt-1');
             fieldContainer.appendChild(errorDiv);
             const button = this.uiManager.createButton(this.t('change'), 'retro-button bg-transparent text-[#ff1493] px-4 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200 self-end', async () => {
-                console.log(`${labelText} changed to:`, input.value, withConfirm ? confirmInput?.value : '');
+                Logger.log(`${labelText} changed to:`, input.value, withConfirm ? confirmInput?.value : '');
                 errorDiv.innerHTML = '';
                 try {
                     await changeHandler(input.value, confirmInput?.value);
@@ -287,8 +287,8 @@ export class UpdateProfilePage {
                     const errorMessage = this.uiManager.createElement('p', '', error);
                     passwordErrorDiv?.appendChild(errorMessage);
                 });
-                console.log("passwordErrors:", passwordErrors);
-                console.log(passwordErrorDiv);
+                Logger.log("passwordErrors:", passwordErrors);
+                Logger.log(passwordErrorDiv);
                 return;
             }
             const res = await fetch(this.routerManager.getUrl('auth/update-password'), {
@@ -318,7 +318,7 @@ export class UpdateProfilePage {
             card.appendChild(passwordField);
         // delete account
         const deleteButton = this.uiManager.createButton(this.t('deleteAccount'), 'retro-button bg-[#ff0000] text-red px-6 py-2 rounded border-2 border-[#ff0000] hover:bg-[#ff3333] hover:text-white shadow-[0_0_10px_#ff0000] hover:shadow-[0_0_20px_#ff0000] transition-all duration-200', () => {
-            console.log('DELETE ACCOUNT clicked');
+            Logger.log('DELETE ACCOUNT clicked');
             this.handlerDeleteAccount();
         });
         // Back button (optional)
@@ -375,7 +375,7 @@ export class UpdateProfilePage {
         this.uiManager.container.appendChild(container);
     }
     handlerDeleteAccount() {
-        console.log("Opening delete confirmation screen");
+        Logger.log("Opening delete confirmation screen");
         const container = this.uiManager.createElement('div', 'retro-container size-full flex flex-col items-center justify-center p-8');
         const card = this.uiManager.createElement('div', 'bg-black/40 backdrop-blur-sm border-2 border-[#ff0000] rounded-lg p-8 shadow-[0_0_30px_#ff0000] w-full max-w-md flex flex-col items-center gap-6 text-center');
         const title = this.uiManager.createElement('h1', 'retro-title text-3xl text-[#ff0000]', this.t('areYouSure'));
