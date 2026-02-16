@@ -574,11 +574,6 @@ networks:
 
 volumes:
   rabbitmq_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${HOME}/data/rabbit
 
   language-manager-node-modules:
     driver: local
