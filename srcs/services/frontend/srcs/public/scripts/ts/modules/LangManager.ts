@@ -31,7 +31,7 @@ export class LanguageManager {
       this.currentLang = langCode;
 
       if (userId) {
-          await fetch(this.routerManager.getUrl('language-manager/set-lang'), {
+          await fetch(this.routerManager.getUrl('/language-manager/set-lang'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',

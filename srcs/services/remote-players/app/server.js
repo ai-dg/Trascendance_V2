@@ -204,10 +204,78 @@ function setupGameSocket(socket) {
 		await requestGameUID(socket, data);
 	});
 
-	socket.on("join-game", (data) => {
+	socket.on("join-game", async (data) => {
 		console.log("Joining game : ", data);
-		socket.join(`game-${data.UUID}`);
-		socket.emit("joined-game", {UUID: data.UUID});
+		const gameUUID = data?.UUID;
+		if (!gameUUID) return;
+		socket.join(`game-${gameUUID}`);
+		socket.emit("joined-game", { UUID: gameUUID });
+
+		// Invite flow: if Redis has game-invite:<gameUUID> = this user, add as player 2
+		const allowedToJoin = await redis.get(`game-invite:${gameUUID}`);
+		if (allowedToJoin != null && String(userId) === String(allowedToJoin)) {
+			const game = runningGames.get(gameUUID);
+			if (game && game.isRemoteGame && !game.player2Id) {
+				await redis.del(`game-invite:${gameUUID}`);
+				game.addPlayer2(socket, userId);
+				userGames.set(userId, gameUUID);
+				socket.on(gameUUID, (eventData) => gameHandler(gameUUID, eventData, socket));
+				if (process.env.DEBUG_INVITE === '1' || process.env.DEBUG_INVITE === 'true') {
+					console.log('[INVITE_OPPONENT_FOUND]', { gameUUID, player2UserId: userId });
+				}
+				Promise.all([
+					fetchAuthUserById(game.player1Id),
+					fetchAuthUserById(userId)
+				]).then(([player1Info, player2Info]) => {
+					const player1Socket = game.player1Socket;
+					const player1Username = player1Info?.username || player1Socket?.user || 'Player 1';
+					const player2Username = player2Info?.username || socket.user || 'Player 2';
+					const player1Avatar = (player1Info?.avatar && String(player1Info.avatar).trim()) || player1Socket?.avatar || 'default';
+					const player2Avatar = (player2Info?.avatar && String(player2Info.avatar).trim()) || socket.avatar || 'default';
+					player1Socket.emit(gameUUID, {
+						type: "opponent-found",
+						playerNumber: 1,
+						opponentId: userId,
+						opponentUsername: player2Username,
+						opponentAvatar: player2Avatar,
+						yourUsername: player1Username,
+						yourAvatar: player1Avatar
+					});
+					socket.emit(gameUUID, {
+						type: "opponent-found",
+						playerNumber: 2,
+						opponentId: game.player1Id,
+						opponentUsername: player1Username,
+						opponentAvatar: player1Avatar,
+						gameUUID: gameUUID,
+						yourUsername: player2Username,
+						yourAvatar: player2Avatar
+					});
+				}).catch((err) => {
+					console.warn('[remote-players] invite opponent-found enrich failed:', err?.message || err);
+					const p1 = game.player1Socket;
+					p1.emit(gameUUID, {
+						type: "opponent-found",
+						playerNumber: 1,
+						opponentId: userId,
+						opponentUsername: socket.user || 'Player 2',
+						opponentAvatar: 'default',
+						yourUsername: p1.user || 'Player 1',
+						yourAvatar: 'default'
+					});
+					socket.emit(gameUUID, {
+						type: "opponent-found",
+						playerNumber: 2,
+						opponentId: game.player1Id,
+						opponentUsername: p1.user || 'Player 1',
+						opponentAvatar: 'default',
+						gameUUID: gameUUID,
+						yourUsername: socket.user || 'Player 2',
+						yourAvatar: 'default'
+					});
+				});
+			}
+		}
 	});
 
 	socket.on("new-game", (data) => newGameSocket(socket, data) );
@@ -441,8 +509,8 @@ function onMatchFound(matchData) {
 
 	const player1Username = player1Info?.username || player1Socket.user || 'Player 1';
 	const player2Username = player2Info?.username || player2Socket.user || 'Player 2';
-	const player1Avatar = player1Info?.avatar || player1Socket.avatar || null;
-	const player2Avatar = player2Info?.avatar || player2Socket.avatar || null;
+	const player1Avatar = (player1Info?.avatar && String(player1Info.avatar).trim()) || player1Socket?.avatar || 'default';
+	const player2Avatar = (player2Info?.avatar && String(player2Info.avatar).trim()) || player2Socket?.avatar || 'default';
 
 	// Add player 2 to the game
 	game.addPlayer2(player2Socket, player2UserId);
@@ -457,23 +525,27 @@ function onMatchFound(matchData) {
 	// Set up socket listener for player 2's inputs on the MATCHED game
 	player2Socket.on(gameUUID, (eventData) => gameHandler(gameUUID, eventData, player2Socket));
 
-	// Notify Player 1
+	// Notify Player 1 (include yourUsername/yourAvatar so player 1 sees their own avatar on the left)
 	player1Socket.emit(gameUUID, {
 		type: "opponent-found",
 		playerNumber: 1,
 		opponentId: player2UserId,
 		opponentUsername: player2Username,
-		opponentAvatar: player2Avatar
+		opponentAvatar: player2Avatar,
+		yourUsername: player1Username,
+		yourAvatar: player1Avatar
 	});
 
-	// Notify Player 2
+	// Notify Player 2 (include yourUsername/yourAvatar so player 2 sees their own avatar)
 	player2Socket.emit(player2GameUUID, {
 		type: "opponent-found",
 		playerNumber: 2,
 		opponentId: player1UserId,
 		opponentUsername: player1Username,
 		opponentAvatar: player1Avatar,
-		gameUUID: gameUUID
+		gameUUID: gameUUID,
+		yourUsername: player2Username,
+		yourAvatar: player2Avatar
 	});
 
 	console.log(`[Server] Match ready! Game: ${gameUUID}`);
@@ -485,15 +557,19 @@ function onMatchFound(matchData) {
 			playerNumber: 1,
 			opponentId: player2UserId,
 			opponentUsername: player2Socket.user || 'Player 2',
-			opponentAvatar: player2Socket.avatar || null
+			opponentAvatar: player2Socket.avatar || 'default',
+			yourUsername: player1Socket.user || 'Player 1',
+			yourAvatar: player1Socket.avatar || 'default'
 		});
 		player2Socket.emit(player2GameUUID, {
 			type: "opponent-found",
 			playerNumber: 2,
 			opponentId: player1UserId,
 			opponentUsername: player1Socket.user || 'Player 1',
-			opponentAvatar: player1Socket.avatar || null,
-			gameUUID: gameUUID
+			opponentAvatar: player1Socket.avatar || 'default',
+			gameUUID: gameUUID,
+			yourUsername: player2Socket.user || 'Player 2',
+			yourAvatar: player2Socket.avatar || 'default'
 		});
 	});
 }

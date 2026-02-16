@@ -11,15 +11,13 @@ export async function connect_message_queue() {
   const password = rabbitmqAuth.password;
   const connection = await amqp.connect(`amqp://${user}:${password}@rabbitmq:5672`);
   
-  // Canal pour les emails (rapide)
+  // Channel for transactional mail (fast)
   const mailChannel = await connection.createChannel();
   await mailChannel.assertQueue(mail_queue, { durable: true });
-  // Préfetch élevé pour les emails rapides
   await mailChannel.prefetch(10);
   
   const validationChannel = await connection.createChannel();
   await validationChannel.assertQueue(validation_queue, { durable: true });
-  // Préfetch bas pour les validations lentes
   await validationChannel.prefetch(10);
   
   return {
@@ -33,7 +31,7 @@ export async function connect_message_queue() {
 export async function setupMessageQueues() {
   const { connection, mailChannel, validationChannel } = await connect_message_queue();
   
-  // Attacher les canaux a fastify
+  // Attach channels to Fastify app
   app.mailChannel = mailChannel;
   app.validationChannel = validationChannel;
   app.rabbitConnection = connection;
@@ -59,7 +57,6 @@ export async function setupMessageQueues() {
 	  }
 	  
 	  
-	  // Traitement lent de la validation
 	  const result = await confirm_email_token(token);
 	  
 	  await validationChannel.sendToQueue(
@@ -71,7 +68,7 @@ export async function setupMessageQueues() {
 	  shouldAck = true;
 	  
 	} catch (error) {
-	  console.error("Erreur validation:", error);
+	  console.error("Validation error:", error);
 	  
 	  if (msg.properties.replyTo && msg.properties.correlationId) {
 		try {
@@ -85,7 +82,7 @@ export async function setupMessageQueues() {
 		  );
 		  shouldAck = true;
 		} catch (sendError) {
-		  console.error("Erreur envoi réponse:", sendError);
+		  console.error("Error sending response:", sendError);
 		}
 	  } else {
 		shouldAck = true;
@@ -98,7 +95,7 @@ export async function setupMessageQueues() {
   });
   
   process.on('SIGINT', async () => {
-	console.log('Fermeture des connexions RabbitMQ...');
+	console.log('Closing RabbitMQ connections...');
 	await mailChannel.close();
 	await validationChannel.close();
 	await connection.close();

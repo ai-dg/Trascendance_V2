@@ -66,11 +66,11 @@ const start = async () => {
 
 				console.log(payload);
 				mailer.sendMail(payload)
-					.then(info => {console.log("✔ Mail envoyé :", info.response)
+					.then(info => {console.log("Mail sent:", info.response)
 								app.channel.ack(msg);
 
 					})
-					.catch(error => console.error("❌ Erreur mail :", error));
+					.catch(error => console.error("Mail error:", error));
 			}
 		})
 

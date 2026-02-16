@@ -1,1 +1,0 @@
-declare module 'point-of-view';

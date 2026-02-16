@@ -71,6 +71,13 @@ export class UpdateProfilePage {
         avatarSection.appendChild(avatarImg);
         avatarSection.appendChild(avatarLabel);
 
+        const isOAuth42 = this.user?.provider === '42';
+        const oauth42Badge = this.uiManager.createElement(
+          'p',
+          'text-sm text-[#00ffff]/90 font-medium mt-1'
+        );
+        oauth42Badge.textContent = this.t('signed_in_with_42');
+
         const createField = (
           labelText: string,
           inputType: string,
@@ -175,7 +182,7 @@ export class UpdateProfilePage {
               try {
                 await changeHandler(input.value, confirmInput?.value);
               } catch (err: any) {
-                errorDiv.textContent = err.message || 'Error updating field';
+                errorDiv.textContent = err.message || 'Update failed';
               }
             }
           );
@@ -184,140 +191,156 @@ export class UpdateProfilePage {
           return { fieldContainer, errorDiv };
         };
 
-        // let errorDiv: HTMLElement | undefined;
-
-        // Username Field
-        const { fieldContainer: usernameField, errorDiv: usernameErrorDiv } = createField(
-          this.t('username'),
-          'text',
-          this.t('usernamePlaceholder'),
-          async (value) => {
-            const usernameErrors = this.checkManager.checkUsername(value);
-            if (usernameErrors.length > 0) {
-              if (usernameErrorDiv)
-                usernameErrorDiv.innerHTML = '';
-              usernameErrors.forEach((error) => {
-                const errorMessage = this.uiManager.createElement('p', '', error);
-                usernameErrorDiv?.appendChild(errorMessage);
-              });
-              Logger.log("usernameErrors:", usernameErrors);
-              Logger.log(usernameErrorDiv);
-              return ;
-            }
-            const res = await fetch(this.routerManager.getUrl('auth/update-username'), {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: "include",
-            body: JSON.stringify({ username: value })
-          });
-          if (!res.ok) {
-              // const text = await res.text();
-              const message3 = await res.json();
-              throw new Error(message3.message || this.t('failedUpdateUsername'));
-          }
-          if (this.user) this.user.username = value;
-          this.render();
-          },
-          false,
-          this.user?.username
-        );
-
-        // Email Field
-        const { fieldContainer: emailField, errorDiv: emailErrorDiv } = createField(
-          this.t('email'),
-          'email',
-          this.t('emailPlaceholder'),
-          async (value) => {
-            if (!value)
-                throw new Error(this.t('noEmailEntered'));
-            const emailErrors = this.checkManager.checkEmail(value);
-            if (emailErrors.length > 0) {
-              if (emailErrorDiv)
-                emailErrorDiv.innerHTML = '';
-              emailErrors.forEach((error) => {
-                const errorMessage = this.uiManager.createElement('p', '', error);
-                emailErrorDiv?.appendChild(errorMessage);
-              });
-              Logger.log("emailErrors:", emailErrors);
-              Logger.log(emailErrorDiv);
-              return ;
-            }
-            try {
-              const res = await fetch(this.routerManager.getUrl('/auth/verify-email-valid'), {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  credentials: "include",
-                  body: JSON.stringify({ email: value })
+        // Username Field (hidden for 42 OAuth users; username is managed by 42)
+        let usernameField: HTMLElement | null = null;
+        if (!isOAuth42) {
+          const usernameResult = createField(
+            this.t('username'),
+            'text',
+            this.t('usernamePlaceholder'),
+            async (value) => {
+              const usernameErrors = this.checkManager.checkUsername(value);
+              if (usernameErrors.length > 0) {
+                if (usernameResult.errorDiv)
+                  usernameResult.errorDiv.innerHTML = '';
+                usernameErrors.forEach((error) => {
+                  const errorMessage = this.uiManager.createElement('p', '', error);
+                  usernameResult.errorDiv?.appendChild(errorMessage);
+                });
+                console.log("usernameErrors:", usernameErrors);
+                return ;
+              }
+              const res = await fetch(this.routerManager.getUrl('auth/update-username'), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: "include",
+                body: JSON.stringify({ username: value })
               });
               if (!res.ok) {
-                  const message = await res.json();
-                  throw new Error(message.message || this.t('failedRequestOTP'));
+                const message3 = await res.json().catch(() => ({}));
+                const msg = message3.message || this.t('failedUpdateUsername');
+                console.info('[UpdateProfile]', msg);
+                if (usernameResult.errorDiv) usernameResult.errorDiv.textContent = msg;
+                return;
+              }
+              if (this.user) this.user.username = value;
+              this.render();
+            },
+            false,
+            this.user?.username
+          );
+          usernameField = usernameResult.fieldContainer;
+        }
+
+        // Email Field (hidden for 42 OAuth users; email is managed by 42)
+        let emailField: HTMLElement | null = null;
+        if (!isOAuth42) {
+          const emailResult = createField(
+            this.t('email'),
+            'email',
+            this.t('emailPlaceholder'),
+            async (value) => {
+              if (!value) {
+                console.info('[UpdateProfile]', this.t('noEmailEntered'));
+                if (emailResult.errorDiv) emailResult.errorDiv.textContent = this.t('noEmailEntered');
+                return;
+              }
+              const emailErrors = this.checkManager.checkEmail(value);
+              if (emailErrors.length > 0) {
+                if (emailResult.errorDiv)
+                  emailResult.errorDiv.innerHTML = '';
+                emailErrors.forEach((error) => {
+                  const errorMessage = this.uiManager.createElement('p', '', error);
+                  emailResult.errorDiv?.appendChild(errorMessage);
+                });
+                console.log("emailErrors:", emailErrors);
+                return ;
+              }
+              try {
+                const res = await fetch(this.routerManager.getUrl('/auth/verify-email-valid'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: "include",
+                    body: JSON.stringify({ email: value })
+                });
+                if (!res.ok) {
+                    const message = await res.json().catch(() => ({}));
+                    const msg = message.message || this.t('failedRequestOTP');
+                    console.info('[UpdateProfile]', msg);
+                    if (emailResult.errorDiv) emailResult.errorDiv.textContent = msg;
+                    return;
+                  }
+                const data1 = await res.json();
+                console.log("OTP sent:", data1);
+                if (!data1.success) {
+                  console.info('[UpdateProfile]', data1.message || this.t('failedUpdateEmail'));
+                  if (emailResult.errorDiv) emailResult.errorDiv.textContent = data1.message || this.t('failedUpdateEmail');
+                  return;
                 }
-              const data1 = await res.json();
-              Logger.log("OTP sent:", data1);
-              if (!data1.success)
-                throw new Error(data1.message || this.t('failedUpdateEmail'));
 
-              const res3 = await fetch(this.routerManager.getUrl('/auth/verify-email'), {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  credentials: "include",
-                  body: JSON.stringify({ email: value })
-              });
-              if (!res3.ok) {
-                  const message = await res3.json();
-                  throw new Error(message.message || this.t('failedRequestOTP'));
-                }
-              const data = await res3.json();
-              this.routerManager.navigateTo('check-otp', data.otp_id);
+                const res3 = await fetch(this.routerManager.getUrl('/auth/verify-email'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: "include",
+                    body: JSON.stringify({ email: value })
+                });
+                if (!res3.ok) {
+                    const message = await res3.json().catch(() => ({}));
+                    const msg = message.message || this.t('failedRequestOTP');
+                    console.info('[UpdateProfile]', msg);
+                    if (emailResult.errorDiv) emailResult.errorDiv.textContent = msg;
+                    return;
+                  }
+                const data = await res3.json();
+                console.log("OTP verify response:", data);
+                console.log("OTP ID received:", data.otp_id);
 
-
-              this.authManager.otpData = {
+                this.authManager.otpData = {
                   otp_id: data.otp_id,
                   context: "verify-email",
                   handler: async () => {
                     try {
                       const res2 = await fetch(this.routerManager.getUrl('/auth/update-email'), {
-                          method: 'PUT',
-                          headers: { 'Content-Type': 'application/json' },
-                          credentials: 'include',
-                          body: JSON.stringify({ email: value })
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ email: value })
                       });
                       if (!res2.ok) {
-                          // const text = await res2.text();
-                          const message2 = await res2.json();
-                          if (this.authManager.otpData)
-                            this.authManager.otpData.context = "update-profile";
-                          throw new Error(message2.message || this.t('failedUpdateEmail'));
+                        const message2 = await res2.json().catch(() => ({}));
+                        if (this.authManager.otpData)
+                          this.authManager.otpData.context = "update-profile";
+                        const msg2 = message2.message || this.t('failedUpdateEmail');
+                        console.info('[UpdateProfile]', msg2);
+                        alert(msg2);
+                        return;
                       }
                       if (this.user) this.user.email = value;
                       if (this.authManager.otpData)
                         this.authManager.otpData.context = "update-profile";
-                      this.render();
+                      this.routerManager.navigateTo('settings');
                     } catch (error: unknown) {
-                      if (error instanceof Error) {
-                        if (this.authManager.otpData)
-                          this.authManager.otpData.context = "update-profile";
-                        throw new Error(error.message || this.t('failedUpdateEmail'));
-                      }
-                      else {
-                        if (this.authManager.otpData)
-                          this.authManager.otpData.context = "update-profile";
-                        throw new Error(this.t('failedUpdateEmail'));
-                      }
+                      if (this.authManager.otpData)
+                        this.authManager.otpData.context = "update-profile";
+                      const msg = error instanceof Error ? error.message : this.t('failedUpdateEmail');
+                      alert(msg);
+                      this.routerManager.navigateTo('settings');
                     }
                   }
-          };
-        } catch (error: unknown) {
-          if (error instanceof Error)
-            throw new Error(error.message || this.t('failedRequestOTP'));
-          else
-            throw new Error(this.t('failedRequestOTP'));
+                };
+                this.routerManager.navigateTo('check-otp', data.otp_id);
+              } catch (err: unknown) {
+                const msg = err instanceof Error ? err.message : this.t('failedRequestOTP');
+                console.info('[UpdateProfile]', msg);
+                if (emailResult.errorDiv) emailResult.errorDiv.textContent = msg;
+                return;
+              }
+            },
+            false,
+            this.user?.email,
+          );
+          emailField = emailResult.fieldContainer;
         }
-      },
-          false,
-          this.user?.email,
-        );
 
         // Password Fields (with confirm)
         const { fieldContainer: passwordField, errorDiv: passwordErrorDiv } = createField(
@@ -326,7 +349,11 @@ export class UpdateProfilePage {
             this.t('enter_password'),
             async (value, confirmValue) => {
                 // TODO: checks to add
-                if (value !== confirmValue) throw new Error("Passwords don't match");
+                if (value !== confirmValue) {
+                  console.info('[UpdateProfile]', "Passwords don't match");
+                  if (passwordErrorDiv) passwordErrorDiv.textContent = "Passwords don't match";
+                  return;
+                }
                 const passwordErrors = this.checkManager.checkPassword(value);
             if (passwordErrors.length > 0) {
               if (passwordErrorDiv)
@@ -346,9 +373,11 @@ export class UpdateProfilePage {
                 body: JSON.stringify({ password: value })
                 });
                 if (!res.ok) {
-                    // const text = await res.text();
-                    const message = await res.json();
-                    throw new Error(message.message || this.t('failedUpdatePassword'));
+                    const message = await res.json().catch(() => ({}));
+                    const msg = message.message || this.t('failedUpdatePassword');
+                    console.info('[UpdateProfile]', msg);
+                    if (passwordErrorDiv) passwordErrorDiv.textContent = msg;
+                    return;
                 }
                 this.render();
             },
@@ -356,8 +385,9 @@ export class UpdateProfilePage {
         );
 
         card.appendChild(avatarSection);
-        card.appendChild(usernameField);
-        card.appendChild(emailField);
+        if (isOAuth42) card.appendChild(oauth42Badge);
+        if (usernameField) card.appendChild(usernameField);
+        if (emailField) card.appendChild(emailField);
         card.appendChild(passwordField);
 
         // delete account
@@ -393,7 +423,7 @@ export class UpdateProfilePage {
 
       const card = this.uiManager.createElement(
         'div',
-        // Card large ("bannière") mais contenu gardé étroit au centre
+        // Wide banner card, content kept narrow and centred
         'bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-8 shadow-[0_0_30px_#ff1493] w-full flex flex-col items-center'
       );
       card.style.width = '1300px';
@@ -404,7 +434,7 @@ export class UpdateProfilePage {
 
       const title = this.uiManager.createElement(
         'h1',
-        // inline-flex => le titre ne "s'étire" pas en largeur avec la bannière
+        // inline-flex so title doesn't stretch with banner width
         'retro-title text-sm mb-6 inline-flex text-center',
         this.t('chooseYourAvatar')
       );
@@ -421,14 +451,15 @@ export class UpdateProfilePage {
 
             if (!res.ok) {
               const text = await res.text();
-              throw new Error(text || this.t('failedUpdateAvatar'));
+              console.info('[UpdateProfile]', text || this.t('failedUpdateAvatar'));
+              return;
             }
 
             if (this.user) this.user.avatar = avatarId;
 
             this.render();
           } catch (err) {
-            Logger.error('Error updating avatar:', err);
+            Logger.info('[UpdateProfile] Avatar update failed:', err);
           }
         },
         this.user?.avatar
@@ -538,13 +569,15 @@ export class UpdateProfilePage {
 
           if (!res.ok) {
             const text = await res.text();
-            throw new Error(text || this.t('failedDeleteAccount'));
+            console.info('[UpdateProfile]', text || this.t('failedDeleteAccount'));
+            alert(text || this.t('failedDeleteAccount'));
+            return;
           }
 
           alert(this.t('accountDeleteSuccess'));
           window.location.href = '/';
         } catch (err) {
-          Logger.error('Error deleting account:', err);
+          Logger.info('[UpdateProfile] Delete account failed:', err);
           alert(this.t('errorDeletingAccount'));
         }
       }

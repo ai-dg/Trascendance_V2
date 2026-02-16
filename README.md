@@ -2,9 +2,7 @@
 
 ## DESCRIPTION 
 
-This project implements a complete web platform for playing multiplayer Pong.
-The system uses a microservices architecture to ensure scalability and maintainability.
-
+This project implements a complete web platform with account management for playing Pong with 3 different modes : AI with choice of difficulty, Local with game customization (Paddle and ball speed), and Multiplayer. A live chat is implemented to permit the communications between players.
 
 ## INSTRUCTIONS
 
@@ -37,7 +35,6 @@ make down
 make logs
 make rebuild
 
-
 ## RESOURCES
 
 - Docker : https://docs.docker.com/
@@ -55,12 +52,14 @@ make rebuild
 ## TEAM INFORMATION
 
 ■ Product Owner : calbor-p
+Christophe was the most coherent choice for us to validate the work's team by his experience in web
 
 ■ Project Manager / Scrum Masters : dagudelo
 
-■ Technical Lead / Architect : nleoni
+■ Technical Lead / Architect / Developer : nleoni
 
 ■ Developers : mmiilpal, rbalazs
+Mari Nathalia and Ralph communicated together to find the solutions 
 
 
 ## PROJECT MANAGEMENT
@@ -78,15 +77,15 @@ The project is organized into independent microservices:
 |---------|-------------|--------------|
 | **Frontend** | User interface, design | TypeScript, Tailwind CSS, EJS |
 | **Gateway** | Entry point and routing | Nginx |
-| **Auth** | Authentication and user management | Node.js, SQLite |
-| **Realtime Sockets** | Realtime socket management | Node.js |
-| **Backend AI** | AI backend system for the game with difficulties | Node.js |
-| **Live Chat** | Real-time chat | Node.js, SQLite |
-| **Game Engine** | Core of the game for each mode (Local, AI, Remote) | Node.js |
-| **Language Manager** | Language management for each page | Node.js, SQLite |
-| **Mail** | Email sending | Node.js |
-| **Server Rendering** | Server-side rendering | Node.js |
-| **Security** | WAF and security | ModSecurity, Nginx |
+| **Auth** | Authentication and user management | Node.js, SQLite, Fastify | 
+| **Realtime Sockets** | Realtime socket management | Node.js, Fastify |
+| **Backend AI** | AI backend system for the game with difficulties | Node.js, Fastify |
+| **Live Chat** | Real-time chat | Node.js, Fastify, SQLite |
+| **Game Engine** | Core of the game for each mode (Local, AI, Remote) | Node.js, Fastify |
+| **Language Manager** | Language management for each page | Node.js, Fastify, SQLite |
+| **Mail** | Email sending | Node.js, Fastify |
+| **Server Rendering** | Server-side rendering | Node.js, Fastify |
+| **Security** | WAF and security | ModSecurity, Nginx, HashiCorp Vault |
 
 ■ Inter-Service Communication
 
@@ -107,7 +106,7 @@ Services communicate via:
 
 ## DATABASE SCHEMA
 
-This project uses **one SQLite database per service** (mounted under `/data` in Docker). There are no explicit cross-service foreign keys; relationships are handled at the application level via a shared `user_id`.
+This project uses one SQLite database per service (mounted under `/data` in Docker). There are no explicit cross-service foreign keys; relationships are handled at the application level via a shared `user_id`.
 
 ■ Auth service (`/data/auth.sqlite`)
 
@@ -118,6 +117,7 @@ This project uses **one SQLite database per service** (mounted under `/data` in 
 - `user_password` (TEXT, NOT NULL)
 - `avatar` (TEXT, nullable)
 - `created_at` (DATETIME, default: CURRENT_TIMESTAMP)
+- `auth_provider` (TEXT)
 
 ■ Live Chat service (`/data/live-chat.sqlite`)
 
@@ -134,6 +134,7 @@ This project uses **one SQLite database per service** (mounted under `/data` in 
 - `sender_id` (INTEGER, NOT NULL)
 - `receiver_id` (INTEGER, NOT NULL)
 - `content` (TEXT, NOT NULL)
+- `is_read` (BOOLEAN)
 - `sent_at` (DATETIME, default: CURRENT_TIMESTAMP)
 - Index: `idx_messages_participants` on (`sender_id`, `receiver_id`)
 
@@ -158,9 +159,32 @@ This project uses **one SQLite database per service** (mounted under `/data` in 
 - **Security**: HTTPS/WSS, CSRF protection, WAF (ModSecurity), secrets management (Vault).
 - **Blockchain**: score storage on Avalanche.
 - **AI opponent / tournaments**: present as a service/module (integration status may vary).
+- **Monitoring system with Prometheus and Grafana**
+
+## INDIVIDUAL CONTRIBUTIONS
+
+■ calbor-p
+Security WAF, Authentification, Docker, Blockchain (Not implemented), local player logic (front and back)
+Difficulties to compile modsecurity with sources, the solutions were to read documentation from official sources and stackoverflow and GPT
+
+■ dagudelo
+Game implementation, ELK
 
 
-## MODULES
+■ nleoni
+Live chat features, Authentification, Langage Manager
+
+
+■ rbalazs
+Frontend design, help to solve bugs in livechat, game implementation with Diego, game customization.
+My principal difficulties was to understand the multiple notions to help to solve bugs and the communication with other teammates helped me a lot.
+
+■ mmiilpal
+AI opponent, Remote player, Monitoring
+Merging difficulties because we did not merge as often so it took time to assemble
+
+
+## MODULES AND COLLABORATIVE CONTRIBUTIONS
 
 ■  Major Modules
 
@@ -174,6 +198,7 @@ This project uses **one SQLite database per service** (mounted under `/data` in 
 - **Standard user management and authentication.** — *nleoni*
 - **Implement real-time features using WebSockets or similar technology.** — *calbor-p*, *dagudelo*, *mmiilpal*, *nleoni*, *rbalazs*
 - **Backend as microservices.** — *calbor-p*, *dagudelo*, *mmiilpal*, *nleoni*, *rbalazs*
+- **Monitoring system with Prometheus and Grafana.** — *mmiilpal*
 
 ■  Minor Modules
 
@@ -192,22 +217,3 @@ This project uses **one SQLite database per service** (mounted under `/data` in 
 **TOTAL MAJOR MODULES** = 10 Modules \
 **TOTAL MINOR MODULES** = 10 Modules \
 **TOTAL POINTS** = 30 Points
-
-## INDIVIDUAL CONTRIBUTIONS
-
-■ calbor-p
-
-■ dagudelo
-Game implementation 
-
-■ nleoni
-
-■ rbalazs
-Frontend design, solve bugs in livechat, game implementation
-
-■ mmiilpal
-AI opponent, Remote player
-Merging difficulties because we did not merge as often so it took time to assemble
-
-
-

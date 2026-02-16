@@ -1,15 +1,27 @@
 import { UIManager } from '../modules/UIManager.js';
+import { LanguageManager } from '../modules/LangManager.js';
 
 export class GuestPage {
   private uiManager: UIManager;
+  private languageManager: LanguageManager;
   private onBack: () => void;
   private onPlayAsGuest: (nickname: string, avatar: string) => void;
   private selectedAvatar: string = 'avatar1';
 
-  constructor(uiManager: UIManager, onBack: () => void, onPlayAsGuest: (nickname: string, avatar: string) => void) {
+  constructor(
+    uiManager: UIManager,
+    languageManager: LanguageManager,
+    onBack: () => void,
+    onPlayAsGuest: (nickname: string, avatar: string) => void
+  ) {
     this.uiManager = uiManager;
+    this.languageManager = languageManager;
     this.onBack = onBack;
     this.onPlayAsGuest = onPlayAsGuest;
+  }
+
+  private t(key: string): string {
+    return this.languageManager.t(key);
   }
 
   public render(): void {
@@ -20,7 +32,7 @@ export class GuestPage {
     
     // Header
     const header = this.uiManager.createElement('div', 'text-center mb-8');
-    const title = this.uiManager.createElement('h1', 'retro-title text-4xl mb-4', 'GUEST MODE');
+    const title = this.uiManager.createElement('h1', 'retro-title text-4xl mb-4', this.t('guestTitle') || 'GUEST MODE');
     const separator = this.uiManager.createElement('div', 'w-full h-px bg-gradient-to-r from-transparent via-[#ff1493] to-transparent mb-8');
     
     header.appendChild(title);
@@ -31,8 +43,11 @@ export class GuestPage {
     
     // Nickname Section
     const nicknameSection = this.uiManager.createElement('div', 'mb-8');
-    const nicknameLabel = this.uiManager.createElement('label', 'retro-text text-sm block mb-2', 'NICKNAME');
-    const nicknameInput = this.uiManager.createInput('text', 'Enter your nickname', 'w-full px-6 py-4 bg-black/60 border-[#00ffff] text-[#00ffff] placeholder:text-[#00ffff]/50 focus:border-[#ff1493] focus:ring-[#ff1493] retro-text');
+    const nicknameLabel = this.uiManager.createElement('label', 'retro-text text-sm block mb-2', this.t('nickname') || 'NICKNAME');
+    
+    // Usando uma string padrão para o placeholder se não houver tradução específica, ou reutilizando o termo
+    const placeholderText = this.t('enter_username') || 'Enter your nickname';
+    const nicknameInput = this.uiManager.createInput('text', placeholderText, 'w-full px-6 py-4 bg-black/60 border-[#00ffff] text-[#00ffff] placeholder:text-[#00ffff]/50 focus:border-[#ff1493] focus:ring-[#ff1493] retro-text');
     nicknameInput.setAttribute('maxlength', '20');
     
     nicknameSection.appendChild(nicknameLabel);
@@ -43,7 +58,7 @@ export class GuestPage {
     
     // Avatar Selection Section
     const avatarSection = this.uiManager.createElement('div', 'mb-8');
-    const avatarLabel = this.uiManager.createElement('h2', 'retro-text text-xl text-center mb-6', 'CHOOSE YOUR AVATAR');
+    const avatarLabel = this.uiManager.createElement('h2', 'retro-text text-xl text-center mb-6', this.t('chooseAvatar') || 'CHOOSE YOUR AVATAR');
 
     const avatarContainer = this.uiManager.createAvatarSelector((avatarId) => {
     const element = avatarContainer.querySelector(`[data-avatar="${avatarId}"]`);
@@ -63,13 +78,13 @@ export class GuestPage {
     const buttonContainer = this.uiManager.createElement('div', 'flex flex-col gap-4');
     
     const playButton = this.uiManager.createButton(
-      'PLAY',
+      this.t('play') || 'PLAY',
       'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200 font-bold text-lg',
       () => this.handlePlay()
     );
     
     const returnButton = this.uiManager.createButton(
-      'RETURN',
+      this.t('back') || 'RETURN',
       'retro-button bg-transparent text-[#00ffff] px-8 py-3 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200',
       this.onBack
     );

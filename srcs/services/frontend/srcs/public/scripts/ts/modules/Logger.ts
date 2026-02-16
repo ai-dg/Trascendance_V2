@@ -20,18 +20,18 @@ function isDebugEnabled(): boolean {
 
 export const Logger = {
     log(...args: any[]) {
-        if (isDebugEnabled()) console.log(...args);
+        if (isDebugEnabled()) console.info('[LOG]', ...args);
     },
     warn(...args: any[]) {
-        if (isDebugEnabled()) console.warn(...args);
+        if (isDebugEnabled()) console.info('[APP]', ...args);
     },
     error(...args: any[]) {
-        if (isDebugEnabled()) console.error(...args);
+        if (isDebugEnabled()) console.info('[APP]', ...args);
     },
     debug(...args: any[]) {
-        if (isDebugEnabled()) console.debug(...args);
+        if (isDebugEnabled()) console.info('[DEBUG]', ...args);
     },
     info(...args: any[]) {
-        if (isDebugEnabled()) console.info(...args);
+        if (isDebugEnabled()) console.info('[APP]', ...args);
     }
 };

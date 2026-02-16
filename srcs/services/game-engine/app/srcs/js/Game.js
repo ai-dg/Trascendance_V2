@@ -58,14 +58,14 @@ export class Game {
       paddle2Dir: 0
     };
 
-    // Initialiser les composants du jeu
+    // Initialise game components
     this.paddle1 = new Paddle(INITIAL_PADDLE1_STATE);
     this.paddle2 = new Paddle(INITIAL_PADDLE2_STATE);
     this.ball = new Ball(INITIAL_BALL_STATE, this.settings.ballSpeed);
     this.score = new Score(this.settings.winningScore);
     this.gameRunning = false;
 
-    // Initialiser la balle avec une vélocité alatoire
+    // Reset ball with random initial velocity
     this.ball.reset();
 
     // Setup Redis subscription for AI input
@@ -531,7 +531,7 @@ export class Game {
 
       console.log(`[Game ${this.uuid}] gameLoop() starting, gameRunning: ${this.gameRunning}`);
 
-      // 60 FPS = ~16.67ms par frame
+      // 60 FPS = ~16.67ms per frame
       this.gameLoopInterval = setInterval(() => {
         try {
           if (!this.gameRunning) {

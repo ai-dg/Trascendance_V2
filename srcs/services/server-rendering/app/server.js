@@ -31,16 +31,16 @@ async function connect_message_queue(){
 	const channel = await connection.createChannel();
 	await channel.assertQueue(validation_queue, { durable : true });
 	connection.on('error', (err) => {
-    	console.error('Connexion RabbitMQ error:', err);
+    	console.error('RabbitMQ connection error:', err);
 		});
 	connection.on('close', () => {
-		console.log('Connexion RabbitMQ fermée !');
+		console.log('RabbitMQ connection closed.');
 		});
 	channel.on('error', (err) => {
 		console.error('Channel error:', err);
 		});
 	channel.on('close', () => {
-		console.log('Channel fermé !');
+		console.log('Channel closed.');
 		});
 	return channel;
 } 

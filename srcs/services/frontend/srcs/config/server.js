@@ -32,7 +32,18 @@ server.register(fastifyView, {
 
 
 server.get("/", async (request, reply) => {
-  const host = request.headers['x-forwarded-host'] || request.headers.host || process.env.BASE_URL || "localhost";
+  // Optional: set APP_CANONICAL_ORIGIN (e.g. https://localhost) to redirect all entry URLs to one origin so session (localStorage + cookies) persists
+  const canonicalOrigin = process.env.APP_CANONICAL_ORIGIN;
+  if (canonicalOrigin) {
+    const proto = request.headers['x-forwarded-proto'] || 'http';
+    const host = request.headers['x-forwarded-host'] || request.headers.host || '';
+    const currentOrigin = `${proto}://${host}`;
+    if (currentOrigin !== canonicalOrigin) {
+      const target = canonicalOrigin + (request.url === '/' ? '' : request.url);
+      return reply.redirect(302, target);
+    }
+  }
+  const host = process.env.BASE_URL || (canonicalOrigin ? new URL(canonicalOrigin).host : null) || request.headers['x-forwarded-host'] || request.headers.host || "localhost";
   return reply.view("index.ejs", { base_url: host });
 });
 

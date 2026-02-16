@@ -14,13 +14,13 @@ export class OTPManagers {
     }
 
     public async signupSuccessHandler(){
-	    // TODO: remplacer l'alerte par un vrai message !
+	    // TODO: replace alert with proper UI message
 	    // alert("sign up success !!!!!!! Have to display front message")
 	    window.location.href="/";	
     }
 
 	// public async changePasswordSuccessHandler(){
-	//     // TODO: remplacer l'alerte par un vrai message !
+	//     // TODO: replace alert with proper UI message
 	//     // alert("forgot password success !!!!!!! Have to display front message")
 	// 	// ??????????
 	//     window.location.href="/";	
@@ -45,10 +45,13 @@ export class OTPManagers {
 	    		body: JSON.stringify({otp: code, otp_id: params.otp_id})
 	    	});
 
-	    	if (!res)
-	    		throw new Error("Can't reach the server");
+	    	if (!res) {
+	    		console.info('[OTP]', 'Server unreachable');
+	    		return { success: false, error: 'Server unreachable. Please try again.' };
+	    	}
 	    	const result = await res.json();
-	    	Logger.log(result);
+	    	console.log(result);
+			console.log(result);
 	    	if (result.success)
 	    	{
 	    		params.handler();
@@ -57,7 +60,8 @@ export class OTPManagers {
 	    	}
 	    	else{
 	    		const errorMessage = result.error?.message || result.error || result.message || 'Unknown error';
-	    		Logger.log('failure : ', errorMessage);
+	    		console.log('failure : ', errorMessage);
+				console.log('failure : ', errorMessage);
 	    		return { success: false, error: errorMessage };
 	    	}
 	    }

@@ -32,10 +32,14 @@ export class AuthManager {
     if (stored) {
       try {
         this.currentUser = JSON.parse(stored);
+        console.log('[REFRESH_DEBUG] AuthManager.loadUserFromStorage: loaded user id=', this.currentUser?.id, 'isGuest=', this.currentUser?.isGuest);
       } catch (error) {
-        Logger.error('Error loading user from storage:', error);
-        localStorage.removeItem('arcade_user');
+        Logger.info('Load user from storage failed:', error);
+        this.currentUser = null;
+        console.log('[REFRESH_DEBUG] AuthManager.loadUserFromStorage: parse error (keeping arcade_user in storage for recovery)');
       }
+    } else {
+      console.log('[REFRESH_DEBUG] AuthManager.loadUserFromStorage: no arcade_user in localStorage');
     }
   }
 
@@ -43,7 +47,24 @@ export class AuthManager {
     if (this.currentUser) {
       localStorage.setItem('arcade_user', JSON.stringify(this.currentUser));
     } else {
+      console.log('[AUTH_CLEAR] reason=saveUserToStorage(currentUser=null)');
+      console.trace();
       localStorage.removeItem('arcade_user');
+    }
+  }
+
+  /** Persist user to localStorage so session survives refresh. Call after successful auth/me or OTP. */
+  public setUserAndPersist(user: User | null): void {
+    this.currentUser = user;
+    this.saveUserToStorage();
+    if (user && !user.isGuest) {
+      localStorage.removeItem('guestNickname');
+      localStorage.removeItem('guestAvatar');
+    }
+    console.log('[REFRESH_DEBUG] AuthManager.setUserAndPersist: id=', user?.id ?? 'null', 'isGuest=', user?.isGuest ?? 'n/a');
+    if (user) {
+      const raw = localStorage.getItem('arcade_user');
+      console.log('[PERSIST_OK] wrote arcade_user length=' + (raw?.length ?? 0));
     }
   }
 
@@ -80,13 +101,17 @@ export class AuthManager {
 
   public async getConnectedUser() {
     try {
+      console.log("Attempting to fetch connected user...");
         const res = await fetch(this.router.getUrl('auth/me'), {
             method: 'GET',
             credentials: 'include'
         });
+        console.log("Response received for connected user:", res);
         if (res.ok) {
           const result = await res.json();
+          console.log("Parsed JSON result for connected user:", result);
           if (result.success) {
+            console.log("Connected user data:", result.data.user);
             return result.data.user;
           }
         }
@@ -96,9 +121,9 @@ export class AuthManager {
         }
     } catch (err) {
         if (err instanceof TypeError && err.message.includes("NetworkError")) {
-            Logger.debug("getConnectedUser: server internal error");
+            Logger.debug("getConnectedUser: server internal failure");
         } else {
-            Logger.error("getConnectedUser: unexpected error →", err);
+            Logger.info("getConnectedUser: unexpected failure →", err);
         }
     }
     return null;
@@ -121,6 +146,7 @@ export class AuthManager {
       return { success: false, error: 'Username is required' };
     }
     const passwdInput = credentials.password;
+    console.log("Login attempt with username:", loginInput); // Debug log
     if (!passwdInput.trim()) {
       return { success: false, error: 'Password is required' };
     }
@@ -128,6 +154,7 @@ export class AuthManager {
 
     try {
       const result = await this.logUser(loginInput, passwdInput, text, view);
+      console.log("Login result:", result); // Debug log
       return result;
     } catch (error) {
       Logger.error('Login failed:', error);
@@ -172,7 +199,7 @@ export class AuthManager {
           handler: this.otpManager.signupSuccessHandler
         };
 
-        Logger.log("OTP data stored:", this.otpData);
+        console.log("OTP data stored:", this.otpData);
         this.onBackToCheckOtp();
 
         // Return success with verification data
@@ -187,7 +214,7 @@ export class AuthManager {
         };
       }
     } catch (error) {
-      Logger.error('Login error:', error);
+      Logger.info('Login failed:', error);
       return { success: false, error: "Network error. Please try again." };
     }
   }
@@ -275,12 +302,12 @@ export class AuthManager {
           handler: this.otpManager.signupSuccessHandler
         };
 
-        Logger.log("OTP data stored:", this.otpData);
+        console.log("OTP data stored:", this.otpData);
         this.onBackToCheckOtp();
         if (errorDiv) {
           errorDiv.textContent = result.message;
         }
-        Logger.log("a confirmation mail has been sended");
+        console.log("a confirmation mail has been sended");
 
         // Return success with verification data
         return {
@@ -343,6 +370,8 @@ export class AuthManager {
   }
 
   private async logoutHandler() {
+    console.log('[AUTH_CLEAR] reason=logoutHandler');
+    console.trace();
     try {
       const url = this.router.getUrl("auth/logout");
       const res = await fetch(url, {
@@ -369,7 +398,7 @@ export class AuthManager {
     }
     catch(err)
     {
-      Logger.log(err)
+      console.log(err)
       // Set flag even if logout fails
       sessionStorage.setItem("not_authenticated", "true");
       window.location.href = '/';
@@ -405,7 +434,7 @@ export class AuthManager {
         }
     };
 
-    Logger.log("OTP data stored HERE:", this.otpData); // TODO: remove this line
+    console.log("OTP data stored HERE:", this.otpData); // TODO: remove this line
     this.onBackToCheckOtp();
     Logger.log("AQUI DPS DE onbacktocheckotp"); // TODO: remove this line
     // Return success with verification data
@@ -423,7 +452,7 @@ export class AuthManager {
     };
 
     } catch (err) {
-      Logger.error("forgotPassword error:", err);
+      Logger.info("forgotPassword failed:", err);
       return { success: false, error: "Network error" };
     }
 }
@@ -446,15 +475,15 @@ public async changePassword(email: string, password: string, otpId: string): Pro
 
     return { success: true };
   } catch (err) {
-    Logger.error("changePassword error:", err);
+    Logger.info("changePassword failed:", err);
     return { success: false, error: "Network error" };
   }
 }
 
-  public logout(): void { // TODO: Implement logout
+  public logout(reason: string): void {
+    console.log('[LOGOUT_TRIGGER]', { reason, stack: new Error().stack });
     this.logoutHandler();
     this.currentUser = null;
-    // this.saveUserToStorage();
     this.notifyListeners();
   }
 

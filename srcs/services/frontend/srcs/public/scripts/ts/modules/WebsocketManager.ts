@@ -44,6 +44,30 @@ export class WebsocketManager {
 
   private chatNotifications = new Map<number, { senderId: number, username: string, message: string }>();
 
+  /** Pending game invite to send once new-game UUID is received (invite-from-chat flow) */
+  private pendingGameInvite: { friendId: number; message: string; toUsername?: string } | null = null;
+  public setPendingGameInvite(friendId: number, message: string, toUsername?: string): void {
+    this.pendingGameInvite = { friendId, message, toUsername };
+  }
+  public getPendingGameInvite(): { friendId: number; message: string; toUsername?: string } | null {
+    return this.pendingGameInvite;
+  }
+  public clearPendingGameInvite(): void {
+    this.pendingGameInvite = null;
+  }
+
+  /** Received game invites (persist across navigation so notification is re-shown when returning to Live Chat) */
+  private pendingReceivedGameInvites = new Map<string, { inviteId: string; fromUserId: number; toUserId: number; gameUUID: string; fromUsername?: string | null; message?: string | null }>();
+  public addPendingReceivedGameInvite(payload: { inviteId: string; fromUserId: number; toUserId: number; gameUUID: string; fromUsername?: string | null; message?: string | null }): void {
+    this.pendingReceivedGameInvites.set(payload.inviteId, payload);
+  }
+  public getPendingReceivedGameInvites(): Array<{ inviteId: string; fromUserId: number; toUserId: number; gameUUID: string; fromUsername?: string | null; message?: string | null }> {
+    return Array.from(this.pendingReceivedGameInvites.values());
+  }
+  public removePendingReceivedGameInvite(inviteId: string): void {
+    this.pendingReceivedGameInvites.delete(inviteId);
+  }
+
   public init(origin: string) {
     // Include persistent guest ID for reconnection support
     const guestId = getOrCreateGuestId();
@@ -75,6 +99,7 @@ export class WebsocketManager {
       }
     };
 
+    console.log('[WS_AUTH] connecting with withCredentials: true (cookies)');
     this.generalSocket = io(origin, generalOptions);
     this.gameSocket = io(origin, gameOptions);
     this.setupDefaultListeners();
@@ -92,12 +117,12 @@ export class WebsocketManager {
     let gameErrorCount = 0;
 
     this.generalSocket?.on("connect", () => {
-      Logger.log("General socket connected");
+      console.log("General socket connected");
       generalErrorCount = 0; // Reset error count on successful connection
     });
 
     this.gameSocket?.on("connect", () => {
-      Logger.log("Game socket connected");
+      console.log("Game socket connected");
       gameErrorCount = 0; // Reset error count on successful connection
       // If we were previously connected and now reconnected, trigger reconnection check
       if (this.gameSocketWasConnected && this.onGameReconnectCallback) {
@@ -115,13 +140,13 @@ export class WebsocketManager {
     this.generalSocket?.on("connect_error", (err) => {
       generalErrorCount++;
       if (generalErrorCount > 3) {
-        Logger.error("[WebsocketManager] General socket persistent connection error:", err.message);
+        Logger.info("[WebsocketManager] General socket connection failed:", err.message);
       }
     });
     this.gameSocket?.on("connect_error", (err) => {
       gameErrorCount++;
       if (gameErrorCount > 3) {
-        Logger.error("[WebsocketManager] Game socket persistent connection error:", err.message);
+        Logger.info("[WebsocketManager] Game socket connection failed:", err.message);
       }
     });
   }

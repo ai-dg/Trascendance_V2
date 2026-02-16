@@ -85,7 +85,7 @@ export async function confirm_email(request, reply)
 			let consumerTag;
 			let timeout;
 			try {
-				// Création du consumer
+				// Create consumer
 				const { consumerTag: tag } = await server.channel.consume(
 					replyQueue.queue,
 					async (msg) => {
@@ -96,7 +96,7 @@ export async function confirm_email(request, reply)
 								resolve(JSON.parse(msg.content.toString()));
 								await server.channel.cancel(tag);
 							} catch (parseError) {
-								reject(new Error('Erreur lors du parsing de la réponse'));
+								reject(new Error('Error parsing response'));
 							}
 						}
 					},
@@ -109,7 +109,7 @@ export async function confirm_email(request, reply)
 							await server.channel.cancel(consumerTag);
 						}
 					} catch (error) {
-						console.error('Erreur lors de l\'annulation du consumer:', error);
+						console.error('Error cancelling consumer:', error);
 					}
 					reject(new Error('Timeout waiting for response'));
 				}, 5000);
@@ -138,16 +138,16 @@ export async function confirm_email(request, reply)
 			return reply.view('index.ejs', { message: response.message, base_url });
 		}
 	} catch (err) {
-		console.error('Erreur lors de la confirmation email:', err);
+		console.error('Email confirmation error:', err);
 		return reply.view('index.ejs', {
-			message: "Une erreur est survenue ou le serveur n'a pas répondu à temps." ,
+			message: "An error occurred or the server did not respond in time.",
 			base_url: base_url
 		});
 	} finally {
 		try {
 			await server.channel.deleteQueue(replyQueue.queue);
 		} catch (cleanupError) {
-			console.error('Erreur lors du nettoyage de la queue:', cleanupError);
+			console.error('Error cleaning up queue:', cleanupError);
 		}
 	}
 }

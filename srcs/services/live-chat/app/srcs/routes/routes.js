@@ -6,12 +6,15 @@ import { friend_request_route,
          block_friend_route,
          remove_friend,
          get_blocked_users_route,
-         unblock_user_route
+         unblock_user_route,
+         user_online_route
  } from "../controlers/controlers.js";
 
  import {
         send_message_route,
-        get_messages_route
+        get_messages_route,
+        mark_as_read_route,
+        typing_route
  } from "../controlers/messageControlers.js";
 
 export function routes(app, options)
@@ -27,7 +30,11 @@ export function routes(app, options)
 
     app.post('/send-message', async (request, reply) => send_message_route(request, reply));
     app.get('/get-messages', async (request, reply) => get_messages_route(request, reply));
+    app.post('/is-read', async (request, reply) => mark_as_read_route(request, reply));
+    app.post('/typing', async (request, reply) => typing_route(request, reply));
 
     app.get('/blocked-users', async (request, reply) => get_blocked_users_route(request, reply));
     app.post('/unblock', async (request, reply) => unblock_user_route(request, reply));
+
+    app.post('/online', async (request, reply) => user_online_route(request, reply));
 }

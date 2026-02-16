@@ -4,20 +4,16 @@ import jwt from 'jsonwebtoken';
 import { createClient } from 'redis';
 import { Server } from 'socket.io';
 import fs from 'fs';
-<<<<<<< HEAD
 import { Game } from '../../game-engine/app/srcs/js/Game.js';
 // import { GameManager } from '../../game-engine/app/srcs/js/GameManager.js';
 import path from 'path';
 import { handleMatchmaking, cancelSearch } from './matchmaking.js';
 
 import { vaultClient } from './vault.js';
-=======
->>>>>>> origin/dev
 
 const is_prod = process.env.NODE_ENV === "PROD";
 export const base_url = is_prod ? "www.transcendance.com" : "localhost";
 
-<<<<<<< HEAD
 await vaultClient.loadSecrets()
 export const authData = vaultClient.get('auth')
 export const redisAuth = vaultClient.get('redis')
@@ -71,8 +67,7 @@ async function fetchAuthUserById(userId) {
 const runningGames = new Map();
 const userGames = new Map(); // userId -> gameUUID mapping
 
-=======
->>>>>>> origin/dev
+
 // HTTPS options
 let httpsOptions = null;
 try {
@@ -124,6 +119,11 @@ app.get('/', async () => {
 });
 
 const generalConnections = new Map();
+
+/** Game invite state: inviteId -> { fromUserId, toUserId, gameUUID, createdAt } */
+const gameInvites = new Map();
+const INVITE_TTL_SEC = 120;
+const DEBUG_INVITE = process.env.DEBUG_INVITE === '1' || process.env.DEBUG_INVITE === 'true';
 
 // Create Socket.IO server
 const io = new Server(app.server, {
@@ -216,7 +216,63 @@ io.on('connection', async (socket) => {
 	console.log(`🌐 User ${userId} connected. Total connections for this user: ${generalConnections.get(userId).size}`);
 	// generalConnections.set(userId, socket);
 	await redis.set(`online:${userId}`, 'true');
-	socket.emit('welcome', { message: 'Bienvenue sur le canal global' });
+	socket.emit('welcome', { message: 'Welcome to the global channel' });
+
+	socket.on('game-invite', async (data) => {
+		if (!userId) return;
+		const { friendId, gameUUID, inviteId, message } = data || {};
+		if (!friendId || !gameUUID || !inviteId) {
+			if (DEBUG_INVITE) console.log('[INVITE_SEND] invalid payload', { friendId, gameUUID, inviteId });
+			return;
+		}
+		const fromUserId = userId;
+		const toUserId = Number(friendId);
+		if (fromUserId === toUserId) {
+			if (DEBUG_INVITE) console.log('[INVITE_SEND] self-invite blocked', { fromUserId });
+			return;
+		}
+		const createdAt = new Date().toISOString();
+		gameInvites.set(inviteId, { fromUserId, toUserId, gameUUID, createdAt, status: 'pending' });
+		if (DEBUG_INVITE) console.log('[INVITE_SEND]', { inviteId, fromUserId, toUserId, gameUUID });
+		const payload = { type: 'game-invite', inviteId, fromUserId, toUserId, gameUUID, fromUsername: socket.user || null, createdAt, message: message || null };
+		await redis.publish('notifications', JSON.stringify({ targetUserId: toUserId, event: 'notifications', payload }));
+	});
+
+	socket.on('game-invite-accept', async (data) => {
+		if (!userId) return;
+		const { inviteId } = data || {};
+		if (!inviteId) return;
+		const invite = gameInvites.get(inviteId);
+		if (!invite || invite.status !== 'pending') {
+			if (DEBUG_INVITE) console.log('[INVITE_ACCEPT] invalid or expired', { inviteId });
+			return;
+		}
+		if (Number(userId) !== Number(invite.toUserId)) {
+			if (DEBUG_INVITE) console.log('[INVITE_ACCEPT] wrong receiver', { userId, toUserId: invite.toUserId });
+			return;
+		}
+		invite.status = 'accepted';
+		const { fromUserId, toUserId, gameUUID } = invite;
+		if (DEBUG_INVITE) console.log('[INVITE_ACCEPT]', { inviteId, fromUserId, toUserId, gameUUID });
+		await redis.set(`game-invite:${gameUUID}`, String(toUserId), { EX: 60 });
+		const payload = { type: 'game-invite-accepted', inviteId, fromUserId, toUserId, gameUUID };
+		await redis.publish('notifications', JSON.stringify({ targetUserId: fromUserId, event: 'notifications', payload }));
+		await redis.publish('notifications', JSON.stringify({ targetUserId: toUserId, event: 'notifications', payload }));
+	});
+
+	socket.on('game-invite-decline', async (data) => {
+		if (!userId) return;
+		const { inviteId } = data || {};
+		if (!inviteId) return;
+		const invite = gameInvites.get(inviteId);
+		if (!invite || invite.status !== 'pending') return;
+		if (Number(userId) !== Number(invite.toUserId)) return;
+		invite.status = 'declined';
+		const { fromUserId, toUserId, gameUUID } = invite;
+		if (DEBUG_INVITE) console.log('[INVITE_DECLINE]', { inviteId, fromUserId, toUserId });
+		const payload = { type: 'game-invite-declined', inviteId, fromUserId, toUserId, gameUUID };
+		await redis.publish('notifications', JSON.stringify({ targetUserId: fromUserId, event: 'notifications', payload }));
+	});
 
 	socket.on('disconnect', () => {
 		const userSockets = generalConnections.get(userId);

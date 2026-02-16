@@ -5,7 +5,7 @@
 // Types
 import type { User } from './modules/TypesManager.js';
 import type { Socket } from "socket.io-client";
-import { RouterManager, type Page } from './modules/RouterManager.js';
+import { RouterManager, type Page, type RouteData } from './modules/RouterManager.js';
 import { type Translations } from './modules/TypesManager.js';
 
 // Managers
@@ -55,6 +55,8 @@ export class App {
   // State
   private currentUser: User | null = null;
   private currentPage: Page = 'auth';
+  private currentRouteData?: RouteData;
+  private _lastAuthMeStatus: number | null | 'error' = null;
 
   // Socket Connections
   generalSocket: Socket | null =  null;
@@ -115,6 +117,7 @@ export class App {
       this.uiManager,
       this.websocketManager,
       this.routerManager,
+      this.languageManager,
       this.handlePlayGameAI.bind(this),
       this.handlePlayGameLocal.bind(this),
       this.handlePlayGameOnline.bind(this),
@@ -126,28 +129,34 @@ export class App {
     );
     this.privacyPolicyPage = new PrivacyPolicyPage(
       this.uiManager,
+      this.languageManager,
       this.handleBackToMenu.bind(this)
     );
     this.termsOfServicePage = new TermsOfServicePage(
       this.uiManager,
+      this.languageManager,
       this.handleBackToMenu.bind(this)
     );
     this.gamePageAI = new AIPage(
       this.uiManager,
+      this.languageManager,
       this.handleBackToMenu.bind(this),
       this.currentUser
     );
     this.gamePageLocal = new GamePageLocal(
       this.uiManager,
+      this.languageManager,
       this.handleBackToMenu.bind(this)
     );
     this.gamePageOnline = new RemotePage(
       this.uiManager,
+      this.languageManager,
       this.handleBackToMenu.bind(this),
       this.currentUser
     );
     this.guestPage = new GuestPage(
       this.uiManager,
+      this.languageManager,
       this.handleBackToAuth.bind(this),
       this.handleConnectAsGuest.bind(this)
     );
@@ -198,15 +207,19 @@ export class App {
    * Setup event listeners for auth and router changes
    */
   private setupEventListeners(): void {
-    // Listen to auth changes
+    // Listen to auth changes (e.g. logout sets user to null)
     this.authManager.addListener((user) => {
+      console.log('[REFRESH_DEBUG] AuthManager listener: user=', user ? 'id=' + user.id : 'null');
       this.currentUser = user;
       this.updateCurrentPage();
     });
 
     // Listen to router changes
-    this.routerManager.addListener((page) => {
+    this.routerManager.addListener((page, data) => {
+      if (page === 'auth') console.log('[AUTH_SWITCH]', { reason: 'router(page=auth)', currentUser: this.currentUser, stack: new Error().stack });
+      if (page === 'menu') console.log('[MENU_SWITCH]', { reason: 'router(page=menu)', currentUser: this.currentUser, stack: new Error().stack });
       this.currentPage = page;
+      this.currentRouteData = data;
       this.render();
     });
   }
@@ -217,19 +230,98 @@ export class App {
 
 
   private async initialize(): Promise<void> {
-      // Check user status and language in parallel for faster initialization
+      const navEntry = typeof performance !== 'undefined' && (performance as any).getEntriesByType ? (performance as any).getEntriesByType('navigation')[0] : undefined;
+      const navType = navEntry?.type ?? 'unknown';
+      const bootArcade = localStorage.getItem('arcade_user');
+      console.log('[BOOT] origin=' + window.location.origin + ' navType=' + navType);
+      console.log('[BOOT] arcade_user=' + (bootArcade == null ? 'null' : 'present') + ' length=' + (bootArcade?.length ?? 0));
+      console.log('[REFRESH_DEBUG] ========== BOOT START ==========');
+      console.log('[BOOT_ORIGIN]', window.location.origin, 'host=', window.location.host, 'protocol=', window.location.protocol);
+      console.log('[REFRESH_DEBUG] origin=', window.location.origin, 'path=', window.location.pathname, 'navType=', navType, '(0=normal 1=reload 2=backforward)');
+      const rawStored = bootArcade ?? localStorage.getItem('arcade_user');
+      const hasStored = !!rawStored;
+      console.log('[BOOT_STORAGE] arcade_user present=', hasStored, 'length=', rawStored?.length ?? 0, hasStored ? '(has value)' : '(empty)');
+      console.log('[REFRESH_DEBUG] localStorage.arcade_user present=', hasStored, 'length=', rawStored?.length ?? 0);
+      if (rawStored) {
+        try {
+          const parsed = JSON.parse(rawStored);
+          console.log('[REFRESH_DEBUG] localStorage.arcade_user parsed id=', parsed?.id, 'isGuest=', parsed?.isGuest);
+        } catch (e) {
+          console.log('[REFRESH_DEBUG] localStorage.arcade_user parse error:', (e as Error).message);
+        }
+      }
+      const cookieStr = document.cookie || '';
+      console.log('[BOOT_COOKIES_CLIENT] document.cookie=', cookieStr === '' ? '(empty)' : cookieStr, '| length=', cookieStr.length, '| token/sessionId are HttpOnly so not visible here');
+      console.log('[REFRESH_DEBUG] document.cookie (visible to JS)=', cookieStr === '' ? '(empty)' : cookieStr, '| length=', cookieStr.length, '| token/sessionId are httpOnly so never visible here');
+      try {
+        const debugUrl = this.routerManager.getUrl('auth/debug-cookies');
+        const debugRes = await fetch(debugUrl, { method: 'GET', credentials: 'include', signal: AbortSignal.timeout(3000) });
+        if (debugRes.ok) {
+          const debug = await debugRes.json();
+          console.log('[REFRESH_DEBUG] cookies received by server: token=', debug.tokenPresent, 'sessionId=', debug.sessionIdPresent, 'lang=', debug.langPresent);
+        } else {
+          console.log('[REFRESH_DEBUG] debug-cookies request failed status=', debugRes.status);
+        }
+      } catch (e) {
+        console.log('[REFRESH_DEBUG] debug-cookies request error:', (e as Error).message);
+      }
+
+      // 1) Rehydrate from localStorage first so we never show "logged out" on refresh
+      const stored = this.authManager.getCurrentUser();
+      const hasRehydratedUser = !!stored;
+      if (stored) {
+        this.currentUser = stored;
+        console.log('[REFRESH_DEBUG] Rehydrated from localStorage → currentUser.id=', stored.id, 'isGuest=', stored.isGuest);
+      } else {
+        console.log('[REFRESH_DEBUG] No user in localStorage → currentUser=null');
+      }
+
+      // 2) Then validate/refresh with auth/me (cookie). If it succeeds, update; if it fails, keep rehydrated user.
+      const authMeUrl = this.routerManager.getUrl('auth/me');
+      const sameOrigin = authMeUrl.startsWith(window.location.origin);
+      console.log('[API_AUTH_REQ] auth/me url=', authMeUrl, 'sameOrigin=', sameOrigin, 'credentials=include');
+      console.log('[REFRESH_DEBUG] Calling auth/me url=', authMeUrl, 'sameOrigin=', sameOrigin, 'credentials=include');
+
       const [user, _] = await Promise.all([
           this.getConnectedUser(),
           this.languageManager.init()
       ]);
 
-      this.currentUser = user;
+      let resolvedUser = user;
+      if (!resolvedUser && this.currentUser && !this.currentUser.isGuest) {
+        console.log('[REFRESH_DEBUG] auth/me returned null but we have rehydrated user → retry auth/me once after 400ms');
+        await new Promise((r) => setTimeout(r, 400));
+        resolvedUser = await this.getConnectedUser();
+        console.log('[REFRESH_DEBUG] auth/me retry result:', resolvedUser ? 'user id=' + resolvedUser.id : 'null');
+      }
+
+      if (resolvedUser) {
+        this.currentUser = resolvedUser;
+        this.authManager.setUserAndPersist(resolvedUser);
+        console.log('[REFRESH_DEBUG] auth/me 200 → currentUser set and persisted, id=', (resolvedUser as User).id);
+      } else {
+        // getConnectedUser() returned null: rehydrate from localStorage (Step E)
+        this.currentUser = this.authManager.getCurrentUser();
+        if (this.currentUser) {
+          sessionStorage.removeItem('not_authenticated');
+          this.authManager.setUserAndPersist(this.currentUser);
+          console.log('[REFRESH_DEBUG] auth/me null but rehydrated from localStorage, id=', this.currentUser.id, '→ will show MENU');
+        }
+        // else: no user → will show AUTH
+      }
+
+      const authMeStatusStr = this._lastAuthMeStatus === 'error' ? 'error' : (this._lastAuthMeStatus ?? 'null');
+      const showing = this.currentUser ? 'MENU' : 'AUTH';
+      console.log('[DECIDE] authMeStatus=' + authMeStatusStr + ' hasRehydratedUser=' + hasRehydratedUser + ' currentUserId=' + (this.currentUser?.id ?? 'null') + ' showing=' + showing);
+      console.log('[REFRESH_DEBUG] After init: currentUser.id=', this.currentUser ? this.currentUser.id : null, '→ showing=', this.currentUser ? 'MENU' : 'AUTH');
+      console.log('[REFRESH_DEBUG] ========== BOOT END ==========');
 
       let didNavigate = false;
 
       if (this.currentUser) {
         const wsManager = WebsocketManager.getInstance();
         wsManager.init(window.location.origin);
+        console.log('[AUTH_LOGIN] boot: user set, persisted to localStorage');
 
         // Expose the game socket for GameManager (imported from `../app.js`)
         gameSocket = wsManager.gameSocket;
@@ -242,6 +334,13 @@ export class App {
             this.gamePageLocal.setupGame(data);
           } else if (this.currentPage === 'game-online') {
             this.gamePageOnline.setupGame(data);
+            const pending = wsManager.getPendingGameInvite();
+            if (pending && data?.UUID) {
+              const inviteId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'inv_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+              wsManager.emitGeneral('game-invite', { friendId: pending.friendId, gameUUID: data.UUID, inviteId, message: pending.message });
+              this.gamePageOnline.setWaitingForInviteResponse(pending.friendId, pending.toUsername);
+              wsManager.clearPendingGameInvite();
+            }
           }
         });
 
@@ -252,6 +351,7 @@ export class App {
 
         // this.gamePageOnline.setWebsocketManager(wsManager);
         if (this.routerManager.getCurrentPage() === 'auth') {
+          console.log('[MENU_SWITCH]', { reason: 'initialize(boot has user)', currentUser: this.currentUser, stack: new Error().stack });
           this.routerManager.navigateTo('menu', undefined, { replace: true });
           didNavigate = true;
         }
@@ -266,60 +366,31 @@ export class App {
 
 
   /**
-   * Get the currently connected user from server or localStorage
+   * Get the currently connected user from server or localStorage.
+   * Cookie (auth/me) always wins over localStorage so that with two tabs (42 + guest)
+   * the 42 session is not overwritten by the guest when refreshing.
    */
   private async getConnectedUser(): Promise<User | null> {
-    // Check for guest user in localStorage first to avoid unnecessary API calls
-    const guestNickname = localStorage.getItem("guestNickname");
-    const guestAvatar = localStorage.getItem("guestAvatar");
-    if (guestAvatar && guestNickname) {
-      return {
-        username: guestNickname,
-        avatar: guestAvatar,
-        isGuest: true
-      };
-    }
-
-    // Check if we just came back from OAuth - clear the not_authenticated flag
     const urlParams = new URLSearchParams(window.location.search);
     const hasOAuthSuccess = urlParams.get('oauth_success') === '1';
     if (hasOAuthSuccess) {
       sessionStorage.removeItem("not_authenticated");
-      // Clean up the URL
       urlParams.delete('oauth_success');
       const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
       window.history.replaceState({}, '', newUrl);
     }
 
-    // Check if we've recently determined user is not authenticated
-    // This avoids repeated 401 errors in console during the same session
-    const notAuthFlag = sessionStorage.getItem("not_authenticated");
-    if (notAuthFlag === "true") {
-      Logger.debug("getConnectedUser: skipping check - user not authenticated in this session");
-      return null;
-    }
-
-    // Skip auth check if we're on auth page and have no prior session indicators
-    // This prevents unnecessary 401 errors in fresh sessions (e.g., incognito tabs)
-    const isAuthPage = this.routerManager.getCurrentPage() === 'auth';
-    const hasSessionIndicator = hasOAuthSuccess || sessionStorage.length > 0 || document.cookie.includes('session');
-
-    if (isAuthPage && !hasSessionIndicator) {
-      Logger.debug("getConnectedUser: skipping check - fresh session on auth page");
-      sessionStorage.setItem("not_authenticated", "true");
-      return null;
-    }
-
-    // Try to fetch authenticated user
-    // Note: httpOnly cookies cannot be checked from JavaScript, so we always try
+    // Always try auth/me first: cookie (42 session) must win over localStorage (guest can overwrite when 2 tabs)
     try {
       const res = await fetch(this.routerManager.getUrl('auth/me'), {
         method: 'GET',
         credentials: 'include',
         signal: AbortSignal.timeout(5000)
       });
+      this._lastAuthMeStatus = res.status;
+      console.log('[REFRESH_DEBUG] auth/me response status=', res.status, 'ok=', res.ok, '(if 401: cookie missing/expired or not sent with this request)');
+
       if (res.ok) {
-        // Clear not-authenticated flag on successful authentication
         sessionStorage.removeItem("not_authenticated");
         const result = await res.json();
         const user = {
@@ -327,28 +398,39 @@ export class App {
           username: result.data.user.pseudo,
           email: result.data.user.user_mail,
           avatar: result.data.user.avatar,
-          isGuest: false
+          isGuest: false,
+          provider: (result.data.user.auth_provider === '42' ? '42' : 'local') as 'local' | '42'
         };
+        console.log('[REFRESH_DEBUG] auth/me 200 → server accepted cookie, user_id=', user.id);
         return user;
       }
 
-      // Handle 401 - user is not authenticated or session expired
-      if (res.status === 401) {
-        // Set flag to prevent repeated checks in this session
+      if (res.status === 401 || res.status === 404) {
+        console.log('[REFRESH_DEBUG] auth/me', res.status, '→ server rejected (no cookie, wrong cookie, token expired, or user not in DB)');
         sessionStorage.setItem("not_authenticated", "true");
-        Logger.debug("getConnectedUser: 401 Unauthorized - user not authenticated");
+        Logger.debug("getConnectedUser: " + res.status + " - user not authenticated");
+        // Only use guest when server says not authenticated (no 42 cookie in this tab)
+        const guestNickname = localStorage.getItem("guestNickname");
+        const guestAvatar = localStorage.getItem("guestAvatar");
+        if (guestAvatar && guestNickname) {
+          const guestId = localStorage.getItem("arcade_guest_id") || "guest";
+          console.log('[REFRESH_DEBUG] auth/me 401 → using guest from localStorage');
+          return { id: guestId, username: guestNickname, avatar: guestAvatar, isGuest: true };
+        }
         return null;
       }
 
-      // Handle other unexpected status codes
+      console.log('[REFRESH_DEBUG] auth/me unexpected status=', res.status);
       Logger.warn(`getConnectedUser: unexpected status ${res.status}`);
       return null;
     }
     catch (err) {
+      this._lastAuthMeStatus = 'error';
+      console.log('[REFRESH_DEBUG] auth/me fetch error:', err instanceof Error ? err.message : String(err));
       if (err instanceof TypeError && err.message.includes("NetworkError")) {
-        Logger.debug("getConnectedUser: server internal error");
+        Logger.debug("getConnectedUser: server internal failure");
       } else {
-        Logger.error("getConnectedUser: unexpected error →", err);
+        Logger.info("getConnectedUser: unexpected failure →", err);
       }
     }
     return null;
@@ -359,8 +441,10 @@ export class App {
    */
   private updateCurrentPage(): void {
     if (this.currentUser) {
+      console.log('[MENU_SWITCH]', { reason: 'updateCurrentPage(has user)', currentUser: this.currentUser, stack: new Error().stack });
       this.routerManager.navigateTo('menu');
     } else {
+      console.log('[AUTH_SWITCH]', { reason: 'updateCurrentPage(no user)', currentUser: this.currentUser, stack: new Error().stack });
       this.routerManager.navigateTo('auth');
     }
   }
@@ -382,14 +466,32 @@ export class App {
    */
   private async render(): Promise<void> {
     this.uiManager.clear();
-    // Don't refetch user on every render - use cached currentUser
-    Logger.log("CURRENT USER RENDER: ", this.currentUser);
+    const routerPage = this.routerManager.getCurrentPage();
+    console.log('[RENDER_DECISION]', {
+      currentUserId: this.currentUser?.id ?? null,
+      currentPage: this.currentPage,
+      routerPage,
+      stack: new Error().stack
+    });
+
+    if (this.currentUser && this.currentPage === 'auth') {
+      if (routerPage !== 'auth') {
+        this.currentPage = routerPage;
+      } else {
+        this.routerManager.navigateTo('menu', undefined, { replace: true });
+        return;
+      }
+    }
+
+    console.log("CURRENT USER RENDER: ", this.currentUser);
 
     switch (this.currentPage) {
       case 'auth':
+        console.log('[AUTH_SWITCH]', { reason: 'render(case auth)', currentUser: this.currentUser, stack: new Error().stack });
         this.authPage.render();
         break;
       case 'menu':
+        console.log('[MENU_SWITCH]', { reason: 'render(case menu)', currentUser: this.currentUser, stack: new Error().stack });
         requestAnimationFrame(() => {
           this.menuPage.setCurrentUser(this.currentUser);
           this.menuPage.render(this.currentUser);
@@ -405,7 +507,7 @@ export class App {
         this.gamePageLocal.render();
         break;
       case 'game-online':
-        this.gamePageOnline.render(this.currentUser);
+        this.gamePageOnline.render(this.currentUser, this.currentRouteData);
         break;
       case 'check-otp':
         // TODO: Get translations from languageManager
@@ -456,24 +558,32 @@ export class App {
 
     if (!result.success) {
       Logger.error('Login failed:', result.error);
+      console.log('Login failed:', result.error);
       this.authPage.showError(result.error || 'Login failed');
     } else if (result.needsVerification) {
       Logger.log('Login successful, verification page should be shown by showVerificationCode');
       // The verification page will be shown by logUser via showVerificationCode
     } else {
-      Logger.log('Login successful without verification');
-      // Clear the not-authenticated flag on successful login
+      console.log('Login successful without verification');
       sessionStorage.removeItem("not_authenticated");
-      // Navigate to menu after successful login
-      this.currentUser = {
-        id: 'guest_' + Date.now(),
-        username: username,
-        email: '',
-        avatar: 'default.png',
-        isGuest: false
-      };
-
-      Logger.log('Playing as user:', username, 'with avatar:', 'default.png');
+      // Fetch real user from auth/me (cookie was set by login) and persist so refresh keeps session
+      console.log('[REFRESH_DEBUG] After login success: fetching auth/me to get user and persist');
+      const user = await this.getConnectedUser();
+      if (user) {
+        this.currentUser = user;
+        this.authManager.setUserAndPersist(user);
+        console.log('[REFRESH_DEBUG] After login: auth/me returned user id=', user.id, '→ persisted to localStorage');
+      } else {
+        console.log('[REFRESH_DEBUG] After login: auth/me returned null (cookie may not be stored by browser) → using fallback user');
+        this.currentUser = {
+          id: 'guest_' + Date.now(),
+          username: username,
+          email: '',
+          avatar: 'default.png',
+          isGuest: false
+        };
+        this.authManager.setUserAndPersist(this.currentUser);
+      }
       this.routerManager.navigateTo('menu');
     }
   }
@@ -530,12 +640,17 @@ export class App {
     }
   }
 
-  private handleOtpVerificationComplete(success: boolean): void {
+  private async handleOtpVerificationComplete(success: boolean): Promise<void> {
     if (success) {
-      Logger.log('OTP verification successful, redirecting to menu');
+      console.log('[REFRESH_DEBUG] OTP verification successful → fetching auth/me to get user and persist');
       this.authManager.otpData = null;
-      // Update current user and navigate to menu
-      this.currentUser = this.authManager.getCurrentUser();
+      this.currentUser = await this.authManager.getConnectedUser();
+      if (this.currentUser) {
+        this.authManager.setUserAndPersist(this.currentUser);
+        console.log('[REFRESH_DEBUG] After OTP: auth/me returned user id=', this.currentUser.id, '→ persisted to localStorage');
+      } else {
+        console.log('[REFRESH_DEBUG] After OTP: auth/me returned null (cookie may not be stored)');
+      }
       this.routerManager.navigateTo('menu');
     } else {
       Logger.log('OTP verification failed');
@@ -543,8 +658,9 @@ export class App {
     }
   }
 
-  private handleLogout(): void {
-    this.authManager.logout();
+  private handleLogout(reason: string): void {
+    console.log('[LOGOUT_TRIGGER]', { reason, stack: new Error().stack });
+    this.authManager.logout(reason);
   }
 
   private handleError(error: string): void {
@@ -552,9 +668,12 @@ export class App {
   }
 
   private handleConnectAsGuest(nickname: string, avatar: string): void {
-    // Create a guest user object
+    const guestId = localStorage.getItem('arcade_guest_id') || 'guest_' + Date.now();
+    if (!localStorage.getItem('arcade_guest_id')) {
+      localStorage.setItem('arcade_guest_id', guestId);
+    }
     this.currentUser = {
-      id: 'guest_' + Date.now(),
+      id: guestId,
       username: nickname,
       email: '',
       avatar: avatar,
@@ -563,6 +682,8 @@ export class App {
 
     localStorage.setItem('guestNickname', nickname);
     localStorage.setItem('guestAvatar', avatar);
+    this.authManager.setUserAndPersist(this.currentUser);
+    console.log('[REFRESH_DEBUG] Guest connected and persisted id=', this.currentUser.id);
 
     // Init sockets for guests too (needed for local/ai games)
     const wsManager = WebsocketManager.getInstance();
@@ -591,6 +712,7 @@ export class App {
   }
 
   private handleBackToAuth(): void {
+    console.log('[AUTH_SWITCH]', { reason: 'handleBackToAuth', currentUser: this.currentUser, stack: new Error().stack });
     this.routerManager.navigateTo('auth');
   }
 

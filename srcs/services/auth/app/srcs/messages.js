@@ -1,8 +1,8 @@
 const LOG = true
 
 const ERRORS_MESSAGES = {
-	AUTH_INVALID_CREDENTIALS : "Adresse e-mail ou mot de passe incorrect",
-	USER_NOT_AUTHENTICATED : "Accès non autorisé",
+	AUTH_INVALID_CREDENTIALS : "Incorrect email or password",
+	USER_NOT_AUTHENTICATED : "Unauthorised access",
 	AUTH_INVALID_TOKEN : "invalid token",
 	SERVER_ERROR : "unknown server error",
 	SQL_ERROR : "database error"

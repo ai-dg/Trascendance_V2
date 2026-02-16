@@ -125,7 +125,7 @@ export class CheckOtp {
 
     // Verify button
     const verifyBtn = this.check.getElement<HTMLButtonElement>('verifyBtn');
-    verifyBtn.addEventListener('click', async () => {
+    if (verifyBtn) verifyBtn.addEventListener('click', async () => {
       const result = await this.otpManager.OTPValidationHandler(params, inputs);
       if (!result.success) {
         this.showError(result.error || this.t("otpError"));  // Use translation for error message
@@ -145,7 +145,7 @@ export class CheckOtp {
 
     // Back button
     const backBtn = this.check.getElement<HTMLButtonElement>('backBtn');
-    backBtn.addEventListener('click', () => {
+    if (backBtn) backBtn.addEventListener('click', () => {
       this.onBack();
     });
   }

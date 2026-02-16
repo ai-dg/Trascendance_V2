@@ -43,6 +43,7 @@ export class RouterManager {
   }
 
   public navigateTo(page: Page, data?: RouteData, options?: { replace?: boolean }): void {
+    console.log(`Navigating to page: ${page} with data:`, data, 'and options:', options); // Debug log
     if (this.currentPage !== page) {
       this.currentPage = page;
       this.updateHistory(page, options?.replace ?? false);
@@ -112,8 +113,8 @@ export class RouterManager {
 
   private getBaseUrl(): string {
       const element = document.querySelector("meta[name='api-base-url']");
-      const baseUrl = element?.getAttribute('content') ?? '';
-      return baseUrl;
+      const baseUrl = (element?.getAttribute('content') ?? '').trim();
+      return baseUrl || (typeof window !== 'undefined' ? window.location.host : '');
   }
 
   public getUrl(endpoint: string): string{

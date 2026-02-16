@@ -74,6 +74,7 @@ async function setupLiveChatdb() {
 			    sender_id INTEGER NOT NULL,
 			    receiver_id INTEGER NOT NULL,
 			    content TEXT NOT NULL,
+				is_read BOOLEAN DEFAULT 0,
 			    sent_at DATETIME DEFAULT CURRENT_TIMESTAMP
 			  );
 			`);
