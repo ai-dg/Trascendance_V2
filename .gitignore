@@ -21,6 +21,8 @@ vscode/
 claude/
 .claude
 
+docs/
+
 
 # Ignore compiled/transpiled JS files from TypeScript in frontend
 srcs/services/frontend/srcs/public/scripts/js/
