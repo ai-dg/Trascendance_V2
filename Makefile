@@ -1,4 +1,4 @@
-.PHONY: up d dev build no-cache re watch fclean down downv clean find-logs kill-logs logs logs-all logs-recent npm-install debug npm-install debug restart
+.PHONY: up d dev build no-cache re watch fclean down downv clean find-logs kill-logs logs logs-all logs-recent npm-install debug npm-install debug restart fix-rabbit-permissions fix-rabbit-cookie
 
 # ■ Path Configuration
 COMPOSE = srcs/docker-compose.yml
@@ -128,7 +128,9 @@ clean:
 	@rm -f srcs/services/auth/app/auth.sqlite
 	@rm -f srcs/services/live-chat/app/live-chat.sqlite
 	@echo $(GREEN)Removing Redis data...$(RESET)
-	@rm -rf srcs/volumes/redis_data/dump.rdb
+	@if [ -e srcs/volumes/redis_data/dump.rdb ]; then \
+	  rm -f srcs/volumes/redis_data/dump.rdb 2>/dev/null || sudo rm -f srcs/volumes/redis_data/dump.rdb; \
+	fi
 	@echo $(GREEN)Removing compiled JavaScript files...$(RESET)
 	@find srcs/services/frontend/srcs/public/scripts/js -type f -name "*.js" -delete 2>/dev/null || true
 	@find srcs/services/frontend/srcs/public/scripts/js -type f -name "*.d.ts" -delete 2>/dev/null || true
@@ -140,9 +142,22 @@ clean:
 #************************ ▌ STOP & CLEAN ▌***************************#
 ######################################################################
 
-find-logs:
+# Fixes permissions for RabbitMQ .erlang.cookie file if it exists.
+# On a fresh clone, this file won't exist until RabbitMQ runs for the first time.
+# The || true ensures no error if the file is missing (first run).
+fix-rabbit-cookie:
+	@if [ -f $(HOME)/data/rabbit/.erlang.cookie ]; then \
+		sudo chown 999:999 $(HOME)/data/rabbit/.erlang.cookie; \
+		sudo chmod 400 $(HOME)/data/rabbit/.erlang.cookie; \
+	fi
+
+fix-rabbit-permissions: fix-rabbit-cookie
+	sudo chown -R 999:999 $(HOME)/data/rabbit
+
+find-logs: fix-rabbit-permissions
 	@echo $(GREEN)Generating logs...$(RESET)
-	@sudo chmod 777 -R $(DATABASE_DIRECTORIES)
+	@sudo chown -R $(USER):$(USER) $(HOME)/data
+	@chmod -R 777 $(DATABASE_DIRECTORIES)
 	@srcs/scripts/logs/log-finder.sh
 
 kill-logs:
@@ -185,7 +200,30 @@ debug:
 #*********************** ▌ UPDATE DATA ▌ ****************************#
 ######################################################################
 
-npm-install:
+npm-check:
+	       @echo $(GREEN)Checking Node.js, npm, TypeScript, pnpm, and nodemon...$(RESET)
+	       @if ! command -v node >/dev/null; then \
+		       echo "Node.js not found. Installing..."; \
+		       sudo apt-get install -y nodejs; \
+	       fi
+	       @if ! command -v npm >/dev/null; then \
+		       echo "npm not found. Installing..."; \
+		       sudo apt-get install -y npm; \
+	       fi
+	       @if ! command -v tsc >/dev/null; then \
+		       echo "TypeScript not found. Installing..."; \
+		       npm install -g typescript; \
+	       fi
+	       @if ! command -v pnpm >/dev/null; then \
+		       echo "pnpm not found. Installing..."; \
+		       npm install -g pnpm; \
+	       fi
+	       @if ! command -v nodemon >/dev/null; then \
+		       echo "nodemon not found. Installing..."; \
+		       npm install -g nodemon; \
+	       fi
+
+npm-install: npm-check
 	@echo $(GREEN)Installing npm dependencies in all services...$(RESET)
 	@cd srcs/services/frontend && npm install
 	@cd srcs/services/auth/app && npm install

@@ -295,6 +295,7 @@ export class App {
         console.log('[REFRESH_DEBUG] auth/me retry result:', resolvedUser ? 'user id=' + resolvedUser.id : 'null');
       }
 
+
       if (resolvedUser) {
         this.currentUser = resolvedUser;
         this.authManager.setUserAndPersist(resolvedUser);
@@ -390,22 +391,23 @@ export class App {
       this._lastAuthMeStatus = res.status;
       console.log('[REFRESH_DEBUG] auth/me response status=', res.status, 'ok=', res.ok, '(if 401: cookie missing/expired or not sent with this request)');
 
-      if (res.ok) {
+      const data = await res.json();
+
+      if (res.ok && data.success === true) {
         sessionStorage.removeItem("not_authenticated");
-        const result = await res.json();
         const user = {
-          id: result.data.user.user_id,
-          username: result.data.user.pseudo,
-          email: result.data.user.user_mail,
-          avatar: result.data.user.avatar,
+          id: data.data.user.user_id,
+          username: data.data.user.pseudo,
+          email: data.data.user.user_mail,
+          avatar: data.data.user.avatar,
           isGuest: false,
-          provider: (result.data.user.auth_provider === '42' ? '42' : 'local') as 'local' | '42'
+          provider: (data.data.user.auth_provider === '42' ? '42' : 'local') as 'local' | '42'
         };
         console.log('[REFRESH_DEBUG] auth/me 200 → server accepted cookie, user_id=', user.id);
         return user;
       }
 
-      if (res.status === 401 || res.status === 404) {
+      else if (res.ok && data.success === false) {
         console.log('[REFRESH_DEBUG] auth/me', res.status, '→ server rejected (no cookie, wrong cookie, token expired, or user not in DB)');
         sessionStorage.setItem("not_authenticated", "true");
         Logger.debug("getConnectedUser: " + res.status + " - user not authenticated");

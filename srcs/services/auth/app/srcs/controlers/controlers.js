@@ -781,7 +781,7 @@ export async function auth_me_route(request, reply) {
     console.log('[AUTH_DEBUG] /me Origin=', origin, 'Cookie header length=', cookieLen, 'token present=', !!token, 'NODE_ENV=', process.env.NODE_ENV);
     if (!token) {
       console.log('[AUTH_DEBUG] /me 401 → no token in request');
-      return reply.code(401).send({ success: false, message: "Not authenticated" });
+      return reply.code(200).send({ success: false, message: "Not authenticated" });
     }
 
     let payload;
@@ -789,8 +789,8 @@ export async function auth_me_route(request, reply) {
       payload = verify(token, process.env.JWT_SECRET);
       console.log('[AUTH_DEBUG] /me JWT verify ok. user_id=', payload.user_id, 'jti=', payload.jti);
     } catch (e) {
-      console.log('[AUTH_DEBUG] /me 401 → JWT verify failed:', (e && e.message) || String(e));
-      return reply.code(401).send({ success: false, message: "Invalid or expired token" });
+      console.log('[AUTH_DEBUG] /me 200 → JWT verify failed:', (e && e.message) || String(e));
+      return reply.code(200).send({ success: false, message: "Invalid or expired token" });
     }
 
     const isProduction = process.env.NODE_ENV === 'PROD';
@@ -798,8 +798,8 @@ export async function auth_me_route(request, reply) {
       const redisVal = await redis.get(`jwt:${payload.jti}`);
       console.log('[AUTH_DEBUG] /me Redis jwt:' + payload.jti + ' =', redisVal === null ? 'null (expired?)' : redisVal);
       if (redisVal !== 'valid') {
-        console.log('[AUTH_DEBUG] /me 401 → Redis not valid (revoked or expired)');
-        return reply.code(401).send({ success: false, message: "Token revoked or expired" });
+        console.log('[AUTH_DEBUG] /me 200 → Redis not valid (revoked or expired)');
+        return reply.code(200).send({ success: false, message: "Token revoked or expired" });
       }
     }
 
@@ -808,8 +808,8 @@ export async function auth_me_route(request, reply) {
       [payload.user_id]
     );
     if (!user) {
-      console.log('[AUTH_DEBUG] /me 401 → user_id not in DB (e.g. after DB reset):', payload.user_id);
-      return reply.code(401).send({ success: false, message: "User not found or session invalid" });
+      console.log('[AUTH_DEBUG] /me 200 → user_id not in DB (e.g. after DB reset):', payload.user_id);
+      return reply.code(200).send({ success: false, message: "User not found or session invalid" });
     }
     console.log('[AUTH_DEBUG] /me 200 → sending user_id=', user.user_id);
     return reply.send({ success: true, data: { user } });
