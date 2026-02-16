@@ -86,7 +86,9 @@ RUN ./configure \
 # && rm -rf /var/lib/apt/lists/* /opt/*
 
 
+RUN mkdir -p /etc/nginx/sites-enabled/
 COPY ./services/security/modsecurity/conf/pong.conf /etc/nginx/sites-available/default.conf
+COPY ./services/security/modsecurity/conf/pong.conf /etc/nginx/sites-enabled/default.conf
 COPY ./services/security/modsecurity/conf/nginx.conf /etc/nginx/nginx.conf
 COPY ./services/security/modsecurity/conf/modsecurity.conf /etc/modsecurity/modsecurity.conf
 COPY ./services/security/modsecurity/conf/crs-setup.conf /etc/modsecurity/crs/crs-setup.conf
@@ -95,8 +97,8 @@ COPY ./services/security/modsecurity/conf/unicode.mapping /etc/modsecurity/unico
 
 RUN mkdir -p /etc/modsecurity/crs/rules/
 COPY ./services/security/modsecurity/conf/rules/* /etc/modsecurity/crs/rules/
-RUN mkdir -p /etc/nginx/sites-enabled/
-RUN ln -s /etc/nginx/sites-available/default.conf /etc/nginx/sites-enabled/
+# RUN mkdir -p /etc/nginx/sites-enabled/
+# RUN ln -s /etc/nginx/sites-available/default.conf /etc/nginx/sites-enabled/
 
 RUN mkdir -p /etc/nginx/ssl
 
