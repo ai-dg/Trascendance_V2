@@ -21,6 +21,11 @@ DATABASE_DIRECTORIES := \
 	./srcs/logs
 
 
+
+# ■ Cleanup Targets
+
+VAULT_DIRECTORIES= srcs/services/vault/data srcs/services/vault/logs
+
 ######################################################################
 #********************** ▌ START & DEPLOYMENT ▌***********************#
 ######################################################################
