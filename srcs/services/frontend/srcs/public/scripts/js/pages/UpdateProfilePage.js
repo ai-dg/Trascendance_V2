@@ -314,7 +314,8 @@ export class UpdateProfilePage {
             card.appendChild(usernameField);
         if (emailField)
             card.appendChild(emailField);
-        card.appendChild(passwordField);
+        if (!isOAuth42)
+            card.appendChild(passwordField);
         // delete account
         const deleteButton = this.uiManager.createButton(this.t('deleteAccount'), 'retro-button bg-[#ff0000] text-red px-6 py-2 rounded border-2 border-[#ff0000] hover:bg-[#ff3333] hover:text-white shadow-[0_0_10px_#ff0000] hover:shadow-[0_0_20px_#ff0000] transition-all duration-200', () => {
             console.log('DELETE ACCOUNT clicked');
@@ -324,7 +325,8 @@ export class UpdateProfilePage {
         const backButton = this.uiManager.createButton(this.t('backToSettings'), 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200', () => {
             this.onBack();
         });
-        card.appendChild(deleteButton);
+        if (!isOAuth42)
+            card.appendChild(deleteButton);
         card.appendChild(backButton);
         container.appendChild(card);
         return container;
