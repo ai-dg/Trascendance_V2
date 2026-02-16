@@ -103,13 +103,13 @@ export class WebsocketManager {
             gameErrorCount = 0; // Reset error count on successful connection
             // If we were previously connected and now reconnected, trigger reconnection check
             if (this.gameSocketWasConnected && this.onGameReconnectCallback) {
-                console.log("[WebsocketManager] Game socket reconnected - triggering reconnection check");
+                Logger.log("[WebsocketManager] Game socket reconnected - triggering reconnection check");
                 this.onGameReconnectCallback();
             }
             this.gameSocketWasConnected = true;
         });
         this.gameSocket?.on("disconnect", (reason) => {
-            console.log("[WebsocketManager] Game socket disconnected:", reason);
+            Logger.log("[WebsocketManager] Game socket disconnected:", reason);
         });
         // Only log errors after multiple failures (Socket.io retries automatically)
         this.generalSocket?.on("connect_error", (err) => {

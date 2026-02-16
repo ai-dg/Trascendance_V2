@@ -1,0 +1,5 @@
+**/vault/data/**
+**/vault/logs/**
+**/.git
+**/node_modules
+**/.env

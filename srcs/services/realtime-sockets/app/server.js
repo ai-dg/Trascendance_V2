@@ -4,9 +4,70 @@ import jwt from 'jsonwebtoken';
 import { createClient } from 'redis';
 import { Server } from 'socket.io';
 import fs from 'fs';
+// import { Game } from '../../game-engine/app/srcs/js/Game.js';
+
+// import { GameManager } from '../../game-engine/app/srcs/js/GameManager.js';
+import path from 'path';
+import { handleMatchmaking, cancelSearch } from './matchmaking.js';
+
+import { vaultClient } from './vault.js';
 
 const is_prod = process.env.NODE_ENV === "PROD";
 export const base_url = is_prod ? "www.transcendance.com" : "localhost";
+
+await vaultClient.loadSecrets()
+export const authData = vaultClient.get('auth')
+export const redisAuth = vaultClient.get('redis')
+
+
+const AUTH_INTERNAL_URL = process.env.AUTH_INTERNAL_URL || 'https://auth_app:3000';
+
+function isNumericUserId(userId) {
+	if (userId === null || userId === undefined) return false;
+	if (typeof userId === 'number') return Number.isFinite(userId);
+	if (typeof userId !== 'string') return false;
+	return /^\d+$/.test(userId);
+}
+
+async function fetchAuthUserById(userId) {
+	if (!isNumericUserId(userId)) {
+		return { username: null, avatar: null };
+	}
+
+	try {
+		const serviceToken = jwt.sign(
+			{ service: 'realtime-sockets' },
+			authData.jwt,
+			{ expiresIn: '5m' }
+		);
+
+		const res = await fetch(`${AUTH_INTERNAL_URL}/username-id`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${serviceToken}`
+			},
+			body: JSON.stringify({ id: String(userId) })
+		});
+
+		if (!res.ok) {
+			return { username: null, avatar: null };
+		}
+		const data = await res.json();
+		return {
+			username: data?.data?.user?.pseudo ?? null,
+			avatar: data?.data?.user?.avatar ?? null
+		};
+	} catch (err) {
+		console.warn('[realtime-sockets] Failed to fetch user from auth:', err?.message || err);
+		return { username: null, avatar: null };
+	}
+}
+
+// Track active games and which users are in them
+const runningGames = new Map();
+const userGames = new Map(); // userId -> gameUUID mapping
+
 
 // HTTPS options
 let httpsOptions = null;
@@ -37,10 +98,10 @@ let socketio = null;
 /* Redis Client Setup */
 export const redis = createClient({
     socket: {
-        host: process.env.REDIS_HOST,
-        port: process.env.REDIS_PORT
+        host: redisAuth.host,
+        port: redisAuth.port
     },
-    password: process.env.REDIS_PASSWORD
+    password: redisAuth.password
 });
 
 export const subscriber = redis.duplicate();
@@ -50,7 +111,7 @@ await subscriber.connect();
 /* End Redis Client Setup */
 
 await app.register(cookie, {
-    secret: process.env.COOKIE_SECRET,
+    secret: authData.cookie,
     parseOptions: {}
 });
 
@@ -109,7 +170,7 @@ async function socketAuthMiddleware(socket, next) {
       return next(new Error('No token found'));
     }
 
-    const val = jwt.decode(token, process.env.JWT_SECRET);
+    const val = jwt.decode(token, authData.jwt);
 
     if (!val || !val.jti) {
       return next(new Error('Invalid token'));
@@ -121,7 +182,7 @@ async function socketAuthMiddleware(socket, next) {
       return next(new Error('Token not valid in Redis'));
     }
 
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const payload = jwt.verify(token, authData.jwt);
 
     socket.userId = payload.user_id || payload.id;
     socket.user = payload.pseudo || payload;

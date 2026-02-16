@@ -34,7 +34,8 @@ RUN npm install --package-lock \
 	@grpc/grpc-js \
 	@grpc/proto-loader \
 	amqplib \ 
-	nodemon
+	nodemon \
+	node-vault
 
 COPY . .
 

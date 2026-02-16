@@ -1,4 +1,5 @@
 import { RouterManager } from "./RouterManager.js";
+import { Logger } from './Logger.js';
 export class OTPManagers {
     constructor() {
         this.router = new RouterManager();
@@ -20,11 +21,11 @@ export class OTPManagers {
     async OTPValidationHandler(params, inputs) {
         const context = params.context;
         const code = Array.from(inputs).map(i => i.value).join('');
-        console.log("verifyBtn called : code ", code);
+        Logger.log("verifyBtn called : code ", code);
         try {
-            console.log("OTP sent:", code);
-            console.log("OTP id:", params.otp_id);
-            console.log(context);
+            Logger.log("OTP sent:", code);
+            Logger.log("OTP id:", params.otp_id);
+            Logger.log(context);
             const res = await fetch(this.router.getUrl(`auth/${context}/otp-validation`), {
                 method: "POST",
                 headers: {
@@ -42,7 +43,7 @@ export class OTPManagers {
             console.log(result);
             if (result.success) {
                 params.handler();
-                console.log("PARAMS: ", params);
+                Logger.log("PARAMS: ", params);
                 return { success: true };
             }
             else {
@@ -53,7 +54,7 @@ export class OTPManagers {
             }
         }
         catch (err) {
-            console.log(err);
+            Logger.log(err);
             return { success: false, error: 'Network error. Please try again.' };
         }
     }

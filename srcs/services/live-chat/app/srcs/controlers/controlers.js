@@ -1,4 +1,4 @@
-import { app, redis } from '../../server.js';
+import { app, authData, redis } from '../../server.js';
 import jwt from 'jsonwebtoken';
 
 
@@ -27,7 +27,7 @@ export async function friend_request_route(request, reply) {
         return reply.code(401).send({ success: false, message: "Not authenticated" });
     let payload;
     try {
-        payload = jwt.verify(token, process.env.JWT_SECRET);
+        payload = jwt.verify(token, authData.jwt);
     } catch (err) {
         console.log("payload live-chat error:", err);
         return reply.code(401).send({ success: false, message: "Invalid or expired token" });
@@ -125,7 +125,7 @@ export async function friend_request_response_route(request, reply) {
     
     let payload;
     try {
-        payload = jwt.verify(token, process.env.JWT_SECRET);
+        payload = jwt.verify(token, authData.jwt);
     } catch {
         return reply.code(401).send({ success: false, message: "Invalid or expired token" });
     }
@@ -200,7 +200,7 @@ export async function get_friends_route(request, reply) {
     
     let payload;
     try {
-        payload = jwt.verify(token, process.env.JWT_SECRET);
+        payload = jwt.verify(token, authData.jwt);
     } catch {
         return { success: false, message: "Invalid or expired token" };
     }
@@ -283,7 +283,7 @@ export async function get_pending_requests_route(request, reply) {
 
     let payload;
     try {
-        payload = jwt.verify(token, process.env.JWT_SECRET);
+        payload = jwt.verify(token, authData.jwt);
     } catch {
         return { success: false, message: "Invalid or expired token" };
     }
@@ -372,7 +372,7 @@ export async function block_friend_route(request, reply) {
 
     let payload;
     try {
-        payload = jwt.verify(token, process.env.JWT_SECRET);
+        payload = jwt.verify(token, authData.jwt);
     } catch {
         return { success: false, message: "Invalid or expired token" };
     }
@@ -452,7 +452,7 @@ export async function remove_friend(request, reply) {
 
     let payload;
     try {
-        payload = jwt.verify(token, process.env.JWT_SECRET);
+        payload = jwt.verify(token, authData.jwt);
     } catch {
         return reply.code(401).send({ success: false, message: "Invalid or expired token" });
     }

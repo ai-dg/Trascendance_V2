@@ -1,18 +1,15 @@
 import Fastify from 'fastify';
-import mysql from 'mysql2/promise';
 import 'dotenv/config';
-import { compare, hash } from 'bcryptjs';
-import cors from '@fastify/cors';
-import cookie from '@fastify/cookie';
-import { createClient } from 'redis';
-import validator from 'validator';
 import nodemailer from "nodemailer";
-
+import { vaultClient } from './vault.js';
 import amqp from 'amqplib';
 import fs from 'fs';
 import path from 'path';
 
 
+
+await vaultClient.loadSecrets();
+const rabbitmq = vaultClient.get('rabbitmq')
 // HTTPS options
 let httpsOptions = {};
 try {
@@ -34,8 +31,8 @@ const mail_queue = 'send-mail-queue';
 
 
 async function connect_message_queue() {
-  const user = process.env.RABBITMQ_DEFAULT_USER
-  const password = process.env.RABBITMQ_DEFAULT_PASSWORD
+  const user = rabbitmq.user
+  const password = rabbitmq.password
   const connection = await amqp.connect(`amqp://${user}:${password}@rabbitmq:5672`);
   const channel = await connection.createChannel();
   await channel.assertQueue(mail_queue, { durable : true });

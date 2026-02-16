@@ -74,7 +74,7 @@ export class AuthPage {
   //////////////////////////////////////////////
 
    public render(): void {
-    console.log("render: ", this.showChangePassword);
+    Logger.log("render: ", this.showChangePassword);
     const container = this.uiManager.createElement('div', 'retro-container size-full flex items-center justify-center p-8');
     const content = this.uiManager.createElement('div', 'relative z-10');
     content.style.width = '600px';
@@ -332,7 +332,7 @@ export class AuthPage {
   //////////////////////////////////////////////
 
   public handle42SignIn(): void {
-    console.log('42 Sign In clicked');
+    Logger.log('42 Sign In clicked');
     window.location.href = `${window.location.origin}/auth/42/login`;
   }
 
@@ -363,7 +363,7 @@ export class AuthPage {
   }
 
   private handleSubmit(e: Event): void {
-    console.log("handleSubmit called");
+    Logger.log("handleSubmit called");
     e.preventDefault();
     this.errors = [];
 
@@ -381,9 +381,9 @@ export class AuthPage {
         this.render();
         return ;
       }
-      console.log(this.formData.password, " ", this.formData.confirmPassword);
+      Logger.log(this.formData.password, " ", this.formData.confirmPassword);
       if (this.formData.password !== this.formData.confirmPassword) {
-        console.log("strings dont match");
+        Logger.log("strings dont match");
         const newErrors: string[] = [];
         newErrors.push('Password do not match');
         this.errors = newErrors;
@@ -397,7 +397,7 @@ export class AuthPage {
         return;
       }
 
-      console.log("strings matched");
+      Logger.log("strings matched");
       this.onChangePassword(this.formData.email, this.formData.password, this.formData.confirmPassword);
       return ;
     } else if (this.isLogin) {

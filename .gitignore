@@ -7,8 +7,11 @@ srcs/logs/
 !srcs/services/realtime-sockets/**/*.js
 !srcs/services/game-engine/**/*.js
 *.d.ts
+
 srcs/logs/pids.txt
 srcs/services/auth/app/auth.sqlite
 srcs/volumes/
+**/vault/data/**
+**/vault/logs/**
+unseal.md
 
-srcs/services/vault/config/config.hcl

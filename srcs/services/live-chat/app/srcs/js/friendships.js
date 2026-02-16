@@ -1,4 +1,4 @@
-import { app } from '../../server.js';
+import { app, authData } from '../../server.js';
 import jwt from 'jsonwebtoken';
 
 
@@ -10,7 +10,7 @@ export async function createFriendRequest(token, receiverId) {
 
     let payload;
     try {
-        payload = jwt.verify(token, process.env.JWT_SECRET);
+        payload = jwt.verify(token, authData.jwt);
     } catch {
         return { success: false, message: "Invalid or expired token" };
     }

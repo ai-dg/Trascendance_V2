@@ -3,6 +3,12 @@ import fs from 'fs';
 import path from 'path';
 import { createClient } from 'redis';
 import { Ai } from './srcs/Ai.js';
+import { vaultClient } from './srcs/vault.js'
+
+
+
+await vaultClient.loadSecrets()
+export const redisAuth = vaultClient.get('redis')
 
 // HTTPS options
 let httpsOptions = {};
@@ -24,18 +30,18 @@ const app = Fastify({https: httpsOptions});
 // Redis clients
 const redis = createClient({
 	socket: {
-		host: process.env.REDIS_HOST,
-		port: process.env.REDIS_PORT
+		host: redisAuth.host,
+		port: redisAuth.port
 	},
-	password: process.env.REDIS_PASSWORD
+	password: redisAuth.password
 });
 
 const redisSubscriber = createClient({
 	socket: {
-		host: process.env.REDIS_HOST,
-		port: process.env.REDIS_PORT
+		host: redisAuth.host,
+		port: redisAuth.port
 	},
-	password: process.env.REDIS_PASSWORD
+	password: redisAuth.password
 });
 
 // Store AI instances per game with last activity timestamp

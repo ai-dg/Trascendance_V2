@@ -171,7 +171,7 @@ export class SettingsPage {
         // Buttons container
         const buttonsContainer = this.uiManager.createElement('div', 'flex flex-col items-center gap-4');
         const button1 = this.uiManager.createButton(this.t('update_profile') || 'UPDATE PROFILE', 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200', () => {
-            console.log('UPDATE PROFILE clicked');
+            Logger.log('UPDATE PROFILE clicked');
             const updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.languageManager, () => this.render(), this.onUpdateProfile.bind(this), this.user);
             updateProfilePage.render();
         });

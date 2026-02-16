@@ -63,7 +63,7 @@ export class UpdateProfilePage {
         avatarImg.alt = this.t('avatarAlt');
         avatarImg.title = this.t('avatarTitle');
         avatarImg.addEventListener('click', () => {
-          console.log('Change avatar clicked');
+          Logger.log('Change avatar clicked');
           this.renderAvatarSelector();
         });
 
@@ -177,7 +177,7 @@ export class UpdateProfilePage {
             this.t('change'),
             'retro-button bg-transparent text-[#ff1493] px-4 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200 self-end',
             async () => {
-              console.log(`${labelText} changed to:`, input.value, withConfirm ? confirmInput?.value : '');
+              Logger.log(`${labelText} changed to:`, input.value, withConfirm ? confirmInput?.value : '');
               errorDiv.innerHTML = '';
               try {
                 await changeHandler(input.value, confirmInput?.value);
@@ -362,8 +362,8 @@ export class UpdateProfilePage {
                 const errorMessage = this.uiManager.createElement('p', '', error);
                 passwordErrorDiv?.appendChild(errorMessage);
               });
-              console.log("passwordErrors:", passwordErrors);
-              console.log(passwordErrorDiv);
+              Logger.log("passwordErrors:", passwordErrors);
+              Logger.log(passwordErrorDiv);
               return ;
             }
             const res = await fetch(this.routerManager.getUrl('auth/update-password'), {
@@ -396,7 +396,7 @@ export class UpdateProfilePage {
           this.t('deleteAccount'),
           'retro-button bg-[#ff0000] text-red px-6 py-2 rounded border-2 border-[#ff0000] hover:bg-[#ff3333] hover:text-white shadow-[0_0_10px_#ff0000] hover:shadow-[0_0_20px_#ff0000] transition-all duration-200',
           () => {
-            console.log('DELETE ACCOUNT clicked');
+            Logger.log('DELETE ACCOUNT clicked');
             this.handlerDeleteAccount();
         });
 
@@ -491,7 +491,7 @@ export class UpdateProfilePage {
 
 
   private handlerDeleteAccount() {
-      console.log("Opening delete confirmation screen");
+      Logger.log("Opening delete confirmation screen");
 
       const container = this.uiManager.createElement(
         'div',

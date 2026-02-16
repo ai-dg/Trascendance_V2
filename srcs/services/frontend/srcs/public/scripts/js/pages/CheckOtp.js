@@ -87,14 +87,14 @@ export class CheckOtp {
                 if (!result.success) {
                     this.showError(result.error || this.t("otpError")); // Use translation for error message
                 }
-                console.log("Params context: ", params.context);
+                Logger.log("Params context: ", params.context);
                 if (params.context === 'verify') {
                     // this.onChangePassword(result.success);
-                    console.log("Skipping params.handler()");
+                    Logger.log("Skipping params.handler()");
                     return;
                 }
                 else if (params.context === 'update-email') {
-                    console.log("Going to update profile");
+                    Logger.log("Going to update profile");
                     this.onUpdateProfile(result.success);
                 }
                 this.onVerificationComplete(result.success);

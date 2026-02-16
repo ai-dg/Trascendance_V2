@@ -8,6 +8,7 @@ import fs from 'fs';
 import { routes } from './routes.js';
 import amqp from 'amqplib'
 import path from 'path';
+import { vaultClient } from './vault.js';
 
 export const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
@@ -18,9 +19,14 @@ const is_prod = process.env.NODE_ENV === "PROD"
 export const validation_queue = "email-validation-queue"
 
 
+await vaultClient.loadSecrets();
+export const rabbitmqAuth = vaultClient.get('rabbitmq')
+export const authData = vaultClient.get('auth')
+
+
 async function connect_message_queue(){
-	const user = process.env.RABBITMQ_DEFAULT_USER;
-	const password = process.env.RABBITMQ_DEFAULT_PASSWORD;
+	const user = rabbitmqAuth.user;
+	const password = rabbitmqAuth.password;
 	const connection = await amqp.connect(`amqp://${user}:${password}@rabbit:5672`);
 	const channel = await connection.createChannel();
 	await channel.assertQueue(validation_queue, { durable : true });

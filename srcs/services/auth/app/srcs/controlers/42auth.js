@@ -1,4 +1,4 @@
-import { redis } from '../../server.js';
+import { authData, fortytwoAuth, redis } from '../../server.js';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
@@ -28,6 +28,13 @@ export async function oauth_login_route(request, reply) {
 
     console.log('42 OAuth Login - Redirect URI:', redirectUri, process.env.FORTYTWO_REDIRECT_URI ? '(from FORTYTWO_REDIRECT_URI)' : '(from request headers)');
 
+    console.log('42 OAuth Login - Redirect URI:', redirectUri);
+    console.log('Headers:', {
+        'x-forwarded-proto': request.headers['x-forwarded-proto'],
+        'x-forwarded-host': request.headers['x-forwarded-host'],
+        'host': request.headers.host
+    });
+
     // Store the redirect URI in a cookie so the callback can use the same one
     reply.setCookie('oauth_redirect_uri', redirectUri, {
         path: '/',
@@ -36,7 +43,7 @@ export async function oauth_login_route(request, reply) {
         maxAge: 300 // 5 minutes - enough for OAuth flow
     });
 
-    const redirUrl = `https://api.intra.42.fr/oauth/authorize?client_id=${process.env.FORTYTWO_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
+    const redirUrl = `https://api.intra.42.fr/oauth/authorize?client_id=${fortytwoAuth.clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
     return reply.redirect(redirUrl);
 }
 
@@ -55,8 +62,8 @@ export async function oauth_callback_route(request, reply) {
 
             const params = new URLSearchParams({
                 grant_type: 'authorization_code',
-                client_id: process.env.FORTYTWO_CLIENT_ID,
-                client_secret: process.env.FORTYTWO_CLIENT_SECRET,
+                client_id: fortytwoAuth.clientId,
+                client_secret: fortytwoAuth.clientSecret,
                 code,
                 redirect_uri: redirectUri,
             });
@@ -104,7 +111,7 @@ export async function oauth_callback_route(request, reply) {
             );
 
             const jti = crypto.randomBytes(16).toString('hex');
-            const secretKey = process.env.JWT_SECRET;
+            const secretKey = authData.jwt;
             const payload = { user_id: userId, jti };
 		    const token = sign(payload, secretKey, { expiresIn: '1h' });
 		    await redis.set(`jwt:${jti}`, 'valid', { EX: 3600 });
@@ -128,7 +135,7 @@ export async function oauth_update_profile_route(request, reply) {
         const token = request.cookies.token;
         if (!token) return reply.status(401).send({ success: false, message: "Not authenticated"});
 
-        const payload = verify(token, process.env.JWT_SECRET);
+        const payload = verify(token, authData.jwt);
         const db = request.server.db;
 
         const user = await db.get('SELECT * FROM users WHERE user_id = ?', [payload.user_id]);
@@ -136,8 +143,8 @@ export async function oauth_update_profile_route(request, reply) {
 
         const params = new URLSearchParams({
             grant_type: 'client_credentials',
-            client_id: process.env.FORTYTWO_CLIENT_ID,
-            client_secret: process.env.FORTYTWO_CLIENT_SECRET,
+            client_id: fortytwoAuth.clientId,
+            client_secret: fortytwoAuth.clientSecret,
         });
 
         const tokenRes = await fetch('https://api.intra.42.fr/oauth/token', {

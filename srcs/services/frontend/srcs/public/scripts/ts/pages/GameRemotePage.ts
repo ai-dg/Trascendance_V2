@@ -926,11 +926,11 @@ export class RemotePage {
     const isGameOver = !!winner;
     const isPaused = this.gameManager ? this.gameManager.getIsPaused() : false;
 
-    console.log('[GameRemotePage] updateGameState called - gameRunning:', gameState.gameRunning, 'isPaused:', isPaused, 'hasStarted:', this.gameManager?.getHasStarted());
+    Logger.log('[GameRemotePage] updateGameState called - gameRunning:', gameState.gameRunning, 'isPaused:', isPaused, 'hasStarted:', this.gameManager?.getHasStarted());
 
     // For waiting screen
     if (this.isSearchingOpponent) {
-      console.log('[GameRemotePage] Showing waiting screen');
+      Logger.log('[GameRemotePage] Showing waiting screen');
       startOverlay?.classList.add('hidden');
       pauseOverlay?.classList.add('hidden');
       gameOverOverlay?.classList.add('hidden');
@@ -940,7 +940,7 @@ export class RemotePage {
     // Screen at the start of the game
     if (!this.gameManager?.getHasStarted())
     {
-      console.log('[GameRemotePage] Showing start overlay (game not started yet)');
+      Logger.log('[GameRemotePage] Showing start overlay (game not started yet)');
       if (startOverlay)
         startOverlay.classList.remove('hidden');
       if (pauseOverlay)

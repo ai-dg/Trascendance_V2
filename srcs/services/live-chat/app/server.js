@@ -10,10 +10,15 @@ import jwt from 'jsonwebtoken';
 import { routes } from './srcs/routes/routes.js';
 import fs from 'fs';
 import path from 'path';
+import { vaultClient } from './srcs/services/vault.js';
 
 const is_prod = process.env.NODE_ENV === "PROD"
 export const base_url = is_prod ? "www.transcendance.com" : "localhost"
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
+await vaultClient.loadSecrets()
+export const redisAuth = vaultClient.get('redis');
+export const authData = vaultClient.get('auth')
 
 // HTTPS options
 let httpsOptions = {};
@@ -34,10 +39,10 @@ export const app = Fastify({trustProxy: true, https: httpsOptions});
 
 export const redis = createClient({
 	socket: {
-	host: process.env.REDIS_HOST || 'redis',
-	port: process.env.REDIS_PORT
+	host: redisAuth.host || 'redis',
+	port: redisAuth.port
 	},
-	password: process.env.REDIS_PASSWORD
+	password: redisAuth.password
 });
 
 try {
@@ -87,7 +92,7 @@ async function setupLiveChatdb() {
 }
 
 app.register(cookie, {
-  secret: process.env.COOKIE_SECRET,
+  secret: authData.cookie,
   parseOptions: {}
 });
 

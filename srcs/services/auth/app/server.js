@@ -11,6 +11,8 @@ import { setupMessageQueues } from './srcs/services/message-broker.js';
 import { routes } from './srcs/routes/routes.js';
 import fs from 'fs';
 import path from 'path';
+import { vaultClient } from './srcs/services/vault.js';
+
 
 
 /************************************************************************************************* */
@@ -36,17 +38,40 @@ try {
 	console.log('HTTPS certs not found, running on HTTP');
 }
 
-export const app = Fastify({trustProxy: true, https: httpsOptions});
+await vaultClient.loadSecrets();
+const redisConfig = vaultClient.get('redis');
+export const rabbitmqAuth = vaultClient.get('rabbitmq')
+export const fortytwoAuth = vaultClient.get('fortytwo')
+export const authData = vaultClient.get('auth')
 
+export const app = Fastify({trustProxy: true, https: httpsOptions});
 export const redis = createClient({
 	socket: {
-	host: process.env.REDIS_HOST,
-	port: process.env.REDIS_PORT
+	host: redisConfig.host,
+	port: redisConfig.port
 	},
-	password: process.env.REDIS_PASSWORD
+	password: redisConfig.password
+});
+
+redis.on('connect', () => {
+  console.log('🔄 Redis: Connexion en cours...');
+});
+
+redis.on('ready', () => {
+  console.log('✅ Redis: Connecté et prêt !');
+});
+
+redis.on('error', (err) => {
+  console.error('❌ Redis erreur:', err);
+});
+
+redis.on('end', () => {
+  console.log('🔌 Redis: Déconnecté');
 });
 
 await redis.connect();
+console.log('🎉 Redis connect() terminé');
+
 
 
 // Allow dev origins so cookies are accepted when using http://localhost:8080 etc.
@@ -76,7 +101,7 @@ await app.register(cors, {
 
 
 await app.register(cookie, {
-	secret: process.env.COOKIE_SECRET,
+	secret: authData.cookie,
 	parseOptions: {}
 });
 

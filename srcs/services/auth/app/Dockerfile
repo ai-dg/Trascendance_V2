@@ -36,7 +36,8 @@ RUN npm install --package-lock \
 	@grpc/proto-loader \
 	amqplib \
 	sqlite3 \
-	sqlite
+	sqlite \
+	node-vault
 
 COPY . .
 

@@ -104,7 +104,7 @@ export class LiveChatPage {
             this.t('backToMenu') || 'BACK TO MENU',
             'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 mt-4',
             () => {
-                console.log('Back to menu clicked');
+                Logger.log('Back to menu clicked');
                 this.onBack();
             }
         );
@@ -498,7 +498,7 @@ export class LiveChatPage {
     private async handleBlockFriend() {
         if (!this.currentSelectedFriend) return;
 
-        console.log("Blocking friend:", this.currentSelectedFriend.nbrId);
+        Logger.log("Blocking friend:", this.currentSelectedFriend.nbrId);
         
         try {
             const res = await fetch(this.routerManager.getUrl('/live-chat/block-friend'), {
@@ -510,7 +510,7 @@ export class LiveChatPage {
 
             const data = await res.json();
             if (data.success) {
-                console.log("Friend blocked successfully");
+                Logger.log("Friend blocked successfully");
                 this.socialManager?.loadFriendsList(); 
                 this.currentSelectedFriend = null;
                 this.updateProfileView();
@@ -525,7 +525,7 @@ export class LiveChatPage {
     private async handleDeleteFriend() {
         if (!this.currentSelectedFriend) return;
 
-        console.log("Removing friend:", this.currentSelectedFriend.nbrId);
+        Logger.log("Removing friend:", this.currentSelectedFriend.nbrId);
         try {
             const res = await fetch(this.routerManager.getUrl('/live-chat/remove-friend'), {
                 method: 'POST',
@@ -535,7 +535,7 @@ export class LiveChatPage {
             });
             const data = await res.json();
             if (data.success) {
-                console.log("Friend removed");
+                Logger.log("Friend removed");
                 
                 this.socialManager?.loadFriendsList(); 
                 

@@ -5,7 +5,7 @@ import { open } from "sqlite";
 import { routes } from './srcs/routes/routes.js';
 import fs from 'fs';
 import path from 'path';
-
+import { vaultClient } from './srcs/services/vault.js';
 // // HTTPS options
 // let httpsOptions = {};
 // try {
@@ -23,6 +23,9 @@ import path from 'path';
 
 const is_prod = process.env.NODE_ENV === "PROD"
 export const base_url = is_prod ? "www.transcendance.com" : "localhost"
+
+await vaultClient.loadSecrets()
+export const authData = vaultClient.get('auth')
 
 // HTTPS options
 let httpsOptions = null;
@@ -72,7 +75,7 @@ export async function setupLanguagedb() {
 }
 
 app.register(cookie, {
-  secret: process.env.COOKIE_SECRET,
+  secret: authData.cookie,
 });
 
 app.get('/', async () => {
