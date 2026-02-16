@@ -15,4 +15,3 @@ srcs/volumes/
 **/vault/logs/**
 unseal.md
 
-srcs/services/vault/config/config.hcl
