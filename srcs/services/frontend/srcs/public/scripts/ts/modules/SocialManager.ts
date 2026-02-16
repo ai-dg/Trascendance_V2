@@ -3,7 +3,7 @@ import { WebsocketManager } from "./WebsocketManager";
 import type { User } from "./TypesManager";
 import type { RouterManager } from "./RouterManager";
 import type { LanguageManager } from "./LangManager";
-import { Logger } from "./Logger";
+import { Logger } from "./Logger.js";
 export class SocialManager {
     private uiManager: UIManager;
     private wsManager: WebsocketManager;

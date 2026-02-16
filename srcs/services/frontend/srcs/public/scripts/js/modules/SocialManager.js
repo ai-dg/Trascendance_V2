@@ -1,4 +1,4 @@
-import { Logger } from "./Logger";
+import { Logger } from "./Logger.js";
 export class SocialManager {
     constructor(uiManager, routerManager, wsManager, languageManager, currentUser, getCurrentSelectedFriendId, onFriendSelect, onNewMessage, onGameInvite) {
         this.currentUser = null;
