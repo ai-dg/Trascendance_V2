@@ -117,6 +117,7 @@ export class App {
       this.uiManager,
       this.websocketManager,
       this.routerManager,
+      this.languageManager,
       this.handlePlayGameAI.bind(this),
       this.handlePlayGameLocal.bind(this),
       this.handlePlayGameOnline.bind(this),
@@ -128,28 +129,34 @@ export class App {
     );
     this.privacyPolicyPage = new PrivacyPolicyPage(
       this.uiManager,
+      this.languageManager,
       this.handleBackToMenu.bind(this)
     );
     this.termsOfServicePage = new TermsOfServicePage(
       this.uiManager,
+      this.languageManager,
       this.handleBackToMenu.bind(this)
     );
     this.gamePageAI = new AIPage(
       this.uiManager,
+      this.languageManager,
       this.handleBackToMenu.bind(this),
       this.currentUser
     );
     this.gamePageLocal = new GamePageLocal(
       this.uiManager,
+      this.languageManager,
       this.handleBackToMenu.bind(this)
     );
     this.gamePageOnline = new RemotePage(
       this.uiManager,
+      this.languageManager,
       this.handleBackToMenu.bind(this),
       this.currentUser
     );
     this.guestPage = new GuestPage(
       this.uiManager,
+      this.languageManager,
       this.handleBackToAuth.bind(this),
       this.handleConnectAsGuest.bind(this)
     );

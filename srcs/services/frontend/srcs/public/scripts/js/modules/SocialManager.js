@@ -1,5 +1,9 @@
+// import { UIManager } from "./UIManager";
+// import { WebsocketManager } from "./WebsocketManager";
+// import type { User } from "./TypesManager";
+// import type { RouterManager } from "./RouterManager";
 export class SocialManager {
-    constructor(uiManager, routerManager, wsManager, currentUser, getCurrentSelectedFriendId, onFriendSelect, onNewMessage, onGameInvite) {
+    constructor(uiManager, routerManager, wsManager, languageManager, currentUser, getCurrentSelectedFriendId, onFriendSelect, onNewMessage, onGameInvite) {
         this.currentUser = null;
         this.friendRequests = new Map();
         this.chatNotifications = new Map();
@@ -8,11 +12,15 @@ export class SocialManager {
         this.uiManager = uiManager;
         this.routerManager = routerManager;
         this.wsManager = wsManager;
+        this.languageManager = languageManager;
         this.currentUser = currentUser;
         this.getCurrentSelectedFriendId = getCurrentSelectedFriendId;
         this.onNewMessage = onNewMessage;
         this.onFriendSelected = onFriendSelect;
         this.onGameInvite = onGameInvite;
+    }
+    t(key) {
+        return this.languageManager.t(key);
     }
     isChatOpenWith(sId) {
         const currentId = this.getCurrentSelectedFriendId();
@@ -53,7 +61,7 @@ export class SocialManager {
         // Social Header
         const socialHeaderWrapper = this.uiManager.createElement('div', 'flex items-center justify-between mb-4');
         const socialHeader = this.uiManager.createElement('h3', 'retro-text text-xl text-[#00ffff]');
-        socialHeader.textContent = 'SOCIAL';
+        socialHeader.textContent = this.t('social') || 'SOCIAL';
         const addFriendBtn = this.uiManager.createElement('div', 'mt-1 px-1');
         const img = this.uiManager.createElement('img', 'w-6 h-6');
         img.style.width = '25px';
@@ -62,10 +70,10 @@ export class SocialManager {
         addFriendBtn.appendChild(img);
         const addFriendDiv = this.uiManager.createElement('div', 'flex flex-col gap-2 mt-2 hidden');
         const friendInput = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black');
-        friendInput.placeholder = 'Username';
+        friendInput.placeholder = this.t('username') || 'Username';
         friendInput.id = 'friend-input';
         const sendFriendBtn = this.uiManager.createElement('button', 'px-4 py-2 mb-4 bg-[#00ffff] text-black rounded');
-        sendFriendBtn.textContent = 'Send';
+        sendFriendBtn.textContent = this.t('send') || 'Send';
         const errorMessageDiv = this.uiManager.createElement('div', 'hidden text-red-500 text-sm mt-2');
         errorMessageDiv.id = 'error-message-div';
         addFriendDiv.appendChild(friendInput);
@@ -77,7 +85,7 @@ export class SocialManager {
         sendFriendBtn.addEventListener('click', async () => {
             const username = friendInput.value.trim();
             if (!username) {
-                errorMessageDiv.textContent = 'Please enter a username';
+                errorMessageDiv.textContent = this.t('pleaseEnterUsername') || 'Please enter a username';
                 errorMessageDiv.classList.remove('hidden', 'text-green-500');
                 errorMessageDiv.classList.add('text-red-500');
                 return;
@@ -94,16 +102,16 @@ export class SocialManager {
         const onlineList = this.uiManager.createElement('div', 'w-full mb-6');
         onlineList.id = 'friends-container';
         const onlineTitle = this.uiManager.createElement('h4', 'retro-text text-lg text-[#00ffff] mb-2');
-        onlineTitle.textContent = 'Friends';
+        onlineTitle.textContent = this.t('friends') || 'Friends';
         const onlineContent = this.uiManager.createElement('div', 'text-[#00ffff] opacity-80');
-        onlineContent.textContent = 'List of friends goes here...';
+        onlineContent.textContent = this.t('friendsListPlaceholder') || 'List of friends goes here...';
         onlineList.appendChild(onlineTitle);
         onlineList.appendChild(onlineContent);
         socialDiv.appendChild(onlineList);
         // Notifications section
         const notifList = this.uiManager.createElement('div', 'w-full');
         const notifTitle = this.uiManager.createElement('h4', 'retro-text text-lg text-[#00ffff] mb-2');
-        notifTitle.textContent = 'Notifications';
+        notifTitle.textContent = this.t('notifications') || 'Notifications';
         // Container for all notifications
         const notificationsContainer = this.uiManager.createElement('div', 'flex flex-col gap-2 mt-2 max-h-96 overflow-y-auto');
         notificationsContainer.id = 'notifications-container';
@@ -196,13 +204,13 @@ export class SocialManager {
                 const payload = { senderId, receiverId };
                 console.log('[ADD_FRIEND_SEND] me.id=', senderId, 'target(receiverId)=', receiverId, 'full payload=', payload);
                 if (!receiverId) {
-                    errorMessageDiv.textContent = "User id not found";
+                    errorMessageDiv.textContent = this.t('userIdNotFound') || "User id not found";
                     errorMessageDiv.classList.remove('hidden', 'text-green-500');
                     errorMessageDiv.classList.add('text-red-500');
                     return;
                 }
                 if (Number(receiverId) === Number(this.currentUser.id)) {
-                    errorMessageDiv.textContent = "You cannot add yourself as a friend";
+                    errorMessageDiv.textContent = this.t('cannotAddSelf') || "You cannot add yourself as a friend";
                     errorMessageDiv.classList.remove('hidden', 'text-green-500');
                     errorMessageDiv.classList.add('text-red-500');
                     return;
@@ -227,12 +235,12 @@ export class SocialManager {
                 }
                 if (!data.success) {
                     console.info('[SocialManager]', 'Send friend request failed:', data.message || 'Request failed');
-                    errorMessageDiv.textContent = data.message || "Request failed. Please try again.";
+                    errorMessageDiv.textContent = data.message || this.t('requestFailedTryAgain') || "Request failed. Please try again.";
                     errorMessageDiv.classList.remove('hidden', 'text-green-500');
                     errorMessageDiv.classList.add('text-red-500');
                     return;
                 }
-                errorMessageDiv.textContent = "Friend request sent!";
+                errorMessageDiv.textContent = this.t('friendRequestSent') || "Friend request sent!";
                 errorMessageDiv.classList.remove('hidden', 'text-red-500');
                 errorMessageDiv.classList.add('text-green-500');
                 friendInput.value = '';
@@ -241,14 +249,14 @@ export class SocialManager {
         }
         catch (error) {
             console.info('[SocialManager]', 'Send friend request failed:', error);
-            errorMessageDiv.textContent = "Failed to send request. Please try again.";
+            errorMessageDiv.textContent = this.t('failedSendRequestTryAgain') || "Failed to send request. Please try again.";
             errorMessageDiv.classList.remove('hidden', 'text-green-500');
             errorMessageDiv.classList.add('text-red-500');
         }
         finally {
             if (sendFriendBtn) {
                 sendFriendBtn.disabled = false;
-                sendFriendBtn.textContent = 'Send';
+                sendFriendBtn.textContent = this.t('send') || 'Send';
             }
         }
     }
@@ -335,7 +343,7 @@ export class SocialManager {
                     const removerId = Number(data.userId);
                     if (this.isChatOpenWith(removerId)) {
                         if (this.onNewMessage)
-                            this.onNewMessage(removerId, "🚫 You have been blocked or unfriended.");
+                            this.onNewMessage(removerId, "🚫 " + (this.t('blockedOrUnfriended') || "You have been blocked or unfriended."));
                     }
                     break;
                 case 'clear-notification':
@@ -371,7 +379,7 @@ export class SocialManager {
                     const blockedId = Number(data.friendId);
                     if (this.isChatOpenWith(blockedId)) {
                         if (this.onNewMessage)
-                            this.onNewMessage(blockedId, "🚫 You blocked this user.");
+                            this.onNewMessage(blockedId, "🚫 " + (this.t('youBlockedThisUser') || "You blocked this user."));
                     }
                     break;
                 case 'unblocked':
@@ -462,9 +470,9 @@ export class SocialManager {
         notifMessage.textContent = message;
         const notifButtons = this.uiManager.createElement('div', 'flex gap-2');
         const acceptBtn = this.uiManager.createElement('button', 'px-3 py-1 text-xs bg-green-500 text-black rounded hover:bg-green-400');
-        acceptBtn.textContent = 'Accept';
+        acceptBtn.textContent = this.t('accept') || 'Accept';
         const rejectBtn = this.uiManager.createElement('button', 'px-3 py-1 text-xs bg-red-500 text-black rounded hover:bg-red-400');
-        rejectBtn.textContent = 'Reject';
+        rejectBtn.textContent = this.t('reject') || 'Reject';
         acceptBtn.addEventListener('click', async () => {
             acceptBtn.disabled = true;
             rejectBtn.disabled = true;
@@ -540,15 +548,15 @@ export class SocialManager {
         const { inviteId, fromUsername, message } = data;
         if (this.pendingGameInvites.has(inviteId))
             return;
-        const text = message || (fromUsername ? `${fromUsername} invited you to play` : 'You were invited to a game');
+        const text = message || (fromUsername ? `${fromUsername} ${this.t('invitedYouToPlay') || 'invited you to play'}` : (this.t('invitedToGame') || 'You were invited to a game'));
         const notifCard = this.uiManager.createElement('div', 'p-3 bg-black/80 border border-[#ff1493] rounded');
         const notifMessage = this.uiManager.createElement('p', 'text-[#00ffff] text-sm mb-2');
         notifMessage.textContent = text;
         const notifButtons = this.uiManager.createElement('div', 'flex gap-2');
         const acceptBtn = this.uiManager.createElement('button', 'px-3 py-1 text-xs bg-green-500 text-black rounded hover:bg-green-400');
-        acceptBtn.textContent = 'Accept';
+        acceptBtn.textContent = this.t('accept') || 'Accept';
         const declineBtn = this.uiManager.createElement('button', 'px-3 py-1 text-xs bg-red-500 text-black rounded hover:bg-red-400');
-        declineBtn.textContent = 'Decline';
+        declineBtn.textContent = this.t('decline') || 'Decline';
         acceptBtn.addEventListener('click', () => {
             acceptBtn.disabled = true;
             declineBtn.disabled = true;
@@ -595,13 +603,13 @@ export class SocialManager {
             this.routerManager.navigateTo('game-online', { joinGameUUID: data.gameUUID });
         }
         else if (myId === Number(data.fromUserId)) {
-            this.showToast('Invite accepted! Waiting for opponent...');
+            this.showToast(this.t('inviteAcceptedWaiting') || 'Invite accepted! Waiting for opponent...');
         }
     }
     handleGameInviteDeclined(data) {
         const myId = this.currentUser ? Number(this.currentUser.id) : null;
         if (myId !== null && myId === Number(data.fromUserId)) {
-            this.showToast('Invite declined.');
+            this.showToast(this.t('inviteDeclined') || 'Invite declined.');
             window.dispatchEvent(new CustomEvent('game-invite-declined'));
         }
     }
@@ -678,7 +686,7 @@ export class SocialManager {
             return;
         container.innerHTML = '';
         const emptyMessage = this.uiManager.createElement('p', 'text-[#00ffff]/50 text-sm italic');
-        emptyMessage.textContent = 'No friends yet. Add some!';
+        emptyMessage.textContent = this.t('noFriendsYet') || 'No friends yet. Add some!';
         container.appendChild(emptyMessage);
     }
     async displayFriends(friends) {
@@ -698,11 +706,11 @@ export class SocialManager {
             const username = friend.username;
             const friendItem = this.uiManager.createElement('div', 'p-2 bg-black/40 border border-[#00ffff]/30 rounded hover:bg-black/60 cursor-pointer transition-colors');
             const friendName = this.uiManager.createElement('p', 'text-[#00ffff] text-sm');
-            friendName.textContent = username || `User ${username}`;
+            friendName.textContent = username || `${this.t('user') || 'User'} ${username}`;
             const friendId = friendIdNum;
             const online = await this.isUserOnline(friend.id);
             if (online) {
-                friendName.textContent += " (Online)";
+                friendName.textContent += ` (${this.t('online') || 'Online'})`;
             }
             friendItem.addEventListener('click', async () => {
                 this.wsManager.clearNotification(friendId);

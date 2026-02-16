@@ -1,12 +1,19 @@
 import { UIManager } from '../modules/UIManager.js';
+import { LanguageManager } from '../modules/LangManager.js';
 
 export class TermsOfServicePage {
   private uiManager: UIManager;
+  private languageManager: LanguageManager;
   private onBackToMenu: () => void;
 
-  constructor(uiManager: UIManager, onBackToMenu: () => void) {
+  constructor(uiManager: UIManager, languageManager: LanguageManager, onBackToMenu: () => void) {
     this.uiManager = uiManager;
+    this.languageManager = languageManager;
     this.onBackToMenu = onBackToMenu;
+  }
+
+  private t(key: string): string {
+    return this.languageManager.t(key);
   }
 
   render(): void {
@@ -17,7 +24,7 @@ export class TermsOfServicePage {
     const header = this.uiManager.createElement('div', 'flex items-center justify-between mb-8 border-b-2 border-cyan-400 pb-4');
 
     const backButton = this.uiManager.createButton(
-      'BACK TO MENU',
+      this.t('backToMenu') || 'BACK TO MENU',
       'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2',
       () => backCallback()
     );
@@ -25,7 +32,7 @@ export class TermsOfServicePage {
     backButton.appendChild(backIcon);
 
     const title = this.uiManager.createElement('h1', 'text-3xl font-bold text-center flex-1 text-cyan-400 glow-text');
-    title.textContent = 'TERMS OF SERVICE';
+    title.textContent = this.t('tosTitle') || 'TERMS OF SERVICE';
 
     const placeholder = this.uiManager.createElement('div', 'w-20');
 
@@ -38,107 +45,129 @@ export class TermsOfServicePage {
 
     // Last Updated
     const lastUpdated = this.uiManager.createElement('p', 'text-sm text-gray-400');
-    lastUpdated.innerHTML = '<strong>Last Updated:</strong> February 3, 2026';
+    const labelUpdated = this.t('lastUpdatedLabel') || 'Last Updated:';
+    const dateUpdated = this.t('lastUpdatedDate') || 'February 3, 2026';
+    lastUpdated.innerHTML = `<strong>${labelUpdated}</strong> ${dateUpdated}`;
     content.appendChild(lastUpdated);
 
     // Section 1: Acceptance of Terms
-    this.addSection(content, '1. ACCEPTANCE OF TERMS',
-      'By accessing and using Transcendence, you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service. These Terms of Service apply to all users, including but not limited to users who are browsers, vendors, customers, merchants, and/ or contributors of content.'
+    this.addSection(content, 
+      this.t('tosSec1Title') || '1. ACCEPTANCE OF TERMS',
+      this.t('tosSec1Text') || 'By accessing and using Transcendence, you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service. These Terms of Service apply to all users, including but not limited to users who are browsers, vendors, customers, merchants, and/ or contributors of content.'
     );
 
     // Section 2: License
-    this.addSection(content, '2. LICENSE',
-      'Permission is granted to temporarily download one copy of the materials on Transcendence for personal, non-commercial viewing only. This is the grant of a license, not a transfer of title.'
+    this.addSection(content, 
+      this.t('tosSec2Title') || '2. LICENSE',
+      this.t('tosSec2Text') || 'Permission is granted to temporarily download one copy of the materials on Transcendence for personal, non-commercial viewing only. This is the grant of a license, not a transfer of title.'
     );
 
     // Section 3: Disclaimer
-    this.addSection(content, '3. DISCLAIMER',
-      'The materials on Transcendence are provided on an "as is" basis. We make no warranties, expressed or implied, and hereby disclaim and negate all other warranties.'
+    this.addSection(content, 
+      this.t('tosSec3Title') || '3. DISCLAIMER',
+      this.t('tosSec3Text') || 'The materials on Transcendence are provided on an "as is" basis. We make no warranties, expressed or implied, and hereby disclaim and negate all other warranties.'
     );
 
     // Section 4: Limitations
-    this.addSection(content, '4. LIMITATIONS',
-      'In no event shall Transcendence or its suppliers be liable for any damages arising out of the use or inability to use the materials on the service.'
+    this.addSection(content, 
+      this.t('tosSec4Title') || '4. LIMITATIONS',
+      this.t('tosSec4Text') || 'In no event shall Transcendence or its suppliers be liable for any damages arising out of the use or inability to use the materials on the service.'
     );
 
     // Section 5: Accuracy of Materials
-    this.addSection(content, '5. ACCURACY OF MATERIALS',
-      'The materials appearing on Transcendence could include technical, typographical, or photographic errors. We do not warrant that any of the materials are accurate, complete, or current.'
+    this.addSection(content, 
+      this.t('tosSec5Title') || '5. ACCURACY OF MATERIALS',
+      this.t('tosSec5Text') || 'The materials appearing on Transcendence could include technical, typographical, or photographic errors. We do not warrant that any of the materials are accurate, complete, or current.'
     );
 
     // Section 6: Modifications
-    this.addSection(content, '6. MODIFICATIONS',
-      'We may revise these Terms of Service at any time without notice. By using the service, you agree to be bound by the then-current version.'
+    this.addSection(content, 
+      this.t('tosSec6Title') || '6. MODIFICATIONS',
+      this.t('tosSec6Text') || 'We may revise these Terms of Service at any time without notice. By using the service, you agree to be bound by the then-current version.'
     );
 
     // Section 7: Governing Law
-    this.addSection(content, '7. GOVERNING LAW',
-      'These Terms shall be governed and construed in accordance with the laws of the jurisdiction in which the service is operated.'
+    this.addSection(content, 
+      this.t('tosSec7Title') || '7. GOVERNING LAW',
+      this.t('tosSec7Text') || 'These Terms shall be governed and construed in accordance with the laws of the jurisdiction in which the service is operated.'
     );
 
     // Section 8: Accounts
-    this.addSection(content, '8. ACCOUNTS',
-      'You are responsible for safeguarding your account and for all activities that occur under your account. You agree to provide accurate and complete information.'
+    this.addSection(content, 
+      this.t('tosSec8Title') || '8. ACCOUNTS',
+      this.t('tosSec8Text') || 'You are responsible for safeguarding your account and for all activities that occur under your account. You agree to provide accurate and complete information.'
     );
 
     // Section 9: User Conduct
-    this.addSection(content, '9. USER CONDUCT',
-      'You agree not to use the service for any unlawful purpose or to violate any applicable laws. Harassment, cheating, or abusive behavior is prohibited.'
+    this.addSection(content, 
+      this.t('tosSec9Title') || '9. USER CONDUCT',
+      this.t('tosSec9Text') || 'You agree not to use the service for any unlawful purpose or to violate any applicable laws. Harassment, cheating, or abusive behavior is prohibited.'
     );
 
     // Section 10: Gameplay Rules
-    this.addSection(content, '10. GAMEPLAY RULES',
-      'You agree to play fairly and not exploit bugs or cheats. We reserve the right to suspend or terminate accounts that violate gameplay rules.'
+    this.addSection(content, 
+      this.t('tosSec10Title') || '10. GAMEPLAY RULES',
+      this.t('tosSec10Text') || 'You agree to play fairly and not exploit bugs or cheats. We reserve the right to suspend or terminate accounts that violate gameplay rules.'
     );
 
     // Section 11: Intellectual Property
-    this.addSection(content, '11. INTELLECTUAL PROPERTY',
-      'The service and its original content, features, and functionality are owned by Transcendence and are protected by intellectual property laws.'
+    this.addSection(content, 
+      this.t('tosSec11Title') || '11. INTELLECTUAL PROPERTY',
+      this.t('tosSec11Text') || 'The service and its original content, features, and functionality are owned by Transcendence and are protected by intellectual property laws.'
     );
 
     // Section 12: Termination
-    this.addSection(content, '12. TERMINATION',
-      'We may terminate or suspend access to the service immediately, without prior notice, for any reason whatsoever, including without limitation if you breach the Terms.'
+    this.addSection(content, 
+      this.t('tosSec12Title') || '12. TERMINATION',
+      this.t('tosSec12Text') || 'We may terminate or suspend access to the service immediately, without prior notice, for any reason whatsoever, including without limitation if you breach the Terms.'
     );
 
     // Section 13: Warranty Disclaimer
-    this.addSection(content, '13. WARRANTY DISCLAIMER',
-      'Your use of the service is at your sole risk. The service is provided on an "AS IS" and "AS AVAILABLE" basis.'
+    this.addSection(content, 
+      this.t('tosSec13Title') || '13. WARRANTY DISCLAIMER',
+      this.t('tosSec13Text') || 'Your use of the service is at your sole risk. The service is provided on an "AS IS" and "AS AVAILABLE" basis.'
     );
 
     // Section 14: Limitation of Liability
-    this.addSection(content, '14. LIMITATION OF LIABILITY',
-      'In no event shall Transcendence, its directors, employees, partners, agents, suppliers, or affiliates be liable for any indirect, incidental, special, consequential or punitive damages.'
+    this.addSection(content, 
+      this.t('tosSec14Title') || '14. LIMITATION OF LIABILITY',
+      this.t('tosSec14Text') || 'In no event shall Transcendence, its directors, employees, partners, agents, suppliers, or affiliates be liable for any indirect, incidental, special, consequential or punitive damages.'
     );
 
     // Section 15: Third-Party Services
-    this.addSection(content, '15. THIRD-PARTY SERVICES',
-      'The service may contain links or access to third-party services that are not owned or controlled by Transcendence. We assume no responsibility for the content or practices of any third-party services.'
+    this.addSection(content, 
+      this.t('tosSec15Title') || '15. THIRD-PARTY SERVICES',
+      this.t('tosSec15Text') || 'The service may contain links or access to third-party services that are not owned or controlled by Transcendence. We assume no responsibility for the content or practices of any third-party services.'
     );
 
     // Section 16: Chat Communications
-    this.addSection(content, '16. CHAT COMMUNICATIONS',
-      'You are responsible for all content you post in chat. We may remove content that violates these Terms or community guidelines.'
+    this.addSection(content, 
+      this.t('tosSec16Title') || '16. CHAT COMMUNICATIONS',
+      this.t('tosSec16Text') || 'You are responsible for all content you post in chat. We may remove content that violates these Terms or community guidelines.'
     );
 
     // Section 17: Dispute Resolution
-    this.addSection(content, '17. DISPUTE RESOLUTION',
-      'Any disputes arising out of or relating to these Terms will be resolved through binding arbitration or courts of competent jurisdiction.'
+    this.addSection(content, 
+      this.t('tosSec17Title') || '17. DISPUTE RESOLUTION',
+      this.t('tosSec17Text') || 'Any disputes arising out of or relating to these Terms will be resolved through binding arbitration or courts of competent jurisdiction.'
     );
 
     // Section 18: Entire Agreement
-    this.addSection(content, '18. ENTIRE AGREEMENT',
-      'These Terms of Service, together with the Privacy Policy, constitute the entire agreement between you and Transcendence regarding your use of the service and supersede all prior agreements and understandings.'
+    this.addSection(content, 
+      this.t('tosSec18Title') || '18. ENTIRE AGREEMENT',
+      this.t('tosSec18Text') || 'These Terms of Service, together with the Privacy Policy, constitute the entire agreement between you and Transcendence regarding your use of the service and supersede all prior agreements and understandings.'
     );
 
     // Section 19: Changes to Terms
-    this.addSection(content, '19. CHANGES TO TERMS',
-      'We may update these Terms from time to time. We will notify you of any significant changes by posting the updated terms on our website and updating the "Last Updated" date.'
+    this.addSection(content, 
+      this.t('tosSec19Title') || '19. CHANGES TO TERMS',
+      this.t('tosSec19Text') || 'We may update these Terms from time to time. We will notify you of any significant changes by posting the updated terms on our website and updating the "Last Updated" date.'
     );
 
     // Section 20: Contact Us
-    this.addSection(content, '20. CONTACT US',
-      'If you have any questions about these Terms of Service, please contact us at:'
+    this.addSection(content, 
+      this.t('tosSec20Title') || '20. CONTACT US',
+      this.t('tosSec20Text') || 'If you have any questions about these Terms of Service, please contact us at:'
     );
 
     const contactInfo = this.uiManager.createElement('p', 'text-cyan-400 font-semibold');

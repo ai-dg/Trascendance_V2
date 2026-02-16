@@ -7,7 +7,6 @@ import type { AuthPage } from './AuthPage.js';
 import { UpdateProfilePage } from './UpdateProfilePage.js';
 import { Logger } from '../modules/Logger.js';
 
-
 export class SettingsPage {
   private static readonly SETTINGS_STORAGE_KEY = 'arcade_settings';
 
@@ -87,13 +86,13 @@ export class SettingsPage {
 
     // Header
     const header = this.uiManager.createElement('div', 'text-center mb-8');
-    const title = this.uiManager.createElement('h1', 'retro-title text-3xl mb-4', this.t('options'));
+    const title = this.uiManager.createElement('h1', 'retro-title text-3xl mb-4', this.t('options') || 'SETTINGS');
 
     header.appendChild(title);
 
     // Back Button
     const backButton = this.uiManager.createButton(
-      this.t('backtoMenu'),
+      this.t('backtoMenu') || 'BACK TO MENU',
       'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] mt-4 hover:text-black transition-all duration-200 flex items-center justify-center gap-2 mb-8 mx-auto',
       this.onBack
     );
@@ -103,18 +102,16 @@ export class SettingsPage {
     // Settings Grid
     const settingsGrid = this.uiManager.createElement('div', 'grid md:grid-cols-2 gap-8');
 
-
     // Game Settings
     const gameCard = this.createSettingsCard(
-      'GAMEPLAY',
+      this.t('gameplay') || 'GAMEPLAY',
       'gamepad',
       '#9d4edd',
       [
-        this.createSliderSetting('BALL SPEED', 'ballSpeed', 3, 12, ''),
-        this.createSliderSetting('PADDLE SPEED', 'paddleSpeed', 4, 15, '')
+        this.createSliderSetting(this.t('ballSpeed') || 'BALL SPEED', 'ballSpeed', 3, 12, ''),
+        this.createSliderSetting(this.t('paddleSpeed') || 'PADDLE SPEED', 'paddleSpeed', 4, 15, '')
       ]
     );
-
 
     // Update profile or sign in with language manager in both
     let userSettings: HTMLElement | undefined;
@@ -131,7 +128,7 @@ export class SettingsPage {
     // Reset Button
     const resetContainer = this.uiManager.createElement('div', 'text-center mt-8');
     const resetButton = this.uiManager.createButton(
-      this.t("resettoDefaults"),
+      this.t("resettoDefaults") || 'RESET TO DEFAULTS',
       'retro-button bg-transparent text-red-400 px-6 py-3 rounded border-2 border-red-400 hover:bg-red-400 hover:text-black transition-all duration-200',
       () => this.resetToDefaults()
     );
@@ -139,7 +136,7 @@ export class SettingsPage {
 
     // Save Notice
     const saveNotice = this.uiManager.createElement('div', 'text-center mt-6 retro-text text-xs opacity-40');
-    const noticeText = this.uiManager.createElement('p', '', this.t("settingsSaved"));
+    const noticeText = this.uiManager.createElement('p', '', this.t("settingsSaved") || 'SETTINGS ARE SAVED AUTOMATICALLY');
     saveNotice.appendChild(noticeText);
 
     content.appendChild(header);
@@ -220,15 +217,10 @@ export class SettingsPage {
   const subtitle = this.uiManager.createElement(
     "p",
     "retro-text text-center text-sm opacity-70",
-    this.t("guestMessage")
+    this.t("guestMessage") || "You are currently playing as a guest."
   );
 
-
-  
-
-  //card.appendChild(header);
   card.appendChild(subtitle);
-  //card.appendChild(buttonsContaEer);
   card.appendChild(this.createLanguageSelector(false));
 
   return card;
@@ -244,7 +236,7 @@ export class SettingsPage {
   const icon = this.uiManager.createIcon('user', 'w-6 h-6');
   icon.style.color = color;
   const title = this.uiManager.createElement('h3', 'retro-text text-lg');
-  title.textContent = this.t("user_settings");
+  title.textContent = this.t("user_settings") || "USER SETTINGS";
 
   header.appendChild(icon);
   header.appendChild(title);
@@ -253,7 +245,7 @@ export class SettingsPage {
   const buttonsContainer = this.uiManager.createElement('div', 'flex flex-col items-center gap-4');
 
   const button1 = this.uiManager.createButton(
-    this.t('update_profile'),
+    this.t('update_profile') || 'UPDATE PROFILE',
     'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200',
     () => {
       console.log('UPDATE PROFILE clicked');
@@ -270,7 +262,7 @@ export class SettingsPage {
     });
 
   const button2 = this.uiManager.createButton(
-    this.t('blocked_users') || "Blocked Users",
+    this.t('blocked_users') || "BLOCKED USERS",
     'retro-button bg-transparent text-[#ff1493] px-4 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200',
     () => {
       this.isViewBlockedUsers = true;
@@ -302,7 +294,7 @@ export class SettingsPage {
     if (currentLangIndex === -1) currentLangIndex = 0;
 
     const wrapper = this.uiManager.createElement("div", "flex items-center gap-2 mt-6 cursor-pointer");
-    const label = this.uiManager.createElement("span", "retro-text text-[#ff1493]", this.t("language"));
+    const label = this.uiManager.createElement("span", "retro-text text-[#ff1493]", this.t("language") || "LANGUAGE:");
     const flag = this.uiManager.createElement("span", "text-2xl", languages[currentLangIndex].flag);
 
     flag.addEventListener("click", async () => {
@@ -343,7 +335,7 @@ export class SettingsPage {
           header.appendChild(title);
 
           const backButton = this.uiManager.createButton(
-            this.t('back'),
+            this.t('back') || 'RETURN',
             'retro-button bg-transparent text-[#00ffff] px-6 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 mb-6',
             () => {
               this.isViewBlockedUsers = false;
@@ -353,7 +345,9 @@ export class SettingsPage {
 
           const listCard = this.uiManager.createElement('div', 'w-full bg-black/40 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-6 min-h-[300px]');
           const listContainer = this.uiManager.createElement('div', 'flex flex-col gap-3 max-h-[50vh] overflow-y-auto pr-2');
-          listContainer.innerHTML = '<div class="text-[#00ffff] text-center animate-pulse mt-10">Loading...</div>';
+          
+          const loadingText = this.t('loading') || 'Loading...';
+          listContainer.innerHTML = `<div class="text-[#00ffff] text-center animate-pulse mt-10">${loadingText}</div>`;
 
           listCard.appendChild(listContainer);
           content.appendChild(header);
@@ -365,6 +359,8 @@ export class SettingsPage {
   }
 
   private async fetchBlockedUsers(listContainer: HTMLElement): Promise<void> {
+    const errorText = this.t('failedToLoadList') || 'Failed to load list.';
+
     try {
       const res = await fetch(this.routerManager.getUrl('/live-chat/blocked-users'), {
         method: 'GET',
@@ -373,7 +369,7 @@ export class SettingsPage {
 
       if (!res.ok) {
         console.info('[Settings]', 'Fetch blocked users failed:', res.status);
-        listContainer.innerHTML = '<p class="text-red-500 text-center">Failed to load list.</p>';
+        listContainer.innerHTML = `<p class="text-red-500 text-center">${errorText}</p>`;
         return;
       }
 
@@ -392,7 +388,7 @@ export class SettingsPage {
 
     } catch (err) {
       Logger.info('[Settings]', err);
-      listContainer.innerHTML = '<p class="text-red-500 text-center">Failed to load list.</p>';
+      listContainer.innerHTML = `<p class="text-red-500 text-center">${errorText}</p>`;
     }
   }
 
@@ -416,7 +412,7 @@ export class SettingsPage {
     nameInfo.appendChild(name);
 
     const unblockBtn = this.uiManager.createButton(
-      'UNBLOCK',
+      this.t('unblock') || 'UNBLOCK',
       'text-xs bg-red-500/20 text-red-400 border border-red-500 px-3 py-1 rounded hover:bg-red-500 hover:text-black transition-colors',
       async () => {
         const btn = unblockBtn as HTMLButtonElement;
@@ -455,4 +451,3 @@ export class SettingsPage {
     }
   }
 }
-

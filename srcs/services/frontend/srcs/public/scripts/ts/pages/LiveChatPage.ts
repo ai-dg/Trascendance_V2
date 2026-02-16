@@ -2,7 +2,6 @@ import { UIManager } from '../modules/UIManager.js';
 import type { User } from '../modules/TypesManager.js';
 import type { LanguageManager } from '../modules/LangManager.js';
 import type { RouterManager } from '../modules/RouterManager.js';
-import type { Socket } from "socket.io-client";
 import type { WebsocketManager } from '../modules/WebsocketManager.js';
 import { SocialManager } from '../modules/SocialManager.js';
 import { Logger } from '../modules/Logger.js';
@@ -53,7 +52,7 @@ export class LiveChatPage {
 
         // Header
         const header = this.uiManager.createElement('div', 'text-center mb-12');
-        const title = this.uiManager.createElement('h1', 'retro-title mb-4', 'LIVE CHAT');
+        const title = this.uiManager.createElement('h1', 'retro-title mb-4', this.t('liveChat') || 'LIVE CHAT');
         header.appendChild(title);
         container.appendChild(header);
 
@@ -70,6 +69,7 @@ export class LiveChatPage {
                 this.uiManager,
                 this.routerManager,
                 this.wsManager,
+                this.languageManager,
                 this.currentUser,
                 () => this.currentSelectedFriend ? this.currentSelectedFriend.nbrId : null,
                 (friendId, username, avatar) => this.handleFriendSelection(friendId, username, avatar),
@@ -101,7 +101,7 @@ export class LiveChatPage {
         const backDiv = this.uiManager.createElement('div', 'flex justify-center items-center h-screen');
 
         const backButton = this.uiManager.createButton(
-            this.t('BACK TO MENU'),
+            this.t('backToMenu') || 'BACK TO MENU',
             'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 mt-4',
             () => {
                 console.log('Back to menu clicked');
@@ -157,15 +157,15 @@ export class LiveChatPage {
         
         const inviteBtn = this.uiManager.createElement('button', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
         inviteBtn.id = 'invite-friend-btn';
-        inviteBtn.textContent = "INVITE";
+        inviteBtn.textContent = this.t('invite') || "INVITE";
         inviteBtn.className += ' hidden';
         const deleteBtn = this.uiManager.createElement('button', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
         deleteBtn.id = 'delete-friend-btn';
-        deleteBtn.textContent = "DELETE";
+        deleteBtn.textContent = this.t('delete') || "DELETE";
         deleteBtn.className += ' hidden';
         const blockBtn = this.uiManager.createElement('button', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#ff1493] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
         blockBtn.id = 'block-friend-btn';
-        blockBtn.textContent = "BLOCK";
+        blockBtn.textContent = this.t('block') || "BLOCK";
         blockBtn.className += ' hidden';
 
         btnDiv.appendChild(inviteBtn);
@@ -189,7 +189,7 @@ export class LiveChatPage {
         
         // Title
         const messagesTitle = this.uiManager.createElement('div', 'text-[#00ffff] text-sm mb-2 opacity-60');
-        messagesTitle.textContent = 'Messages';
+        messagesTitle.textContent = this.t('messages') || 'Messages';
 
         // Field of messages
 
@@ -204,7 +204,7 @@ export class LiveChatPage {
         messagesDiv.appendChild(messagesContainer);
         
         const messagesSelectFriendText = this.uiManager.createElement('div', 'text-3xl text-[#ff1493] text-center retro-text');
-        messagesSelectFriendText.textContent = 'SELECT A FRIEND TO CHAT';
+        messagesSelectFriendText.textContent = this.t('selectFriendToChat') || 'SELECT A FRIEND TO CHAT';
         messagesSelectFriendText.style.marginTop = '200px';
         messagesContainer.appendChild(messagesSelectFriendText);
         messagesSelectFriendText.id = 'messages-select-friend-text';
@@ -215,7 +215,7 @@ export class LiveChatPage {
         inputField.id = 'input-field';
         inputField.className += ' hidden';
         const sendButton = this.uiManager.createElement('button', 'flex-1 bg-black/60 backdrop-blur-sm border-2 border-[#00ffff] rounded-lg p-4 overflow-y-auto text-[#00ffff]');
-        sendButton.textContent = 'SEND';
+        sendButton.textContent = this.t('send') || 'SEND';
         sendButton.className += ' hidden';
         sendButton.id = 'send-button';
         if (this.currentSelectedFriend)
@@ -291,7 +291,7 @@ export class LiveChatPage {
         if (!typingDiv) {
                 typingDiv = this.uiManager.createElement('div', 'text-xs text-[#00ffff] ml-4 mb-2 animate-pulse italic');
                 typingDiv.id = 'typing-indicator';
-                typingDiv.textContent = 'Typing...';
+                typingDiv.textContent = this.t('typing') || 'Typing...';
                 messagesContainer.appendChild(typingDiv);
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }
@@ -479,7 +479,7 @@ export class LiveChatPage {
         const friendId = this.currentSelectedFriend.nbrId;
         if (friendId == null)
             return;
-        const message = 'You have been invited to a game by ' + (this.currentUser?.username ?? 'Someone');
+        const message = (this.t('invitedBy') || 'You have been invited to a game by ') + (this.currentUser?.username ?? (this.t('someone') || 'Someone'));
         const toUsername = this.currentSelectedFriend.username ?? undefined;
         if (typeof (window as any).DEBUG_INVITE !== 'undefined' && (window as any).DEBUG_INVITE) {
             console.log('[INVITE_SEND]', { toFriendId: friendId, message });

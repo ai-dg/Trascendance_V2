@@ -51,13 +51,13 @@ export class App {
         this.checkManager = new CheckManager(this.languageManager);
         // Initialize pages
         this.authPage = new AuthPage(this.uiManager, this.authManager, this.checkManager, this.languageManager, this.handleLogin.bind(this), this.handleRegister.bind(this), this.appHandleForgotPassword.bind(this), this.handleChangePassword.bind(this), this.handleShowGuestPage.bind(this), this.handleError.bind(this));
-        this.menuPage = new MenuPage(this.uiManager, this.websocketManager, this.routerManager, this.handlePlayGameAI.bind(this), this.handlePlayGameLocal.bind(this), this.handlePlayGameOnline.bind(this), this.handleChatWithFriends.bind(this), this.handleSettings.bind(this), this.handleLogout.bind(this), this.handleShowPrivacyPolicy.bind(this), this.handleShowTermsOfService.bind(this));
-        this.privacyPolicyPage = new PrivacyPolicyPage(this.uiManager, this.handleBackToMenu.bind(this));
-        this.termsOfServicePage = new TermsOfServicePage(this.uiManager, this.handleBackToMenu.bind(this));
-        this.gamePageAI = new AIPage(this.uiManager, this.handleBackToMenu.bind(this), this.currentUser);
-        this.gamePageLocal = new GamePageLocal(this.uiManager, this.handleBackToMenu.bind(this));
-        this.gamePageOnline = new RemotePage(this.uiManager, this.handleBackToMenu.bind(this), this.currentUser);
-        this.guestPage = new GuestPage(this.uiManager, this.handleBackToAuth.bind(this), this.handleConnectAsGuest.bind(this));
+        this.menuPage = new MenuPage(this.uiManager, this.websocketManager, this.routerManager, this.languageManager, this.handlePlayGameAI.bind(this), this.handlePlayGameLocal.bind(this), this.handlePlayGameOnline.bind(this), this.handleChatWithFriends.bind(this), this.handleSettings.bind(this), this.handleLogout.bind(this), this.handleShowPrivacyPolicy.bind(this), this.handleShowTermsOfService.bind(this));
+        this.privacyPolicyPage = new PrivacyPolicyPage(this.uiManager, this.languageManager, this.handleBackToMenu.bind(this));
+        this.termsOfServicePage = new TermsOfServicePage(this.uiManager, this.languageManager, this.handleBackToMenu.bind(this));
+        this.gamePageAI = new AIPage(this.uiManager, this.languageManager, this.handleBackToMenu.bind(this), this.currentUser);
+        this.gamePageLocal = new GamePageLocal(this.uiManager, this.languageManager, this.handleBackToMenu.bind(this));
+        this.gamePageOnline = new RemotePage(this.uiManager, this.languageManager, this.handleBackToMenu.bind(this), this.currentUser);
+        this.guestPage = new GuestPage(this.uiManager, this.languageManager, this.handleBackToAuth.bind(this), this.handleConnectAsGuest.bind(this));
         this.checkOtpPage = new CheckOtp(this.uiManager, this.languageManager, this.handleOtpVerificationComplete.bind(this), this.handleNewChangePassword.bind(this), this.handleBackToUpdateProfile.bind(this), this.handleBackToAuth.bind(this));
         this.updateProfilePage = new UpdateProfilePage(this.uiManager, this.routerManager, this.authManager, this.languageManager, this.handleSettings.bind(this), this.handleBackToUpdateProfile.bind(this), this.currentUser);
         if (this.currentUser)

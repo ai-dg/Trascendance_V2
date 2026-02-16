@@ -1,4 +1,4 @@
-FROM debian:bookworm
+FROM node:20-bullseye
 
 RUN apt update && apt upgrade -y \
 	&& apt install -y curl gnupg build-essential python3 make g++ \

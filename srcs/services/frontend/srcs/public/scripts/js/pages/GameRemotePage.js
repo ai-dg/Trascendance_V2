@@ -2,7 +2,7 @@ import { GameManager } from '../modules/GameManager.js';
 import { gameSocket } from '../app.js';
 import { Logger } from '../modules/Logger.js';
 export class RemotePage {
-    constructor(uiManager, onBack, user) {
+    constructor(uiManager, languageManager, onBack, user) {
         this.gameManager = null;
         this.canvas = null;
         this.user = null;
@@ -14,8 +14,18 @@ export class RemotePage {
         this.player2LabelEl = null;
         this._waitingForInviteDeclinedListener = null;
         this.uiManager = uiManager;
+        this.languageManager = languageManager;
         this.onBack = onBack;
         this.user = user ?? null;
+    }
+    t(key, replacements) {
+        let text = this.languageManager.t(key) || key;
+        if (replacements) {
+            for (const [k, v] of Object.entries(replacements)) {
+                text = text.replace(`{${k}}`, v);
+            }
+        }
+        return text;
     }
     ///////////// DESIGN & RENDERING /////////////
     render(user, routeData) {
@@ -46,14 +56,14 @@ export class RemotePage {
         // Score Display
         const scoreDisplay = this.uiManager.createElement('div', 'flex gap-16 items-center retro-text');
         const player1Score = this.uiManager.createElement('div', 'text-center');
-        const player1Label = this.uiManager.createElement('div', 'text-lg opacity-60', 'PLAYER 1');
-        player1Label.textContent = this.user ? this.user.username : 'PLAYER 1';
+        const player1Label = this.uiManager.createElement('div', 'text-lg opacity-60', this.t('player1') || 'PLAYER 1');
+        player1Label.textContent = this.user ? this.user.username : (this.t('player1') || 'PLAYER 1');
         const player1Value = this.uiManager.createElement('div', 'text-4xl tracking-wider', '00');
         player1Score.appendChild(player1Label);
         player1Score.appendChild(player1Value);
-        const vsLabel = this.uiManager.createElement('div', 'text-2xl opacity-40', 'VS');
+        const vsLabel = this.uiManager.createElement('div', 'text-2xl opacity-40', this.t('vs') || 'VS');
         const player2Score = this.uiManager.createElement('div', 'text-center');
-        const player2Label = this.uiManager.createElement('div', 'text-lg opacity-60', '???');
+        const player2Label = this.uiManager.createElement('div', 'text-lg opacity-60', this.t('unknownPlayer') || '???');
         const player2Value = this.uiManager.createElement('div', 'text-4xl tracking-wider', '00');
         player2Score.appendChild(player2Label);
         player2Score.appendChild(player2Value);
@@ -72,8 +82,8 @@ export class RemotePage {
         const startOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg');
         startOverlay.setAttribute('data-overlay', 'start-game');
         const startContent = this.uiManager.createElement('div', 'text-center retro-text');
-        const startTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'CHOOSE YOUR OPPONENT');
-        const startButtonRandom = this.uiManager.createButton('PLAY AGAINST RANDOM PLAYER', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.playAgainstRandomPlayer());
+        const startTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', this.t('chooseOpponent') || 'CHOOSE YOUR OPPONENT');
+        const startButtonRandom = this.uiManager.createButton(this.t('playAgainstRandom') || 'PLAY AGAINST RANDOM PLAYER', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.playAgainstRandomPlayer());
         startContent.appendChild(startTitle);
         startContent.appendChild(startButtonRandom);
         startContent.appendChild(this.uiManager.createElement('div', 'h-4'));
@@ -83,7 +93,7 @@ export class RemotePage {
         const pauseOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg hidden');
         pauseOverlay.setAttribute('data-overlay', 'pause-game');
         const pauseContent = this.uiManager.createElement('div', 'text-center retro-text');
-        const pauseTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'PAUSED');
+        const pauseTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', this.t('paused') || 'PAUSED');
         pauseContent.appendChild(pauseTitle);
         pauseOverlay.appendChild(pauseContent);
         canvasContainer.appendChild(pauseOverlay);
@@ -91,9 +101,9 @@ export class RemotePage {
         const gameOverOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg hidden');
         gameOverOverlay.setAttribute('data-overlay', 'game-over');
         const gameOverContent = this.uiManager.createElement('div', 'text-center retro-text');
-        const gameOverTitle = this.uiManager.createElement('div', 'text-4xl mb-4 text-[#ff1493]', 'GAME OVER');
+        const gameOverTitle = this.uiManager.createElement('div', 'text-4xl mb-4 text-[#ff1493]', this.t('gameOver') || 'GAME OVER');
         const gameOverWinner = this.uiManager.createElement('div', 'text-2xl mb-6 text-[#00ffff]', '');
-        const playAgainButton = this.uiManager.createButton('PLAY AGAIN', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.requestNewGame());
+        const playAgainButton = this.uiManager.createButton(this.t('playAgain') || 'PLAY AGAIN', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.requestNewGame());
         gameOverContent.appendChild(gameOverTitle);
         gameOverContent.appendChild(gameOverWinner);
         gameOverContent.appendChild(playAgainButton);
@@ -102,24 +112,24 @@ export class RemotePage {
         // Controls
         const controls = this.uiManager.createElement('div', 'flex gap-12 retro-text text-sm opacity-60');
         const player1Controls = this.uiManager.createElement('div', 'text-center');
-        const player1Title = this.uiManager.createElement('div', 'mb-2', 'COMMANDS');
-        const player1Up = this.uiManager.createElement('div', '', 'W - UP');
-        const player1Down = this.uiManager.createElement('div', '', 'S - DOWN');
+        const player1Title = this.uiManager.createElement('div', 'mb-2', this.t('commands') || 'COMMANDS');
+        const player1Up = this.uiManager.createElement('div', '', this.t('wUp') || 'W - UP');
+        const player1Down = this.uiManager.createElement('div', '', this.t('sDown') || 'S - DOWN');
         player1Controls.appendChild(player1Title);
         player1Controls.appendChild(player1Up);
         player1Controls.appendChild(player1Down);
         controls.appendChild(player1Controls);
         // Buttons Pause & Reset
         const gameControls = this.uiManager.createElement('div', 'flex gap-4');
-        const pauseButton = this.uiManager.createButton('PAUSE / RESUME', 'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200', () => this.pauseGame());
+        const pauseButton = this.uiManager.createButton(this.t('pauseResume') || 'PAUSE / RESUME', 'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200', () => this.pauseGame());
         // const resetButton = this.uiManager.createButton(
-        // 	'RESTART',
-        // 	'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200',
-        // 	() => this.resetGame()
+        //  'RESTART',
+        //  'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200',
+        //  () => this.resetGame()
         // );
         // Back to Menu Button
         const backButtonContainer = this.uiManager.createElement('div', 'text-center mb-8');
-        const backButton = this.uiManager.createButton('BACK TO MENU', 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mx-auto mt-4', () => this.backToMenu());
+        const backButton = this.uiManager.createButton(this.t('backToMenu') || 'BACK TO MENU', 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mx-auto mt-4', () => this.backToMenu());
         const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
         backButton.appendChild(backIcon);
         backButtonContainer.appendChild(backButton);
@@ -160,7 +170,7 @@ export class RemotePage {
         if (startOverlay) {
             startOverlay.innerHTML = '';
             const content = this.uiManager.createElement('div', 'text-center retro-text');
-            content.appendChild(this.uiManager.createElement('div', 'text-lg text-[#00ffff]', 'Joining game...'));
+            content.appendChild(this.uiManager.createElement('div', 'text-lg text-[#00ffff]', this.t('joiningGame') || 'Joining game...'));
             startOverlay.appendChild(content);
             startOverlay.classList.remove('hidden');
         }
@@ -188,16 +198,17 @@ export class RemotePage {
         if (startOverlay) {
             startOverlay.innerHTML = '';
             const content = this.uiManager.createElement('div', 'text-center retro-text');
-            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#00ffff]', 'ONGOING GAME FOUND');
+            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#00ffff]', this.t('ongoingGameFound') || 'ONGOING GAME FOUND');
             // Show current score
+            const scoreLabel = this.t('scoreLabel') || 'Score:';
             const scoreText = data.gameState ?
-                `Score: ${data.gameState.player1Score} - ${data.gameState.player2Score}` :
+                `${scoreLabel} ${data.gameState.player1Score} - ${data.gameState.player2Score}` :
                 '';
             const scoreDisplay = this.uiManager.createElement('div', 'text-lg mb-2 text-[#ff1493]', scoreText);
-            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'You have an ongoing game. Would you like to reconnect?');
+            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || this.t('reconnectPrompt') || 'You have an ongoing game. Would you like to reconnect?');
             const buttonsContainer = this.uiManager.createElement('div', 'flex flex-col gap-4 items-center');
-            const reconnectButton = this.uiManager.createButton('RECONNECT', 'retro-button bg-[#00ffff] text-black px-8 py-3 rounded border-2 border-[#00ffff] hover:bg-transparent hover:text-[#00ffff] transition-all duration-200', () => this.handleReconnect(data.gameUUID));
-            const newGameButton = this.uiManager.createButton('START NEW GAME', 'retro-button bg-transparent text-[#ff1493] px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200', () => this.rejectReconnection(data.gameUUID));
+            const reconnectButton = this.uiManager.createButton(this.t('reconnect') || 'RECONNECT', 'retro-button bg-[#00ffff] text-black px-8 py-3 rounded border-2 border-[#00ffff] hover:bg-transparent hover:text-[#00ffff] transition-all duration-200', () => this.handleReconnect(data.gameUUID));
+            const newGameButton = this.uiManager.createButton(this.t('startNewGame') || 'START NEW GAME', 'retro-button bg-transparent text-[#ff1493] px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200', () => this.rejectReconnection(data.gameUUID));
             buttonsContainer.appendChild(reconnectButton);
             buttonsContainer.appendChild(newGameButton);
             content.appendChild(title);
@@ -230,7 +241,7 @@ export class RemotePage {
                 console.log("[RemotePage] Reconnection result:", result);
                 console.log("[RemotePage] opponentUsername:", result.opponentUsername, "opponentAvatar:", result.opponentAvatar);
                 if (result.opponentUsername || result.opponentAvatar) {
-                    const opponentUsername = result.opponentUsername || 'Player 2';
+                    const opponentUsername = result.opponentUsername || (this.t('player2') || 'Player 2');
                     const opponentAvatarSrc = this.resolveAvatarSrc(result.opponentAvatar || null);
                     console.log("[RemotePage] Setting opponent display - username:", opponentUsername, "avatar:", opponentAvatarSrc);
                     console.log("[RemotePage] player2LabelEl exists:", !!this.player2LabelEl, "avatarPlayer2ImgEl exists:", !!this.avatarPlayer2ImgEl);
@@ -257,13 +268,14 @@ export class RemotePage {
                 if (startOverlay) {
                     startOverlay.innerHTML = '';
                     const content = this.uiManager.createElement('div', 'text-center retro-text');
-                    const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#00ffff]', 'RECONNECTED!');
+                    const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#00ffff]', this.t('reconnected') || 'RECONNECTED!');
+                    const scoreLabel = this.t('scoreLabel') || 'Score:';
                     const scoreText = result.gameState ?
-                        `Score: ${result.gameState.player1Score} - ${result.gameState.player2Score}` :
+                        `${scoreLabel} ${result.gameState.player1Score} - ${result.gameState.player2Score}` :
                         '';
                     const scoreDisplay = this.uiManager.createElement('div', 'text-lg mb-2 text-[#ff1493]', scoreText);
-                    const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', 'Both players click READY to resume the game.');
-                    const readyButton = this.uiManager.createButton('READY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
+                    const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', this.t('clickReadyToResume') || 'Both players click READY to resume the game.');
+                    const readyButton = this.uiManager.createButton(this.t('ready') || 'READY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
                     content.appendChild(title);
                     if (scoreText)
                         content.appendChild(scoreDisplay);
@@ -280,9 +292,9 @@ export class RemotePage {
                 if (startOverlay) {
                     startOverlay.innerHTML = '';
                     const content = this.uiManager.createElement('div', 'text-center retro-text');
-                    const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'RECONNECTION FAILED');
-                    const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', result.message || 'Could not reconnect to the game.');
-                    const backButton = this.uiManager.createButton('BACK TO LOBBY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.requestNewGame());
+                    const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', this.t('reconnectionFailed') || 'RECONNECTION FAILED');
+                    const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', result.message || this.t('couldNotReconnect') || 'Could not reconnect to the game.');
+                    const backButton = this.uiManager.createButton(this.t('backToLobby') || 'BACK TO LOBBY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.requestNewGame());
                     content.appendChild(title);
                     content.appendChild(message);
                     content.appendChild(backButton);
@@ -314,9 +326,10 @@ export class RemotePage {
             return;
         startOverlay.innerHTML = '';
         const content = this.uiManager.createElement('div', 'text-center retro-text');
-        const title = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'WAITING FOR OPPONENT');
-        const subtitle = this.uiManager.createElement('div', 'text-lg mb-6 text-[#00ffff]', username ? `Waiting for ${username} to accept...` : 'Waiting for opponent to accept...');
-        const cancelBtn = this.uiManager.createButton('CANCEL', 'retro-button bg-transparent text-[#ff1493] px-6 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200', () => {
+        const title = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', this.t('waitingForOpponent') || 'WAITING FOR OPPONENT');
+        const subtitleText = username ? this.t('waitingForUserAccept', { username }) : this.t('waitingForAccept') || 'Waiting for opponent to accept...';
+        const subtitle = this.uiManager.createElement('div', 'text-lg mb-6 text-[#00ffff]', subtitleText);
+        const cancelBtn = this.uiManager.createButton(this.t('cancel') || 'CANCEL', 'retro-button bg-transparent text-[#ff1493] px-6 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200', () => {
             this.clearWaitingForInviteListener();
             this.requestNewGame();
         });
@@ -340,9 +353,9 @@ export class RemotePage {
             return;
         startOverlay.innerHTML = '';
         const content = this.uiManager.createElement('div', 'text-center retro-text');
-        const title = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff6b6b]', 'INVITE DECLINED');
-        const subtitle = this.uiManager.createElement('div', 'text-lg mb-6 text-white', 'Your invite was declined.');
-        const randomBtn = this.uiManager.createButton('PLAY AGAINST RANDOM PLAYER', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.playAgainstRandomPlayer());
+        const title = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff6b6b]', this.t('inviteDeclinedTitle') || 'INVITE DECLINED');
+        const subtitle = this.uiManager.createElement('div', 'text-lg mb-6 text-white', this.t('inviteDeclinedMsg') || 'Your invite was declined.');
+        const randomBtn = this.uiManager.createButton(this.t('playAgainstRandom') || 'PLAY AGAINST RANDOM PLAYER', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.playAgainstRandomPlayer());
         content.appendChild(title);
         content.appendChild(subtitle);
         content.appendChild(randomBtn);
@@ -375,8 +388,8 @@ export class RemotePage {
             // Restore original lobby content (may have been replaced by error/disconnect screens)
             startOverlay.innerHTML = '';
             const startContent = this.uiManager.createElement('div', 'text-center retro-text');
-            const startTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'CHOOSE YOUR OPPONENT');
-            const startButtonRandom = this.uiManager.createButton('PLAY AGAINST RANDOM PLAYER', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.playAgainstRandomPlayer());
+            const startTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', this.t('chooseOpponent') || 'CHOOSE YOUR OPPONENT');
+            const startButtonRandom = this.uiManager.createButton(this.t('playAgainstRandom') || 'PLAY AGAINST RANDOM PLAYER', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.playAgainstRandomPlayer());
             startContent.appendChild(startTitle);
             startContent.appendChild(startButtonRandom);
             startOverlay.appendChild(startContent);
@@ -480,7 +493,7 @@ export class RemotePage {
         this.removeWaitingScreen();
         // Update avatars and usernames (server sends yourAvatar/yourUsername to both players so we show our own avatar even if this.user wasn't set)
         const myUsername = data?.yourUsername ?? this.user?.username ?? 'Guest';
-        const opponentUsername = data?.opponentUsername ?? 'Player 2';
+        const opponentUsername = data?.opponentUsername ?? (this.t('player2') || 'Player 2');
         const myAvatarSrc = this.resolveAvatarSrc(data?.yourAvatar ?? this.user?.avatar ?? null);
         const opponentAvatarSrc = this.resolveAvatarSrc(data?.opponentAvatar ?? null);
         if (this.player1LabelEl)
@@ -497,9 +510,9 @@ export class RemotePage {
             // Change the overlay content to show "Opponent found! Click READY"
             startOverlay.innerHTML = '';
             const content = this.uiManager.createElement('div', 'text-center retro-text');
-            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#00ffff]', 'OPPONENT FOUND!');
-            const subtitle = this.uiManager.createElement('div', 'text-lg mb-6 text-[#ff1493]', `Playing against: ${opponentUsername}`);
-            const readyButton = this.uiManager.createButton('READY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
+            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#00ffff]', this.t('opponentFound') || 'OPPONENT FOUND!');
+            const subtitle = this.uiManager.createElement('div', 'text-lg mb-6 text-[#ff1493]', this.t('playingAgainst', { username: opponentUsername }) || `Playing against: ${opponentUsername}`);
+            const readyButton = this.uiManager.createButton(this.t('ready') || 'READY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
             content.appendChild(title);
             content.appendChild(subtitle);
             content.appendChild(readyButton);
@@ -535,21 +548,23 @@ export class RemotePage {
         if (startOverlay) {
             startOverlay.innerHTML = '';
             const content = this.uiManager.createElement('div', 'text-center retro-text');
-            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'OPPONENT DISCONNECTED');
+            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', this.t('opponentDisconnected') || 'OPPONENT DISCONNECTED');
             // Show current score if available
+            const scoreLabel = this.t('scoreLabel') || 'Score:';
             const scoreText = data.gameState ?
-                `Current score: ${data.gameState.player1Score} - ${data.gameState.player2Score}` :
+                `${scoreLabel} ${data.gameState.player1Score} - ${data.gameState.player2Score}` :
                 '';
             const scoreDisplay = this.uiManager.createElement('div', 'text-lg mb-2 text-[#00ffff]', scoreText);
-            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.waitingForReconnection ?
-                'Your opponent has disconnected. You can wait for them to reconnect or leave the game.' :
-                data.message || 'Your opponent has left the game.');
+            const messageText = data.waitingForReconnection ?
+                (this.t('waitForReconnectMsg') || 'Your opponent has disconnected. You can wait for them to reconnect or leave the game.') :
+                (data.message || this.t('opponentLeft') || 'Your opponent has left the game.');
+            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', messageText);
             const buttonsContainer = this.uiManager.createElement('div', 'flex flex-col gap-4 items-center');
             if (data.waitingForReconnection) {
-                const waitMessage = this.uiManager.createElement('div', 'text-sm mb-4 text-[#9d4edd]', 'Waiting for opponent to reconnect... (2 minute timeout)');
+                const waitMessage = this.uiManager.createElement('div', 'text-sm mb-4 text-[#9d4edd]', this.t('waitingReconnectTimeout') || 'Waiting for opponent to reconnect... (2 minute timeout)');
                 content.appendChild(waitMessage);
             }
-            const leaveButton = this.uiManager.createButton('LEAVE GAME', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.backToLobby());
+            const leaveButton = this.uiManager.createButton(this.t('leaveGame') || 'LEAVE GAME', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.backToLobby());
             buttonsContainer.appendChild(leaveButton);
             content.appendChild(title);
             if (scoreText)
@@ -571,7 +586,7 @@ export class RemotePage {
         console.log("[RemotePage] Handling opponent reconnect", data);
         // Update opponent display with their info
         if (data.opponentUsername || data.opponentAvatar) {
-            const opponentUsername = data.opponentUsername || 'Player 2';
+            const opponentUsername = data.opponentUsername || (this.t('player2') || 'Player 2');
             const opponentAvatarSrc = this.resolveAvatarSrc(data.opponentAvatar || null);
             // Update opponent info (player 2 is always on the right side visually)
             if (this.player2LabelEl)
@@ -585,14 +600,15 @@ export class RemotePage {
         if (startOverlay) {
             startOverlay.innerHTML = '';
             const content = this.uiManager.createElement('div', 'text-center retro-text');
-            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#00ffff]', 'OPPONENT RECONNECTED!');
+            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#00ffff]', this.t('reconnected') || 'OPPONENT RECONNECTED!');
             // Show current score
+            const scoreLabel = this.t('scoreLabel') || 'Score:';
             const scoreText = data.gameState ?
-                `Score: ${data.gameState.player1Score} - ${data.gameState.player2Score}` :
+                `${scoreLabel} ${data.gameState.player1Score} - ${data.gameState.player2Score}` :
                 '';
             const scoreDisplay = this.uiManager.createElement('div', 'text-lg mb-2 text-[#ff1493]', scoreText);
-            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', 'Both players click READY to resume the game.');
-            const readyButton = this.uiManager.createButton('READY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
+            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', this.t('clickReadyToResume') || 'Both players click READY to resume the game.');
+            const readyButton = this.uiManager.createButton(this.t('ready') || 'READY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.setReady());
             content.appendChild(title);
             if (scoreText)
                 content.appendChild(scoreDisplay);
@@ -620,9 +636,9 @@ export class RemotePage {
         if (startOverlay) {
             startOverlay.innerHTML = '';
             const content = this.uiManager.createElement('div', 'text-center retro-text');
-            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'RECONNECTION TIMEOUT');
-            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'Opponent did not reconnect in time. The game has ended.');
-            const backButton = this.uiManager.createButton('BACK TO LOBBY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.backToLobby());
+            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', this.t('reconnectionTimeout') || 'RECONNECTION TIMEOUT');
+            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || this.t('opponentTimeoutMsg') || 'Opponent did not reconnect in time. The game has ended.');
+            const backButton = this.uiManager.createButton(this.t('backToLobby') || 'BACK TO LOBBY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.backToLobby());
             content.appendChild(title);
             content.appendChild(message);
             content.appendChild(backButton);
@@ -645,9 +661,9 @@ export class RemotePage {
         if (startOverlay) {
             startOverlay.innerHTML = '';
             const content = this.uiManager.createElement('div', 'text-center retro-text');
-            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'OPPONENT LEFT');
-            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'Your opponent has started a new game. This game has been ended.');
-            const backButton = this.uiManager.createButton('BACK TO LOBBY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.backToLobby());
+            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', this.t('opponentAbandoned') || 'OPPONENT LEFT');
+            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || this.t('opponentStartedNewGameMsg') || 'Your opponent has started a new game. This game has been ended.');
+            const backButton = this.uiManager.createButton(this.t('backToLobby') || 'BACK TO LOBBY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.backToLobby());
             content.appendChild(title);
             content.appendChild(message);
             content.appendChild(backButton);
@@ -673,9 +689,9 @@ export class RemotePage {
         if (startOverlay) {
             startOverlay.innerHTML = '';
             const content = this.uiManager.createElement('div', 'text-center retro-text');
-            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', 'MATCHMAKING ERROR');
-            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || 'A problem occurred while searching for an opponent.');
-            const backButton = this.uiManager.createButton('BACK TO LOBBY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.backToLobby());
+            const title = this.uiManager.createElement('div', 'text-3xl mb-4 text-[#ff6b6b]', this.t('matchmakingError') || 'MATCHMAKING ERROR');
+            const message = this.uiManager.createElement('div', 'text-lg mb-6 text-white', data.message || this.t('matchmakingProblemMsg') || 'A problem occurred while searching for an opponent.');
+            const backButton = this.uiManager.createButton(this.t('backToLobby') || 'BACK TO LOBBY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.backToLobby());
             content.appendChild(title);
             content.appendChild(message);
             content.appendChild(backButton);
@@ -741,11 +757,11 @@ export class RemotePage {
                     // So if player1Score >= 10, YOU won. If player2Score >= 10, opponent won.
                     // Use score to determine winner (scores are correctly mirrored for each player)
                     // player1Score is always YOUR score after server mirroring
-                    winnerText.textContent = gameState.player1Score >= 10 ? 'YOU WIN!' : 'YOU LOSE!';
+                    winnerText.textContent = gameState.player1Score >= 10 ? (this.t('youWin') || 'YOU WIN!') : (this.t('youLose') || 'YOU LOSE!');
                 }
                 const playAgainBtn = gameOverOverlay.querySelector('button');
                 if (playAgainBtn) {
-                    playAgainBtn.textContent = 'RETURN TO LOBBY';
+                    playAgainBtn.textContent = this.t('returnToLobby') || 'RETURN TO LOBBY';
                 }
                 gameOverOverlay.classList.remove('hidden');
                 gameOverOverlay.style.display = ''; // Clear inline display:none from countdown/pause
@@ -874,9 +890,9 @@ export class RemotePage {
         const WaitingScreen = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg z-10');
         WaitingScreen.setAttribute('data-overlay', 'waiting-screen');
         const WaitingScreenContent = this.uiManager.createElement('div', 'text-center retro-text');
-        const WaitingScreenTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'WAITING FOR AN OPPONENT...');
+        const WaitingScreenTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', this.t('waitingForRandomOpponent') || 'WAITING FOR AN OPPONENT...');
         WaitingScreenContent.appendChild(WaitingScreenTitle);
-        const cancelButton = this.uiManager.createButton('CANCEL', 'retro-button bg-transparent text-[#ff1493] px-6 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200', () => {
+        const cancelButton = this.uiManager.createButton(this.t('cancel') || 'CANCEL', 'retro-button bg-transparent text-[#ff1493] px-6 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200', () => {
             // Cancel matchmaking search
             this.gameManager?.cancelSearch();
             this.removeWaitingScreen();
@@ -912,11 +928,11 @@ export class RemotePage {
         const WaitingScreen = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg z-10');
         WaitingScreen.setAttribute('data-overlay', 'waiting-screen');
         const WaitingScreenContent = this.uiManager.createElement('div', 'text-center retro-text');
-        const WaitingScreenTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'INVITE A FRIEND');
+        const WaitingScreenTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', this.t('inviteAFriend') || 'INVITE A FRIEND');
         WaitingScreenContent.appendChild(WaitingScreenTitle);
         // Friends List
         const friendsList = this.uiManager.createElement('div', 'flex gap-4 justify-center');
-        const selectedLabel = this.uiManager.createElement('div', 'retro-text text-xs opacity-60 mb-2', 'Select a friend');
+        const selectedLabel = this.uiManager.createElement('div', 'retro-text text-xs opacity-60 mb-2', this.t('selectAFriend') || 'Select a friend');
         const friends = [
             { id: 'friend1', name: 'Friend 1' },
             { id: 'friend2', name: 'Friend 2' },
@@ -931,8 +947,8 @@ export class RemotePage {
                 el.classList.toggle('border-[#ff1493]', !isSelected);
             });
             selectedLabel.textContent = this.selectedFriendId
-                ? `Selected: ${friends.find(f => f.id === this.selectedFriendId)?.name ?? this.selectedFriendId}`
-                : 'Select a friend';
+                ? this.t('selectedFriend', { username: friends.find(f => f.id === this.selectedFriendId)?.name ?? this.selectedFriendId }) || `Selected: ${friends.find(f => f.id === this.selectedFriendId)?.name ?? this.selectedFriendId}`
+                : (this.t('selectAFriend') || 'Select a friend');
         };
         friends.forEach((f) => {
             const friendEl = this.uiManager.createElement('button', 'cursor-pointer px-4 py-2 rounded border-2 border-[#ff1493] bg-black/40 hover:bg-black/60 transition-all duration-200', f.name);
@@ -951,17 +967,17 @@ export class RemotePage {
         WaitingScreenContent.appendChild(this.uiManager.createElement('div', 'h-4'));
         const buttonsWrapper = this.uiManager.createElement('div', 'flex flex-col gap-4 items-center');
         // Invite Button
-        const inviteButton = this.uiManager.createButton('INVITE', 'retro-button bg-[#ff1493] text-black px-6 py-2 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => {
+        const inviteButton = this.uiManager.createButton(this.t('invite') || 'INVITE', 'retro-button bg-[#ff1493] text-black px-6 py-2 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => {
             // TODO: Implement invite friend functionality
             // Example: use this.selectedFriendId
             if (!this.selectedFriendId) {
-                selectedLabel.textContent = 'Select a friend first';
+                selectedLabel.textContent = this.t('selectFriendFirst') || 'Select a friend first';
                 return;
             }
         });
         buttonsWrapper.appendChild(inviteButton);
         // Cancel Button
-        const cancelButton = this.uiManager.createButton('CANCEL', 'retro-button bg-transparent text-[#ff1493] px-6 py-2 rounded border-2 border-[#ff1493] hover:bg-[#ff1493] hover:text-black transition-all duration-200', () => {
+        const cancelButton = this.uiManager.createButton(this.t('cancel') || 'CANCEL', 'retro-button bg-transparent text-[#ff1493] px-6 py-2 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-black transition-all duration-200', () => {
             this.removeWaitingScreen();
             this.isSearchingOpponent = false;
             document.querySelector('[data-overlay="start-game"]')?.classList.remove('hidden');

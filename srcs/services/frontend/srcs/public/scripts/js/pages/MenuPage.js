@@ -1,6 +1,6 @@
 import { SocialManager } from '../modules/SocialManager.js';
 export class MenuPage {
-    constructor(uiManager, wsManager, routerManager, onPlayGameAI, onPlayGameLocal, onPlayGameOnline, onChatWithFriends, onSettings, onLogout, onShowPrivacyPolicy, onShowTermsOfService) {
+    constructor(uiManager, wsManager, routerManager, languageManager, onPlayGameAI, onPlayGameLocal, onPlayGameOnline, onChatWithFriends, onSettings, onLogout, onShowPrivacyPolicy, onShowTermsOfService) {
         this.wsManager = null;
         this.routerManager = null;
         this.currentUser = null;
@@ -11,31 +11,31 @@ export class MenuPage {
         this.menuItems = [
             {
                 icon: 'zap',
-                label: 'AI',
+                labelKey: 'ai',
                 action: () => this.onPlayGameAI(),
                 color: '#ff1493',
             },
             {
                 icon: 'monitor',
-                label: 'LOCAL',
+                labelKey: 'local',
                 action: () => this.onPlayGameLocal(),
                 color: '#ff1493',
             },
             {
                 icon: 'multiplayer',
-                label: 'ONLINE',
+                labelKey: 'onlineGame',
                 action: () => this.onPlayGameOnline(),
                 color: '#ff1493',
             },
             {
                 icon: 'chat',
-                label: 'LIVE CHAT',
+                labelKey: 'liveChat',
                 action: () => this.onChatWithFriends(),
                 color: '#00ffff',
             },
             {
                 icon: 'settings',
-                label: 'SETTINGS',
+                labelKey: 'options',
                 action: () => this.onSettings(),
                 color: '#9d4edd',
             }
@@ -43,6 +43,7 @@ export class MenuPage {
         this.uiManager = uiManager;
         this.wsManager = wsManager;
         this.routerManager = routerManager;
+        this.languageManager = languageManager;
         this.onPlayGameAI = onPlayGameAI;
         this.onPlayGameLocal = onPlayGameLocal;
         this.onPlayGameOnline = onPlayGameOnline;
@@ -51,6 +52,9 @@ export class MenuPage {
         this.onLogout = onLogout;
         this.onShowPrivacyPolicy = onShowPrivacyPolicy;
         this.onShowTermsOfService = onShowTermsOfService;
+    }
+    t(key) {
+        return this.languageManager.t(key);
     }
     render(user) {
         this._logoutArmed = false;
@@ -82,13 +86,13 @@ export class MenuPage {
         /////////// Header ////////////////
         ///////////////////////////////////
         const header = this.uiManager.createElement('div', 'text-center mb-12');
-        const title = this.uiManager.createElement('h1', 'retro-title mb-4', 'TRANSCENDENCE');
-        const subtitle = this.uiManager.createElement('p', 'retro-subtitle text-lg', 'WELCOME TO THE RETRO PONG');
+        const title = this.uiManager.createElement('h1', 'retro-title mb-4', this.t('title') || 'TRANSCENDENCE');
+        const subtitle = this.uiManager.createElement('p', 'retro-subtitle text-lg', this.t('welcomeRetroPong') || 'WELCOME TO THE RETRO PONG');
         header.appendChild(title);
         header.appendChild(subtitle);
         if (user) {
             const userWelcome = this.uiManager.createElement('div', 'mt-6 flex items-center justify-center gap-3 retro-text');
-            const userText = this.uiManager.createElement('span', 'text-[#00ffff]', `PLAYER: ${user.username.toUpperCase()}`);
+            const userText = this.uiManager.createElement('span', 'text-[#00ffff]', `${this.t('player') || 'PLAYER'}: ${user.username.toUpperCase()}`);
             userText.style.fontSize = '1.5rem';
             // Avatar
             const avatarImg = this.uiManager.createElement('img', 'rounded-full object-cover');
@@ -106,7 +110,7 @@ export class MenuPage {
                     ? `public/avatars/${user.avatar}`
                     : `public/avatars/${user.avatar}.png`;
             }
-            avatarImg.alt = 'User Avatar';
+            avatarImg.alt = this.t('avatarAlt') || 'User Avatar';
             userWelcome.appendChild(avatarImg);
             userWelcome.appendChild(userText);
             header.appendChild(userWelcome);
@@ -119,7 +123,7 @@ export class MenuPage {
         playRectangle.style.boxShadow = '0 0 30px rgba(255, 20, 147, 0.3)';
         playRectangle.style.minWidth = '700px';
         const playTitle = this.uiManager.createElement('h3', 'retro-text text-2xl text-[#ff1493] text-center mb-6');
-        playTitle.textContent = 'GAME MODES';
+        playTitle.textContent = this.t('gameModes') || 'GAME MODES';
         playRectangle.appendChild(playTitle);
         const playGrid = this.uiManager.createElement('div', 'grid md:grid-cols-3 gap-6');
         this.menuItems.slice(0, 3).forEach((item) => {
@@ -135,7 +139,7 @@ export class MenuPage {
             iconContainer.appendChild(icon);
             // Label
             const label = this.uiManager.createElement('h3', 'retro-text text-lg mb-2');
-            label.textContent = item.label;
+            label.textContent = this.t(item.labelKey);
             label.style.color = item.color;
             const content = this.uiManager.createElement('div', 'relative z-10 text-center');
             content.appendChild(iconContainer);
@@ -165,7 +169,7 @@ export class MenuPage {
             iconContainer.appendChild(icon);
             // Label
             const label = this.uiManager.createElement('h3', 'retro-text text-xl mb-2');
-            label.textContent = item.label;
+            label.textContent = this.t(item.labelKey);
             label.style.color = item.color;
             const content = this.uiManager.createElement('div', 'relative z-10 text-center');
             content.appendChild(iconContainer);
@@ -180,33 +184,6 @@ export class MenuPage {
             menuItem.addEventListener('click', item.action);
             otherButtonsGrid.appendChild(menuItem);
         });
-        // this.menuItems.forEach((item) => {
-        //   const menuItem = this.uiManager.createElement('div', 'group bg-black/40 backdrop-blur-sm border-2 border-transparent hover:border-[var(--item-color)] rounded-lg p-8 cursor-pointer transition-all duration-300 hover:shadow-[0_0_30px_var(--item-color)] relative overflow-hidden');
-        //   menuItem.style.setProperty('--item-color', item.color);
-        //   // Animated background
-        //   const animatedBg = this.uiManager.createElement('div', 'absolute inset-0 bg-gradient-to-br from-transparent via-[var(--item-color)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300');
-        //   menuItem.appendChild(animatedBg);
-        //   // Icon
-        //   const iconContainer = this.uiManager.createElement('div', 'flex justify-center mb-4');
-        //   const icon = this.uiManager.createIcon(item.icon, 'w-12 h-12 transition-all duration-300 group-hover:scale-110');
-        //   icon.style.color = item.color;
-        //   iconContainer.appendChild(icon);
-        //   // Label
-        //   const label = this.uiManager.createElement('h3', 'retro-text text-xl mb-2');
-        //   label.textContent = item.label;
-        //   label.style.color = item.color;
-        //   const content = this.uiManager.createElement('div', 'relative z-10 text-center');
-        //   content.appendChild(iconContainer);
-        //   content.appendChild(label);
-        //   // Scan line effect
-        //   const scanLine = this.uiManager.createElement('div', 'absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300');
-        //   const scanLineInner = this.uiManager.createElement('div', 'absolute inset-0 bg-gradient-to-b from-transparent via-[var(--item-color)]/10 to-transparent animate-pulse');
-        //   scanLineInner.style.backgroundSize = '100% 200%';
-        //   scanLine.appendChild(scanLineInner);
-        //   menuItem.appendChild(content);
-        //   menuItem.appendChild(scanLine);
-        //   menuItem.addEventListener('click', item.action);
-        //});
         ////////////////////////////////////////////////
         ////////// SOCIAL HEADER + ADD FRIEND //////////
         ////////////////////////////////////////////////
@@ -215,14 +192,14 @@ export class MenuPage {
         socialDiv.style.minHeight = '480px';
         const socialHeaderWrapper = this.uiManager.createElement('div', 'flex items-center justify-between mb-4');
         const socialHeader = this.uiManager.createElement('h3', 'retro-text text-xl text-[#00ffff]');
-        socialHeader.textContent = 'SOCIAL';
+        socialHeader.textContent = this.t('social') || 'SOCIAL';
         const addFriendBtn = this.uiManager.createElement('button', 'px-2 py-1 text-sm bg-black text-red-500 border border-red-500 rounded');
         addFriendBtn.innerHTML = '+';
         const addFriendDiv = this.uiManager.createElement('div', 'flex gap-2 mt-2 hidden');
         const friendInput = this.uiManager.createElement('input', 'flex-1 p-2 rounded text-black');
-        friendInput.placeholder = 'Username';
+        friendInput.placeholder = this.t('username') || 'Username';
         const sendFriendBtn = this.uiManager.createElement('button', 'px-4 py-2 bg-[#00ffff] text-black rounded');
-        sendFriendBtn.textContent = 'Send';
+        sendFriendBtn.textContent = this.t('send') || 'Send';
         addFriendDiv.appendChild(friendInput);
         addFriendDiv.appendChild(sendFriendBtn);
         addFriendBtn.addEventListener('click', () => {
@@ -235,18 +212,18 @@ export class MenuPage {
         // Online List
         const onlineList = this.uiManager.createElement('div', 'w-full mb-6');
         const onlineTitle = this.uiManager.createElement('h4', 'retro-text text-lg text-[#00ffff] mb-2');
-        onlineTitle.textContent = 'Online';
+        onlineTitle.textContent = this.t('online') || 'Online';
         const onlineListContent = this.uiManager.createElement('div', 'text-[#00ffff] opacity-80');
-        onlineListContent.textContent = 'List of online users goes here...';
+        onlineListContent.textContent = this.t('onlineUsersPlaceholder') || 'List of online users goes here...';
         onlineList.appendChild(onlineTitle);
         onlineList.appendChild(onlineListContent);
         socialDiv.appendChild(onlineList);
         // Notifications
         const notifications = this.uiManager.createElement('div', 'w-full');
         const notificationsTitle = this.uiManager.createElement('h4', 'retro-text text-lg text-[#00ffff] mb-2');
-        notificationsTitle.textContent = 'Notifications';
+        notificationsTitle.textContent = this.t('notifications') || 'Notifications';
         const notificationsContent = this.uiManager.createElement('div', 'text-[#00ffff] opacity-80');
-        notificationsContent.textContent = 'Notifications list goes here...';
+        notificationsContent.textContent = this.t('notificationsPlaceholder') || 'Notifications list goes here...';
         notifications.appendChild(notificationsTitle);
         notifications.appendChild(notificationsContent);
         socialDiv.appendChild(notifications);
@@ -263,7 +240,7 @@ export class MenuPage {
         const socialDivWrapper = this.uiManager.createElement('div', 'w-80 flex flex-col flex-shrink-0');
         socialDivWrapper.style.justifySelf = 'end';
         if (this.wsManager && this.routerManager) {
-            this.socialManager = new SocialManager(this.uiManager, this.routerManager, this.wsManager, this.currentUser, () => null, (friendId, username, avatar) => {
+            this.socialManager = new SocialManager(this.uiManager, this.routerManager, this.wsManager, this.languageManager, this.currentUser, () => null, (friendId, username, avatar) => {
                 sessionStorage.setItem('selectedFriendId', friendId.toString());
                 sessionStorage.setItem('selectedFriendUsername', username);
                 if (avatar != null && avatar !== '') {
@@ -281,7 +258,7 @@ export class MenuPage {
         //////////////////////////////////
         const footer = this.uiManager.createElement('div', 'flex justify-center gap-6 mt-12');
         const logoutButton = this.uiManager.createElement('button', 'retro-button bg-transparent text-red-400 px-6 py-3 rounded border-2 border-red-400 hover:bg-red-400 hover:text-black transition-all duration-200 flex items-center gap-2');
-        logoutButton.textContent = 'LOGOUT ';
+        logoutButton.textContent = (this.t('logout') || 'LOGOUT') + ' ';
         logoutButton.setAttribute('type', 'button');
         logoutButton.addEventListener('keydown', (e) => {
             if (e.key !== 'Enter' && e.key !== ' ')
@@ -335,13 +312,13 @@ export class MenuPage {
         console.log('[LOGOUT_BUTTON_ATTACHED]', { when: 'footer', performanceNow: typeof performance !== 'undefined' ? performance.now() : 0 });
         // Version Info
         const versionInfo = this.uiManager.createElement('div', 'text-center mt-8 retro-text text-xs');
-        const versionText = this.uiManager.createElement('div', 'opacity-40', 'MADE BY DIEGO, CHRISTOPHE, NATHALIA, MARI AND RALPH');
+        const versionText = this.uiManager.createElement('div', 'opacity-40', this.t('madeBy') || 'MADE BY DIEGO, CHRISTOPHE, NATHALIA, MARI AND RALPH');
         const linksRow = this.uiManager.createElement('div', 'mt-8 mb-8 flex justify-center gap-4');
         const privacyLink = this.uiManager.createElement('span', 'text-[#00ffff] cursor-pointer hover:text-[#ff1493] transition-colors duration-200 underline');
-        privacyLink.textContent = 'Privacy Policy';
+        privacyLink.textContent = this.t('privacyPolicy') || 'Privacy Policy';
         privacyLink.addEventListener('click', () => this.onShowPrivacyPolicy());
         const termsLink = this.uiManager.createElement('span', 'text-[#00ffff] cursor-pointer hover:text-[#ff1493] transition-colors duration-200 underline');
-        termsLink.textContent = 'Terms of Service';
+        termsLink.textContent = this.t('termsOfService') || 'Terms of Service';
         termsLink.addEventListener('click', () => this.onShowTermsOfService());
         versionInfo.appendChild(versionText);
         linksRow.appendChild(privacyLink);

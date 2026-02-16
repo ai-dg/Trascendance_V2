@@ -1,13 +1,17 @@
 import { GameManager } from '../modules/GameManager.js';
 export class AIPage {
-    constructor(uiManager, onBack, user) {
+    constructor(uiManager, languageManager, onBack, user) {
         this.gameManager = null;
         this.canvas = null;
         this.user = null;
         this.selectedDifficulty = 'medium';
         this.uiManager = uiManager;
+        this.languageManager = languageManager;
         this.onBack = onBack;
         this.user = user ?? null;
+    }
+    t(key) {
+        return this.languageManager.t(key);
     }
     ///////////// DESIGN & RENDERING /////////////
     render(user) {
@@ -35,14 +39,14 @@ export class AIPage {
         // Score Display
         const scoreDisplay = this.uiManager.createElement('div', 'flex gap-16 items-center retro-text');
         const player1Score = this.uiManager.createElement('div', 'text-center');
-        const player1Label = this.uiManager.createElement('div', 'text-lg opacity-60', 'PLAYER 1');
-        player1Label.textContent = this.user ? this.user.username : 'PLAYER 1';
+        const player1Label = this.uiManager.createElement('div', 'text-lg opacity-60', this.t('player1') || 'PLAYER 1');
+        player1Label.textContent = this.user ? this.user.username : (this.t('player1') || 'PLAYER 1');
         const player1Value = this.uiManager.createElement('div', 'text-4xl tracking-wider', '00');
         player1Score.appendChild(player1Label);
         player1Score.appendChild(player1Value);
-        const vsLabel = this.uiManager.createElement('div', 'text-2xl opacity-40', 'VS');
+        const vsLabel = this.uiManager.createElement('div', 'text-2xl opacity-40', this.t('vs') || 'VS');
         const player2Score = this.uiManager.createElement('div', 'text-center');
-        const player2Label = this.uiManager.createElement('div', 'text-lg opacity-60', 'AI BOT');
+        const player2Label = this.uiManager.createElement('div', 'text-lg opacity-60', this.t('aiBot') || 'AI BOT');
         const player2Value = this.uiManager.createElement('div', 'text-4xl tracking-wider', '00');
         player2Score.appendChild(player2Label);
         player2Score.appendChild(player2Value);
@@ -59,10 +63,10 @@ export class AIPage {
         const startOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg');
         startOverlay.setAttribute('data-overlay', 'start-game');
         const startContent = this.uiManager.createElement('div', 'text-center retro-text');
-        const startTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'CHOOSE DIFFICULTY');
-        const startButtonEasy = this.uiManager.createButton('EASY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.selectDifficulty('easy'));
-        const startButtonMedium = this.uiManager.createButton('MEDIUM', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.selectDifficulty('medium'));
-        const startButtonHard = this.uiManager.createButton('HARD', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.selectDifficulty('hard'));
+        const startTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', this.t('chooseDifficulty') || 'CHOOSE DIFFICULTY');
+        const startButtonEasy = this.uiManager.createButton(this.t('easy') || 'EASY', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.selectDifficulty('easy'));
+        const startButtonMedium = this.uiManager.createButton(this.t('medium') || 'MEDIUM', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.selectDifficulty('medium'));
+        const startButtonHard = this.uiManager.createButton(this.t('hard') || 'HARD', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.selectDifficulty('hard'));
         startContent.appendChild(startTitle);
         startContent.appendChild(startButtonEasy);
         startContent.appendChild(this.uiManager.createElement('div', 'h-4'));
@@ -75,7 +79,7 @@ export class AIPage {
         const pauseOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg hidden');
         pauseOverlay.setAttribute('data-overlay', 'pause-game');
         const pauseContent = this.uiManager.createElement('div', 'text-center retro-text');
-        const pauseTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', 'PAUSED');
+        const pauseTitle = this.uiManager.createElement('div', 'text-3xl mb-6 text-[#ff1493]', this.t('paused') || 'PAUSED');
         pauseContent.appendChild(pauseTitle);
         pauseOverlay.appendChild(pauseContent);
         canvasContainer.appendChild(pauseOverlay);
@@ -83,9 +87,9 @@ export class AIPage {
         const gameOverOverlay = this.uiManager.createElement('div', 'absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg hidden');
         gameOverOverlay.setAttribute('data-overlay', 'game-over');
         const gameOverContent = this.uiManager.createElement('div', 'text-center retro-text');
-        const gameOverTitle = this.uiManager.createElement('div', 'text-4xl mb-4 text-[#ff1493]', 'GAME OVER');
+        const gameOverTitle = this.uiManager.createElement('div', 'text-4xl mb-4 text-[#ff1493]', this.t('gameOver') || 'GAME OVER');
         const gameOverWinner = this.uiManager.createElement('div', 'text-2xl mb-6 text-[#00ffff]', '');
-        const playAgainButton = this.uiManager.createButton('PLAY AGAIN', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.requestNewGame());
+        const playAgainButton = this.uiManager.createButton(this.t('playAgain') || 'PLAY AGAIN', 'retro-button bg-[#ff1493] text-black px-8 py-3 rounded border-2 border-[#ff1493] hover:bg-transparent hover:text-[#ff1493] transition-all duration-200', () => this.requestNewGame());
         gameOverContent.appendChild(gameOverTitle);
         gameOverContent.appendChild(gameOverWinner);
         gameOverContent.appendChild(playAgainButton);
@@ -94,20 +98,20 @@ export class AIPage {
         // Controls
         const controls = this.uiManager.createElement('div', 'flex gap-12 retro-text text-sm opacity-60');
         const player1Controls = this.uiManager.createElement('div', 'text-center');
-        const player1Title = this.uiManager.createElement('div', 'mb-2', 'COMMANDS');
-        const player1Up = this.uiManager.createElement('div', '', 'W - UP');
-        const player1Down = this.uiManager.createElement('div', '', 'S - DOWN');
+        const player1Title = this.uiManager.createElement('div', 'mb-2', this.t('commands') || 'COMMANDS');
+        const player1Up = this.uiManager.createElement('div', '', this.t('wUp') || 'W - UP');
+        const player1Down = this.uiManager.createElement('div', '', this.t('sDown') || 'S - DOWN');
         player1Controls.appendChild(player1Title);
         player1Controls.appendChild(player1Up);
         player1Controls.appendChild(player1Down);
         controls.appendChild(player1Controls);
         // Buttons Pause & Reset
         const gameControls = this.uiManager.createElement('div', 'flex gap-4');
-        const pauseButton = this.uiManager.createButton('PAUSE / RESUME', 'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200', () => this.pauseGame());
-        const resetButton = this.uiManager.createButton('RESTART', 'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200', () => this.resetGame());
+        const pauseButton = this.uiManager.createButton(this.t('pauseResume') || 'PAUSE / RESUME', 'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200', () => this.pauseGame());
+        const resetButton = this.uiManager.createButton(this.t('restart') || 'RESTART', 'retro-button bg-transparent text-[#9d4edd] px-6 py-2 rounded border-2 border-[#9d4edd] hover:bg-[#9d4edd] hover:text-black transition-all duration-200', () => this.resetGame());
         // Back to Menu Button
         const backButtonContainer = this.uiManager.createElement('div', 'text-center mb-8');
-        const backButton = this.uiManager.createButton('BACK TO MENU', 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mx-auto mt-4', () => this.backToMenu());
+        const backButton = this.uiManager.createButton(this.t('backToMenu') || 'BACK TO MENU', 'retro-button bg-transparent text-[#00ffff] px-4 py-2 rounded border-2 border-[#00ffff] hover:bg-[#00ffff] hover:text-black transition-all duration-200 flex items-center gap-2 mx-auto mt-4', () => this.backToMenu());
         const backIcon = this.uiManager.createIcon('arrow-left', 'w-4 h-4');
         backButton.appendChild(backIcon);
         backButtonContainer.appendChild(backButton);
