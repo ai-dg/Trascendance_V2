@@ -388,7 +388,8 @@ export class UpdateProfilePage {
         if (isOAuth42) card.appendChild(oauth42Badge);
         if (usernameField) card.appendChild(usernameField);
         if (emailField) card.appendChild(emailField);
-        card.appendChild(passwordField);
+        if (!isOAuth42)
+          card.appendChild(passwordField);
 
         // delete account
         const deleteButton = this.uiManager.createButton(
@@ -409,7 +410,8 @@ export class UpdateProfilePage {
           }
         );
 
-        card.appendChild(deleteButton);
+        if (!isOAuth42)
+          card.appendChild(deleteButton);
         card.appendChild(backButton);
         container.appendChild(card);
         return container;
