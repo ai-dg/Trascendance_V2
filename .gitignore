@@ -11,3 +11,4 @@ srcs/logs/pids.txt
 srcs/services/auth/app/auth.sqlite
 srcs/volumes/
 
+srcs/services/vault/config/config.hcl
