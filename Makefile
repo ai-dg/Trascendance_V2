@@ -30,11 +30,6 @@ VAULT_DIRECTORIES= srcs/services/vault/data srcs/services/vault/logs
 #********************** ▌ START & DEPLOYMENT ▌***********************#
 ######################################################################
 
-
-up: build
-	docker compose -f $(COMPOSE) up --remove-orphans
-
-
 d: build
 	mkdir -p $(DATABASE_DIRECTORIES)
 	@bash -lc 'source ./srcs/.env && \
@@ -48,6 +43,9 @@ d: build
 			$(MAKE) find-logs; \
 		fi'
 
+		
+up: build
+	docker compose -f $(COMPOSE) up --remove-orphans
 
 
 start:
@@ -216,6 +214,7 @@ vault:
 	docker cp srcs/services/vault/init/vaultInit.sh vault:/vault/config
 	docker cp srcs/.env vault:/vault/config/.env
 	docker exec vault sh ./vault/config/vaultInit.sh
+	docker cp vault:/vault/config/.env srcs/.env
 	docker exec vault rm /vault/config/vaultInit.sh
 	docker exec vault rm /vault/config/.env
 

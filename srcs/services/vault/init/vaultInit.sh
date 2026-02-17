@@ -46,8 +46,32 @@ vault kv put kv/fortytwo \
   redirectUri=$FORTYTWO_REDIRECT_URI
 
 echo "✅ Secrets Vault initialisés"
-echo add vault root token to .env file :
-echo $ROOT_TOKEN
 
-echo "please keep unseal key ! it won't be revealed again :"
-echo $UNSEAL_KEY
+# Met à jour le fichier .env dans le conteneur (qui sera copié de retour vers l'hôte par le Makefile)
+ENV_FILE="/vault/config/.env"
+if [ -f "$ENV_FILE" ]; then
+    # Met à jour ou ajoute VAULT_ROOT_TOKEN
+    if grep -q "^VAULT_ROOT_TOKEN=" "$ENV_FILE"; then
+        sed -i "s|^VAULT_ROOT_TOKEN=.*|VAULT_ROOT_TOKEN=$ROOT_TOKEN|" "$ENV_FILE"
+    else
+        echo "VAULT_ROOT_TOKEN=$ROOT_TOKEN" >> "$ENV_FILE"
+    fi
+    
+    # Met à jour ou ajoute UNSEAL
+    if grep -q "^UNSEAL=" "$ENV_FILE"; then
+        sed -i "s|^UNSEAL=.*|UNSEAL=$UNSEAL_KEY|" "$ENV_FILE"
+    else
+        echo "UNSEAL=$UNSEAL_KEY" >> "$ENV_FILE"
+    fi
+    
+    echo "✅ Variables VAULT_ROOT_TOKEN et UNSEAL mises à jour dans .env"
+else
+    echo "⚠️  Fichier .env non trouvé à $ENV_FILE"
+    echo "Veuillez ajouter manuellement dans ./srcs/.env :"
+    echo "VAULT_ROOT_TOKEN=$ROOT_TOKEN"
+    echo "UNSEAL=$UNSEAL_KEY"
+fi
+
+echo ""
+echo "⚠️  Conservez la clé unseal ! Elle ne sera plus révélée :"
+echo "$UNSEAL_KEY"

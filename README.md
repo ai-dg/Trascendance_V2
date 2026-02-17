@@ -168,11 +168,11 @@ Security WAF, Authentification, Docker, Blockchain (Not implemented), local play
 Difficulties to compile modsecurity with sources, the solutions were to read documentation from official sources and stackoverflow and GPT
 
 ■ dagudelo
-Game implementation, ELK
+Game implementation, ELK. Difficulty identifying frontend bugs and inconsistencies during merges and during overlaps between different phases of the website's Docker-based infrastructure.
 
 
 ■ nleoni
-Live chat features, Authentification, Langage Manager
+Live chat features, Authentification, Langage Manager. Difficulties integrating the different backend and frontend components, particularly in coordinating the live chat, remote gameplay features, and real-time socket communication.
 
 
 ■ rbalazs
