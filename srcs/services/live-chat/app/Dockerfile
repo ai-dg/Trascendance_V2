@@ -2,11 +2,9 @@ FROM node:20
 
 WORKDIR /data
 
-COPY . .
 COPY package*.json ./
 
-RUN npm install node-vault
-RUN npm install --production
+RUN npm ci --production --no-audit --no-fund
 
 COPY . .
 

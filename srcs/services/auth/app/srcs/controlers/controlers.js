@@ -416,9 +416,9 @@ export async function login_otp_validation_route(request, reply)
 function getMainStyleCookieOptions(maxAge = 3600, request = null) {
 	const isSecure = request ? (request.headers['x-forwarded-proto'] || 'http') === 'https' : true;
 	return {
-		token: { path: '/', httpOnly: true, sameSite: 'lax', maxAge },
-		sessionId: { path: '/', httpOnly: true, sameSite: isSecure ? 'none' : 'lax', secure: isSecure, maxAge },
-		lang: { path: '/', httpOnly: false, sameSite: 'lax', maxAge }
+		token: { path: '/', httpOnly: true, sameSite: 'Lax', maxAge },
+		sessionId: { path: '/', httpOnly: true, sameSite: isSecure ? 'None' : 'Lax', secure: isSecure, maxAge },
+		lang: { path: '/', httpOnly: false, sameSite: 'Lax', maxAge }
 	};
 }
 
@@ -429,7 +429,7 @@ export function getCookieOptions(request, maxAge = 3600) {
 	const isSecure = !forceInsecure && protocol === 'https';
 	const opts = {
 		httpOnly: true,
-		sameSite: isSecure ? 'none' : 'lax',
+		sameSite: isSecure ? 'None' : 'Lax',
 		secure: isSecure,
 		path: '/',
 		maxAge

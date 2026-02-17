@@ -74,6 +74,7 @@ RUN ./configure \
     --error-log-path=/var/log/nginx/error.log \
     --http-log-path=/var/log/nginx/access.log \
     --with-http_ssl_module \
+    --with-http_v2_module \
     --add-module=/opt/ModSecurity-nginx && \
     make && \
     make install

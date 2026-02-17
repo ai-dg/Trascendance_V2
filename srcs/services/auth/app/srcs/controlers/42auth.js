@@ -9,8 +9,8 @@ function get42CallbackCookieOptions(request) {
     const protocol = request.headers['x-forwarded-proto'] || 'http';
     const isSecure = protocol === 'https';
     return {
-        token: { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 3600 },
-        sessionId: { path: '/', httpOnly: true, sameSite: isSecure ? 'none' : 'lax', secure: isSecure, maxAge: 3600 }
+        token: { path: '/', httpOnly: true, sameSite: 'Lax', maxAge: 3600 },
+        sessionId: { path: '/', httpOnly: true, sameSite: isSecure ? 'None' : 'Lax', secure: isSecure, maxAge: 3600 }
     };
 }
 
@@ -39,7 +39,7 @@ export async function oauth_login_route(request, reply) {
     reply.setCookie('oauth_redirect_uri', redirectUri, {
         path: '/',
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: 'Lax',
         maxAge: 300 // 5 minutes - enough for OAuth flow
     });
 
