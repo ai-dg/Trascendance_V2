@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import fs from 'fs';
 import path from 'path';
+import { setupMetrics } from '/monitoring/metrics.js';
 
 
 
@@ -24,6 +25,9 @@ const app = Fastify({https: httpsOptions});
 app.get('/', async () => {
 	return { status: 'ok', service: 'game-engine_app' };
 });
+
+// Setup Prometheus metrics
+setupMetrics(app, 'game-engine');
 
 
 const start = async () => {

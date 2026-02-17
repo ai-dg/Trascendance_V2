@@ -9,6 +9,7 @@ import { routes } from './routes.js';
 import amqp from 'amqplib'
 import path from 'path';
 import { vaultClient } from './vault.js';
+import { setupMetrics } from '/monitoring/metrics.js';
 
 export const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
@@ -85,6 +86,9 @@ export function loadTranslations(lang = 'en') {
 
 
 app.register(routes, {});
+
+// Setup Prometheus metrics
+setupMetrics(app, 'server-rendering');
 
 const start = async () => {
   try {

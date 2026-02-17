@@ -268,7 +268,6 @@ services:
       - NODE_ENV=${NODE_ENV}
       - VAULT_ADDR=${VAULT_ADDR}
       - VAULT_TOKEN=${VAULT_ROOT_TOKEN}
-
     volumes:
       - /data/node_modules
       # - sqlite_data:/data/sqlite
@@ -278,6 +277,10 @@ services:
       - ./monitoring/metrics.js:/monitoring/metrics.js:ro
     networks:
       - internal
+    depends_on:
+      redis:
+        condition: service_started
+    restart: on-failure
 
 
 ######################################################################
@@ -516,10 +519,13 @@ services:
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
+    ports:
+      - "${GRAFANA_PORT}:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
       - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_SERVER_HTTP_PORT=3000
       - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/grafana/
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
       - GF_USERS_ALLOW_SIGN_UP=false

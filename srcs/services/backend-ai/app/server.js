@@ -3,7 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import { createClient } from 'redis';
 import { Ai } from './srcs/Ai.js';
-import { vaultClient } from './srcs/vault.js'
+import { vaultClient } from './srcs/vault.js';
+import { setupMetrics } from '/monitoring/metrics.js';
 
 
 
@@ -51,6 +52,9 @@ const AI_INSTANCE_TTL = 10 * 60 * 1000; // 10 minutes
 app.get('/', async () => {
 	return { status: 'ok', service: 'backend-ai', activeGames: aiInstances.size };
 });
+
+// Setup Prometheus metrics
+setupMetrics(app, 'backend-ai');
 
 async function setupRedisSubscription() {
 	try {

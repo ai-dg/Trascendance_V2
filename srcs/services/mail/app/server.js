@@ -5,6 +5,7 @@ import { vaultClient } from './vault.js';
 import amqp from 'amqplib';
 import fs from 'fs';
 import path from 'path';
+import { setupMetrics } from '/monitoring/metrics.js';
 
 
 
@@ -26,6 +27,9 @@ try {
 }
 
 const app = Fastify({https: httpsOptions});
+
+// Setup Prometheus metrics
+setupMetrics(app, 'mail');
 
 const mail_queue = 'send-mail-queue';
 

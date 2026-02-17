@@ -12,6 +12,7 @@ import { routes } from './srcs/routes/routes.js';
 import fs from 'fs';
 import path from 'path';
 import { vaultClient } from './srcs/services/vault.js';
+import { setupMetrics } from '/monitoring/metrics.js';
 
 
 
@@ -143,6 +144,8 @@ app.addHook('onRequest', async (request, reply) => {
 
 app.register(routes,{});
 
+// Setup Prometheus metrics
+setupMetrics(app, 'auth');
 
 app.get('/test-route', async () => {
 	return { status: 'ok', service: 'auth' };

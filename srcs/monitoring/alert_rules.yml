@@ -40,13 +40,31 @@ groups:
           description: "Redis has been unreachable for more than 1 minute."
 
       - alert: HighContainerMemory
-        expr: container_memory_usage_bytes{name!=""} > 536870912
+        expr: container_memory_usage_bytes{name!="", name!="elasticsearch", name!="logstash"} > 536870912
         for: 5m
         labels:
           severity: warning
         annotations:
           summary: "High memory usage on {{ $labels.name }}"
           description: "Container {{ $labels.name }} is using more than 512MB of memory for 5 minutes."
+
+      - alert: HighContainerMemory_Elasticsearch
+        expr: container_memory_usage_bytes{name="elasticsearch"} > 2147483648
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on elasticsearch"
+          description: "Elasticsearch is using more than 2GB of memory for 5 minutes."
+
+      - alert: HighContainerMemory_Logstash
+        expr: container_memory_usage_bytes{name="logstash"} > 1610612736
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on logstash"
+          description: "Logstash is using more than 1.5GB of memory for 5 minutes."
 
       - alert: HighContainerCPU
         expr: sum(rate(container_cpu_usage_seconds_total{name!=""}[3m])) by (name) * 100 > 80

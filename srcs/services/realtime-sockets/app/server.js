@@ -9,6 +9,7 @@ import fs from 'fs';
 // import { GameManager } from '../../game-engine/app/srcs/js/GameManager.js';
 import path from 'path';
 import { handleMatchmaking, cancelSearch } from './matchmaking.js';
+import { setupMetrics } from '/monitoring/metrics.js';
 
 import { vaultClient } from './vault.js';
 
@@ -118,6 +119,9 @@ await app.register(cookie, {
 app.get('/', async () => {
     return { status: 'ok', service: 'realtime-sockets' };
 });
+
+// Setup Prometheus metrics
+setupMetrics(app, 'realtime-sockets');
 
 const generalConnections = new Map();
 

@@ -1,4 +1,4 @@
-.PHONY: up d dev build no-cache re watch fclean down downv clean find-logs kill-logs logs logs-all logs-recent npm-install debug npm-install debug restart fix-rabbit-permissions fix-rabbit-cookie
+.PHONY: up d dev build no-cache re watch fclean down downv clean find-logs kill-logs logs logs-all logs-recent npm-install npm-build debug npm-install debug restart fix-rabbit-permissions fix-rabbit-cookie
 
 # ■ Path Configuration
 COMPOSE = srcs/docker-compose.yml
@@ -18,7 +18,8 @@ DATABASE_DIRECTORIES := \
 	$(HOME)/data/grafana \
 	$(HOME)/data/logstash \
 	$(HOME)/data/alertmanager \
-	./srcs/logs
+	./srcs/logs \
+	./srcs/volumes
 
 
 
@@ -30,8 +31,9 @@ VAULT_DIRECTORIES= srcs/services/vault/data srcs/services/vault/logs
 #********************** ▌ START & DEPLOYMENT ▌***********************#
 ######################################################################
 
-d: vault build
-	mkdir -p $(DATABASE_DIRECTORIES)
+d: npm-build vault build
+	@sudo mkdir -p $(DATABASE_DIRECTORIES)
+	@sudo chmod -R 777 $(DATABASE_DIRECTORIES)
 	@bash -lc 'source ./srcs/.env && \
 		if [ "$$NODE_ENV" = "PROD" ]; then \
 			docker compose --profile prod -f $(COMPOSE) up --remove-orphans -d; \
@@ -43,7 +45,6 @@ d: vault build
 			$(MAKE) find-logs; \
 		fi'
 
-		
 up: build
 	docker compose -f $(COMPOSE) up --remove-orphans
 
@@ -76,21 +77,22 @@ dev:
 	docker compose -f $(COMPOSE) up --force-recreate --build
 
 build:
-	mkdir -p $(DATABASE_DIRECTORIES)
+	@sudo mkdir -p $(DATABASE_DIRECTORIES)
+	@sudo chmod -R 777 $(DATABASE_DIRECTORIES)
 	docker compose -f $(COMPOSE) build
 
 no-cache:
 	docker compose -f $(COMPOSE) build --no-cache
 
 re:
-	@$(MAKE) down
-	@docker images -q > IMAGES
-	@cat IMAGES | while IFS= read -r line; do \
-		docker rmi "$$line"; \
-	done
-	@rm IMAGES
-	@echo ${GREEN}Images deleted${RESET}
-	@$(MAKE) up
+	@$(MAKE) downv
+	# @docker images -q > IMAGES
+	# @cat IMAGES | while IFS= read -r line; do \
+	# 	docker rmi "$$line"; \
+	# done
+	# @rm IMAGES
+	# @echo ${GREEN}Images deleted${RESET}
+	@$(MAKE) d
 
 ######################################################################
 #************************ ▌ STOP & CLEAN ▌***************************#
@@ -114,7 +116,8 @@ downv:
 	docker volume rm srcs_logsdata srcs_grafana_data srcs_prometheus_data srcs_rabbitmq_data srcs_language-manager-node-modules 2>/dev/null || true
 	sudo rm -rf $(DATABASE_DIRECTORIES)
 	sudo rm -rf $(VAULT_DIRECTORIES)
-	@mkdir -p $(DATABASE_DIRECTORIES)
+	@sudo mkdir -p $(DATABASE_DIRECTORIES)
+	@sudo chmod -R 777 $(DATABASE_DIRECTORIES)
 	@echo $(GREEN)Volumes removed.$(RESET)
 
 clean:
@@ -161,8 +164,10 @@ fix-rabbit-permissions: fix-rabbit-cookie
 
 find-logs: fix-rabbit-permissions
 	@echo $(GREEN)Generating logs...$(RESET)
+	@sudo mkdir -p $(DATABASE_DIRECTORIES)
 	@sudo chown -R $(USER):$(USER) $(HOME)/data
-	@chmod -R 777 $(DATABASE_DIRECTORIES)
+	@sudo chown -R $(USER):$(USER) ./srcs/logs ./srcs/volumes 2>/dev/null || true
+	@sudo chmod -R 777 $(DATABASE_DIRECTORIES)
 	@srcs/scripts/logs/log-finder.sh
 
 kill-logs:
@@ -215,7 +220,11 @@ vault:
 	docker cp srcs/services/vault/init/vaultInit.sh vault:/vault/config
 	docker cp srcs/.env vault:/vault/config/.env
 	docker exec vault sh ./vault/config/vaultInit.sh
-	docker cp vault:/vault/config/.env srcs/.env
+	sleep 2
+	@echo $(GREEN)Copying updated .env back to host...$(RESET)
+	@sudo docker cp vault:/vault/config/.env srcs/.env
+	@echo $(GREEN)✅ .env file updated successfully$(RESET)
+	sleep 3
 	docker exec vault rm /vault/config/vaultInit.sh
 	docker exec vault rm /vault/config/.env
 
@@ -253,7 +262,7 @@ npm-check:
 npm-install: npm-check
 	@echo $(GREEN)Installing npm dependencies in all services...$(RESET)
 	@echo $(GREEN)Fixing permissions for service directories...$(RESET)
-	@sudo chown -R $$(whoami):$$(whoami) srcs/services/auth/app srcs/services/backend-ai/app srcs/services/game-engine/app srcs/services/language-manager srcs/services/live-chat/app srcs/services/mail/app srcs/services/realtime-sockets/app srcs/services/server-rendering/app srcs/services/frontend 2>/dev/null || true
+	@sudo chown -R $$(whoami):$$(whoami) srcs/services/auth/app srcs/services/backend-ai/app srcs/services/game-engine/app srcs/services/language-manager srcs/services/live-chat/app srcs/services/mail/app srcs/services/realtime-sockets/app srcs/services/remote-players/app srcs/services/server-rendering/app srcs/services/frontend 2>/dev/null || true
 	@cd srcs/services/frontend && npm install
 	@cd srcs/services/auth/app && npm install
 	@cd srcs/services/backend-ai/app && npm install
@@ -262,8 +271,19 @@ npm-install: npm-check
 	@cd srcs/services/live-chat/app && npm install
 	@cd srcs/services/mail/app && npm install
 	@cd srcs/services/realtime-sockets/app && npm install
+	@cd srcs/services/remote-players/app && npm install
 	@cd srcs/services/server-rendering/app && npm install
 	@echo $(GREEN)All npm dependencies installed!$(RESET)
+
+npm-build: npm-install
+	@echo $(GREEN)Building npm projects...$(RESET)
+	@cd srcs/services/frontend && npm run build && npm run build:css || true
+	@if [ -f srcs/services/server-rendering/app/srcs/styles/tailwind.css ]; then \
+		cd srcs/services/server-rendering/app && npm run build:css || true; \
+	else \
+		echo "Skipping server-rendering CSS build (tailwind.css not found)"; \
+	fi
+	@echo $(GREEN)All npm projects built!$(RESET)
 
 %:
 	@:

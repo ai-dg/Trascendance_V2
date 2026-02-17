@@ -45,26 +45,23 @@ vault kv put kv/fortytwo \
   clientId=$FORTYTWO_CLIENT_ID \
   redirectUri=$FORTYTWO_REDIRECT_URI
 
-echo "✅ Vault secrets initialized"
+echo "Vault secrets initialized"
 
-# Update .env file in container (will be copied back to host by Makefile)
 ENV_FILE="/vault/config/.env"
 if [ -f "$ENV_FILE" ]; then
-    # Update or add VAULT_ROOT_TOKEN
     if grep -q "^VAULT_ROOT_TOKEN=" "$ENV_FILE"; then
         sed -i "s|^VAULT_ROOT_TOKEN=.*|VAULT_ROOT_TOKEN=$ROOT_TOKEN|" "$ENV_FILE"
     else
         echo "VAULT_ROOT_TOKEN=$ROOT_TOKEN" >> "$ENV_FILE"
     fi
     
-    # Update or add UNSEAL
     if grep -q "^UNSEAL=" "$ENV_FILE"; then
         sed -i "s|^UNSEAL=.*|UNSEAL=$UNSEAL_KEY|" "$ENV_FILE"
     else
         echo "UNSEAL=$UNSEAL_KEY" >> "$ENV_FILE"
     fi
     
-    echo "✅ VAULT_ROOT_TOKEN and UNSEAL variables updated in .env"
+    echo "VAULT_ROOT_TOKEN and UNSEAL variables updated in .env"
 else
     echo "⚠️  .env file not found at $ENV_FILE"
     echo "Please manually add to ./srcs/.env :"

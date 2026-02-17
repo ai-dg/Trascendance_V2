@@ -11,6 +11,7 @@ import { routes } from './srcs/routes/routes.js';
 import fs from 'fs';
 import path from 'path';
 import { vaultClient } from './srcs/services/vault.js';
+import { setupMetrics } from '/monitoring/metrics.js';
 
 const is_prod = process.env.NODE_ENV === "PROD"
 export const base_url = is_prod ? "www.transcendance.com" : "localhost"
@@ -105,6 +106,9 @@ process.on('uncaughtException', (err) => {
 
 
 app.register(routes,{});
+
+// Setup Prometheus metrics
+setupMetrics(app, 'live-chat');
 
 app.get('/live-chat', async () => {
 	return { status: 'ok', service: 'live-chat' };
