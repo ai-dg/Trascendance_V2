@@ -239,19 +239,21 @@ npm-check:
 	       fi
 	       @if ! command -v tsc >/dev/null; then \
 		       echo "TypeScript not found. Installing..."; \
-		       npm install -g typescript; \
+		       sudo npm install -g typescript; \
 	       fi
 	       @if ! command -v pnpm >/dev/null; then \
 		       echo "pnpm not found. Installing..."; \
-		       npm install -g pnpm; \
+		       sudo npm install -g pnpm; \
 	       fi
 	       @if ! command -v nodemon >/dev/null; then \
 		       echo "nodemon not found. Installing..."; \
-		       npm install -g nodemon; \
+		       sudo npm install -g nodemon; \
 	       fi
 
 npm-install: npm-check
 	@echo $(GREEN)Installing npm dependencies in all services...$(RESET)
+	@echo $(GREEN)Fixing permissions for service directories...$(RESET)
+	@sudo chown -R $$(whoami):$$(whoami) srcs/services/auth/app srcs/services/backend-ai/app srcs/services/game-engine/app srcs/services/language-manager srcs/services/live-chat/app srcs/services/mail/app srcs/services/realtime-sockets/app srcs/services/server-rendering/app srcs/services/frontend 2>/dev/null || true
 	@cd srcs/services/frontend && npm install
 	@cd srcs/services/auth/app && npm install
 	@cd srcs/services/backend-ai/app && npm install
