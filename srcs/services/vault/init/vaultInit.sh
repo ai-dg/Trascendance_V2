@@ -2,10 +2,10 @@
 
 export VAULT_ADDR='http://localhost:8200'
 
-# Charge les variables depuis .env
+# Load variables from .env
 if [ ! -f /vault/config/.env ]; then
-    echo "❌ Fichier .env manquant"
-    echo "Copiez .env.vault.example vers .env.vault et remplissez les valeurs"
+    echo "❌ .env file missing"
+    echo "Copy .env.vault.example to .env.vault and fill in the values"
     exit 1
 fi
 
@@ -14,7 +14,7 @@ source /vault/config/.env
 chown 100:1000 vault/data
 
 
-# Init et unseal
+# Initialize and unseal
 vault operator init -key-shares=1 -key-threshold=1 > vault-keys.txt
 UNSEAL_KEY=$(grep 'Unseal Key' vault-keys.txt | awk '{print $4}')
 ROOT_TOKEN=$(grep 'Root Token' vault-keys.txt | awk '{print $4}')
@@ -45,33 +45,34 @@ vault kv put kv/fortytwo \
   clientId=$FORTYTWO_CLIENT_ID \
   redirectUri=$FORTYTWO_REDIRECT_URI
 
-echo "✅ Secrets Vault initialisés"
+echo "✅ Vault secrets initialized"
 
-# Met à jour le fichier .env dans le conteneur (qui sera copié de retour vers l'hôte par le Makefile)
+# Update .env file in container (will be copied back to host by Makefile)
 ENV_FILE="/vault/config/.env"
 if [ -f "$ENV_FILE" ]; then
-    # Met à jour ou ajoute VAULT_ROOT_TOKEN
+    # Update or add VAULT_ROOT_TOKEN
     if grep -q "^VAULT_ROOT_TOKEN=" "$ENV_FILE"; then
         sed -i "s|^VAULT_ROOT_TOKEN=.*|VAULT_ROOT_TOKEN=$ROOT_TOKEN|" "$ENV_FILE"
     else
         echo "VAULT_ROOT_TOKEN=$ROOT_TOKEN" >> "$ENV_FILE"
     fi
     
-    # Met à jour ou ajoute UNSEAL
+    # Update or add UNSEAL
     if grep -q "^UNSEAL=" "$ENV_FILE"; then
         sed -i "s|^UNSEAL=.*|UNSEAL=$UNSEAL_KEY|" "$ENV_FILE"
     else
         echo "UNSEAL=$UNSEAL_KEY" >> "$ENV_FILE"
     fi
     
-    echo "✅ Variables VAULT_ROOT_TOKEN et UNSEAL mises à jour dans .env"
+    echo "✅ VAULT_ROOT_TOKEN and UNSEAL variables updated in .env"
 else
-    echo "⚠️  Fichier .env non trouvé à $ENV_FILE"
-    echo "Veuillez ajouter manuellement dans ./srcs/.env :"
+    echo "⚠️  .env file not found at $ENV_FILE"
+    echo "Please manually add to ./srcs/.env :"
     echo "VAULT_ROOT_TOKEN=$ROOT_TOKEN"
     echo "UNSEAL=$UNSEAL_KEY"
 fi
 
 echo ""
-echo "⚠️  Conservez la clé unseal ! Elle ne sera plus révélée :"
-echo "$UNSEAL_KEY"
+echo "  Keep the unseal key! It won't be revealed again :"
+echo "Root token : $ROOT_TOKEN"
+echo "Unseal key : $UNSEAL_KEY"

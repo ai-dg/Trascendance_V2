@@ -30,7 +30,7 @@ VAULT_DIRECTORIES= srcs/services/vault/data srcs/services/vault/logs
 #********************** ▌ START & DEPLOYMENT ▌***********************#
 ######################################################################
 
-d: build
+d: vault build
 	mkdir -p $(DATABASE_DIRECTORIES)
 	@bash -lc 'source ./srcs/.env && \
 		if [ "$$NODE_ENV" = "PROD" ]; then \
@@ -113,6 +113,7 @@ downv:
 	docker rm elasticsearch || true
 	docker volume rm srcs_logsdata srcs_grafana_data srcs_prometheus_data srcs_rabbitmq_data srcs_language-manager-node-modules 2>/dev/null || true
 	sudo rm -rf $(DATABASE_DIRECTORIES)
+	sudo rm -rf $(VAULT_DIRECTORIES)
 	@mkdir -p $(DATABASE_DIRECTORIES)
 	@echo $(GREEN)Volumes removed.$(RESET)
 
