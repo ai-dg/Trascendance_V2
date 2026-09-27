@@ -14,7 +14,7 @@ This project implements a complete web platform with account management for play
 
 1. Configure environment variables
 
-Create a `.env` file at the root with the necessary variables, for example:
+Copy `.env.example` to `srcs/.env` (the file the Makefile reads) and fill in your own values, for example:
 
 FORTYTWO_CLIENT_ID=your_client_id 
 FORTYTWO_CLIENT_SECRET=your_client_secret

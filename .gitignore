@@ -15,3 +15,7 @@ srcs/volumes/
 **/vault/logs/**
 unseal.md
 
+# Local secrets and editor settings
+srcs/.env
+.env
+.vscode/
