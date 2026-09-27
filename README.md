@@ -20,7 +20,9 @@ FORTYTWO_CLIENT_ID=your_client_id
 FORTYTWO_CLIENT_SECRET=your_client_secret
 FORTYTWO_REDIRECT_URI=https://localhost/auth/42/callback
 JWT_SECRET=your_jwt_secret
+COOKIE_SECRET=your_cookie_secret
 REDIS_PASSWORD=your_redis_password
+RABBITMQ_DEFAULT_USER=your_user
 RABBITMQ_DEFAULT_PASS=your_rabbitmq_password
 
 2. Launch services with make (builds the front end on the host, initialises Vault, then starts the containers)
@@ -40,7 +42,6 @@ make re - Remove containers and volumes, then rebuild and restart
 - Fastify : https://www.fastify.io/
 - Tailwind CSS : https://tailwindcss.com/
 - ModSecurity : https://modsecurity.org/
-- Avalanche : https://docs.avax.network/
 - HashiCorp Vault : https://www.vaultproject.io/
 - Microservices Architecture - Martin Fowler : https://martinfowler.com/articles/microservices.html
 - WebSocket API - MDN : https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
@@ -155,7 +156,7 @@ This project uses one SQLite database per service (mounted under `/data` in Dock
 - **SSR**: server-side rendering service for improved performance/SEO.
 - **Internationalization**: multi-language support.
 - **Security**: HTTPS/WSS, CSRF protection, WAF (ModSecurity), secrets management (Vault).
-- **AI opponent / tournaments**: present as a service/module (integration status may vary).
+- **AI opponent**: present as a service/module (integration status may vary).
 - **Monitoring system with Prometheus and Grafana**
 
 ## INDIVIDUAL CONTRIBUTIONS
