@@ -8,7 +8,7 @@ This project implements a complete web platform with account management for play
 
 ■ Prerequisites
 
-- Docker and Docker Compose, Node.js (for local development), Git
+- Docker and Docker Compose, Node.js and npm (the default make target builds the front end on the host), Git
 
 ■ Installation
 
@@ -18,22 +18,21 @@ Copy `.env.example` to `srcs/.env` (the file the Makefile reads) and fill in you
 
 FORTYTWO_CLIENT_ID=your_client_id 
 FORTYTWO_CLIENT_SECRET=your_client_secret
-FORTYTWO_REDIRECT_URI=https://localhost/auth/callback
+FORTYTWO_REDIRECT_URI=https://localhost/auth/42/callback
 JWT_SECRET=your_jwt_secret
-DATABASE_URL=sqlite:./data/database.db
-REDIS_URL=redis://redis:6379
-RABBITMQ_URL=amqp://rabbitmq:5672
+REDIS_PASSWORD=your_redis_password
+RABBITMQ_DEFAULT_PASS=your_rabbitmq_password
 
-2. Launch services with Docker with make or docker-compose -f srcs/docker-compose.yml up -d
+2. Launch services with make (builds the front end on the host, initialises Vault, then starts the containers)
 
 3. Open your browser and go to: `https://localhost`
 
 ■ Main Commands
 make
-make d - Create logs in a folder
+make d - Default target: build front end, init Vault, build and start the stack, start log collection
 make down
 make logs
-make rebuild
+make re - Remove containers and volumes, then rebuild and restart
 
 ## RESOURCES
 
@@ -99,7 +98,6 @@ Services communicate via:
 - **Database** : SQLite
 - **Message Broker** : RabbitMQ
 - **Cache** : Redis
-- **Blockchain** : Avalanche (Solidity)
 - **Security** : ModSecurity, HashiCorp Vault
 - **Containerization** : Docker, Docker Compose
 - **Web Server** : Nginx
@@ -157,7 +155,6 @@ This project uses one SQLite database per service (mounted under `/data` in Dock
 - **SSR**: server-side rendering service for improved performance/SEO.
 - **Internationalization**: multi-language support.
 - **Security**: HTTPS/WSS, CSRF protection, WAF (ModSecurity), secrets management (Vault).
-- **Blockchain**: score storage on Avalanche.
 - **AI opponent / tournaments**: present as a service/module (integration status may vary).
 - **Monitoring system with Prometheus and Grafana**
 
@@ -191,7 +188,6 @@ Merging difficulties because we did not merge as often so it took time to assemb
 - **Implement WAF/ModSecurity (hardened) + HashiCorp Vault for secrets.** — *calbor-p*
 - **Infrastructure for log management using ELK (Elasticsearch, Logstash, Kibana).** — *dagudelo*
 - **Implement a complete web-based game where users can play against each other.** — *dagudelo*, *rbalazs*, *mmiilpal*
-- **Multiplayer game (more than two players).** — *rbalazs*, *mmiilpal*
 - **Remote players — Enable two players on separate computers to play the same game in real-time.** — *mmiilpal*
 - **Introduce an AI Opponent for games.** — *mmiilpal*
 - **Allow users to interact with other users.** — *nleoni*
